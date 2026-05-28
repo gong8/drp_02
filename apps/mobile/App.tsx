@@ -1,20 +1,20 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { StatusBar } from "expo-status-bar";
+import { StyleSheet, View } from "react-native";
+import { TheMoment } from "./src/screens/TheMoment";
+import { colors } from "./src/theme";
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Let's meet up!</Text>
-      <StatusBar style="auto" />
+    <View style={styles.root}>
+      <TheMoment />
+      <StatusBar style="dark" />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: colors.bg,
   },
 });

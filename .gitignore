@@ -5,3 +5,4 @@ android/
 ios/
 .env
 *.log
+.DS_Store

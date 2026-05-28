@@ -1,5 +1,5 @@
 {
-  "name": "@drp/mobile",
+  "name": "@bethere/mobile",
   "version": "1.0.0",
   "main": "expo/AppEntry",
   "scripts": {
@@ -13,7 +13,7 @@
     "preset": "jest-expo"
   },
   "dependencies": {
-    "@drp/shared": "workspace:*",
+    "@bethere/shared": "workspace:*",
     "@trpc/client": "^11.0.0",
     "expo": "~56.0.6",
     "expo-status-bar": "~56.0.4",
@@ -22,7 +22,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.29.7",
-    "@drp/api": "workspace:*",
+    "@bethere/api": "workspace:*",
     "@types/jest": "^29.5.14",
     "@types/react": "~19.2.15",
     "jest": "~29.7.0",

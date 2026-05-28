@@ -1,5 +1,5 @@
 {
-  "name": "@drp/api",
+  "name": "@bethere/api",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -18,9 +18,10 @@
     "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
-    "@drp/shared": "workspace:*",
+    "@bethere/shared": "workspace:*",
     "@fastify/cors": "^10.0.1",
     "@trpc/server": "^11.0.0",
+    "dotenv": "^17.4.2",
     "drizzle-orm": "^0.38.3",
     "fastify": "^5.2.0",
     "pg": "^8.13.1"

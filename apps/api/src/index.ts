@@ -1,6 +1,8 @@
-import { fastifyTRPCPlugin } from "@trpc/server/adapters/fastify";
+import "dotenv/config";
 import cors from "@fastify/cors";
+import { fastifyTRPCPlugin } from "@trpc/server/adapters/fastify";
 import Fastify from "fastify";
+import { reseedDemo } from "./db/seed.js";
 import { appRouter } from "./router.js";
 import { createContext } from "./trpc.js";
 
@@ -11,6 +13,9 @@ await server.register(fastifyTRPCPlugin, {
   prefix: "/trpc",
   trpcOptions: { router: appRouter, createContext },
 });
+
+await reseedDemo(); // fresh, replayable demo moment on every boot
+server.log.info("seeded demo moment");
 
 const port = Number(process.env.PORT ?? 3000);
 

@@ -7,7 +7,8 @@ services:
       POSTGRES_PASSWORD: drp
       POSTGRES_DB: drp
     ports:
-      - "5432:5432"
+      # Host 5433 to avoid clashing with a local Postgres already on 5432.
+      - "5433:5432"
     volumes:
       - drp_pgdata:/var/lib/postgresql/data
 
