@@ -7,6 +7,12 @@ on:
   pull_request:
     branches: ["main"]
 
+# A new push to the PR supersedes any in-flight CI run for the same PR; cancel the
+# stale one so we do not burn runners checking out-of-date commits.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 

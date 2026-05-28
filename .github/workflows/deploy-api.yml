@@ -14,6 +14,13 @@ on:
       - ".github/workflows/deploy-api.yml"
   workflow_dispatch:
 
+# Serialise deploys: never cancel a production deploy mid-flight (an interrupted
+# ECR push / App Runner rollout is risky). A newer push queues as pending and runs
+# once the current deploy settles, so prod always converges to the latest commit.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: bethere-api
@@ -37,16 +44,24 @@ jobs:
 
       - uses: docker/setup-buildx-action@v3
 
+      # build-push-action wires up the GitHub Actions cache backend (it exposes the
+      # runtime token automatically), so unchanged layers - notably the pnpm install -
+      # are restored across deploys instead of rebuilt from scratch. mode=max caches
+      # intermediate stages too for a higher hit rate. provenance=false keeps a single
+      # plain image (App Runner does not want a multi-arch manifest list).
       - name: Build and push image
-        env:
-          REGISTRY: ${{ steps.ecr.outputs.registry }}
-        run: |
-          IMAGE="$REGISTRY/$ECR_REPOSITORY"
-          docker buildx build \
-            --provenance=false --platform linux/amd64 \
-            -f apps/api/Dockerfile \
-            -t "$IMAGE:latest" -t "$IMAGE:${{ github.sha }}" \
-            --push .
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: true
+          platforms: linux/amd64
+          provenance: false
+          tags: |
+            ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
+            ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       # App Runner auto-deploys on the :latest push. This step does NOT gate the deploy; it
       # waits for that auto-deploy to settle and raises a loud warning if it did not succeed
