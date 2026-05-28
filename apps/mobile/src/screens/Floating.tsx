@@ -5,16 +5,6 @@ import { trpc } from "../lib/trpc";
 import { colors, radius, space } from "../theme";
 
 type Floater = Awaited<ReturnType<typeof trpc.availability.mine.query>>[number];
-type Activity = Floater["activity"];
-
-const EMOJI: Record<Activity, string> = {
-  coffee: "☕",
-  food: "🍜",
-  gym: "🏋️",
-  study: "📚",
-  drinks: "🍻",
-  anything: "✨",
-};
 
 // Floating (the calm wait) — your live availability, abstract by design: no counts,
 // no names, nothing to refresh. A silent escape hatch per item. If a moment starts,
@@ -101,9 +91,7 @@ export function Floating({ navigate }: { navigate: Navigate }) {
         <View style={s.list}>
           {floaters.map((f) => (
             <View key={f.suggestionId} style={s.card}>
-              <Text style={s.cardTitle}>
-                {EMOJI[f.activity]} {f.activity}
-              </Text>
+              <Text style={s.cardTitle}>{f.activity}</Text>
               <Text style={s.status}>Floating</Text>
               <Pressable
                 style={s.withdrawBtn}
@@ -116,18 +104,12 @@ export function Floating({ navigate }: { navigate: Navigate }) {
           ))}
         </View>
       </ScrollView>
-
-      <View style={s.footer}>
-        <Pressable style={s.textBtn} onPress={() => navigate({ name: "home" })}>
-          <Text style={s.textLabel}>Back</Text>
-        </Pressable>
-      </View>
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg, paddingTop: 64 },
+  screen: { flex: 1, backgroundColor: colors.bg, paddingTop: 12 },
   scroll: { paddingHorizontal: 22, paddingBottom: 24 },
   center: {
     flex: 1,
@@ -159,7 +141,4 @@ const s = StyleSheet.create({
   status: { fontSize: 13.5, fontWeight: "500", color: colors.muted, marginTop: 4 },
   withdrawBtn: { alignSelf: "flex-start", paddingVertical: 8, marginTop: space.sm },
   withdrawLabel: { fontSize: 14, fontWeight: "600", color: colors.muted },
-  footer: { paddingHorizontal: 22, paddingBottom: 28, paddingTop: space.sm },
-  textBtn: { paddingVertical: 12, alignItems: "center" },
-  textLabel: { fontSize: 15, fontWeight: "600", color: colors.muted },
 });

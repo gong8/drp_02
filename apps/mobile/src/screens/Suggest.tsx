@@ -9,13 +9,13 @@ type Activity = NonNullable<Group["activeSuggestion"]>["activity"];
 type WindowKey = "tonight" | "week" | "weekend";
 
 const ACTIVITIES = [
-  { key: "coffee", emoji: "☕", label: "Coffee" },
-  { key: "food", emoji: "🍜", label: "Food" },
-  { key: "gym", emoji: "🏋️", label: "Gym" },
-  { key: "study", emoji: "📚", label: "Study" },
-  { key: "drinks", emoji: "🍻", label: "Drinks" },
-  { key: "anything", emoji: "✨", label: "Anything" },
-] as const satisfies readonly { key: Activity; emoji: string; label: string }[];
+  { key: "coffee", label: "Coffee" },
+  { key: "food", label: "Food" },
+  { key: "gym", label: "Gym" },
+  { key: "study", label: "Study" },
+  { key: "drinks", label: "Drinks" },
+  { key: "anything", label: "Anything" },
+] as const satisfies readonly { key: Activity; label: string }[];
 
 const WINDOWS = [
   { key: "tonight", label: "Tonight" },
@@ -103,9 +103,7 @@ export function Suggest({ navigate }: { navigate: Navigate }) {
                 style={[s.chip, on && s.chipOn]}
                 onPress={() => setActivity(a.key)}
               >
-                <Text style={[s.chipLabel, on && s.chipLabelOn]}>
-                  {a.emoji} {a.label}
-                </Text>
+                <Text style={[s.chipLabel, on && s.chipLabelOn]}>{a.label}</Text>
               </Pressable>
             );
           })}
@@ -158,7 +156,7 @@ export function Suggest({ navigate }: { navigate: Navigate }) {
 }
 
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg, paddingTop: 64 },
+  screen: { flex: 1, backgroundColor: colors.bg, paddingTop: 12 },
   scroll: { paddingHorizontal: 22, paddingBottom: 24 },
   center: {
     flex: 1,

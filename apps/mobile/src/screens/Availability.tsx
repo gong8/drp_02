@@ -5,17 +5,7 @@ import { trpc } from "../lib/trpc";
 import { colors, radius, space } from "../theme";
 
 type Suggestion = NonNullable<Awaited<ReturnType<typeof trpc.suggestions.get.query>>>;
-type Activity = Suggestion["activity"];
 type PartOfDay = "morning" | "afternoon" | "evening";
-
-const EMOJI: Record<Activity, string> = {
-  coffee: "☕",
-  food: "🍜",
-  gym: "🏋️",
-  study: "📚",
-  drinks: "🍻",
-  anything: "✨",
-};
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
@@ -101,7 +91,7 @@ export function Availability({
     <View style={s.screen}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         <Text style={s.title}>
-          {suggestion.byName} suggested {EMOJI[suggestion.activity]} — when are you free?
+          {suggestion.byName} suggested {suggestion.activity} — when are you free?
         </Text>
 
         <Text style={s.label}>Days</Text>
@@ -157,7 +147,7 @@ export function Availability({
 }
 
 const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg, paddingTop: 64 },
+  screen: { flex: 1, backgroundColor: colors.bg, paddingTop: 12 },
   scroll: { paddingHorizontal: 22, paddingBottom: 24 },
   center: {
     flex: 1,
