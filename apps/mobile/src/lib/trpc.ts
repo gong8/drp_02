@@ -1,4 +1,4 @@
-import type { AppRouter } from "@drp/api";
+import type { AppRouter } from "@bethere/api";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 
 export const trpc = createTRPCClient<AppRouter>({

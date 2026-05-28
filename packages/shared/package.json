@@ -1,5 +1,5 @@
 {
-  "name": "@drp/shared",
+  "name": "@bethere/shared",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -12,12 +12,14 @@
     }
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.7"
   }
 }
