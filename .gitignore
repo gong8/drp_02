@@ -6,3 +6,4 @@ ios/
 .env
 *.log
 .DS_Store
+infra/.deploy-state.local

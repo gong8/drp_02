@@ -1,9 +1,171 @@
 {
-  "id": "c6ebf313-bcf3-473c-afaa-a90ccabe45c9",
+  "id": "53fbbd31-d32d-4551-a2cb-ed097f428514",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "public.availability": {
+      "name": "availability",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "suggestion_id": {
+          "name": "suggestion_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slots": {
+          "name": "slots",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "availability_suggestion_id_suggestions_id_fk": {
+          "name": "availability_suggestion_id_suggestions_id_fk",
+          "tableFrom": "availability",
+          "tableTo": "suggestions",
+          "columnsFrom": [
+            "suggestion_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "availability_user_id_users_id_fk": {
+          "name": "availability_user_id_users_id_fk",
+          "tableFrom": "availability",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.group_members": {
+      "name": "group_members",
+      "schema": "",
+      "columns": {
+        "group_id": {
+          "name": "group_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "group_members_group_id_groups_id_fk": {
+          "name": "group_members_group_id_groups_id_fk",
+          "tableFrom": "group_members",
+          "tableTo": "groups",
+          "columnsFrom": [
+            "group_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "group_members_user_id_users_id_fk": {
+          "name": "group_members_user_id_users_id_fk",
+          "tableFrom": "group_members",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "group_members_group_id_user_id_pk": {
+          "name": "group_members_group_id_user_id_pk",
+          "columns": [
+            "group_id",
+            "user_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.groups": {
+      "name": "groups",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_met_at": {
+          "name": "last_met_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.moments": {
       "name": "moments",
       "schema": "",
@@ -14,6 +176,12 @@
           "primaryKey": true,
           "notNull": true
         },
+        "suggestion_id": {
+          "name": "suggestion_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
         "activity": {
           "name": "activity",
           "type": "activity",
@@ -21,20 +189,14 @@
           "primaryKey": false,
           "notNull": true
         },
-        "title": {
-          "name": "title",
-          "type": "text",
+        "proposed_time": {
+          "name": "proposed_time",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true
         },
-        "place": {
-          "name": "place",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "detail": {
-          "name": "detail",
+        "proposed_place": {
+          "name": "proposed_place",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -51,6 +213,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "window_ends_at": {
+          "name": "window_ends_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
         "status": {
           "name": "status",
           "type": "moment_status",
@@ -61,7 +229,85 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "moments_suggestion_id_suggestions_id_fk": {
+          "name": "moments_suggestion_id_suggestions_id_fk",
+          "tableFrom": "moments",
+          "tableTo": "suggestions",
+          "columnsFrom": [
+            "suggestion_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.plans": {
+      "name": "plans",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "moment_id": {
+          "name": "moment_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "activity": {
+          "name": "activity",
+          "type": "activity",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "final_time": {
+          "name": "final_time",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "place": {
+          "name": "place",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "confirmed_participant_ids": {
+          "name": "confirmed_participant_ids",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "plans_moment_id_moments_id_fk": {
+          "name": "plans_moment_id_moments_id_fk",
+          "tableFrom": "plans",
+          "tableTo": "moments",
+          "columnsFrom": [
+            "moment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -125,6 +371,135 @@
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
+    },
+    "public.suggestions": {
+      "name": "suggestions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "group_id": {
+          "name": "group_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "by_user_id": {
+          "name": "by_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "activity": {
+          "name": "activity",
+          "type": "activity",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "text": {
+          "name": "text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "window_start": {
+          "name": "window_start",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "window_end": {
+          "name": "window_end",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "suggestion_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'collecting'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "suggestions_group_id_groups_id_fk": {
+          "name": "suggestions_group_id_groups_id_fk",
+          "tableFrom": "suggestions",
+          "tableTo": "groups",
+          "columnsFrom": [
+            "group_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "suggestions_by_user_id_users_id_fk": {
+          "name": "suggestions_by_user_id_users_id_fk",
+          "tableFrom": "suggestions",
+          "tableTo": "users",
+          "columnsFrom": [
+            "by_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "avatar_color": {
+          "name": "avatar_color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     }
   },
   "enums": {
@@ -156,6 +531,15 @@
         "yes",
         "no",
         "conditional"
+      ]
+    },
+    "public.suggestion_status": {
+      "name": "suggestion_status",
+      "schema": "public",
+      "values": [
+        "collecting",
+        "fired",
+        "expired"
       ]
     }
   },

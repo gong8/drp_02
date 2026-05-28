@@ -1,0 +1,12 @@
+**/node_modules
+**/.git
+**/.env
+**/.env.*
+!**/.env.example
+**/.expo
+**/dist
+**/build
+apps/mobile/android
+apps/mobile/ios
+**/*.log
+**/.DS_Store

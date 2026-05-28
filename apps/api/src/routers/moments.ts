@@ -1,24 +1,41 @@
 import { randomUUID } from "node:crypto";
-import { ResolveInput, RespondInput, resolveIn } from "@bethere/shared";
+import { headlineFor, ResolveInput, RespondInput } from "@bethere/shared";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { moments, responses } from "../db/schema.js";
+import { groupMembers, moments, plans, responses, suggestions, users } from "../db/schema.js";
+import { formatWhen } from "../format.js";
+import { resolveMoment } from "../services/bethere.js";
 import { publicProcedure, router } from "../trpc.js";
 
 export const momentsRouter = router({
-  // The proposal as THIS user may see it. Returns only display fields — never
-  // participantIds, others' responses, or any tally (blind/equal during the window).
+  // The proposal as THIS user may see it. `members` are the GROUP's members (minus the
+  // current user) — used to populate the "I'm in if…" picker; group membership is not
+  // secret. NEVER returns participantIds, others' responses, or any tally (blind/equal).
   mine: publicProcedure.query(async ({ ctx }) => {
     const open = await db.select().from(moments).where(eq(moments.status, "open"));
-    const forMe = open.find((m) => m.participantIds.includes(ctx.userId));
-    if (!forMe) return null;
+    const m = open.find((row) => row.participantIds.includes(ctx.userId));
+    if (!m) return null;
+
+    const [sug] = await db.select().from(suggestions).where(eq(suggestions.id, m.suggestionId));
+    const memberRows = sug
+      ? await db.select().from(groupMembers).where(eq(groupMembers.groupId, sug.groupId))
+      : [];
+    const members: { id: string; name: string }[] = [];
+    for (const row of memberRows) {
+      if (row.userId === ctx.userId) continue;
+      const [u] = await db.select().from(users).where(eq(users.id, row.userId));
+      members.push({ id: row.userId, name: u?.name ?? "Someone" });
+    }
+
     return {
-      id: forMe.id,
-      activity: forMe.activity,
-      title: forMe.title,
-      place: forMe.place,
-      detail: forMe.detail,
+      id: m.id,
+      activity: m.activity,
+      title: headlineFor(m.activity),
+      place: m.proposedPlace,
+      detail: formatWhen(m.proposedTime),
+      msLeft: Math.max(0, m.windowEndsAt.getTime() - Date.now()),
+      members,
     };
   }),
 
@@ -40,25 +57,34 @@ export const momentsRouter = router({
     return { recorded: true as const };
   }),
 
-  // The buzzer: resolve conditionals and decide clear vs fizzle. On clear we reveal
-  // the IN count (those people opted in — safe to show). On fizzle we reveal nothing,
-  // not even how close it got (privacy §8.5). Idempotent once resolved.
+  // The buzzer: resolve conditionals and decide clear vs fizzle (delegates to the
+  // service). On clear we reveal the IN count; on fizzle nothing (privacy §8.5).
   resolve: publicProcedure.input(ResolveInput).mutation(async ({ input }) => {
     const [moment] = await db.select().from(moments).where(eq(moments.id, input.momentId));
     if (!moment) throw new TRPCError({ code: "NOT_FOUND" });
+    return resolveMoment(input.momentId);
+  }),
 
-    const rows = await db.select().from(responses).where(eq(responses.momentId, moment.id));
-    const inSet = resolveIn(
-      rows.map((r) => ({ userId: r.userId, kind: r.kind, cond: r.cond ?? undefined })),
-    );
+  // The firm plan for a cleared moment. Only a participant may read it. Reveals only the
+  // IN crowd (safe — they opted in); No's / non-responders are never represented (§8.4).
+  plan: publicProcedure.input(ResolveInput).query(async ({ ctx, input }) => {
+    const [m] = await db.select().from(moments).where(eq(moments.id, input.momentId));
+    if (!m?.participantIds.includes(ctx.userId)) return null;
+    const [p] = await db.select().from(plans).where(eq(plans.momentId, input.momentId));
+    if (!p) return null;
 
-    let status = moment.status;
-    if (status === "open") {
-      status = inSet.size >= moment.quorum ? "cleared" : "fizzled";
-      await db.update(moments).set({ status }).where(eq(moments.id, moment.id));
+    const people: { id: string; name: string; color: string }[] = [];
+    for (const id of p.confirmedParticipantIds) {
+      const [u] = await db.select().from(users).where(eq(users.id, id));
+      people.push({ id, name: u?.name ?? "Someone", color: u?.avatarColor ?? "#8B948B" });
     }
-    return status === "cleared"
-      ? { status: "cleared" as const, inCount: inSet.size }
-      : { status: "fizzled" as const };
+
+    return {
+      activity: p.activity,
+      place: p.place,
+      detail: formatWhen(p.finalTime),
+      finalTimeMs: p.finalTime.getTime(),
+      people,
+    };
   }),
 });
