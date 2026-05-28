@@ -118,17 +118,21 @@ export function TheMoment({ navigate }: { navigate: Navigate }) {
         disabled={busy}
         onPress={() => answer("yes")}
       >
-        <Text style={s.primaryLabel}>I'm in</Text>
+        <Text style={s.primaryLabel}>I will make it</Text>
       </Pressable>
       <Pressable
         style={[s.btn, s.ghost, busy && s.dim]}
         disabled={busy}
         onPress={() => setSheet(true)}
       >
-        <Text style={s.ghostLabel}>I'm in if…</Text>
+        <Text style={s.ghostLabel}>I will make it if…</Text>
       </Pressable>
-      <Pressable style={s.textBtn} disabled={busy} onPress={() => answer("no")}>
-        <Text style={s.textLabel}>Can't make it</Text>
+      <Pressable
+        style={[s.btn, s.ghost, busy && s.dim]}
+        disabled={busy}
+        onPress={() => answer("no")}
+      >
+        <Text style={s.ghostLabelMuted}>I won't make it</Text>
       </Pressable>
 
       <Modal
@@ -140,17 +144,18 @@ export function TheMoment({ navigate }: { navigate: Navigate }) {
         <Pressable style={s.scrim} onPress={() => setSheet(false)} />
         <View style={s.sheet}>
           <View style={s.handle} />
-          <Text style={s.sheetTitle}>I'm in if…</Text>
+          <Text style={s.sheetTitle}>I will make it if…</Text>
+          <Text style={s.sheetHint}>…these people are going:</Text>
 
           <View style={s.seg}>
-            {(["all", "any"] as const).map((m) => (
+            {(["any", "all"] as const).map((m) => (
               <Pressable
                 key={m}
                 style={[s.segOpt, mode === m && s.segOn]}
                 onPress={() => setMode(m)}
               >
                 <Text style={[s.segLabel, mode === m && s.segLabelOn]}>
-                  {m === "all" ? "All of these" : "At least one"}
+                  {m === "all" ? "All of them" : "At least one of"}
                 </Text>
               </Pressable>
             ))}
@@ -185,7 +190,7 @@ export function TheMoment({ navigate }: { navigate: Navigate }) {
               answer("conditional", { mode, targetIds: picked });
             }}
           >
-            <Text style={s.primaryLabel}>Done</Text>
+            <Text style={s.primaryLabel}>Confirm</Text>
           </Pressable>
         </View>
       </Modal>
@@ -228,6 +233,7 @@ const s = StyleSheet.create({
   primaryLabel: { fontSize: 15, fontWeight: "700", color: "#fff" },
   ghost: { borderWidth: 1, borderColor: colors.line, backgroundColor: "transparent" },
   ghostLabel: { fontSize: 15, fontWeight: "700", color: colors.ink },
+  ghostLabelMuted: { fontSize: 15, fontWeight: "700", color: colors.muted },
   dim: { opacity: 0.4 },
   textBtn: { paddingVertical: 12, alignItems: "center", marginTop: space.xs },
   textLabel: { fontSize: 15, fontWeight: "600", color: colors.muted },
@@ -246,7 +252,8 @@ const s = StyleSheet.create({
     alignSelf: "center",
     marginBottom: 18,
   },
-  sheetTitle: { fontSize: 21, fontWeight: "700", color: colors.ink, marginBottom: 14 },
+  sheetTitle: { fontSize: 21, fontWeight: "700", color: colors.ink, marginBottom: 4 },
+  sheetHint: { fontSize: 13.5, fontWeight: "500", color: colors.muted, marginBottom: 14 },
   sheetDone: { marginTop: space.lg },
   seg: {
     flexDirection: "row",

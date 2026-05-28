@@ -6,6 +6,18 @@ import { colors, radius, space } from "../theme";
 
 type Group = Awaited<ReturnType<typeof trpc.groups.mine.query>>[number];
 
+// Deterministic per-group avatar colour, so each group reads as a distinct circle.
+const AVATAR_COLORS = ["#5F9472", "#C9823F", "#7E6BB0", "#3F7BA8", "#B0654F"] as const;
+function groupColor(id: string): string {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return AVATAR_COLORS[h % AVATAR_COLORS.length];
+}
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase();
+}
+
 // Home / Groups — calm by design. Groups as quiet rows; a single primary action;
 // a gentle banner only when a moment is already coming together.
 export function Home({ navigate }: { navigate: Navigate }) {
@@ -43,7 +55,7 @@ export function Home({ navigate }: { navigate: Navigate }) {
   return (
     <View style={s.screen}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
-        <Text style={s.title}>BeThere</Text>
+        <Text style={s.title}>Your Groups</Text>
 
         {hasMoment && (
           <Pressable style={s.banner} onPress={() => navigate({ name: "moment" })}>
@@ -61,8 +73,15 @@ export function Home({ navigate }: { navigate: Navigate }) {
                 disabled={!sug}
                 onPress={() => sug && navigate({ name: "availability", suggestionId: sug.id })}
               >
-                <Text style={s.rowName}>{g.name}</Text>
-                <Text style={s.rowMeta}>{g.memberCount} members</Text>
+                <View style={s.rowMain}>
+                  <View style={s.rowText}>
+                    <Text style={s.rowName}>{g.name}</Text>
+                    <Text style={s.rowMeta}>Members ({g.memberCount})</Text>
+                  </View>
+                  <View style={[s.avatar, { backgroundColor: groupColor(g.id) }]}>
+                    <Text style={s.avatarText}>{initials(g.name)}</Text>
+                  </View>
+                </View>
                 {sug && (
                   <Text style={s.rowSub}>
                     {sug.byName} suggested {sug.activity} — add your availability
@@ -77,7 +96,7 @@ export function Home({ navigate }: { navigate: Navigate }) {
 
       <View style={s.footer}>
         <Pressable style={[s.btn, s.primary]} onPress={() => navigate({ name: "suggest" })}>
-          <Text style={s.primaryLabel}>Suggest something</Text>
+          <Text style={s.primaryLabel}>Suggest a Meet</Text>
         </Pressable>
       </View>
     </View>
@@ -113,9 +132,20 @@ const s = StyleSheet.create({
     borderRadius: radius.xl,
     backgroundColor: colors.surface,
   },
+  rowMain: { flexDirection: "row", alignItems: "center" },
+  rowText: { flex: 1 },
   rowName: { fontSize: 17, fontWeight: "600", color: colors.ink },
   rowMeta: { fontSize: 13.5, fontWeight: "500", color: colors.muted, marginTop: 3 },
   rowSub: { fontSize: 13.5, fontWeight: "500", color: colors.accentInk, marginTop: space.sm },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: space.md,
+  },
+  avatarText: { fontSize: 14, fontWeight: "700", color: "#fff" },
   footer: { paddingHorizontal: 22, paddingBottom: 28, paddingTop: space.sm },
   btn: { borderRadius: radius.lg, paddingVertical: 16, alignItems: "center" },
   primary: { backgroundColor: colors.accent },

@@ -91,7 +91,7 @@ export function Suggest({ navigate }: { navigate: Navigate }) {
   return (
     <View style={s.screen}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
-        <Text style={s.title}>Suggest something</Text>
+        <Text style={s.title}>Suggest a meet</Text>
 
         <Text style={s.label}>What</Text>
         <View style={s.chips}>
@@ -148,7 +148,7 @@ export function Suggest({ navigate }: { navigate: Navigate }) {
           disabled={!ready || busy}
           onPress={submit}
         >
-          <Text style={s.primaryLabel}>Suggest to group</Text>
+          <Text style={s.primaryLabel}>Create</Text>
         </Pressable>
       </View>
     </View>
