@@ -28,9 +28,21 @@ function statusFor(userId: string, resp: ResponseInput[]): MyStatus {
   return resolveIn(resp).has(userId) ? "going" : "awaiting";
 }
 
+// Caller must belong to the group. Identity (ctx.userId) is a dev stub today, so this is
+// correctness/scoping rather than real auth - see docs/tech-debt.md for the auth gap.
+async function requireMember(groupId: string, userId: string): Promise<void> {
+  const m = await db
+    .select()
+    .from(groupMembers)
+    .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, userId)))
+    .limit(1);
+  if (m.length === 0) throw new TRPCError({ code: "FORBIDDEN" });
+}
+
 export const eventsRouter = router({
   // Create a concrete meet for a group. The creator sets the time and place up front.
   create: publicProcedure.input(CreateEventInput).mutation(async ({ ctx, input }) => {
+    await requireMember(input.groupId, ctx.userId);
     const id = `e_${randomUUID()}`;
     await db.insert(events).values({
       id,
@@ -80,6 +92,7 @@ export const eventsRouter = router({
   get: publicProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
     const [e] = await db.select().from(events).where(eq(events.id, input.id));
     if (!e) return null;
+    await requireMember(e.groupId, ctx.userId);
     const [g] = await db.select().from(groups).where(eq(groups.id, e.groupId));
 
     const resp = await responsesFor(e.id);
@@ -124,6 +137,7 @@ export const eventsRouter = router({
   respond: publicProcedure.input(RespondInput).mutation(async ({ ctx, input }) => {
     const [e] = await db.select().from(events).where(eq(events.id, input.eventId));
     if (!e) throw new TRPCError({ code: "NOT_FOUND" });
+    await requireMember(e.groupId, ctx.userId);
     await db
       .delete(responses)
       .where(and(eq(responses.eventId, input.eventId), eq(responses.userId, ctx.userId)));
@@ -139,9 +153,10 @@ export const eventsRouter = router({
 
   // The deadline: lock the event. Conditionals are already resolved live for display;
   // the event always happens, so this just flips the status to resolved.
-  resolve: publicProcedure.input(ResolveInput).mutation(async ({ input }) => {
+  resolve: publicProcedure.input(ResolveInput).mutation(async ({ ctx, input }) => {
     const [e] = await db.select().from(events).where(eq(events.id, input.eventId));
     if (!e) throw new TRPCError({ code: "NOT_FOUND" });
+    await requireMember(e.groupId, ctx.userId);
     if (e.status === "open" && Date.now() > e.respondByAt.getTime()) {
       await db.update(events).set({ status: "resolved" }).where(eq(events.id, input.eventId));
     }
