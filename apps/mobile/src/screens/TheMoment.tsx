@@ -6,17 +6,7 @@ import { colors, radius, space } from "../theme";
 
 type Proposal = NonNullable<Awaited<ReturnType<typeof trpc.moments.mine.query>>>;
 type Member = Proposal["members"][number];
-type Activity = Proposal["activity"];
 type Mode = "all" | "any";
-
-const EMOJI: Record<Activity, string> = {
-  coffee: "☕",
-  food: "🍜",
-  gym: "🏋️",
-  study: "📚",
-  drinks: "🍻",
-  anything: "✨",
-};
 
 // Format remaining milliseconds as "m:ss left", clamped at zero.
 function formatLeft(ms: number): string {
@@ -117,9 +107,7 @@ export function TheMoment({ navigate }: { navigate: Navigate }) {
       </View>
 
       <View style={s.plan}>
-        <Text style={s.planTitle}>
-          {EMOJI[proposal.activity]} {proposal.place}
-        </Text>
+        <Text style={s.planTitle}>{proposal.place}</Text>
         <Text style={s.planMeta}>{proposal.detail}</Text>
       </View>
 
@@ -210,7 +198,7 @@ const s = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.bg,
     paddingHorizontal: 22,
-    paddingTop: 64,
+    paddingTop: 12,
     paddingBottom: 28,
   },
   center: {

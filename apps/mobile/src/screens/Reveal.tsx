@@ -5,16 +5,6 @@ import { trpc } from "../lib/trpc";
 import { colors, radius, space } from "../theme";
 
 type Plan = NonNullable<Awaited<ReturnType<typeof trpc.moments.plan.query>>>;
-type Activity = Plan["activity"];
-
-const EMOJI: Record<Activity, string> = {
-  coffee: "☕",
-  food: "🍜",
-  gym: "🏋️",
-  study: "📚",
-  drinks: "🍻",
-  anything: "✨",
-};
 
 // It's on (the reveal) — "It clicked". Shows only the IN crowd (everyone here opted
 // in, so it's safe to reveal them) plus the firm plan.
@@ -77,9 +67,7 @@ export function Reveal({ navigate, momentId }: { navigate: Navigate; momentId: s
       </Text>
 
       <View style={s.plan}>
-        <Text style={s.planTitle}>
-          {EMOJI[plan.activity]} {plan.place}
-        </Text>
+        <Text style={s.planTitle}>{plan.place}</Text>
         <Text style={s.planMeta}>{plan.detail}</Text>
       </View>
 
@@ -99,7 +87,7 @@ const s = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.bg,
     paddingHorizontal: 22,
-    paddingTop: 64,
+    paddingTop: 12,
     paddingBottom: 28,
   },
   center: {

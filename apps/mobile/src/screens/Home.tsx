@@ -5,16 +5,6 @@ import { trpc } from "../lib/trpc";
 import { colors, radius, space } from "../theme";
 
 type Group = Awaited<ReturnType<typeof trpc.groups.mine.query>>[number];
-type Activity = NonNullable<Group["activeSuggestion"]>["activity"];
-
-const EMOJI: Record<Activity, string> = {
-  coffee: "☕",
-  food: "🍜",
-  gym: "🏋️",
-  study: "📚",
-  drinks: "🍻",
-  anything: "✨",
-};
 
 // Home / Groups — calm by design. Groups as quiet rows; a single primary action;
 // a gentle banner only when a moment is already coming together.
@@ -75,7 +65,7 @@ export function Home({ navigate }: { navigate: Navigate }) {
                 <Text style={s.rowMeta}>{g.memberCount} members</Text>
                 {sug && (
                   <Text style={s.rowSub}>
-                    {sug.byName} suggested {EMOJI[sug.activity]} — add your availability
+                    {sug.byName} suggested {sug.activity} — add your availability
                   </Text>
                 )}
               </Pressable>
