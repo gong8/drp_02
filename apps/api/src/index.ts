@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import cors from "@fastify/cors";
 import { fastifyTRPCPlugin } from "@trpc/server/adapters/fastify";
+import { sql } from "drizzle-orm";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import Fastify from "fastify";
 import { db } from "./db/client.js";
@@ -29,6 +30,26 @@ await server.register(fastifyTRPCPlugin, {
   prefix: "/trpc",
   trpcOptions: { router: appRouter, createContext },
 });
+
+// DANGER, one-shot escape hatch: DB_RESET_ON_BOOT=true drops and recreates the public
+// schema before migrating. Needed only when the migration baseline is reset (regenerated
+// 0000), which otherwise makes migrate-on-boot fail with "type ... already exists" against
+// the old schema and silently roll the deploy back. Default off. Set it for ONE deploy,
+// confirm the deploy succeeded, then set it back to false. See docs/runbook-deploy.md.
+if (process.env.DB_RESET_ON_BOOT === "true") {
+  server.log.warn(
+    { scope: "boot" },
+    "DB_RESET_ON_BOOT=true: dropping and recreating the public schema (DESTRUCTIVE)",
+  );
+  await db.execute(sql`DROP SCHEMA public CASCADE`);
+  await db.execute(sql`CREATE SCHEMA public`);
+  await db.execute(sql`GRANT ALL ON SCHEMA public TO CURRENT_USER`);
+  await db.execute(sql`GRANT ALL ON SCHEMA public TO public`);
+  // Drizzle keeps its migration journal in a separate "drizzle" schema; drop it too, or
+  // migrate() below sees the baseline as already applied and never rebuilds the tables.
+  await db.execute(sql`DROP SCHEMA IF EXISTS drizzle CASCADE`);
+  server.log.warn({ scope: "boot" }, "public + drizzle schemas reset; migrations will rebuild");
+}
 
 // Apply schema migrations on boot so a fresh (e.g. RDS) database is ready without a
 // separate step. The committed Drizzle migrations live next to this file.

@@ -97,9 +97,11 @@ JSON
 aws apprunner create-service --cli-input-json file:///tmp/apprunner.json \
   --query 'Service.ServiceUrl' --output text
 
-# --- CI user for GitHub Actions (ECR push only; never the root keys) ---
+# --- CI user for GitHub Actions (ECR push + read-only App Runner; never the root keys) ---
+# ECR push to ship the image; apprunner Describe/ListOperations so the CD workflow can read
+# the auto-deploy result and warn on a rollback (deploy-api.yml "Alert if App Runner rolled back").
 aws iam create-user --user-name bethere-ci
 aws iam put-user-policy --user-name bethere-ci --policy-name bethere-ci-ecr-push \
-  --policy-document "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"ecr:GetAuthorizationToken\",\"Resource\":\"*\"},{\"Effect\":\"Allow\",\"Action\":[\"ecr:BatchCheckLayerAvailability\",\"ecr:InitiateLayerUpload\",\"ecr:UploadLayerPart\",\"ecr:CompleteLayerUpload\",\"ecr:PutImage\",\"ecr:BatchGetImage\"],\"Resource\":\"arn:aws:ecr:${AWS_REGION}:${ACCOUNT}:repository/bethere-api\"}]}"
+  --policy-document "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"ecr:GetAuthorizationToken\",\"Resource\":\"*\"},{\"Effect\":\"Allow\",\"Action\":[\"ecr:BatchCheckLayerAvailability\",\"ecr:InitiateLayerUpload\",\"ecr:UploadLayerPart\",\"ecr:CompleteLayerUpload\",\"ecr:PutImage\",\"ecr:BatchGetImage\"],\"Resource\":\"arn:aws:ecr:${AWS_REGION}:${ACCOUNT}:repository/bethere-api\"},{\"Effect\":\"Allow\",\"Action\":[\"apprunner:DescribeService\",\"apprunner:ListOperations\"],\"Resource\":\"arn:aws:apprunner:${AWS_REGION}:${ACCOUNT}:service/bethere-api/*\"}]}"
 # Then: aws iam create-access-key --user-name bethere-ci
 #       gh secret set AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY -R gong8/drp_02
