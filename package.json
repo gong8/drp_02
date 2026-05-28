@@ -1,12 +1,12 @@
 {
-  "name": "drp-monorepo",
+  "name": "bethere-monorepo",
   "version": "1.0.0",
   "private": true,
   "packageManager": "pnpm@9.15.4",
   "scripts": {
-    "dev": "concurrently -k -n api,mobile -c blue,magenta \"pnpm --filter @drp/api dev\" \"pnpm --filter @drp/mobile ios\"",
-    "dev:mobile": "pnpm --filter @drp/mobile start",
-    "dev:api": "pnpm --filter @drp/api dev",
+    "dev": "concurrently -k -n api,mobile -c blue,magenta \"pnpm --filter @bethere/api dev\" \"pnpm --filter @bethere/mobile ios\"",
+    "dev:mobile": "pnpm --filter @bethere/mobile start",
+    "dev:api": "pnpm --filter @bethere/api dev",
     "test": "pnpm -r --if-present test",
     "typecheck": "pnpm -r --if-present typecheck",
     "lint": "biome check",

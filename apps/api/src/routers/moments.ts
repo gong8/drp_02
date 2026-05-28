@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { ResolveInput, RespondInput, resolveIn } from "@drp/shared";
+import { ResolveInput, RespondInput, resolveIn } from "@bethere/shared";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 import { db } from "../db/client.js";

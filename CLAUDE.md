@@ -10,9 +10,9 @@ Persistent guidance for Claude Code in this repo. These cover things you can't i
 
 pnpm workspace monorepo. **Use `pnpm` only — never `npm` or `yarn`.** (`.npmrc` sets `node-linker=hoisted`, which Expo/Metro requires.)
 
-- `apps/mobile` — Expo SDK 56 React Native client (`@drp/mobile`)
-- `apps/api` — Fastify + tRPC server (`@drp/api`)
-- `packages/shared` — shared Zod schemas & types (`@drp/shared`)
+- `apps/mobile` — Expo SDK 56 React Native client (`@bethere/mobile`)
+- `apps/api` — Fastify + tRPC server (`@bethere/api`)
+- `packages/shared` — shared Zod schemas & types (`@bethere/shared`)
 
 Stack: Expo · tRPC v11 · Zod · Drizzle ORM · Postgres · Fastify.
 
@@ -25,7 +25,7 @@ pnpm test                        # tests, all packages
 pnpm dev:api                     # API at http://localhost:3000
 pnpm dev:mobile                  # Expo dev server
 pnpm db:up / pnpm db:down        # local Postgres (docker-compose)
-pnpm --filter @drp/api <script>  # run a script in one package
+pnpm --filter @bethere/api <script>  # run a script in one package
 ```
 
 Run `pnpm typecheck` and `pnpm test` before opening any PR.
@@ -55,8 +55,8 @@ Track all work in Linear via the Linear MCP, religiously. Keep it current — it
 
 - **Type chain — don't hand-write API types.** Define shapes as Zod schemas in `packages/shared`, expose tRPC procedures in `apps/api/src/router.ts` (+ `routers/`); the mobile client's types follow automatically.
 - `apps/api` is ESM (`"type": "module"`) — relative imports need `.js` extensions.
-- `apps/mobile` imports `@drp/api` **type-only** (`import type { AppRouter }`) so Metro never bundles server code.
-- Drizzle schema: `apps/api/src/db/schema.ts`; migrate via `pnpm --filter @drp/api db:generate` / `db:migrate`.
+- `apps/mobile` imports `@bethere/api` **type-only** (`import type { AppRouter }`) so Metro never bundles server code.
+- Drizzle schema: `apps/api/src/db/schema.ts`; migrate via `pnpm --filter @bethere/api db:generate` / `db:migrate`.
 
 ## Design docs
 

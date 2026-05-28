@@ -17,7 +17,7 @@ importers:
 
   apps/api:
     dependencies:
-      '@drp/shared':
+      '@bethere/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       '@fastify/cors':
@@ -57,7 +57,7 @@ importers:
 
   apps/mobile:
     dependencies:
-      '@drp/shared':
+      '@bethere/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       '@trpc/client':
@@ -79,7 +79,7 @@ importers:
       '@babel/core':
         specifier: ^7.29.7
         version: 7.29.7
-      '@drp/api':
+      '@bethere/api':
         specifier: workspace:*
         version: link:../api
       '@types/jest':
