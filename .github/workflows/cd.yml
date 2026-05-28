@@ -13,6 +13,9 @@ env:
 jobs:
   build-apk:
     runs-on: ubuntu-latest
+    env:
+      # Bake the live backend URL into the APK (EXPO_PUBLIC_* is inlined at build time).
+      EXPO_PUBLIC_API_URL: https://96mgvmgcbj.us-east-1.awsapprunner.com
     steps:
       - uses: actions/checkout@v4
 
