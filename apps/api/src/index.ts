@@ -15,7 +15,7 @@ await server.register(fastifyTRPCPlugin, {
 });
 
 await reseedDemo(); // fresh, replayable demo moment on every boot
-server.log.info("seeded demo moment");
+server.log.info("seeded demo data");
 
 const port = Number(process.env.PORT ?? 3000);
 
