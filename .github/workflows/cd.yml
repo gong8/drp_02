@@ -1,9 +1,10 @@
 name: Android CD
 
+# CD runs on push to main (production). main is protected and can only receive
+# CI-passed dev -> main merges, so CI gates CD: nothing deploys without CI
+# having passed on the dev -> main PR.
 on:
-  workflow_run:
-    workflows: ["Node.js CI"]
-    types: [completed]
+  push:
     branches: [main]
 
 env:
@@ -12,7 +13,6 @@ env:
 jobs:
   build-apk:
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion == 'success'
     steps:
       - uses: actions/checkout@v4
 
