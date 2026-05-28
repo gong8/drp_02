@@ -1,5 +1,5 @@
-import { fastifyTRPCPlugin } from "@trpc/server/adapters/fastify";
 import cors from "@fastify/cors";
+import { fastifyTRPCPlugin } from "@trpc/server/adapters/fastify";
 import Fastify from "fastify";
 import { appRouter } from "./router.js";
 import { createContext } from "./trpc.js";

@@ -1,10 +1,8 @@
-import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import type { AppRouter } from "@drp/api";
+import { createTRPCClient, httpBatchLink } from "@trpc/client";
 
 export const trpc = createTRPCClient<AppRouter>({
-  links: [
-    httpBatchLink({ url: "http://localhost:3000/trpc" }),
-  ],
+  links: [httpBatchLink({ url: "http://localhost:3000/trpc" })],
 });
 
 // Type-chain proof: `health` is known and typed as () => Promise<{ ok: true }>.
