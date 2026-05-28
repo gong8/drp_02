@@ -35,15 +35,8 @@ function todayISO(): string {
 // for food (3) and a moment fires immediately. Runs on every `pnpm dev:api` boot so
 // the loop is clean and replayable. The pre-seeded availability lives server-side and
 // is never sent to a client (privacy §8.1).
-export async function reseedDemo(): Promise<void> {
-  // 1. Clear transactional tables in FK-safe order.
-  await db.delete(plans);
-  await db.delete(responses);
-  await db.delete(moments);
-  await db.delete(availability);
-  await db.delete(suggestions);
-
-  // 2. Upsert the demo users.
+async function insertDemoData(): Promise<void> {
+  // 1. Upsert the demo users.
   for (const u of DEMO_USERS) {
     await db
       .insert(users)
@@ -54,13 +47,13 @@ export async function reseedDemo(): Promise<void> {
       });
   }
 
-  // 3. The group + its members.
+  // 2. The group + its members.
   await db.insert(groups).values({ id: GROUP_ID, name: "Flatmates" }).onConflictDoNothing();
   for (const u of DEMO_USERS) {
     await db.insert(groupMembers).values({ groupId: GROUP_ID, userId: u.id }).onConflictDoNothing();
   }
 
-  // 4. The collecting suggestion (Maya, food, this week).
+  // 3. The collecting suggestion (Maya, food, this week).
   const windowStart = new Date();
   const windowEnd = new Date();
   windowEnd.setDate(windowEnd.getDate() + 6);
@@ -75,12 +68,31 @@ export async function reseedDemo(): Promise<void> {
     status: "collecting",
   });
 
-  // 5. Maya & Sam are already free this evening (so the dev user's drop tips quorum).
+  // 4. Maya & Sam are already free this evening (so the dev user's drop tips quorum).
   const slots = [{ day: todayISO(), partOfDay: "evening" as const }];
   await db.insert(availability).values([
     { id: "a_maya", suggestionId: SEED_SUGGESTION_ID, userId: "u_maya", slots },
     { id: "a_sam", suggestionId: SEED_SUGGESTION_ID, userId: "u_sam", slots },
   ]);
+}
+
+// Wipe transactional tables then re-insert the clean demo loop. Used in local dev
+// (SEED_ON_BOOT defaults to "reset") so every boot is a clean, replayable demo.
+export async function reseedDemo(): Promise<void> {
+  await db.delete(plans);
+  await db.delete(responses);
+  await db.delete(moments);
+  await db.delete(availability);
+  await db.delete(suggestions);
+  await insertDemoData();
+}
+
+// Seed the demo loop only when the suggestions table is empty — i.e. a fresh DB.
+// Used on the live backend so redeploys / instance recycles never wipe real data.
+export async function seedDemoIfEmpty(): Promise<void> {
+  const existing = await db.select({ id: suggestions.id }).from(suggestions).limit(1);
+  if (existing.length > 0) return;
+  await insertDemoData();
 }
 
 // DEMO ONLY: when a moment fires, auto-answer "yes" for every other matched participant
