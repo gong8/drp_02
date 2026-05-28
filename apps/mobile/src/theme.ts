@@ -10,6 +10,16 @@ export const colors = {
   line: "#E9ECE5",
 } as const;
 
+// Status accents (mockups colour-code RSVP state). Going reuses the sage accent.
+export const status = {
+  going: "#5F9472",
+  goingSoft: "#E9F1EB",
+  pending: "#C98A2B",
+  pendingSoft: "#F6ECD9",
+  declined: "#C0573F",
+  declinedSoft: "#F4E3DE",
+} as const;
+
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
 export const radius = { md: 12, lg: 15, xl: 18, sheet: 28 } as const;
 
