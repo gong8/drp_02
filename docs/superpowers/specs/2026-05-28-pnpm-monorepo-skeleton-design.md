@@ -97,6 +97,11 @@ Both existing workflows assume the app is at the repo root and use npm; both mus
 
 The `--legacy-peer-deps` flag is dropped (the SDK 56 upgrade already resolved the peer conflict).
 
+## Documentation
+
+- Update the root `README.md` for the new monorepo: pnpm prerequisite, `pnpm install` at root,
+  per-app run/test commands (`apps/mobile`, `apps/api`), and local Postgres via `docker-compose`.
+
 ## Out of scope
 
 - Any product/domain logic (availability, groups, proposals, responses, push, AI suggestions).
