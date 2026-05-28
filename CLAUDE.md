@@ -34,11 +34,22 @@ Run `pnpm typecheck` and `pnpm test` before opening any PR.
 
 `main` is production and protected. **Never push to `main`, and never open a PR from a feature branch into `main`.**
 
-- Branch off `dev`; do work on `feat/*`; PR into `dev`.
+- **Default: work directly on `dev`.** For routine changes, bug fixes, and incremental work, commit straight to `dev` — no feature branch needed.
+- **Only branch (`feat/*` → PR into `dev`) for a massive feature** — something large, risky, or worth isolating/reviewing on its own.
 - To ship: PR `dev` → `main` (the only branch permitted to merge into `main`).
 - CI runs on PRs into `main`; CD (Android build) runs on push to `main`.
 
 Full model: `CONTRIBUTING.md`.
+
+## Issue tracking — IMPORTANT
+
+Track all work in Linear via the Linear MCP, religiously. Keep it current — it is the source of truth for what's in flight.
+
+- **Before starting work**, find or create the Linear issue for it; move it to **In Progress**.
+- **While working**, log meaningful progress, decisions, and blockers as comments on the issue.
+- **When done**, mark the issue **Done** and reference the commit/PR.
+- If the user asks for something not yet tracked, create the issue first, then do the work.
+- Keep issue status in sync with reality at all times — never leave finished work marked open or in-flight work marked todo.
 
 ## Conventions
 
