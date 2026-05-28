@@ -1,8 +1,9 @@
-name: Node.js CI
+name: CI
 
+# CI runs only on PRs into main. A lightweight guard rejects any PR whose
+# source branch is not `dev`, so only dev -> main can ever merge. The heavy
+# build/test (ci job) only proceeds for dev -> main.
 on:
-  push:
-    branches: ["main"]
   pull_request:
     branches: ["main"]
 
@@ -10,18 +11,25 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  build:
+  guard:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [20.x]
+    steps:
+      - name: Only dev may target main
+        if: github.head_ref != 'dev'
+        run: |
+          echo "::error::Only the 'dev' branch can be merged into main (this PR's head is '${{ github.head_ref }}')."
+          exit 1
+
+  ci:
+    needs: guard
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Use Node.js 20.x
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 20.x
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
       - run: pnpm -r --if-present typecheck
