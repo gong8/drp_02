@@ -1,11 +1,11 @@
 {
-  "id": "53fbbd31-d32d-4551-a2cb-ed097f428514",
+  "id": "d4dc2f0d-4a6f-40b8-bb4f-47d0114a97fe",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.availability": {
-      "name": "availability",
+    "public.events": {
+      "name": "events",
       "schema": "",
       "columns": {
         "id": {
@@ -14,23 +14,55 @@
           "primaryKey": true,
           "notNull": true
         },
-        "suggestion_id": {
-          "name": "suggestion_id",
+        "group_id": {
+          "name": "group_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "user_id": {
-          "name": "user_id",
+        "created_by_user_id": {
+          "name": "created_by_user_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "slots": {
-          "name": "slots",
-          "type": "jsonb",
+        "title": {
+          "name": "title",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "location": {
+          "name": "location",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "starts_at": {
+          "name": "starts_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "respond_by_at": {
+          "name": "respond_by_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "event_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'open'"
         },
         "created_at": {
           "name": "created_at",
@@ -42,12 +74,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "availability_suggestion_id_suggestions_id_fk": {
-          "name": "availability_suggestion_id_suggestions_id_fk",
-          "tableFrom": "availability",
-          "tableTo": "suggestions",
+        "events_group_id_groups_id_fk": {
+          "name": "events_group_id_groups_id_fk",
+          "tableFrom": "events",
+          "tableTo": "groups",
           "columnsFrom": [
-            "suggestion_id"
+            "group_id"
           ],
           "columnsTo": [
             "id"
@@ -55,12 +87,12 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "availability_user_id_users_id_fk": {
-          "name": "availability_user_id_users_id_fk",
-          "tableFrom": "availability",
+        "events_created_by_user_id_users_id_fk": {
+          "name": "events_created_by_user_id_users_id_fk",
+          "tableFrom": "events",
           "tableTo": "users",
           "columnsFrom": [
-            "user_id"
+            "created_by_user_id"
           ],
           "columnsTo": [
             "id"
@@ -151,163 +183,16 @@
           "primaryKey": false,
           "notNull": true
         },
-        "last_met_at": {
-          "name": "last_met_at",
+        "created_at": {
+          "name": "created_at",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {},
       "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.moments": {
-      "name": "moments",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "suggestion_id": {
-          "name": "suggestion_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "activity": {
-          "name": "activity",
-          "type": "activity",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "proposed_time": {
-          "name": "proposed_time",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "proposed_place": {
-          "name": "proposed_place",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "participant_ids": {
-          "name": "participant_ids",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "quorum": {
-          "name": "quorum",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "window_ends_at": {
-          "name": "window_ends_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "moment_status",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'open'"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "moments_suggestion_id_suggestions_id_fk": {
-          "name": "moments_suggestion_id_suggestions_id_fk",
-          "tableFrom": "moments",
-          "tableTo": "suggestions",
-          "columnsFrom": [
-            "suggestion_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.plans": {
-      "name": "plans",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "moment_id": {
-          "name": "moment_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "activity": {
-          "name": "activity",
-          "type": "activity",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "final_time": {
-          "name": "final_time",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "place": {
-          "name": "place",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "confirmed_participant_ids": {
-          "name": "confirmed_participant_ids",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "plans_moment_id_moments_id_fk": {
-          "name": "plans_moment_id_moments_id_fk",
-          "tableFrom": "plans",
-          "tableTo": "moments",
-          "columnsFrom": [
-            "moment_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -324,8 +209,8 @@
           "primaryKey": true,
           "notNull": true
         },
-        "moment_id": {
-          "name": "moment_id",
+        "event_id": {
+          "name": "event_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -352,110 +237,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "responses_moment_id_moments_id_fk": {
-          "name": "responses_moment_id_moments_id_fk",
+        "responses_event_id_events_id_fk": {
+          "name": "responses_event_id_events_id_fk",
           "tableFrom": "responses",
-          "tableTo": "moments",
+          "tableTo": "events",
           "columnsFrom": [
-            "moment_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.suggestions": {
-      "name": "suggestions",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "group_id": {
-          "name": "group_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "by_user_id": {
-          "name": "by_user_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "activity": {
-          "name": "activity",
-          "type": "activity",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "text": {
-          "name": "text",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "window_start": {
-          "name": "window_start",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "window_end": {
-          "name": "window_end",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "suggestion_status",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'collecting'"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "suggestions_group_id_groups_id_fk": {
-          "name": "suggestions_group_id_groups_id_fk",
-          "tableFrom": "suggestions",
-          "tableTo": "groups",
-          "columnsFrom": [
-            "group_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "suggestions_by_user_id_users_id_fk": {
-          "name": "suggestions_by_user_id_users_id_fk",
-          "tableFrom": "suggestions",
-          "tableTo": "users",
-          "columnsFrom": [
-            "by_user_id"
+            "event_id"
           ],
           "columnsTo": [
             "id"
@@ -503,25 +290,12 @@
     }
   },
   "enums": {
-    "public.activity": {
-      "name": "activity",
-      "schema": "public",
-      "values": [
-        "coffee",
-        "food",
-        "gym",
-        "study",
-        "drinks",
-        "anything"
-      ]
-    },
-    "public.moment_status": {
-      "name": "moment_status",
+    "public.event_status": {
+      "name": "event_status",
       "schema": "public",
       "values": [
         "open",
-        "cleared",
-        "fizzled"
+        "resolved"
       ]
     },
     "public.response_kind": {
@@ -531,15 +305,6 @@
         "yes",
         "no",
         "conditional"
-      ]
-    },
-    "public.suggestion_status": {
-      "name": "suggestion_status",
-      "schema": "public",
-      "values": [
-        "collecting",
-        "fired",
-        "expired"
       ]
     }
   },

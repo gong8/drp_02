@@ -68,7 +68,7 @@ for (const dir of SCAN_DIRS) {
   try {
     if (statSync(full).isDirectory()) walk(full);
   } catch {
-    // directory absent — skip
+    // directory absent - skip
   }
 }
 
@@ -77,11 +77,11 @@ try {
   statSync(join(ROOT, ".eslintignore"));
   violations.push({ file: ".eslintignore", line: 0, name: ".eslintignore file" });
 } catch {
-  // none — good
+  // none - good
 }
 
 if (violations.length > 0) {
-  console.error(`\n✖ quality check failed — ${violations.length} banned pattern(s):\n`);
+  console.error(`\n✖ quality check failed - ${violations.length} banned pattern(s):\n`);
   for (const v of violations) {
     console.error(`  ${v.file}${v.line ? `:${v.line}` : ""}  →  ${v.name}`);
   }
@@ -89,4 +89,4 @@ if (violations.length > 0) {
   process.exit(1);
 }
 
-console.log("✓ quality check passed — no banned patterns found.");
+console.log("✓ quality check passed - no banned patterns found.");

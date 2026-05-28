@@ -4,9 +4,9 @@ A meetup-coordination app, built as a pnpm monorepo.
 
 ## Structure
 
-- `apps/mobile` — Expo / React Native client (TypeScript)
-- `apps/api` — Fastify + tRPC backend
-- `packages/shared` — shared Zod schemas and types
+- `apps/mobile` - Expo / React Native client (TypeScript)
+- `apps/api` - Fastify + tRPC backend
+- `packages/shared` - shared Zod schemas and types
 
 ## Stack
 

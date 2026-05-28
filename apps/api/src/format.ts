@@ -1,6 +1,6 @@
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-/** e.g. "Thu · 7:00pm" — server-side so the client receives a ready string. */
+/** e.g. "Thu · 7:00pm" - server-side so the client receives a ready string. */
 export function formatWhen(date: Date): string {
   const day = DAYS[date.getDay()];
   let h = date.getHours();

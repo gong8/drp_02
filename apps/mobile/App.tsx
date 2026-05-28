@@ -1,54 +1,90 @@
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StatusBar } from "expo-status-bar";
-import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { Availability } from "./src/screens/Availability";
-import { Floating } from "./src/screens/Floating";
-import { Home } from "./src/screens/Home";
-import { Reveal } from "./src/screens/Reveal";
-import { Suggest } from "./src/screens/Suggest";
-import { TheMoment } from "./src/screens/TheMoment";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { CreateEvent } from "./src/screens/CreateEvent";
+import { CreateGroup } from "./src/screens/CreateGroup";
+import { Dashboard } from "./src/screens/Dashboard";
+import { EventDetail } from "./src/screens/EventDetail";
+import { GroupDetail } from "./src/screens/GroupDetail";
+import { GroupsList } from "./src/screens/GroupsList";
 import { colors } from "./src/theme";
 
-export type Route =
-  | { name: "home" }
-  | { name: "suggest" }
-  | { name: "availability"; suggestionId: string }
-  | { name: "floating" }
-  | { name: "moment" }
-  | { name: "reveal"; momentId: string };
+export type MeetupsStackParams = {
+  Dashboard: undefined;
+  EventDetail: { eventId: string };
+  CreateEvent: undefined;
+};
+export type GroupsStackParams = {
+  GroupsList: undefined;
+  GroupDetail: { groupId: string };
+  CreateGroup: undefined;
+};
 
-export type Navigate = (route: Route) => void;
+const stackHeader = {
+  headerStyle: { backgroundColor: colors.bg },
+  headerShadowVisible: false,
+  headerTintColor: colors.ink,
+  headerTitleStyle: { color: colors.ink },
+  contentStyle: { backgroundColor: colors.bg },
+} as const;
 
-export default function App() {
-  const [route, setRoute] = useState<Route>({ name: "home" });
+const MeetupsStack = createNativeStackNavigator<MeetupsStackParams>();
+function MeetupsStackScreen() {
   return (
-    <View style={styles.root}>
-      {route.name !== "home" && (
-        <View style={styles.header}>
-          <Pressable hitSlop={8} style={styles.back} onPress={() => setRoute({ name: "home" })}>
-            <Text style={styles.backLabel}>Back</Text>
-          </Pressable>
-        </View>
-      )}
-      <View style={styles.body}>
-        {route.name === "home" && <Home navigate={setRoute} />}
-        {route.name === "suggest" && <Suggest navigate={setRoute} />}
-        {route.name === "availability" && (
-          <Availability navigate={setRoute} suggestionId={route.suggestionId} />
-        )}
-        {route.name === "floating" && <Floating navigate={setRoute} />}
-        {route.name === "moment" && <TheMoment navigate={setRoute} />}
-        {route.name === "reveal" && <Reveal navigate={setRoute} momentId={route.momentId} />}
-      </View>
-      <StatusBar style="dark" />
-    </View>
+    <MeetupsStack.Navigator screenOptions={stackHeader}>
+      <MeetupsStack.Screen name="Dashboard" component={Dashboard} options={{ title: "Meetups" }} />
+      <MeetupsStack.Screen name="EventDetail" component={EventDetail} options={{ title: "" }} />
+      <MeetupsStack.Screen
+        name="CreateEvent"
+        component={CreateEvent}
+        options={{ title: "Suggest a Meet" }}
+      />
+    </MeetupsStack.Navigator>
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg },
-  header: { paddingTop: 60, paddingHorizontal: 22, paddingBottom: 6 },
-  back: { alignSelf: "flex-start", paddingVertical: 6, paddingRight: 12 },
-  backLabel: { fontSize: 15, fontWeight: "600", color: colors.muted },
-  body: { flex: 1 },
-});
+const GroupsStack = createNativeStackNavigator<GroupsStackParams>();
+function GroupsStackScreen() {
+  return (
+    <GroupsStack.Navigator screenOptions={stackHeader}>
+      <GroupsStack.Screen
+        name="GroupsList"
+        component={GroupsList}
+        options={{ title: "Your Groups" }}
+      />
+      <GroupsStack.Screen name="GroupDetail" component={GroupDetail} options={{ title: "" }} />
+      <GroupsStack.Screen
+        name="CreateGroup"
+        component={CreateGroup}
+        options={{ title: "New group" }}
+      />
+    </GroupsStack.Navigator>
+  );
+}
+
+const Tab = createBottomTabNavigator();
+
+export default function App() {
+  return (
+    <SafeAreaProvider>
+      <NavigationContainer>
+        <Tab.Navigator
+          screenOptions={{
+            headerShown: false,
+            tabBarActiveTintColor: colors.accentInk,
+            tabBarInactiveTintColor: colors.muted,
+            tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.line },
+            tabBarLabelStyle: { fontSize: 13, fontWeight: "600" },
+            tabBarIconStyle: { display: "none" },
+          }}
+        >
+          <Tab.Screen name="Meetups" component={MeetupsStackScreen} />
+          <Tab.Screen name="Groups" component={GroupsStackScreen} />
+        </Tab.Navigator>
+        <StatusBar style="dark" />
+      </NavigationContainer>
+    </SafeAreaProvider>
+  );
+}

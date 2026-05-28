@@ -4,9 +4,9 @@ argument-hint: "[optional short descriptor]"
 allowed-tools: Bash(date:*), Bash(git:*), Bash(gh:*), Bash(echo:*), Bash(mkdir:*), Read, Glob, Grep, Write
 ---
 
-You are writing a durable, self-contained record of this working session so that a future engineer — or a future Claude with NO memory of this conversation — can fully understand what happened, why, and how to continue. Err toward completeness: this is an archive that is read on demand, not a file loaded into every prompt. Dump the context and everything learned.
+You are writing a durable, self-contained record of this working session so that a future engineer - or a future Claude with NO memory of this conversation - can fully understand what happened, why, and how to continue. Err toward completeness: this is an archive that is read on demand, not a file loaded into every prompt. Dump the context and everything learned.
 
-## Facts gathered for you (ground the summary in these — do not contradict them)
+## Facts gathered for you (ground the summary in these - do not contradict them)
 
 - Now: !`date "+%Y-%m-%d %H:%M %Z"`
 - Filename stamp: !`date "+%Y-%m-%d-%H%M"`
@@ -15,7 +15,7 @@ You are writing a durable, self-contained record of this working session so that
 - Working tree: !`git status --short`
 - Pull requests: !`gh pr list --state all --limit 20 2>/dev/null || echo "(gh unavailable)"`
 
-## Step 1 — decide the output path
+## Step 1 - decide the output path
 
 Write to: `docs/summary/<Filename stamp>-<descriptor>.md`
 
@@ -23,16 +23,16 @@ Write to: `docs/summary/<Filename stamp>-<descriptor>.md`
 - **Descriptor:** if `$ARGUMENTS` is non-empty, slugify it (lowercase, alphanumeric, hyphen-separated). Otherwise derive a 3–6 word kebab-case descriptor capturing the session's main theme (e.g. `pnpm-monorepo-and-ci-gates`).
 - Ensure `docs/summary/` exists (the Write tool creates parent directories; if unsure, `mkdir -p docs/summary` first).
 
-## Step 2 — reconstruct everything
+## Step 2 - reconstruct everything
 
-From the **full conversation**, reconstruct what was done this session, cross-checked against the git/PR facts above. Capture the *reasoning*, not just outcomes. Do not invent — if something is uncertain or you can't verify it, say so explicitly.
+From the **full conversation**, reconstruct what was done this session, cross-checked against the git/PR facts above. Capture the *reasoning*, not just outcomes. Do not invent - if something is uncertain or you can't verify it, say so explicitly.
 
-## Step 3 — write the file
+## Step 3 - write the file
 
 Use this structure (omit a section only if it is genuinely empty):
 
 ```
-# <Descriptive title> — <Now date>
+# <Descriptive title> - <Now date>
 
 **Branch:** … | **PRs:** … | **Scope:** <one line>
 
@@ -44,7 +44,7 @@ Thematic or chronological bullets. For each: the concrete change AND why it was 
 
 ## Key decisions & rationale
 Every significant choice, the alternatives weighed, and WHY this one won. This is the
-highest-value section — preserve the reasoning so it isn't relitigated later.
+highest-value section - preserve the reasoning so it isn't relitigated later.
 
 ## Things learned / discovered
 Non-obvious findings, version constraints, tool quirks, surprises, and mistakes made and

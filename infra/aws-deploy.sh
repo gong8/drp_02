@@ -2,7 +2,7 @@
 # Provision the BeThere API on AWS App Runner + RDS Postgres (us-east-1).
 #
 # This is the reproducible record of how the live backend was stood up. It is
-# idempotent-ish but NOT re-run blindly — most steps fail if the resource already
+# idempotent-ish but NOT re-run blindly - most steps fail if the resource already
 # exists. Run sections as needed. Requires the AWS CLI authenticated with rights to
 # create EC2/RDS/IAM/App Runner/ECR resources, plus Docker.
 #
