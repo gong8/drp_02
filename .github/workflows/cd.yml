@@ -13,26 +13,29 @@ jobs:
   build-apk:
     runs-on: ubuntu-latest
     if: github.event.workflow_run.conclusion == 'success'
-
     steps:
       - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: 20.x
-          cache: 'npm'
+          cache: "pnpm"
 
-      - run: npm ci --legacy-peer-deps
+      - run: pnpm install --frozen-lockfile
 
       - uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          java-version: "17"
+          distribution: "temurin"
 
       - name: Generate native Android project
-        run: npx expo prebuild --platform android --no-install
+        working-directory: apps/mobile
+        run: pnpm exec expo prebuild --platform android --no-install
 
       - name: Build debug APK
+        working-directory: apps/mobile
         run: |
           chmod +x android/gradlew
           cd android && ./gradlew assembleDebug -PbundleInDebug=true
@@ -40,5 +43,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
