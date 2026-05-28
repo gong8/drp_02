@@ -9,7 +9,7 @@ const connectionString = process.env.DATABASE_URL;
 const isLocal = !connectionString || /@(localhost|127\.0\.0\.1)/.test(connectionString);
 
 // Prefer verifying against AWS's RDS CA bundle (DATABASE_CA_PATH, set in the container).
-// Only fall back to unverified TLS if no CA is available — acceptable solely because the
+// Only fall back to unverified TLS if no CA is available - acceptable solely because the
 // App Runner -> RDS hop is inside a private VPC, never the public internet.
 // DATABASE_SSL ("disable" | "require" | "verify") overrides the localhost heuristic.
 const caPath = process.env.DATABASE_CA_PATH;

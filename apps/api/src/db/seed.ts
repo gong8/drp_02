@@ -87,7 +87,7 @@ export async function reseedDemo(): Promise<void> {
   await insertDemoData();
 }
 
-// Seed the demo loop only when the suggestions table is empty — i.e. a fresh DB.
+// Seed the demo loop only when the suggestions table is empty - i.e. a fresh DB.
 // Used on the live backend so redeploys / instance recycles never wipe real data.
 export async function seedDemoIfEmpty(): Promise<void> {
   const existing = await db.select({ id: suggestions.id }).from(suggestions).limit(1);

@@ -14,7 +14,7 @@ function formatLeft(ms: number): string {
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")} left`;
 }
 
-// The moment (the heart) — blind & timed. Load the proposal, answer Yes / If… / No,
+// The moment (the heart) - blind & timed. Load the proposal, answer Yes / If… / No,
 // resolve at the buzzer, then reveal "It clicked" or let it quietly fizzle. Never shows
 // other responses or a tally.
 export function TheMoment({ navigate }: { navigate: Navigate }) {
@@ -63,7 +63,7 @@ export function TheMoment({ navigate }: { navigate: Navigate }) {
       if (outcome.status === "cleared") {
         navigate({ name: "reveal", momentId: proposal.id });
       } else {
-        // Silent fizzle — no "failed" state, just back to the calm home.
+        // Silent fizzle - no "failed" state, just back to the calm home.
         navigate({ name: "home" });
       }
     } catch {

@@ -32,7 +32,7 @@ function windowRange(key: WindowKey): { start: string; end: string } {
   return { start: now.toISOString(), end: end.toISOString() };
 }
 
-// Suggest (the seed) — one tap to seed a meetup: pick an activity, a loose window,
+// Suggest (the seed) - one tap to seed a meetup: pick an activity, a loose window,
 // and the group. No time grid, no organising.
 export function Suggest({ navigate }: { navigate: Navigate }) {
   const [groups, setGroups] = useState<Group[]>([]);

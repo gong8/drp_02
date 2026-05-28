@@ -13,7 +13,7 @@ export interface ClearingSlot {
 
 /**
  * Find the concrete slot with the most people free, returned only if it meets quorum.
- * Selecting people who share ONE slot guarantees mutual compatibility — this is why
+ * Selecting people who share ONE slot guarantees mutual compatibility - this is why
  * there is no intransitivity bug (we never take a "connected component" with no common time).
  */
 export function findClearingSlot(

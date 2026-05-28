@@ -17,7 +17,7 @@ export type Slot = z.infer<typeof Slot>;
 export const ResponseKind = z.enum(["yes", "no", "conditional"]);
 export type ResponseKind = z.infer<typeof ResponseKind>;
 
-// "I'm in if…" — resolved by the server, never revealed to the targets.
+// "I'm in if…" - resolved by the server, never revealed to the targets.
 // mode "all": in once every target is in. mode "any": in once any target is in.
 export const Conditional = z.object({
   mode: z.enum(["all", "any"]),
@@ -37,11 +37,11 @@ export const RespondInput = z
   });
 export type RespondInput = z.infer<typeof RespondInput>;
 
-// Network boundary for moments.resolve — the "buzzer" for a single moment.
+// Network boundary for moments.resolve - the "buzzer" for a single moment.
 export const ResolveInput = z.object({ momentId: z.string() });
 export type ResolveInput = z.infer<typeof ResolveInput>;
 
-// Network boundary for suggestions.create — a low-pressure nudge to a group.
+// Network boundary for suggestions.create - a low-pressure nudge to a group.
 export const CreateSuggestionInput = z.object({
   groupId: z.string(),
   activity: Activity,
@@ -50,7 +50,7 @@ export const CreateSuggestionInput = z.object({
 });
 export type CreateSuggestionInput = z.infer<typeof CreateSuggestionInput>;
 
-// Network boundary for availability.drop — privately float when you're free.
+// Network boundary for availability.drop - privately float when you're free.
 export const DropAvailabilityInput = z.object({
   suggestionId: z.string(),
   slots: z.array(Slot).min(1),

@@ -6,7 +6,7 @@ import { colors, radius, space } from "../theme";
 
 type Plan = NonNullable<Awaited<ReturnType<typeof trpc.moments.plan.query>>>;
 
-// It's on (the reveal) — "It clicked". Shows only the IN crowd (everyone here opted
+// It's on (the reveal) - "It clicked". Shows only the IN crowd (everyone here opted
 // in, so it's safe to reveal them) plus the firm plan.
 export function Reveal({ navigate, momentId }: { navigate: Navigate; momentId: string }) {
   const [plan, setPlan] = useState<Plan | null>(null);

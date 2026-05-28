@@ -73,7 +73,7 @@ export const availability = pgTable("availability", {
 });
 
 // One concrete, timed proposal sent to a set of participants. Display strings
-// (title/place line/when) are computed at read time in moments.mine — they are
+// (title/place line/when) are computed at read time in moments.mine - they are
 // NOT stored here.
 export const moments = pgTable("moments", {
   id: text("id").primaryKey(),
@@ -101,7 +101,7 @@ export const responses = pgTable("responses", {
 });
 
 // A cleared moment: the firm plan with the IN crowd. Only the IN crowd is recorded
-// (No's / non-responders are never represented — privacy §8.4).
+// (No's / non-responders are never represented - privacy §8.4).
 export const plans = pgTable("plans", {
   id: text("id").primaryKey(),
   momentId: text("moment_id")

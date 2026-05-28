@@ -8,7 +8,7 @@ const WINDOW_MS = 30 * 60 * 1000; // 30-minute moment window
 
 /**
  * Called after each availability drop. Fires a moment if a concrete slot meets
- * quorum. Pure backend logic — no demo seeding here.
+ * quorum. Pure backend logic - no demo seeding here.
  */
 export async function tryFireMoment(suggestionId: string): Promise<string | null> {
   const [sug] = await db.select().from(suggestions).where(eq(suggestions.id, suggestionId));
@@ -37,7 +37,7 @@ export async function tryFireMoment(suggestionId: string): Promise<string | null
     status: "open",
   });
   await db.update(suggestions).set({ status: "fired" }).where(eq(suggestions.id, suggestionId));
-  // TODO push: notify slot.userIds "it's coming together — respond"
+  // TODO push: notify slot.userIds "it's coming together - respond"
   return id;
 }
 
@@ -45,8 +45,8 @@ export type ResolveResult = { status: "cleared"; inCount: number } | { status: "
 
 /**
  * Resolve conditionals and decide clear vs fizzle. Idempotent once resolved.
- * On clear we reveal only the IN count (those people opted in — safe). On fizzle we
- * reveal nothing — no push, no trace, nobody learns how close it got (privacy §8.5).
+ * On clear we reveal only the IN count (those people opted in - safe). On fizzle we
+ * reveal nothing - no push, no trace, nobody learns how close it got (privacy §8.5).
  */
 export async function resolveMoment(momentId: string): Promise<ResolveResult> {
   const [moment] = await db.select().from(moments).where(eq(moments.id, momentId));
@@ -70,7 +70,7 @@ export async function resolveMoment(momentId: string): Promise<ResolveResult> {
       confirmedParticipantIds: [...inSet],
     });
     await db.update(moments).set({ status: "cleared" }).where(eq(moments.id, momentId));
-    // TODO push: notify IN "it clicked — you're on"
+    // TODO push: notify IN "it clicked - you're on"
     return { status: "cleared", inCount: inSet.size };
   }
 

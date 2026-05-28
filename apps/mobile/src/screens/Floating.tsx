@@ -6,7 +6,7 @@ import { colors, radius, space } from "../theme";
 
 type Floater = Awaited<ReturnType<typeof trpc.availability.mine.query>>[number];
 
-// Floating (the calm wait) — your live availability, abstract by design: no counts,
+// Floating (the calm wait) - your live availability, abstract by design: no counts,
 // no names, nothing to refresh. A silent escape hatch per item. If a moment starts,
 // drift gently into it.
 export function Floating({ navigate }: { navigate: Navigate }) {

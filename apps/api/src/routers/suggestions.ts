@@ -38,7 +38,7 @@ export const suggestionsRouter = router({
   }),
 
   // The suggestion as a prospective responder sees it: who suggested + the candidate
-  // days. NEVER exposes any availability (who's free / counts) — that stays private.
+  // days. NEVER exposes any availability (who's free / counts) - that stays private.
   get: publicProcedure.input(z.object({ id: z.string() })).query(async ({ input }) => {
     const [sug] = await db.select().from(suggestions).where(eq(suggestions.id, input.id));
     if (!sug) return null;

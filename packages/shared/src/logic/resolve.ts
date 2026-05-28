@@ -11,7 +11,7 @@ export interface ResponseInput {
  *
  * Plain yeses anchor the set; conditionals latch on once their targets are IN, and each new
  * member can satisfy further conditionals, so we loop until nothing changes. A pure conditional
- * cycle has no yes to anchor it and therefore never enters IN — no phantom plans nobody wanted.
+ * cycle has no yes to anchor it and therefore never enters IN - no phantom plans nobody wanted.
  */
 export function resolveIn(responses: ResponseInput[]): Set<string> {
   const IN = new Set<string>();
@@ -59,7 +59,7 @@ export function findLinchpins(
   for (const p of participantIds) {
     if (current.has(p)) continue;
     const answered = responses.some((r) => r.userId === p && r.kind !== "conditional");
-    if (answered) continue; // already said yes/no — don't nudge
+    if (answered) continue; // already said yes/no - don't nudge
     const hypothetical: ResponseInput[] = [
       ...responses.filter((r) => r.userId !== p),
       { userId: p, kind: "yes" },

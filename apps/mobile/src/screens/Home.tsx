@@ -18,7 +18,7 @@ function initials(name: string): string {
   return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase();
 }
 
-// Home / Groups — calm by design. Groups as quiet rows; a single primary action;
+// Home / Groups - calm by design. Groups as quiet rows; a single primary action;
 // a gentle banner only when a moment is already coming together.
 export function Home({ navigate }: { navigate: Navigate }) {
   const [groups, setGroups] = useState<Group[]>([]);
@@ -84,7 +84,7 @@ export function Home({ navigate }: { navigate: Navigate }) {
                 </View>
                 {sug && (
                   <Text style={s.rowSub}>
-                    {sug.byName} suggested {sug.activity} — add your availability
+                    {sug.byName} suggested {sug.activity} - add your availability
                   </Text>
                 )}
               </Pressable>

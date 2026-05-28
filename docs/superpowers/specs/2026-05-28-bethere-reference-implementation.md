@@ -1,9 +1,9 @@
-# BeThere — Reference Implementation for `drp_02`
+# BeThere - Reference Implementation for `drp_02`
 
 **Date:** 2026-05-28
-**Reads with:** `2026-05-28-bethere-product-design.md` (the "why"). This doc is the "how" — stack-matched reference code mapped to the monorepo.
+**Reads with:** `2026-05-28-bethere-product-design.md` (the "why"). This doc is the "how" - stack-matched reference code mapped to the monorepo.
 
-> **This is reference code, not a finished build.** Lift and adapt it. It follows the repo's conventions: pnpm only; type chain Zod (`@drp/shared`) → tRPC (`@drp/api`) → RN client; `apps/api` is ESM (relative imports end in `.js`); Biome formatting (2-space, double quotes, width 100). Branch off `dev` into a `feat/*` branch (see `CONTRIBUTING.md`); these files were written to `docs/` only — nothing under `apps/`/`packages/` has been touched.
+> **This is reference code, not a finished build.** Lift and adapt it. It follows the repo's conventions: pnpm only; type chain Zod (`@drp/shared`) → tRPC (`@drp/api`) → RN client; `apps/api` is ESM (relative imports end in `.js`); Biome formatting (2-space, double quotes, width 100). Branch off `dev` into a `feat/*` branch (see `CONTRIBUTING.md`); these files were written to `docs/` only - nothing under `apps/`/`packages/` has been touched.
 
 ---
 
@@ -35,7 +35,7 @@ pnpm --filter @drp/mobile add @tanstack/react-query @trpc/react-query   # option
 # api: nothing new (zod via @drp/shared, drizzle/pg/trpc already present)
 ```
 
-## 3. `@drp/shared` — schemas
+## 3. `@drp/shared` - schemas
 
 `packages/shared/src/schemas.ts`:
 
@@ -97,7 +97,7 @@ export * from "./logic/resolve.js";
 
 > ESM note: `@drp/shared` is `"type": "module"`; use `.js` extensions on relative imports (Metro and tsx both resolve these to the `.ts` source).
 
-## 4. `@drp/shared` — the pure logic core (the rigorous part — unit-test it)
+## 4. `@drp/shared` - the pure logic core (the rigorous part - unit-test it)
 
 `packages/shared/src/logic/quorum.ts`:
 
@@ -165,7 +165,7 @@ export interface ClearingSlot {
 
 /**
  * Find the concrete slot with the most people free, returned only if it meets quorum.
- * Selecting people who share ONE slot guarantees mutual compatibility — this is why
+ * Selecting people who share ONE slot guarantees mutual compatibility - this is why
  * there is no intransitivity bug (we never take a "connected component" with no common time).
  */
 export function findClearingSlot(
@@ -225,7 +225,7 @@ export function resolveIn(responses: ResponseInput[]): Set<string> {
           : targetIds.some((id) => IN.has(id));
       if (ok) {
         IN.add(r.userId);
-        changed = true; // a new IN may satisfy further conditionals — loop again
+        changed = true; // a new IN may satisfy further conditionals - loop again
       }
     }
   }
@@ -251,7 +251,7 @@ export function findLinchpins(
   for (const p of participantIds) {
     if (current.has(p)) continue;
     const answered = responses.some((r) => r.userId === p && r.kind !== "conditional");
-    if (answered) continue; // already said yes/no — don't nudge
+    if (answered) continue; // already said yes/no - don't nudge
     const hypothetical: ResponseInput[] = [
       ...responses.filter((r) => r.userId !== p),
       { userId: p, kind: "yes" },
@@ -262,7 +262,7 @@ export function findLinchpins(
 }
 ```
 
-### 4a. Tests (vitest — runner-agnostic `describe/it/expect`)
+### 4a. Tests (vitest - runner-agnostic `describe/it/expect`)
 
 `packages/shared/src/logic/resolve.test.ts`:
 
@@ -327,7 +327,7 @@ describe("findClearingSlot", () => {
 
 Add to `packages/shared/package.json`: `"scripts": { "test": "vitest run" }` so root `pnpm test` picks it up.
 
-## 5. `@drp/api` — Drizzle schema
+## 5. `@drp/api` - Drizzle schema
 
 `apps/api/src/db/schema.ts`:
 
@@ -412,7 +412,7 @@ export const plans = pgTable("plans", {
 
 Generate + migrate: `pnpm --filter @drp/api db:generate && pnpm --filter @drp/api db:migrate`.
 
-## 6. `@drp/api` — services + tRPC procedures
+## 6. `@drp/api` - services + tRPC procedures
 
 **Context:** add the current user to tRPC context (the skeleton's `createContext` returns `{}`). For dev, read a header or hardcode; production = real auth.
 
@@ -424,7 +424,7 @@ export function createContext(opts: CreateFastifyContextOptions) {
 }
 ```
 
-`apps/api/src/services/bethere.ts` — trigger + resolve (the only place that touches privacy-sensitive data):
+`apps/api/src/services/bethere.ts` - trigger + resolve (the only place that touches privacy-sensitive data):
 
 ```ts
 import { eq } from "drizzle-orm";
@@ -460,7 +460,7 @@ export async function tryFireMoment(suggestionId: string): Promise<string | null
     status: "open",
   });
   await db.update(suggestions).set({ status: "fired" }).where(eq(suggestions.id, suggestionId));
-  // TODO push: notify slot.userIds "it's coming together — respond"
+  // TODO push: notify slot.userIds "it's coming together - respond"
   return id;
 }
 
@@ -482,7 +482,7 @@ export async function resolveMoment(momentId: string): Promise<"cleared" | "fizz
       confirmedParticipantIds: [...IN],
     });
     await db.update(moments).set({ status: "cleared" }).where(eq(moments.id, momentId));
-    // TODO push: notify IN "it clicked — you're on"
+    // TODO push: notify IN "it clicked - you're on"
     return "cleared";
   }
   await db.update(moments).set({ status: "fizzled" }).where(eq(moments.id, momentId));
@@ -547,7 +547,7 @@ export const availabilityRouter = router({
       await db
         .delete(availability)
         .where(and(eq(availability.suggestionId, input.suggestionId), eq(availability.userId, ctx.userId)));
-      return { ok: true }; // silent — no one notified
+      return { ok: true }; // silent - no one notified
     },
   ),
 });
@@ -565,7 +565,7 @@ import { resolveMoment } from "../services/bethere.js";
 import { publicProcedure, router } from "../trpc.js";
 
 export const momentsRouter = router({
-  // The proposal as the CURRENT USER may see it — never includes others' responses or a tally.
+  // The proposal as the CURRENT USER may see it - never includes others' responses or a tally.
   mine: publicProcedure.query(async ({ ctx }) => {
     const open = await db.select().from(moments).where(eq(moments.status, "open"));
     const forMe = open.filter((m) => m.participantIds.includes(ctx.userId));
@@ -609,9 +609,9 @@ export const appRouter = router({
 export type AppRouter = typeof appRouter;
 ```
 
-> **Resolving at the buzzer:** simplest is a periodic sweep — `setInterval` in `index.ts` that finds `moments` with `status="open"` and `windowEndsAt < now` and calls `resolveMoment`. (A job queue is overkill at this scale.) The linchpin nudge uses `findLinchpins(...)` mid-window inside the same sweep, sending at most one push per linchpin.
+> **Resolving at the buzzer:** simplest is a periodic sweep - `setInterval` in `index.ts` that finds `moments` with `status="open"` and `windowEndsAt < now` and calls `resolveMoment`. (A job queue is overkill at this scale.) The linchpin nudge uses `findLinchpins(...)` mid-window inside the same sweep, sending at most one push per linchpin.
 
-## 7. `@drp/mobile` — navigation
+## 7. `@drp/mobile` - navigation
 
 The skeleton has **no nav library**. Recommended: **expo-router** (file-based, idiomatic for Expo SDK 56). Route files under `apps/mobile/app/`:
 
@@ -621,14 +621,14 @@ app/index.tsx          # Home / Groups
 app/suggest.tsx        # Suggest
 app/availability.tsx   # Availability (params: suggestionId)
 app/floating.tsx       # Floating
-app/moment.tsx         # The moment (params: momentId)  — presents the conditional sheet
+app/moment.tsx         # The moment (params: momentId)  - presents the conditional sheet
 app/reveal.tsx         # It's on
 app/plan.tsx           # Firm plan
 ```
 
-(For a faster prototype, a single `useState<Screen>` switcher also works and avoids the dep — but expo-router is the real-app choice.)
+(For a faster prototype, a single `useState<Screen>` switcher also works and avoids the dep - but expo-router is the real-app choice.)
 
-## 8. `@drp/mobile` — theme tokens
+## 8. `@drp/mobile` - theme tokens
 
 `apps/mobile/src/theme.ts`:
 
@@ -656,7 +656,7 @@ export const fonts = {
 } as const;
 ```
 
-## 9. `@drp/mobile` — fonts (App root)
+## 9. `@drp/mobile` - fonts (App root)
 
 `apps/mobile/App.tsx` (or `app/_layout.tsx` with expo-router):
 
@@ -682,9 +682,9 @@ export default function App() {
 }
 ```
 
-## 10. `@drp/mobile` — hero screen: The Moment
+## 10. `@drp/mobile` - hero screen: The Moment
 
-`apps/mobile/src/screens/TheMoment.tsx` — faithful to the agreed design (flat, one accent, quiet countdown, blind). The "I'm in if…" sheet has the **all / at-least-one** toggle.
+`apps/mobile/src/screens/TheMoment.tsx` - faithful to the agreed design (flat, one accent, quiet countdown, blind). The "I'm in if…" sheet has the **all / at-least-one** toggle.
 
 ```tsx
 import { useMemo, useState } from "react";
@@ -829,7 +829,7 @@ const s = StyleSheet.create({
 });
 ```
 
-## 11. `@drp/mobile` — hero screen: It's On (reveal)
+## 11. `@drp/mobile` - hero screen: It's On (reveal)
 
 `apps/mobile/src/screens/Reveal.tsx`:
 
@@ -840,7 +840,7 @@ import { colors, fonts, radius, space } from "../theme";
 type Person = { id: string; name: string; color: string };
 
 export function Reveal(props: {
-  people: Person[]; // the IN crowd (you + others) — already opted in, safe to show
+  people: Person[]; // the IN crowd (you + others) - already opted in, safe to show
   place: string;
   detail: string;
   onAddToCalendar: () => void;
@@ -898,12 +898,12 @@ const s = StyleSheet.create({
 
 ## 12. The remaining screens (build to these specs, same tokens/components)
 
-- **Home / Groups** — `FlatList` of group rows (name + member count); a single primary "Suggest something" button (accent) pinned bottom; a quiet banner only if `moments.mine` returns one. No noise.
-- **Suggest** — activity chips (reuse the pill style from the sheet); window chips (Tonight/This week/Weekend); a group selector; primary "Suggest to group" → `trpc.suggestions.create`. Then route to Floating.
-- **Availability** — header "X suggested 🍜 — when are you free?"; day chips (from the window) + part-of-day chips; persistent muted line "Private — only you see this"; primary "Drop availability" → `trpc.availability.drop`. The lock line is the *only* reassurance text — keep it to one line.
-- **Floating** — calm list of the user's pending availability (status "Floating", no counts/names); a quiet "Withdraw quietly" text button per item → `trpc.availability.withdraw`. When `moments.mine` starts returning a moment, route to TheMoment.
-- **Firm plan** — compact card (activity, final time, place, the confirmed avatars from the plan); "Add to calendar" + "Set a reminder". No thread.
-- **Silent expiry** — there is no dedicated screen; the floating item simply disappears (its suggestion went `fizzled`). Optionally animate a gentle fade on removal. **Never** show a "failed" state.
+- **Home / Groups** - `FlatList` of group rows (name + member count); a single primary "Suggest something" button (accent) pinned bottom; a quiet banner only if `moments.mine` returns one. No noise.
+- **Suggest** - activity chips (reuse the pill style from the sheet); window chips (Tonight/This week/Weekend); a group selector; primary "Suggest to group" → `trpc.suggestions.create`. Then route to Floating.
+- **Availability** - header "X suggested 🍜 - when are you free?"; day chips (from the window) + part-of-day chips; persistent muted line "Private - only you see this"; primary "Drop availability" → `trpc.availability.drop`. The lock line is the *only* reassurance text - keep it to one line.
+- **Floating** - calm list of the user's pending availability (status "Floating", no counts/names); a quiet "Withdraw quietly" text button per item → `trpc.availability.withdraw`. When `moments.mine` starts returning a moment, route to TheMoment.
+- **Firm plan** - compact card (activity, final time, place, the confirmed avatars from the plan); "Add to calendar" + "Set a reminder". No thread.
+- **Silent expiry** - there is no dedicated screen; the floating item simply disappears (its suggestion went `fizzled`). Optionally animate a gentle fade on removal. **Never** show a "failed" state.
 
 ## 13. Privacy as concrete server rules (procedure return shapes)
 
@@ -914,7 +914,7 @@ const s = StyleSheet.create({
 | `moments.mine` | proposal fields (time/place/activity/deadline) | `participantIds`, others' responses, any tally |
 | `moments.respond` | `{ recorded }` | the running tally |
 | (on clear) `plans` read | the IN crowd + final details | who said no / didn't respond (indistinguishable) |
-| (on fizzle) | nothing — no push, no record surfaced | any signal at all |
+| (on fizzle) | nothing - no push, no record surfaced | any signal at all |
 
 These are the teeth behind product-design §8. Keep the rule in a comment on each procedure.
 
@@ -931,7 +931,7 @@ pnpm dev:mobile                    # Expo
 
 ## 15. Deferred (wire later, behind the same interfaces)
 
-- **Push notifications** (`expo-notifications`) — the only 4 signals in product-design §8.6. Real-time is push-based by design; no websockets/subscriptions needed.
-- **AI seeding** — `suggestions` can be created by a service that reads `groups.lastMetAt` + past activities; start with a deterministic stub, swap in a model later.
+- **Push notifications** (`expo-notifications`) - the only 4 signals in product-design §8.6. Real-time is push-based by design; no websockets/subscriptions needed.
+- **AI seeding** - `suggestions` can be created by a service that reads `groups.lastMetAt` + past activities; start with a deterministic stub, swap in a model later.
 - **Add-to-calendar** (`expo-calendar`) and **reminders**.
-- **Server-state caching** — add `@trpc/react-query` + `@tanstack/react-query` for polling `moments.mine` and invalidation; until then call the vanilla `trpc` client in a `useEffect` + focus listener.
+- **Server-state caching** - add `@trpc/react-query` + `@tanstack/react-query` for polling `moments.mine` and invalidation; until then call the vanilla `trpc` client in a `useEffect` + focus listener.
