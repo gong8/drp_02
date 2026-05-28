@@ -50,10 +50,17 @@ if (seedMode === "reset") {
 
 const port = Number(process.env.PORT ?? 3000);
 
+// Fastify logs its own "Server listening at <addr>" line at info level (one per bound
+// address, with no scope). Mute info briefly around listen so only our single scoped line
+// shows; errors (>= warn) still surface if the bind fails.
+const restoreLevel = server.log.level;
+server.log.level = "warn";
 try {
   await server.listen({ port, host: "0.0.0.0" });
+  server.log.level = restoreLevel;
   server.log.info({ scope: "boot", port }, `API listening on http://localhost:${port}`);
 } catch (err) {
+  server.log.level = restoreLevel;
   server.log.error({ scope: "boot", err }, "failed to start");
   process.exit(1);
 }
