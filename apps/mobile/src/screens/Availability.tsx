@@ -21,7 +21,7 @@ function dayLabel(day: string): string {
   return `${WEEKDAYS[d.getDay()]} ${d.getDate()}`;
 }
 
-// Availability (private) — pick loose slots within the window. The lock line is the
+// Availability (private) - pick loose slots within the window. The lock line is the
 // ONLY reassurance; nothing else is said. Submitting floats the availability.
 export function Availability({
   navigate,
@@ -91,7 +91,7 @@ export function Availability({
     <View style={s.screen}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         <Text style={s.title}>
-          {suggestion.byName} suggested {suggestion.activity} — when are you free?
+          {suggestion.byName} suggested {suggestion.activity} - when are you free?
         </Text>
 
         <Text style={s.label}>Days</Text>
@@ -130,7 +130,7 @@ export function Availability({
           })}
         </View>
 
-        <Text style={s.lock}>Private — only you see this.</Text>
+        <Text style={s.lock}>Private - only you see this.</Text>
       </ScrollView>
 
       <View style={s.footer}>

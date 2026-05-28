@@ -30,7 +30,7 @@ export const availabilityRouter = router({
     return { floating: true, firedMomentId };
   }),
 
-  // Silent withdraw — deletes this user's availability for the suggestion. No one notified.
+  // Silent withdraw - deletes this user's availability for the suggestion. No one notified.
   withdraw: publicProcedure
     .input(z.object({ suggestionId: z.string() }))
     .mutation(async ({ ctx, input }) => {
@@ -45,7 +45,7 @@ export const availabilityRouter = router({
       return { ok: true as const };
     }),
 
-  // ONLY the current user's own floating availability — never anyone else's (privacy §8.1).
+  // ONLY the current user's own floating availability - never anyone else's (privacy §8.1).
   mine: publicProcedure.query(async ({ ctx }) => {
     const rows = await db.select().from(availability).where(eq(availability.userId, ctx.userId));
     const items = await Promise.all(

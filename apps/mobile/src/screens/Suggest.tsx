@@ -32,7 +32,7 @@ function windowRange(key: WindowKey): { start: string; end: string } {
   return { start: now.toISOString(), end: end.toISOString() };
 }
 
-// Suggest (the seed) — one tap to seed a meetup: pick an activity, a loose window,
+// Suggest (the seed) - one tap to seed a meetup: pick an activity, a loose window,
 // and the group. No time grid, no organising.
 export function Suggest({ navigate }: { navigate: Navigate }) {
   const [groups, setGroups] = useState<Group[]>([]);
@@ -91,7 +91,7 @@ export function Suggest({ navigate }: { navigate: Navigate }) {
   return (
     <View style={s.screen}>
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
-        <Text style={s.title}>Suggest something</Text>
+        <Text style={s.title}>Suggest a meet</Text>
 
         <Text style={s.label}>What</Text>
         <View style={s.chips}>
@@ -148,7 +148,7 @@ export function Suggest({ navigate }: { navigate: Navigate }) {
           disabled={!ready || busy}
           onPress={submit}
         >
-          <Text style={s.primaryLabel}>Suggest to group</Text>
+          <Text style={s.primaryLabel}>Create</Text>
         </Pressable>
       </View>
     </View>

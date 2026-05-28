@@ -20,15 +20,15 @@ describe("resolveIn", () => {
   });
 
   it("resolves a conditional off a yes anchor and cascades through the chain", () => {
-    // a says yes; b is in if a; c is in if b — all three should latch on.
+    // a says yes; b is in if a; c is in if b - all three should latch on.
     const IN = resolveIn([yes("a"), ifAny("b", "a"), ifAny("c", "b")]);
     expect([...IN].sort()).toEqual(["a", "b", "c"]);
   });
 
   it("'all' requires every target IN, 'any' requires just one", () => {
-    // all: b waits on a AND c, but c never comes — b stays out.
+    // all: b waits on a AND c, but c never comes - b stays out.
     expect(resolveIn([yes("a"), ifAll("b", "a", "c")]).has("b")).toBe(false);
-    // any: b waits on a OR c, and a is in — b comes in.
+    // any: b waits on a OR c, and a is in - b comes in.
     expect(resolveIn([yes("a"), ifAny("b", "a", "c")]).has("b")).toBe(true);
   });
 
@@ -51,7 +51,7 @@ describe("clears", () => {
 
 describe("findLinchpins", () => {
   it("flags the person whose yes would clear the plan", () => {
-    // a and b are in (2/3); c hasn't answered — c's yes would tip it to quorum.
+    // a and b are in (2/3); c hasn't answered - c's yes would tip it to quorum.
     expect(findLinchpins(["a", "b", "c"], [yes("a"), yes("b")], 3)).toEqual(["c"]);
   });
 

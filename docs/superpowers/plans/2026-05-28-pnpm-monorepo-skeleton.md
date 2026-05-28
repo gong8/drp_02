@@ -24,7 +24,7 @@
 - Create: `pnpm-workspace.yaml`
 - Create: `.npmrc`
 - Create: `tsconfig.base.json`
-- Modify: `package.json` (root — replace contents)
+- Modify: `package.json` (root - replace contents)
 - Modify: `.gitignore`
 
 - [ ] **Step 1: Create `pnpm-workspace.yaml`**
@@ -113,7 +113,7 @@ git commit -m "chore: add pnpm workspace root configuration"
 
 - [ ] **Step 1: Create the directory and move files with git**
 
-Note: `package.json` is NOT moved here — Task 1 already turned the root `package.json` into the monorepo root. The mobile `package.json` is created fresh in Step 2.
+Note: `package.json` is NOT moved here - Task 1 already turned the root `package.json` into the monorepo root. The mobile `package.json` is created fresh in Step 2.
 
 ```bash
 mkdir -p apps/mobile
@@ -236,7 +236,7 @@ git commit -m "refactor: move Expo app into apps/mobile"
 
 - [ ] **Step 3: Create `packages/shared/src/index.ts`**
 
-Empty barrel — Zod domain schemas go here later. The export keeps it a valid module.
+Empty barrel - Zod domain schemas go here later. The export keeps it a valid module.
 
 ```ts
 // Shared Zod schemas and inferred types live here.
@@ -376,7 +376,7 @@ server.listen({ port, host: "0.0.0.0" }).catch((err) => {
 
 - [ ] **Step 6: Create `apps/api/src/db/schema.ts`**
 
-Empty Drizzle schema — tables added later. Empty is valid for drizzle-kit (produces no migration).
+Empty Drizzle schema - tables added later. Empty is valid for drizzle-kit (produces no migration).
 
 ```ts
 // Drizzle table definitions live here.
@@ -526,7 +526,7 @@ export type HealthResult = Awaited<ReturnType<typeof trpc.health.query>>;
 - [ ] **Step 2: Typecheck the mobile app**
 
 Run: `pnpm --filter @drp/mobile typecheck`
-Expected: PASS (exit 0). If `AppRouter` or `trpc.health` were not resolvable, this fails — proving the chain when it passes.
+Expected: PASS (exit 0). If `AppRouter` or `trpc.health` were not resolvable, this fails - proving the chain when it passes.
 
 - [ ] **Step 3: Commit**
 
@@ -653,9 +653,9 @@ A meetup-coordination app, built as a pnpm monorepo.
 
 ## Structure
 
-- `apps/mobile` — Expo / React Native client (TypeScript)
-- `apps/api` — Fastify + tRPC backend
-- `packages/shared` — shared Zod schemas and types
+- `apps/mobile` - Expo / React Native client (TypeScript)
+- `apps/api` - Fastify + tRPC backend
+- `packages/shared` - shared Zod schemas and types
 
 ## Stack
 
@@ -703,7 +703,7 @@ git commit -m "docs: update README for monorepo structure"
 
 ### Task 10: Full verification
 
-No files changed — this task confirms the skeleton works end to end.
+No files changed - this task confirms the skeleton works end to end.
 
 - [ ] **Step 1: Clean install from the lockfile**
 

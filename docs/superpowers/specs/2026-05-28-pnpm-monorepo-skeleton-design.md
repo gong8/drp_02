@@ -1,4 +1,4 @@
-# pnpm Monorepo Skeleton — Design
+# pnpm Monorepo Skeleton - Design
 
 **Date:** 2026-05-28
 **Status:** Approved (design), pending implementation plan
@@ -34,12 +34,12 @@ drp_02/
 │   │   ├── App.tsx, app.json, babel.config.js, tsconfig.json
 │   │   ├── __tests__/
 │   │   └── package.json     # deps: @drp/shared; type-only dep: @drp/api
-│   └── api/                 # @drp/api — Fastify + tRPC
+│   └── api/                 # @drp/api - Fastify + tRPC
 │       ├── src/
 │       │   ├── index.ts             # Fastify bootstrap (stub)
 │       │   ├── trpc.ts              # tRPC init: context + base procedure (stub)
 │       │   ├── router.ts            # appRouter; exports `type AppRouter`; one health ping
-│       │   ├── routers/             # empty — domain routers added later
+│       │   ├── routers/             # empty - domain routers added later
 │       │   └── db/
 │       │       ├── client.ts        # drizzle client (stub)
 │       │       ├── schema.ts        # Drizzle schema (empty)
@@ -48,11 +48,11 @@ drp_02/
 │       ├── tsconfig.json
 │       └── package.json
 ├── packages/
-│   ├── shared/              # @drp/shared — Zod schemas + inferred types (empty barrel)
+│   ├── shared/              # @drp/shared - Zod schemas + inferred types (empty barrel)
 │   │   ├── src/index.ts
 │   │   ├── tsconfig.json
 │   │   └── package.json
-│   └── tsconfig/            # @drp/tsconfig — shared base tsconfigs
+│   └── tsconfig/            # @drp/tsconfig - shared base tsconfigs
 │       ├── base.json
 │       └── package.json
 ├── pnpm-workspace.yaml      # packages: apps/*, packages/*
@@ -76,7 +76,7 @@ to the React Native component. No codegen, no hand-synced types.
 ## Key decisions
 
 - **Both `apps/` and `packages/`.** `apps/{mobile,api}` are deployables; `packages/{shared,tsconfig}`
-  are libraries. This is the standard split and resolves the earlier "apps vs packages" question — it is both.
+  are libraries. This is the standard split and resolves the earlier "apps vs packages" question - it is both.
 - **`.npmrc` with `node-linker=hoisted`.** Required so Expo/Metro resolves modules under pnpm
   (pnpm's default symlinked layout breaks Metro).
 - **No Turborepo.** Plain pnpm workspace scripts to stay light; can be added later if builds slow.

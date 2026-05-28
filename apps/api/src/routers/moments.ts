@@ -10,7 +10,7 @@ import { publicProcedure, router } from "../trpc.js";
 
 export const momentsRouter = router({
   // The proposal as THIS user may see it. `members` are the GROUP's members (minus the
-  // current user) — used to populate the "I'm in if…" picker; group membership is not
+  // current user) - used to populate the "I'm in if…" picker; group membership is not
   // secret. NEVER returns participantIds, others' responses, or any tally (blind/equal).
   mine: publicProcedure.query(async ({ ctx }) => {
     const open = await db.select().from(moments).where(eq(moments.status, "open"));
@@ -39,8 +39,8 @@ export const momentsRouter = router({
     };
   }),
 
-  // Records the user's answer (one per user — a later answer replaces an earlier one).
-  // Returns only { recorded } — never the running tally (blind).
+  // Records the user's answer (one per user - a later answer replaces an earlier one).
+  // Returns only { recorded } - never the running tally (blind).
   respond: publicProcedure.input(RespondInput).mutation(async ({ ctx, input }) => {
     const [moment] = await db.select().from(moments).where(eq(moments.id, input.momentId));
     if (!moment) throw new TRPCError({ code: "NOT_FOUND" });
@@ -66,7 +66,7 @@ export const momentsRouter = router({
   }),
 
   // The firm plan for a cleared moment. Only a participant may read it. Reveals only the
-  // IN crowd (safe — they opted in); No's / non-responders are never represented (§8.4).
+  // IN crowd (safe - they opted in); No's / non-responders are never represented (§8.4).
   plan: publicProcedure.input(ResolveInput).query(async ({ ctx, input }) => {
     const [m] = await db.select().from(moments).where(eq(moments.id, input.momentId));
     if (!m?.participantIds.includes(ctx.userId)) return null;

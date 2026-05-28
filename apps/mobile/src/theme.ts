@@ -1,4 +1,4 @@
-// Sage palette — the BeThere visual identity. Flat, one accent, hairline borders.
+// Sage palette - the BeThere visual identity. Flat, one accent, hairline borders.
 export const colors = {
   bg: "#F7F8F3",
   surface: "#FFFFFF",
@@ -13,4 +13,4 @@ export const colors = {
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
 export const radius = { md: 12, lg: 15, xl: 18, sheet: 28 } as const;
 
-// Fonts (Lora/Inter) are deferred in this skeleton — system font + weights for now.
+// Fonts (Lora/Inter) are deferred in this skeleton - system font + weights for now.

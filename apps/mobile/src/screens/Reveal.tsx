@@ -6,7 +6,7 @@ import { colors, radius, space } from "../theme";
 
 type Plan = NonNullable<Awaited<ReturnType<typeof trpc.moments.plan.query>>>;
 
-// It's on (the reveal) — "It clicked". Shows only the IN crowd (everyone here opted
+// It's on (the reveal) - "It clicked". Shows only the IN crowd (everyone here opted
 // in, so it's safe to reveal them) plus the firm plan.
 export function Reveal({ navigate, momentId }: { navigate: Navigate; momentId: string }) {
   const [plan, setPlan] = useState<Plan | null>(null);
@@ -48,27 +48,27 @@ export function Reveal({ navigate, momentId }: { navigate: Navigate; momentId: s
     );
   }
 
-  const others = plan.people.length - 1;
-
   return (
     <View style={s.screen}>
       <Text style={s.title}>It clicked</Text>
       <Text style={s.sub}>You're not the only one{"\n"}who wanted this.</Text>
 
-      <View style={s.avs}>
-        {plan.people.map((p, i) => (
-          <View key={p.id} style={[s.av, { backgroundColor: p.color, marginLeft: i ? -12 : 0 }]}>
-            <Text style={s.avText}>{p.name[0]}</Text>
-          </View>
-        ))}
-      </View>
-      <Text style={s.proof}>
-        You + {others} {others === 1 ? "other" : "others"} are in
-      </Text>
-
       <View style={s.plan}>
         <Text style={s.planTitle}>{plan.place}</Text>
         <Text style={s.planMeta}>{plan.detail}</Text>
+      </View>
+
+      <Text style={s.whoLabel}>Who's going</Text>
+      <View style={s.who}>
+        {plan.people.map((p) => (
+          <View key={p.id} style={s.whoRow}>
+            <View style={[s.whoAv, { backgroundColor: p.color }]}>
+              <Text style={s.whoAvText}>{p.name[0]}</Text>
+            </View>
+            <Text style={s.whoName}>{p.name}</Text>
+            <Text style={s.whoCheck}>✓</Text>
+          </View>
+        ))}
       </View>
 
       <View style={s.spacer} />
@@ -108,18 +108,35 @@ const s = StyleSheet.create({
     marginTop: 12,
     lineHeight: 20,
   },
-  avs: { flexDirection: "row", justifyContent: "center", marginTop: 30, marginBottom: 14 },
-  av: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 3,
-    borderColor: colors.bg,
+  whoLabel: {
+    fontSize: 13.5,
+    fontWeight: "600",
+    color: colors.muted,
+    marginTop: space.xl,
+    marginBottom: space.md,
+  },
+  who: { gap: 9 },
+  whoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 11,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 13,
+    backgroundColor: colors.surface,
+  },
+  whoAv: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
   },
-  avText: { fontSize: 16, fontWeight: "700", color: "#fff" },
-  proof: { fontSize: 15.5, fontWeight: "700", color: colors.ink, textAlign: "center" },
+  whoAvText: { fontSize: 12, fontWeight: "700", color: "#fff" },
+  whoName: { fontSize: 14, fontWeight: "600", color: colors.ink },
+  whoCheck: { marginLeft: "auto", fontSize: 14, fontWeight: "700", color: colors.accent },
   plan: {
     marginTop: space.xl,
     padding: 18,
