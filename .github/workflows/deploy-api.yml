@@ -47,3 +47,27 @@ jobs:
             -f apps/api/Dockerfile \
             -t "$IMAGE:latest" -t "$IMAGE:${{ github.sha }}" \
             --push .
+
+      # App Runner auto-deploys on the :latest push. This step does NOT gate the deploy; it
+      # waits for that auto-deploy to settle and raises a loud warning if it did not succeed
+      # (e.g. a boot/migration crash makes App Runner roll back to the OLD image, leaving prod
+      # stale even though this build is green). Turns a silent rollback into a visible signal.
+      - name: Alert if App Runner rolled back
+        env:
+          SERVICE_ARN: arn:aws:apprunner:us-east-1:208569836255:service/bethere-api/260292b3564d41d6b60e9e2129a0263b
+        run: |
+          echo "Waiting for the App Runner auto-deploy to settle (not gating)..."
+          sleep 30
+          STATUS=""; TYPE=""
+          for i in $(seq 1 40); do
+            read TYPE STATUS < <(aws apprunner list-operations --service-arn "$SERVICE_ARN" \
+              --max-results 1 --query 'OperationSummaryList[0].[Type,Status]' --output text)
+            echo "operation=$TYPE status=$STATUS"
+            [ "$STATUS" != "OPERATION_IN_PROGRESS" ] && break
+            sleep 15
+          done
+          if [ "$STATUS" = "SUCCEEDED" ]; then
+            echo "App Runner deploy succeeded - prod is on the new image."
+          else
+            echo "::warning title=App Runner deploy did not succeed::Latest operation '$TYPE' ended with status='$STATUS'. App Runner likely ROLLED BACK to the previous image, so PROD MAY BE STALE despite this green build. Check the App Runner application logs for a boot/migration error (a baseline reset needs DB_RESET_ON_BOOT - see docs/runbook-deploy.md)."
+          fi
