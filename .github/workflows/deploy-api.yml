@@ -74,12 +74,18 @@ jobs:
           echo "Waiting for the App Runner auto-deploy to settle (not gating)..."
           sleep 30
           STATUS=""; TYPE=""
+          # list-operations Status is one of PENDING | IN_PROGRESS | ROLLBACK_IN_PROGRESS |
+          # SUCCEEDED | FAILED | ROLLBACK_SUCCEEDED | ROLLBACK_FAILED. Keep polling while the
+          # newest operation is in a non-terminal state (note: this differs from describe-service's
+          # OPERATION_IN_PROGRESS). App Runner deploys take a few minutes.
           for i in $(seq 1 40); do
             read TYPE STATUS < <(aws apprunner list-operations --service-arn "$SERVICE_ARN" \
               --max-results 1 --query 'OperationSummaryList[0].[Type,Status]' --output text)
             echo "operation=$TYPE status=$STATUS"
-            [ "$STATUS" != "OPERATION_IN_PROGRESS" ] && break
-            sleep 15
+            case "$STATUS" in
+              PENDING|IN_PROGRESS|ROLLBACK_IN_PROGRESS|"") sleep 15 ;;
+              *) break ;;
+            esac
           done
           if [ "$STATUS" = "SUCCEEDED" ]; then
             echo "App Runner deploy succeeded - prod is on the new image."
