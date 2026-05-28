@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # Build context is the repo ROOT (pnpm workspace):
 #   docker build -f apps/api/Dockerfile -t bethere-api .
 FROM node:20-bookworm-slim
@@ -15,7 +16,11 @@ COPY apps/api/package.json apps/api/
 COPY apps/mobile/package.json apps/mobile/
 COPY packages/shared/package.json packages/shared/
 
-RUN pnpm install --frozen-lockfile --filter @bethere/api...
+# BuildKit cache mount keeps the pnpm content-addressable store warm across builds,
+# so a lockfile change re-runs install without re-downloading unchanged packages.
+# --store-dir pins the store to the mount path (do not rely on the default location).
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+    pnpm install --frozen-lockfile --store-dir=/pnpm/store --filter @bethere/api...
 
 # Source (shared is consumed as TS; the API runs via tsx).
 COPY packages/shared packages/shared
