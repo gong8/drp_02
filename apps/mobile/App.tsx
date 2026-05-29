@@ -34,8 +34,16 @@ const MeetupsStack = createNativeStackNavigator<MeetupsStackParams>();
 function MeetupsStackScreen() {
   return (
     <MeetupsStack.Navigator screenOptions={stackHeader}>
-      <MeetupsStack.Screen name="Dashboard" component={Dashboard} options={{ title: "Meetups" }} />
-      <MeetupsStack.Screen name="EventDetail" component={EventDetail} options={{ title: "" }} />
+      <MeetupsStack.Screen
+        name="Dashboard"
+        component={Dashboard}
+        options={{ title: "Meetups" }}
+      />
+      <MeetupsStack.Screen
+        name="EventDetail"
+        component={EventDetail}
+        options={{ title: "" }}
+      />
       <MeetupsStack.Screen
         name="CreateEvent"
         component={CreateEvent}
@@ -54,7 +62,11 @@ function GroupsStackScreen() {
         component={GroupsList}
         options={{ title: "Your Groups" }}
       />
-      <GroupsStack.Screen name="GroupDetail" component={GroupDetail} options={{ title: "" }} />
+      <GroupsStack.Screen
+        name="GroupDetail"
+        component={GroupDetail}
+        options={{ title: "" }}
+      />
       <GroupsStack.Screen
         name="CreateGroup"
         component={CreateGroup}
@@ -75,7 +87,10 @@ export default function App() {
             headerShown: false,
             tabBarActiveTintColor: colors.accentInk,
             tabBarInactiveTintColor: colors.muted,
-            tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.line },
+            tabBarStyle: {
+              backgroundColor: colors.surface,
+              borderTopColor: colors.line,
+            },
             tabBarLabelStyle: { fontSize: 13, fontWeight: "600" },
             tabBarIconStyle: { display: "none" },
           }}
