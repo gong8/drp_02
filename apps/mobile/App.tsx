@@ -34,16 +34,8 @@ const MeetupsStack = createNativeStackNavigator<MeetupsStackParams>();
 function MeetupsStackScreen() {
   return (
     <MeetupsStack.Navigator screenOptions={stackHeader}>
-      <MeetupsStack.Screen
-        name="Dashboard"
-        component={Dashboard}
-        options={{ title: "Meetups" }}
-      />
-      <MeetupsStack.Screen
-        name="EventDetail"
-        component={EventDetail}
-        options={{ title: "" }}
-      />
+      <MeetupsStack.Screen name="Dashboard" component={Dashboard} options={{ title: "Meetups" }} />
+      <MeetupsStack.Screen name="EventDetail" component={EventDetail} options={{ title: "" }} />
       <MeetupsStack.Screen
         name="CreateEvent"
         component={CreateEvent}
@@ -62,11 +54,7 @@ function GroupsStackScreen() {
         component={GroupsList}
         options={{ title: "Your Groups" }}
       />
-      <GroupsStack.Screen
-        name="GroupDetail"
-        component={GroupDetail}
-        options={{ title: "" }}
-      />
+      <GroupsStack.Screen name="GroupDetail" component={GroupDetail} options={{ title: "" }} />
       <GroupsStack.Screen
         name="CreateGroup"
         component={CreateGroup}
