@@ -119,7 +119,7 @@ export function Dashboard({ navigation }: Props) {
 
       <View style={s.footer}>
         <Pressable style={s.btn} onPress={() => navigation.navigate("CreateEvent")}>
-          <Text style={s.btnLabel}>Suggest a Meet</Text>
+          <Text style={s.btnLabel}>Suggest a Meetup</Text>
         </Pressable>
       </View>
     </View>
