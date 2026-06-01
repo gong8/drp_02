@@ -24,3 +24,33 @@ export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
 export const radius = { md: 12, lg: 15, xl: 18, sheet: 28 } as const;
 
 // Fonts (Lora/Inter) are deferred in this skeleton - system font + weights for now.
+
+// Refined-neobrutalist design system (DRP-25). Legacy colours above are removed once every
+// screen has migrated to `ui`.
+export const ui = {
+  gradient: ["#FCEFE8", "#ECEAFF"] as [string, string],
+  surface: "#FFFFFF",
+  ink: "#111111",
+  muted: "#7D7A86",
+  hairline: "rgba(0,0,0,0.10)",
+  scrim: "rgba(24,18,34,0.45)",
+  brand: "#FF5CA8", // pink: urgent + primary
+  going: "#34A853", // green: going + affirmative
+  rCard: 18,
+  rButton: 14,
+  rInput: 12,
+  rTab: 8,
+  rChip: 999,
+  rSmall: 6,
+  border: 2,
+  shadow: 4, // hard offset in px
+} as const;
+
+export const font = {
+  display: "Archivo_800ExtraBold",
+  black: "Archivo_900Black",
+  body: "Inter_400Regular",
+  medium: "Inter_500Medium",
+  bold: "Inter_700Bold",
+  mono: "SpaceMono_700Bold",
+} as const;
