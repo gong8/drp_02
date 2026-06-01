@@ -14,9 +14,7 @@ export function ScreenBackground({ children }: { children: ReactNode }) {
       end={{ x: 1, y: 1 }}
       style={{ flex: 1 }}
     >
-      <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}>
-        {children}
-      </View>
+      <View style={{ flex: 1, paddingTop: insets.top }}>{children}</View>
     </LinearGradient>
   );
 }

@@ -81,12 +81,14 @@ export const eventsRouter = router({
           nowMs: Date.now(),
         });
         let goingCount: number | null = null;
-        const goingPreview: { color: string; initial: string }[] = [];
+        const goingPreview: { uid: string; color: string; initial: string }[] = [];
         if (revealed) {
           goingCount = revealed.length;
+          // TODO perf: batch these avatar lookups (one query per preview user) if event lists grow.
           for (const uid of revealed.slice(0, 4)) {
             const [u] = await db.select().from(users).where(eq(users.id, uid));
             goingPreview.push({
+              uid,
               color: u?.avatarColor ?? "#8B948B",
               initial: (u?.name ?? "?").charAt(0).toUpperCase(),
             });

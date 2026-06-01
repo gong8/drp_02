@@ -3,6 +3,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useCallback, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
+import { AccountAvatar } from "../components/AccountAvatar";
 import { countdown, formatTime } from "../lib/format";
 import { trpc } from "../lib/trpc";
 import { font, ui } from "../theme";
@@ -19,7 +20,7 @@ import {
 
 type Ev = Awaited<ReturnType<typeof trpc.events.mine.query>>[number];
 type Props = NativeStackScreenProps<MeetupsStackParams, "Dashboard">;
-const FILTERS = ["All", "Going", "Awaiting"] as const;
+const FILTERS = ["All", "Going", "Awaiting", "Declined"] as const;
 type Filter = (typeof FILTERS)[number];
 
 export function Dashboard({ navigation }: Props) {
@@ -52,7 +53,10 @@ export function Dashboard({ navigation }: Props) {
   const list = useMemo(() => {
     const rest = events.filter((e) => e.id !== featured?.id);
     const matches = (e: Ev) =>
-      filter === "All" || (filter === "Going" ? e.myStatus === "going" : e.myStatus === "awaiting");
+      filter === "All" ||
+      (filter === "Going" && e.myStatus === "going") ||
+      (filter === "Awaiting" && e.myStatus === "awaiting") ||
+      (filter === "Declined" && e.myStatus === "declined");
     return rest
       .filter(matches)
       .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
@@ -77,7 +81,7 @@ export function Dashboard({ navigation }: Props) {
         <Heading
           overline={`${events.length} this week`}
           title="Your meets"
-          right={<Avatar initial="A" color={ui.muted} size={28} />}
+          right={<AccountAvatar />}
         />
 
         {error && (
@@ -122,10 +126,7 @@ export function Dashboard({ navigation }: Props) {
                 ) : (
                   <View style={{ flexDirection: "row", alignItems: "center" }}>
                     {featured.goingPreview.map((p, i) => (
-                      <View
-                        key={`${p.initial}-${p.color}`}
-                        style={{ marginLeft: i === 0 ? 0 : -6 }}
-                      >
+                      <View key={p.uid} style={{ marginLeft: i === 0 ? 0 : -6 }}>
                         <Avatar initial={p.initial} color={p.color} size={18} />
                       </View>
                     ))}

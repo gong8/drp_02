@@ -3,6 +3,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useCallback, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import type { GroupsStackParams } from "../../App";
+import { AccountAvatar } from "../components/AccountAvatar";
 import { colorFor, initials } from "../lib/format";
 import { trpc } from "../lib/trpc";
 import { font, ui } from "../theme";
@@ -49,7 +50,7 @@ export function GroupsList({ navigation }: Props) {
         <Heading
           overline={`${groups.length} groups`}
           title="Your groups"
-          right={<Avatar initial="A" color={ui.muted} size={28} />}
+          right={<AccountAvatar />}
         />
         {error && (
           <Text style={{ fontFamily: font.medium, color: ui.muted, marginBottom: 12 }}>
