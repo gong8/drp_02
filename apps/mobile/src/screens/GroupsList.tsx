@@ -22,7 +22,12 @@ export function GroupsList({ navigation }: Props) {
       let active = true;
       trpc.groups.mine
         .query()
-        .then((g) => active && setGroups(g))
+        .then((g) => {
+          if (active) {
+            setGroups(g);
+            setError(false);
+          }
+        })
         .catch(() => active && setError(true))
         .finally(() => active && setLoading(false));
       return () => {

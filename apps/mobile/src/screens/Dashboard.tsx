@@ -34,7 +34,12 @@ export function Dashboard({ navigation }: Props) {
       let active = true;
       trpc.events.mine
         .query()
-        .then((e) => active && setEvents(e))
+        .then((e) => {
+          if (active) {
+            setEvents(e);
+            setError(false);
+          }
+        })
         .catch(() => active && setError(true))
         .finally(() => active && setLoading(false));
       return () => {
