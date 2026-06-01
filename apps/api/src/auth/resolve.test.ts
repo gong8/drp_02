@@ -9,7 +9,7 @@ const okVerify = async (token: string): Promise<VerifiedClaims> => {
 
 test("bearer token resolves to its sub and claims", async () => {
   const r = await resolveAuth(
-    { authHeader: "Bearer good", userIdHeader: undefined, devBypass: false },
+    { authHeader: "Bearer good", userIdHeader: undefined, devBypass: false, clerkConfigured: true },
     okVerify,
   );
   assert.equal(r.userId, "user_123");
@@ -18,7 +18,7 @@ test("bearer token resolves to its sub and claims", async () => {
 
 test("invalid bearer token resolves to null (unauthenticated)", async () => {
   const r = await resolveAuth(
-    { authHeader: "Bearer nope", userIdHeader: undefined, devBypass: false },
+    { authHeader: "Bearer nope", userIdHeader: undefined, devBypass: false, clerkConfigured: true },
     okVerify,
   );
   assert.equal(r.userId, null);
@@ -27,7 +27,7 @@ test("invalid bearer token resolves to null (unauthenticated)", async () => {
 
 test("dev bypass with no token uses x-user-id header", async () => {
   const r = await resolveAuth(
-    { authHeader: undefined, userIdHeader: "u_lily", devBypass: true },
+    { authHeader: undefined, userIdHeader: "u_lily", devBypass: true, clerkConfigured: true },
     okVerify,
   );
   assert.equal(r.userId, "u_lily");
@@ -36,7 +36,7 @@ test("dev bypass with no token uses x-user-id header", async () => {
 
 test("dev bypass with no header defaults to u_dev", async () => {
   const r = await resolveAuth(
-    { authHeader: undefined, userIdHeader: undefined, devBypass: true },
+    { authHeader: undefined, userIdHeader: undefined, devBypass: true, clerkConfigured: true },
     okVerify,
   );
   assert.equal(r.userId, "u_dev");
@@ -44,7 +44,7 @@ test("dev bypass with no header defaults to u_dev", async () => {
 
 test("no token and no bypass resolves to null", async () => {
   const r = await resolveAuth(
-    { authHeader: undefined, userIdHeader: "u_dev", devBypass: false },
+    { authHeader: undefined, userIdHeader: "u_dev", devBypass: false, clerkConfigured: true },
     okVerify,
   );
   assert.equal(r.userId, null);
@@ -52,8 +52,32 @@ test("no token and no bypass resolves to null", async () => {
 
 test("a valid bearer token wins even when dev bypass is on", async () => {
   const r = await resolveAuth(
-    { authHeader: "Bearer good", userIdHeader: "u_dev", devBypass: true },
+    { authHeader: "Bearer good", userIdHeader: "u_dev", devBypass: true, clerkConfigured: true },
     okVerify,
   );
   assert.equal(r.userId, "user_123");
+});
+
+test("when Clerk is not configured, a bearer token is ignored and dev bypass takes over", async () => {
+  // Local dev: CLERK_JWT_KEY unset, so an attached (unverifiable) Clerk token must not 401 -
+  // it falls back to the seed user instead.
+  const r = await resolveAuth(
+    { authHeader: "Bearer good", userIdHeader: undefined, devBypass: true, clerkConfigured: false },
+    okVerify,
+  );
+  assert.equal(r.userId, "u_dev");
+  assert.equal(r.claims, null);
+});
+
+test("when Clerk is not configured and no bypass, a bearer token resolves to null", async () => {
+  const r = await resolveAuth(
+    {
+      authHeader: "Bearer good",
+      userIdHeader: undefined,
+      devBypass: false,
+      clerkConfigured: false,
+    },
+    okVerify,
+  );
+  assert.equal(r.userId, null);
 });

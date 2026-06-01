@@ -3,7 +3,6 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useCallback, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import type { GroupsStackParams } from "../../App";
-import { AccountAvatar } from "../components/AccountAvatar";
 import { colorFor, initials } from "../lib/format";
 import { trpc } from "../lib/trpc";
 import { font, ui } from "../theme";
@@ -52,7 +51,7 @@ export function GroupsList({ navigation }: Props) {
         contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 24 }}
         showsVerticalScrollIndicator={false}
       >
-        <Heading title="Your groups" right={<AccountAvatar />} />
+        <Heading title="Your groups" />
         {error && (
           <Text style={{ fontFamily: font.medium, color: ui.muted, marginBottom: 12 }}>
             Couldn't reach the server.

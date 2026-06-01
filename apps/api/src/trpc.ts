@@ -13,6 +13,7 @@ export async function createContext({ req }: CreateFastifyContextOptions) {
   // DEV_AUTH_BYPASS is set, fall back to the spoofable x-user-id stub (default u_dev).
   // userId is nullable here - protectedProcedure does the rejecting.
   const devBypass = process.env.DEV_AUTH_BYPASS === "1" || process.env.DEV_AUTH_BYPASS === "true";
+  const clerkConfigured = !!process.env.CLERK_JWT_KEY;
 
   const authHeader = headerString(req.headers.authorization);
   const { userId, claims } = await resolveAuth(
@@ -20,14 +21,16 @@ export async function createContext({ req }: CreateFastifyContextOptions) {
       authHeader,
       userIdHeader: headerString(req.headers["x-user-id"]),
       devBypass,
+      clerkConfigured,
     },
     verifyClerkToken,
   );
 
-  // A bearer token that did not verify (bad/expired token, or a server-side CLERK_JWT_KEY
-  // misconfig) degrades to unauthenticated - log it so a silent misconfiguration is
-  // debuggable rather than looking like a plain client error.
-  if (authHeader && !userId) {
+  // A bearer token we tried to verify but couldn't (bad/expired token, or a server-side
+  // CLERK_JWT_KEY misconfig) degrades to unauthenticated - log it so a silent
+  // misconfiguration is debuggable rather than looking like a plain client error. Skipped
+  // when Clerk is not configured at all (local dev), since we never attempted verification.
+  if (authHeader && clerkConfigured && !userId) {
     req.log.warn({ scope: "auth" }, "bearer token present but did not verify");
   }
 

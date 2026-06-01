@@ -64,6 +64,31 @@ export function CreateEvent({ navigation }: Props) {
     );
   }
 
+  // Can't plan a meetup without a group. Guard the form so we never show an empty group picker.
+  if (!error && groups.length === 0) {
+    return (
+      <ScreenBackground>
+        <ScrollView
+          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 24 }}
+          showsVerticalScrollIndicator={false}
+        >
+          <BackBar title="Suggest a meet" onBack={() => navigation.goBack()} />
+          <Text
+            style={{
+              fontFamily: font.medium,
+              fontSize: 13,
+              color: ui.muted,
+              marginTop: 8,
+              lineHeight: 20,
+            }}
+          >
+            You're not in any groups yet. Create or join a group first, then you can plan a meetup.
+          </Text>
+        </ScrollView>
+      </ScreenBackground>
+    );
+  }
+
   return (
     <ScreenBackground>
       <ScrollView
