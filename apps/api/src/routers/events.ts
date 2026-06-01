@@ -5,6 +5,7 @@ import {
   RespondInput,
   type ResponseInput,
   resolveIn,
+  revealGoing,
 } from "@bethere/shared";
 import { TRPCError } from "@trpc/server";
 import { and, eq, inArray } from "drizzle-orm";
@@ -74,6 +75,23 @@ export const eventsRouter = router({
       rows.map(async (e) => {
         const [g] = await db.select().from(groups).where(eq(groups.id, e.groupId));
         const resp = await responsesFor(e.id);
+        const revealed = revealGoing(resp, {
+          respondByAtMs: e.respondByAt.getTime(),
+          status: e.status,
+          nowMs: Date.now(),
+        });
+        let goingCount: number | null = null;
+        const goingPreview: { color: string; initial: string }[] = [];
+        if (revealed) {
+          goingCount = revealed.length;
+          for (const uid of revealed.slice(0, 4)) {
+            const [u] = await db.select().from(users).where(eq(users.id, uid));
+            goingPreview.push({
+              color: u?.avatarColor ?? "#8B948B",
+              initial: (u?.name ?? "?").charAt(0).toUpperCase(),
+            });
+          }
+        }
         return {
           id: e.id,
           groupName: g?.name ?? "Group",
@@ -82,6 +100,8 @@ export const eventsRouter = router({
           startsAt: e.startsAt.toISOString(),
           respondByAt: e.respondByAt.toISOString(),
           myStatus: statusFor(ctx.userId, resp),
+          goingCount, // number once the timer has passed, else null
+          goingPreview, // up to 4 {color, initial}, empty while pending
         };
       }),
     );
