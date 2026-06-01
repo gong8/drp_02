@@ -1,5 +1,14 @@
+import type { PartOfDay, PlanPhase, WhenMode } from "@bethere/shared";
 import { db } from "./client.js";
-import { events, groupMembers, groups, responses, users } from "./schema.js";
+import {
+  candidateReactions,
+  eventCandidates,
+  events,
+  groupMembers,
+  groups,
+  responses,
+  users,
+} from "./schema.js";
 
 type Kind = "yes" | "no" | "conditional";
 
@@ -35,32 +44,97 @@ const GROUPS = [
 
 const HOUR = 60 * 60 * 1000;
 
-function at(iso: string): Date {
-  return new Date(iso);
+// A day relative to "now" at a fixed local hour, for legible demo candidate slots.
+function dayAt(daysFromNow: number, hour: number): Date {
+  const d = new Date();
+  d.setDate(d.getDate() + daysFromNow);
+  d.setHours(hour, 0, 0, 0);
+  return d;
 }
 
-// Demo events spread across the three dashboard statuses for the dev user ("You"):
-// Bowling = Awaiting (You haven't answered, deadline ticking); Knitting/Climbing/Dinner =
-// Going (You said yes); Baking/Football = Declined (You said no). Peer responses are baked
-// in so the "Who's going" list is populated for a solo tester.
-const EVENTS: {
+interface Cand {
+  suffix: string;
+  startsAt: Date;
+  partOfDay?: PartOfDay;
+  label?: string;
+  reactedBy?: string[];
+}
+interface Resp {
+  userId: string;
+  kind: Kind;
+  cond?: { mode: "all" | "any"; targetIds: string[] };
+}
+interface Plan {
   id: string;
   groupId: string;
   createdBy: string;
   title: string;
-  location: string;
-  startsAt: Date;
-  respondByAt: Date;
-  responses: { userId: string; kind: Kind }[];
-}[] = [
+  location?: string;
+  whenMode: WhenMode;
+  contingent: boolean;
+  quorum: number;
+  phase: PlanPhase;
+  candidates: Cand[];
+  chosenSuffix?: string;
+  momentStartsAt?: Date;
+  momentEndsAt?: Date;
+  responses?: Resp[];
+}
+
+// Demo plans cover every (whenMode x phase) the dashboard renders:
+// - movie  : options / collecting (You created it, so You see the tally + "Lock it"; c1 clears).
+// - pub    : fuzzy   / collecting (You have NOT reacted yet, so the dashboard nudges You).
+// - bowling: exact   / moment     (countdown running, blind - You are awaiting).
+// - climbing/dinner : cleared (You are Going); football: cleared (You declined).
+// - baking : fuzzy   / fizzled    (under quorum - must stay silent / hidden).
+const PLANS: Plan[] = [
+  {
+    id: "e_movie",
+    groupId: "g_boys",
+    createdBy: "u_dev",
+    title: "Dune: Part Two",
+    location: "Cineworld Bexleyheath",
+    whenMode: "options",
+    contingent: true,
+    quorum: 3,
+    phase: "collecting",
+    candidates: [
+      { suffix: "c1", startsAt: dayAt(2, 18), reactedBy: ["u_dev", "u_adi", "u_lily", "u_joe"] },
+      { suffix: "c2", startsAt: dayAt(2, 20), reactedBy: ["u_dev", "u_nathan", "u_bethan"] },
+      { suffix: "c3", startsAt: dayAt(3, 14), reactedBy: ["u_lily"] },
+    ],
+  },
+  {
+    id: "e_pub",
+    groupId: "g_climb",
+    createdBy: "u_adi",
+    title: "Pub night",
+    location: "The Lighthouse",
+    whenMode: "fuzzy",
+    contingent: true,
+    quorum: 2,
+    phase: "collecting",
+    candidates: [
+      { suffix: "d1", startsAt: dayAt(1, 19), partOfDay: "evening", reactedBy: ["u_adi", "u_joe"] },
+      { suffix: "d2", startsAt: dayAt(2, 19), partOfDay: "evening", reactedBy: ["u_adi"] },
+      { suffix: "d3", startsAt: dayAt(3, 19), partOfDay: "evening", reactedBy: ["u_joe"] },
+      { suffix: "d4", startsAt: dayAt(4, 19), partOfDay: "evening", reactedBy: [] },
+    ],
+  },
   {
     id: "e_bowling",
     groupId: "g_boys",
     createdBy: "u_adi",
     title: "Bowling",
     location: "TenPin Bowling, Bexleyheath",
-    startsAt: at("2026-05-28T16:00:00"),
-    respondByAt: new Date(Date.now() + 8 * HOUR + 49 * 60 * 1000),
+    whenMode: "exact",
+    contingent: false,
+    quorum: 1,
+    phase: "moment",
+    candidates: [{ suffix: "c1", startsAt: dayAt(0, 19) }],
+    chosenSuffix: "c1",
+    momentStartsAt: new Date(Date.now() - HOUR),
+    momentEndsAt: new Date(Date.now() + 8 * HOUR),
     responses: [
       { userId: "u_adi", kind: "yes" },
       { userId: "u_lily", kind: "yes" },
@@ -70,30 +144,23 @@ const EVENTS: {
     ],
   },
   {
-    id: "e_knitting",
-    groupId: "g_knit",
-    createdBy: "u_noah",
-    title: "Knitting",
-    location: "Noah's House",
-    startsAt: at("2026-05-26T06:00:00"),
-    respondByAt: new Date(Date.now() - 24 * HOUR),
-    responses: [
-      { userId: "u_dev", kind: "yes" },
-      { userId: "u_lily", kind: "yes" },
-      { userId: "u_bethan", kind: "yes" },
-    ],
-  },
-  {
     id: "e_climbing",
     groupId: "g_climb",
     createdBy: "u_joe",
     title: "Climbing",
     location: "Ravenswall",
-    startsAt: at("2026-06-06T20:00:00"),
-    respondByAt: new Date(Date.now() + 36 * HOUR),
+    whenMode: "fuzzy",
+    contingent: true,
+    quorum: 2,
+    phase: "cleared",
+    candidates: [{ suffix: "d1", startsAt: dayAt(-2, 19), partOfDay: "evening" }],
+    chosenSuffix: "d1",
+    momentStartsAt: new Date(Date.now() - 3 * HOUR),
+    momentEndsAt: new Date(Date.now() - 2 * HOUR),
     responses: [
       { userId: "u_dev", kind: "yes" },
       { userId: "u_adi", kind: "yes" },
+      { userId: "u_joe", kind: "yes" },
     ],
   },
   {
@@ -102,8 +169,17 @@ const EVENTS: {
     createdBy: "u_vasanth",
     title: "Dinner",
     location: "La Palombe",
-    startsAt: at("2026-05-26T20:00:00"),
-    respondByAt: new Date(Date.now() - 48 * HOUR),
+    whenMode: "options",
+    contingent: true,
+    quorum: 2,
+    phase: "cleared",
+    candidates: [
+      { suffix: "c1", startsAt: dayAt(-3, 20) },
+      { suffix: "c2", startsAt: dayAt(-2, 20) },
+    ],
+    chosenSuffix: "c2",
+    momentStartsAt: new Date(Date.now() - 50 * HOUR),
+    momentEndsAt: new Date(Date.now() - 48 * HOUR),
     responses: [
       { userId: "u_dev", kind: "yes" },
       { userId: "u_vasanth", kind: "yes" },
@@ -116,8 +192,14 @@ const EVENTS: {
     createdBy: "u_joe",
     title: "Football",
     location: "Goals Wembley",
-    startsAt: at("2026-06-06T10:00:00"),
-    respondByAt: new Date(Date.now() + 12 * HOUR),
+    whenMode: "exact",
+    contingent: false,
+    quorum: 1,
+    phase: "cleared",
+    candidates: [{ suffix: "c1", startsAt: dayAt(-1, 10) }],
+    chosenSuffix: "c1",
+    momentStartsAt: new Date(Date.now() - 26 * HOUR),
+    momentEndsAt: new Date(Date.now() - 24 * HOUR),
     responses: [
       { userId: "u_dev", kind: "no" },
       { userId: "u_joe", kind: "yes" },
@@ -129,14 +211,21 @@ const EVENTS: {
     createdBy: "u_noah",
     title: "Baking",
     location: "Joe's Place",
-    startsAt: at("2026-06-30T17:00:00"),
-    respondByAt: new Date(Date.now() + 72 * HOUR),
-    responses: [
-      { userId: "u_dev", kind: "no" },
-      { userId: "u_noah", kind: "yes" },
-    ],
+    whenMode: "fuzzy",
+    contingent: true,
+    quorum: 2,
+    phase: "fizzled",
+    candidates: [{ suffix: "d1", startsAt: dayAt(-1, 17), partOfDay: "afternoon" }],
+    chosenSuffix: "d1",
+    momentStartsAt: new Date(Date.now() - 4 * HOUR),
+    momentEndsAt: new Date(Date.now() - 3 * HOUR),
+    responses: [{ userId: "u_noah", kind: "yes" }],
   },
 ];
+
+function candId(planId: string, suffix: string): string {
+  return `${planId}_${suffix}`;
+}
 
 async function insertDemoData(): Promise<void> {
   for (const u of DEMO_USERS) {
@@ -151,25 +240,55 @@ async function insertDemoData(): Promise<void> {
       await db.insert(groupMembers).values({ groupId: g.id, userId }).onConflictDoNothing();
     }
   }
-  for (const e of EVENTS) {
+  for (const p of PLANS) {
+    const sorted = [...p.candidates].sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
+    const chosen = p.chosenSuffix
+      ? p.candidates.find((c) => c.suffix === p.chosenSuffix)
+      : undefined;
+    const startsAt = chosen?.startsAt ?? sorted[0].startsAt;
+    const respondByAt = p.momentEndsAt ?? sorted[sorted.length - 1].startsAt;
+
     await db.insert(events).values({
-      id: e.id,
-      groupId: e.groupId,
-      createdByUserId: e.createdBy,
-      title: e.title,
+      id: p.id,
+      groupId: p.groupId,
+      createdByUserId: p.createdBy,
+      title: p.title,
       description: null,
-      location: e.location,
-      startsAt: e.startsAt,
-      respondByAt: e.respondByAt,
-      status: "open",
+      location: p.location ?? "",
+      startsAt,
+      respondByAt,
+      status: p.phase === "cleared" || p.phase === "fizzled" ? "resolved" : "open",
+      whenMode: p.whenMode,
+      contingent: p.contingent,
+      quorum: p.quorum,
+      phase: p.phase,
+      chosenCandidateId: chosen ? candId(p.id, chosen.suffix) : null,
+      momentStartsAt: p.momentStartsAt ?? null,
+      momentEndsAt: p.momentEndsAt ?? null,
     });
-    for (const r of e.responses) {
+
+    for (const c of p.candidates) {
+      await db.insert(eventCandidates).values({
+        id: candId(p.id, c.suffix),
+        eventId: p.id,
+        startsAt: c.startsAt,
+        partOfDay: c.partOfDay ?? null,
+        label: c.label ?? null,
+      });
+      for (const userId of c.reactedBy ?? []) {
+        await db
+          .insert(candidateReactions)
+          .values({ eventId: p.id, candidateId: candId(p.id, c.suffix), userId });
+      }
+    }
+
+    for (const r of p.responses ?? []) {
       await db.insert(responses).values({
-        id: `r_${e.id}_${r.userId}`,
-        eventId: e.id,
+        id: `r_${p.id}_${r.userId}`,
+        eventId: p.id,
         userId: r.userId,
         kind: r.kind,
-        cond: null,
+        cond: r.cond ?? null,
       });
     }
   }
@@ -178,6 +297,8 @@ async function insertDemoData(): Promise<void> {
 // Wipe + re-insert the clean demo (local dev: SEED_ON_BOOT defaults to "reset").
 export async function reseedDemo(): Promise<void> {
   await db.delete(responses);
+  await db.delete(candidateReactions);
+  await db.delete(eventCandidates);
   await db.delete(events);
   await db.delete(groupMembers);
   await db.delete(groups);
