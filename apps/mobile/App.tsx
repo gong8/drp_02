@@ -1,18 +1,18 @@
 import { ClerkProvider } from "@clerk/clerk-expo";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { NavigationContainer } from "@react-navigation/native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { StatusBar } from "expo-status-bar";
-import { useFonts } from "expo-font";
 import { Archivo_800ExtraBold, Archivo_900Black } from "@expo-google-fonts/archivo";
 import { Inter_400Regular, Inter_500Medium, Inter_700Bold } from "@expo-google-fonts/inter";
 import { SpaceMono_700Bold } from "@expo-google-fonts/space-mono";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { useFonts } from "expo-font";
+import { StatusBar } from "expo-status-bar";
 import type { ReactNode } from "react";
 import { Platform, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { AccountButton } from "./src/components/AccountButton";
 import { DevAuthProvider, useAuthBridge } from "./src/lib/auth";
 import { publishableKey, tokenCache } from "./src/lib/clerk";
+import { Account } from "./src/screens/Account";
 import { CreateEvent } from "./src/screens/CreateEvent";
 import { CreateGroup } from "./src/screens/CreateGroup";
 import { Dashboard } from "./src/screens/Dashboard";
@@ -20,7 +20,7 @@ import { EventDetail } from "./src/screens/EventDetail";
 import { GroupDetail } from "./src/screens/GroupDetail";
 import { GroupsList } from "./src/screens/GroupsList";
 import { SignIn } from "./src/screens/SignIn";
-import { colors } from "./src/theme";
+import { font, ui } from "./src/theme";
 
 export type MeetupsStackParams = {
   Dashboard: undefined;
@@ -34,25 +34,17 @@ export type GroupsStackParams = {
 };
 
 const stackHeader = {
-  headerStyle: { backgroundColor: colors.bg },
-  headerShadowVisible: false,
-  headerTintColor: colors.ink,
-  headerTitleStyle: { color: colors.ink },
-  contentStyle: { backgroundColor: colors.bg },
-  headerRight: () => <AccountButton />,
+  headerShown: false,
+  contentStyle: { backgroundColor: "transparent" },
 } as const;
 
 const MeetupsStack = createNativeStackNavigator<MeetupsStackParams>();
 function MeetupsStackScreen() {
   return (
     <MeetupsStack.Navigator screenOptions={stackHeader}>
-      <MeetupsStack.Screen name="Dashboard" component={Dashboard} options={{ title: "Meetups" }} />
-      <MeetupsStack.Screen name="EventDetail" component={EventDetail} options={{ title: "" }} />
-      <MeetupsStack.Screen
-        name="CreateEvent"
-        component={CreateEvent}
-        options={{ title: "Suggest a Meet" }}
-      />
+      <MeetupsStack.Screen name="Dashboard" component={Dashboard} />
+      <MeetupsStack.Screen name="EventDetail" component={EventDetail} />
+      <MeetupsStack.Screen name="CreateEvent" component={CreateEvent} />
     </MeetupsStack.Navigator>
   );
 }
@@ -61,17 +53,9 @@ const GroupsStack = createNativeStackNavigator<GroupsStackParams>();
 function GroupsStackScreen() {
   return (
     <GroupsStack.Navigator screenOptions={stackHeader}>
-      <GroupsStack.Screen
-        name="GroupsList"
-        component={GroupsList}
-        options={{ title: "Your Groups" }}
-      />
-      <GroupsStack.Screen name="GroupDetail" component={GroupDetail} options={{ title: "" }} />
-      <GroupsStack.Screen
-        name="CreateGroup"
-        component={CreateGroup}
-        options={{ title: "New group" }}
-      />
+      <GroupsStack.Screen name="GroupsList" component={GroupsList} />
+      <GroupsStack.Screen name="GroupDetail" component={GroupDetail} />
+      <GroupsStack.Screen name="CreateGroup" component={CreateGroup} />
     </GroupsStack.Navigator>
   );
 }
@@ -82,21 +66,23 @@ function MainTabs() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.accentInk,
-        tabBarInactiveTintColor: colors.muted,
-        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.line },
-        tabBarLabelStyle: { fontSize: 13, fontWeight: "600" },
+        sceneStyle: { backgroundColor: "transparent" },
+        tabBarActiveTintColor: ui.brand,
+        tabBarInactiveTintColor: ui.muted,
+        tabBarStyle: { backgroundColor: ui.surface, borderTopWidth: 2, borderTopColor: ui.ink },
+        tabBarLabelStyle: { fontFamily: font.display, fontSize: 12 },
         tabBarIconStyle: { display: "none" },
       }}
     >
       <Tab.Screen name="Meetups" component={MeetupsStackScreen} />
       <Tab.Screen name="Groups" component={GroupsStackScreen} />
+      <Tab.Screen name="Account" component={Account} />
     </Tab.Navigator>
   );
 }
 
-// Auth gate. useAuthBridge keeps the tRPC header holder in sync and tells us whether to
-// show the app or the sign-in screen.
+// Auth gate. useAuthBridge keeps the tRPC header holder in sync and tells us whether to show
+// the app or the sign-in screen.
 function Gate() {
   const authed = useAuthBridge();
   return (
@@ -111,10 +97,8 @@ function Gate() {
 function Shell({ children }: { children: ReactNode }) {
   if (Platform.OS !== "web") return <>{children}</>;
   return (
-    <View style={{ flex: 1, alignItems: "center", backgroundColor: colors.line }}>
-      <View style={{ flex: 1, width: "100%", maxWidth: 480, backgroundColor: colors.bg }}>
-        {children}
-      </View>
+    <View style={{ flex: 1, alignItems: "center", backgroundColor: ui.ink }}>
+      <View style={{ flex: 1, width: "100%", maxWidth: 480 }}>{children}</View>
     </View>
   );
 }
