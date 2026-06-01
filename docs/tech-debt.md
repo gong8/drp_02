@@ -32,3 +32,29 @@ data. Options, cheapest → proper:
    *not* real security.
 3. **Per-user auth** (real tokens / sessions) - the actual fix. Its own piece of work; ties
    into a real `users` identity instead of the `u_dev` stub.
+
+## Real-time is polling; no real push notifications
+
+**Logged:** 2026-06-01 · **Area:** `apps/mobile` · **Severity:** low
+
+**What:** The convergence model's "live" feel (the moment countdown, the "It's coming together"
+banner, the reveal) is driven by **~5s polling** (`setInterval` re-querying `events.mine` /
+`events.get` in `Dashboard.tsx` and `EventDetail.tsx`). There is no OS-level notification - the
+blind moment cannot "ding" a phone that has the app closed, and we ship no local notification
+either.
+
+**Why polling, not push:** real remote push needs `expo-notifications` **plus a development
+build** (`expo-dev-client`), a physical device, and an Apple Developer account (APNs key) for
+iOS. The iOS Simulator cannot receive remote push at all, and Expo Go dropped remote push in
+SDK 53+. That is a multi-day detour and collides with the SDK-54 / Expo-Go constraint (see
+`CLAUDE.md`). Polling satisfies the DRP "real-time interaction" requirement for a supervised
+testing session where participants have the app open.
+
+**Why it's acceptable for now:** M3 testing is a short, supervised session (often co-located or
+orchestrated), so in-app live updates are enough; the banner gives the "coming together" cue.
+
+**When to fix:** bundle with the planned **dev-build migration** (the same step that unblocks
+bumping the Expo SDK). Then add `expo-notifications`: a *local* notification when a moment opens
+for you (the "ding taste"), and later a real *remote* push from the server (EAS push / APNs+FCM)
+so a closed app still gets pulled into the moment. A WebSocket/SSE subscription could also
+replace polling for instant in-app updates if poll load becomes a concern.
