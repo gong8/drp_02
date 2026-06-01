@@ -9,7 +9,7 @@ import { useFonts } from "expo-font";
 import { StatusBar } from "expo-status-bar";
 import type { ReactNode } from "react";
 import { Platform, View } from "react-native";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import { DevAuthProvider, useAuthBridge } from "./src/lib/auth";
 import { publishableKey, tokenCache } from "./src/lib/clerk";
 import { Account } from "./src/screens/Account";
@@ -62,6 +62,12 @@ function GroupsStackScreen() {
 
 const Tab = createBottomTabNavigator();
 function MainTabs() {
+  // We render labels only (no icons), so size the bar to a compact label row plus a small
+  // bottom gap - otherwise RN centers the label in a tall default content area and stacks
+  // the full home-indicator inset below it, leaving a big white "chin" under the tabs. We
+  // only keep a fraction of the inset so the labels sit close to the bottom edge.
+  const insets = useSafeAreaInsets();
+  const bottomGap = Math.max(Math.round(insets.bottom * 0.75), 12);
   return (
     <Tab.Navigator
       screenOptions={{
@@ -69,9 +75,17 @@ function MainTabs() {
         sceneStyle: { backgroundColor: "transparent" },
         tabBarActiveTintColor: ui.brand,
         tabBarInactiveTintColor: ui.muted,
-        tabBarStyle: { backgroundColor: ui.surface, borderTopWidth: 2, borderTopColor: ui.ink },
+        tabBarStyle: {
+          backgroundColor: ui.surface,
+          borderTopWidth: 2,
+          borderTopColor: ui.ink,
+          height: 40 + bottomGap,
+          paddingTop: 8,
+          paddingBottom: bottomGap,
+        },
+        tabBarItemStyle: { justifyContent: "center" },
         tabBarLabelStyle: { fontFamily: font.display, fontSize: 12 },
-        tabBarIconStyle: { display: "none" },
+        tabBarIconStyle: { display: "none", height: 0, width: 0 },
       }}
     >
       <Tab.Screen name="Meetups" component={MeetupsStackScreen} />

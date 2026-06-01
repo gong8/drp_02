@@ -244,7 +244,7 @@ export function Dashboard({ navigation }: Props) {
             ))}
         </ScrollView>
 
-        <View style={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: 8 }}>
+        <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 20 }}>
           {hasGroups && !error ? (
             <BigButton
               label="Suggest a meetup"
