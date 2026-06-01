@@ -12,11 +12,13 @@ Persistent guidance for Claude Code in this repo. These cover things you can't i
 
 pnpm workspace monorepo. **Use `pnpm` only - never `npm` or `yarn`.** (`.npmrc` sets `node-linker=hoisted`, required by Expo/Metro.)
 
-- `apps/mobile` - Expo SDK 56 React Native client (`@bethere/mobile`); navigation via `@react-navigation`
+- `apps/mobile` - Expo SDK 54 React Native client (`@bethere/mobile`); navigation via `@react-navigation`
 - `apps/api` - Fastify + tRPC server (`@bethere/api`)
 - `packages/shared` - shared Zod schemas & types (`@bethere/shared`)
 
 Stack: Expo · React Navigation · tRPC v11 · Zod · Drizzle ORM · Postgres · Fastify.
+
+> **Do NOT upgrade the Expo SDK above 54.** The team tests on the App Store build of Expo Go, which only runs the latest SDK *it* shipped with (currently SDK 54). Pinning higher (we tried 56, then 55) makes Expo Go reject the project with "requires a newer version of Expo Go" - there is no newer Expo Go to install; the store build simply lags new SDK releases. Stay on SDK 54 until the team's installed Expo Go actually advances, then bump to match it (never ahead). The real long-term fix is a dev build (`expo-dev-client`), which removes this constraint - do that before bumping the SDK. When changing the SDK, use `npx expo install --fix` to align `react-native`/`react`/native modules; note pre-SDK-55 packages like `expo-status-bar` use their own version line (e.g. `~3.0.9`), not the SDK number. Entry point is `apps/mobile/index.ts` (`main: "index.ts"`), not `expo/AppEntry` - the latter's relative `../../App` import breaks under pnpm's hoisted node_modules.
 
 ## Commands
 
