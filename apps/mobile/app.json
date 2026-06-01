@@ -5,18 +5,11 @@
     "version": "1.0.0",
     "scheme": "bethere",
     "orientation": "portrait",
-    "platforms": [
-      "ios",
-      "android",
-      "web"
-    ],
+    "platforms": ["ios", "android", "web"],
     "web": {
       "bundler": "metro",
       "output": "single"
     },
-    "plugins": [
-      "expo-web-browser",
-      "expo-secure-store"
-    ]
+    "plugins": ["expo-web-browser", "expo-secure-store"]
   }
 }
