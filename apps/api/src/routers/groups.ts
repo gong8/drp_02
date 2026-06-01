@@ -5,7 +5,7 @@ import { and, eq, notInArray } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../db/client.js";
 import { groupMembers, groups, users } from "../db/schema.js";
-import { publicProcedure, router } from "../trpc.js";
+import { protectedProcedure, router } from "../trpc.js";
 
 async function memberIdsOf(groupId: string): Promise<string[]> {
   const rows = await db
@@ -24,7 +24,7 @@ async function requireMember(groupId: string, userId: string): Promise<void> {
 
 export const groupsRouter = router({
   // The groups the current user belongs to, with a member count for the list rows.
-  mine: publicProcedure.query(async ({ ctx }) => {
+  mine: protectedProcedure.query(async ({ ctx }) => {
     const memberships = await db
       .select()
       .from(groupMembers)
@@ -40,7 +40,7 @@ export const groupsRouter = router({
   }),
 
   // One group with its full member roster (id, name, avatar colour).
-  get: publicProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
+  get: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
     const [group] = await db.select().from(groups).where(eq(groups.id, input.id));
     if (!group) return null;
     await requireMember(input.id, ctx.userId);
@@ -54,7 +54,7 @@ export const groupsRouter = router({
   }),
 
   // Seeded users not already in the group - the candidates for "Add to group".
-  addableUsers: publicProcedure
+  addableUsers: protectedProcedure
     .input(z.object({ groupId: z.string() }))
     .query(async ({ ctx, input }) => {
       await requireMember(input.groupId, ctx.userId);
@@ -66,14 +66,14 @@ export const groupsRouter = router({
     }),
 
   // Create a group and add the creator as its first member.
-  create: publicProcedure.input(CreateGroupInput).mutation(async ({ ctx, input }) => {
+  create: protectedProcedure.input(CreateGroupInput).mutation(async ({ ctx, input }) => {
     const id = `g_${randomUUID()}`;
     await db.insert(groups).values({ id, name: input.name });
     await db.insert(groupMembers).values({ groupId: id, userId: ctx.userId });
     return { id };
   }),
 
-  rename: publicProcedure
+  rename: protectedProcedure
     .input(z.object({ id: z.string(), name: z.string().min(1).max(60) }))
     .mutation(async ({ ctx, input }) => {
       await requireMember(input.id, ctx.userId);
@@ -81,7 +81,7 @@ export const groupsRouter = router({
       return { ok: true as const };
     }),
 
-  addMember: publicProcedure
+  addMember: protectedProcedure
     .input(z.object({ groupId: z.string(), userId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       await requireMember(input.groupId, ctx.userId);
@@ -92,7 +92,7 @@ export const groupsRouter = router({
       return { ok: true as const };
     }),
 
-  removeMember: publicProcedure
+  removeMember: protectedProcedure
     .input(z.object({ groupId: z.string(), userId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       await requireMember(input.groupId, ctx.userId);
