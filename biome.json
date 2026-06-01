@@ -7,7 +7,7 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!**/migrations", "!**/archive"]
+    "includes": ["**", "!**/migrations", "!**/archive", "!**/mockups"]
   },
   "linter": {
     "enabled": true,

@@ -2,6 +2,7 @@ import "dotenv/config";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import cors from "@fastify/cors";
+import rateLimit from "@fastify/rate-limit";
 import { fastifyTRPCPlugin } from "@trpc/server/adapters/fastify";
 import { sql } from "drizzle-orm";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
@@ -14,7 +15,14 @@ import { createContext } from "./trpc.js";
 
 // Our own Pino instance (see logger.ts). disableRequestLogging turns off Fastify's default
 // two-lines-per-request output; the onResponse hook below emits one clean line instead.
-const server = Fastify({ loggerInstance: logger, disableRequestLogging: true });
+// trustProxy: App Runner terminates TLS and forwards via X-Forwarded-For, so req.ip must
+// resolve to the real client (otherwise every request looks like it comes from the proxy
+// and rate limiting buckets them all together).
+const server = Fastify({
+  loggerInstance: logger,
+  disableRequestLogging: true,
+  trustProxy: true,
+});
 
 server.addHook("onResponse", (req, reply, done) => {
   const ms = Math.round(reply.elapsedTime);
@@ -23,6 +31,21 @@ server.addHook("onResponse", (req, reply, done) => {
     `${req.method} ${req.url} ${reply.statusCode} ${ms}ms`,
   );
   done();
+});
+
+// Global rate limit, keyed on the (proxy-resolved) client IP. The API is deliberately
+// open (DEV_AUTH_BYPASS, open CORS), so this is the main guard against a single client
+// hammering the live App Runner service and burning compute. Tune via env without a
+// code change. tRPC batches many procedure calls into one HTTP request, so 100/min is
+// generous for real use but stops scripted abuse.
+await server.register(rateLimit, {
+  global: true,
+  max: Number(process.env.RATE_LIMIT_MAX ?? 100),
+  timeWindow: process.env.RATE_LIMIT_WINDOW ?? "1 minute",
+  // App Runner's health check (GET /trpc/health) must never be throttled. Exact-path
+  // match only: a batched tRPC call has a different path (e.g. /trpc/health,groups.mine),
+  // so this exemption cannot be abused to bypass the limit.
+  allowList: (req) => req.url.split("?")[0] === "/trpc/health",
 });
 
 await server.register(cors, { origin: true });

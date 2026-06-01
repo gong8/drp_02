@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BeThere - UX overhaul mockups (refined neobrutalist)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:Inter,system-ui,sans-serif; background:#ECEAE4; color:#1a1a1a; padding:32px 24px 56px; }
+  .page-head { max-width:1100px; margin:0 auto 28px; }
+  .page-head h1 { font-family:Archivo,sans-serif; font-weight:900; font-size:30px; letter-spacing:-1px; }
+  .page-head p { color:#6b6862; font-size:14px; margin-top:6px; max-width:760px; }
+  .swatches { display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; align-items:center; }
+  .swatches span { width:22px; height:22px; border-radius:6px; border:1px solid rgba(0,0,0,.12); }
+  .swatches small { font-size:12px; color:#6b6862; margin-left:6px; }
+  .grid { max-width:1100px; margin:0 auto; display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:28px; }
+  figure { margin:0; }
+  figcaption { margin-top:12px; }
+  figcaption b { font-family:Archivo,sans-serif; font-size:15px; display:block; }
+  figcaption span { font-size:12.5px; color:#6b6862; }
+
+  .nframe { background:#15171c; border-radius:32px; padding:6px; width:218px; margin:0 auto; box-shadow:0 9px 24px rgba(0,0,0,.20); }
+  .scr { border-radius:26px; overflow:hidden; height:500px; position:relative; display:flex; flex-direction:column; font-family:Inter,sans-serif; color:#111; background:linear-gradient(160deg,#FCEFE8,#ECEAFF); }
+  .sb { display:flex; justify-content:space-between; align-items:center; padding:7px 14px 2px; font-size:9px; font-weight:600; }
+  .bat { width:15px; height:8px; border:1px solid currentColor; border-radius:2px; opacity:.5; display:inline-block; }
+  .wrap { flex:1; display:flex; flex-direction:column; padding:4px 14px 14px; position:relative; }
+  .head { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:13px; }
+  .over { font-size:8px; font-weight:700; letter-spacing:1.6px; text-transform:uppercase; }
+  .h1 { font-family:Archivo,sans-serif; font-weight:900; font-size:26px; letter-spacing:-1px; line-height:.92; margin-top:3px; }
+  .avatar { width:27px; height:27px; border-radius:50%; background:#c9c7c0; border:2px solid #111; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; flex-shrink:0; }
+  .topbar { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .back { width:30px; height:30px; border:2px solid #111; border-radius:9px; background:#fff; box-shadow:3px 3px 0 #111; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:800; flex-shrink:0; }
+  .topttl { font-family:Archivo,sans-serif; font-weight:800; font-size:15px; }
+  .card2 { background:#fff; border:2px solid #111; border-radius:18px; box-shadow:4px 4px 0 #111; padding:12px; }
+  .title { font-family:Archivo,sans-serif; font-weight:800; font-size:18px; letter-spacing:-.3px; }
+  .meta { font-size:9.5px; color:#7d7a86; margin-top:1px; }
+  .feat-bot { display:flex; justify-content:space-between; align-items:center; margin-top:11px; }
+  .avs { display:flex; align-items:center; }
+  .avs i { width:18px; height:18px; border-radius:50%; border:2px solid #fff; background:#bdbbb4; margin-left:-6px; }
+  .avs i:first-child { margin-left:0; }
+  .avs b { font-size:8.5px; font-weight:700; margin-left:5px; color:#7d7a86; }
+  .datebox { font-family:'Space Mono',monospace; font-weight:700; font-size:9px; border:1px solid #111; border-radius:6px; padding:3px 7px; }
+  .datebox.sm { font-size:8px; padding:2px 5px; }
+  .tag { font-family:'Space Mono',monospace; font-weight:700; font-size:8.5px; border-radius:6px; padding:2px 7px; transform:rotate(4deg); background:#FF5CA8; color:#fff; box-shadow:2px 2px 0 #111; }
+  .tabs { display:flex; gap:7px; margin-bottom:12px; }
+  .tab { font-size:10px; font-weight:700; padding:5px 11px; border-radius:8px; color:#7d7a86; }
+  .tab.on { background:#111; color:#fff; }
+  .listbox { background:#fff; border:2px solid #111; border-radius:18px; box-shadow:4px 4px 0 #111; overflow:hidden; }
+  .row { display:flex; align-items:center; gap:9px; padding:9px 11px; border-top:1px solid rgba(0,0,0,.10); }
+  .row:first-child { border-top:none; }
+  .addrow { border-bottom:1px dashed #111; }
+  .addbtn { margin-left:auto; background:#FF5CA8; color:#fff; font-weight:800; font-size:13px; width:24px; height:24px; border:1px solid #111; border-radius:7px; display:flex; align-items:center; justify-content:center; }
+  .addtxt { font-size:11px; color:#7d7a86; }
+  .check { width:17px; height:17px; border:1.5px solid #111; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:10px; flex-shrink:0; }
+  .check.on { background:#34A853; border-color:#34A853; color:#fff; }
+  .check.pink.on { background:#FF5CA8; border-color:#FF5CA8; }
+  .rtitle { font-weight:700; font-size:12.5px; }
+  .row .datebox { margin-left:auto; }
+  .lbl { font-size:9px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:#111; margin:12px 0 5px; }
+  .field { background:#fff; border:2px solid #111; border-radius:12px; box-shadow:3px 3px 0 #111; padding:9px 11px; font-size:11px; font-weight:600; }
+  .field.soft { color:#9a97a2; font-weight:500; }
+  .chiprow { display:flex; flex-wrap:wrap; gap:7px; }
+  .chip2 { font-size:10px; font-weight:700; padding:6px 11px; border:2px solid #111; border-radius:999px; background:#fff; box-shadow:2px 2px 0 #111; }
+  .chip2.on { background:#111; color:#fff; }
+  .btnP { background:#FF5CA8; color:#fff; border:2px solid #111; border-radius:14px; box-shadow:4px 4px 0 #111; text-align:center; font-family:Archivo,sans-serif; font-weight:800; font-size:13px; padding:11px; }
+  .btnG { background:#34A853; color:#fff; border:2px solid #111; border-radius:14px; box-shadow:4px 4px 0 #111; text-align:center; font-family:Archivo,sans-serif; font-weight:800; font-size:14px; padding:12px; }
+  .btnO { background:#fff; color:#111; border:2px solid #111; border-radius:14px; box-shadow:4px 4px 0 #111; text-align:center; font-family:Archivo,sans-serif; font-weight:800; font-size:14px; padding:12px; }
+  .btnO.muted { color:#7d7a86; }
+  .av { width:32px; height:32px; border-radius:50%; border:2px solid #111; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; color:#fff; flex-shrink:0; }
+  .rm { margin-left:auto; font-size:13px; font-weight:800; color:#7d7a86; }
+  .gcaret { margin-left:auto; font-size:18px; font-weight:800; }
+  .scrim { position:absolute; inset:0; background:rgba(24,18,34,.45); z-index:5; border-radius:26px; }
+  .sheet { position:absolute; left:0; right:0; bottom:0; background:#fff; border-top:2px solid #111; border-left:2px solid #111; border-right:2px solid #111; border-top-left-radius:24px; border-top-right-radius:24px; padding:14px 14px 16px; z-index:6; }
+  .handle { width:38px; height:4px; border-radius:2px; background:#111; opacity:.25; margin:0 auto 12px; }
+  .seg { display:flex; border:2px solid #111; border-radius:12px; overflow:hidden; margin:10px 0 12px; }
+  .seg div { flex:1; text-align:center; font-size:9.5px; font-weight:700; padding:8px 4px; }
+  .seg .on { background:#111; color:#fff; }
+</style>
+</head>
+<body>
+  <div class="page-head">
+    <h1>BeThere - UX overhaul</h1>
+    <p>Refined neobrutalist visual system: peach-to-lavender gradient, white boxy cards, 2px outlines, hard offset shadows, tilted pink stickers, monospace date chips, heavy Archivo headings. Approved direction "Rounded + Sticker, Peach to Lavender". See the spec at docs/superpowers/specs/2026-06-01-ux-overhaul-visual-system-design.md.</p>
+    <div class="swatches">
+      <span style="background:#FCEFE8;"></span><span style="background:#ECEAFF;"></span><span style="background:#111111;"></span><span style="background:#FF5CA8;"></span><span style="background:#34A853;"></span>
+      <small>peach / lavender / ink / pink (brand) / green (going) &middot; Archivo + Inter + Space Mono</small>
+    </div>
+  </div>
+
+  <div class="grid">
+
+    <!-- 1 HOME -->
+    <figure>
+      <div class="nframe"><div class="scr">
+        <div class="sb"><span>9:41</span><span class="bat"></span></div>
+        <div class="wrap">
+          <div class="head"><div><div class="over">4 this week</div><div class="h1">Your meets</div></div><div class="avatar">A</div></div>
+          <div class="card2" style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;align-items:center;"><span class="title">Bowling</span><span class="tag">RSVP 8H</span></div><div class="meta">The Boys &middot; TenPin Bexleyheath</div><div class="feat-bot"><span class="datebox">FRI 16:00</span><span class="avs"><i></i><i></i><i></i><b>+5 going</b></span></div></div>
+          <div class="tabs"><span class="tab on">All</span><span class="tab">Going</span><span class="tab">Awaiting</span></div>
+          <div class="listbox"><div class="row addrow"><span class="addtxt">Suggest a meet&hellip;</span><span class="addbtn">+</span></div><div class="row"><span class="check on">&#10003;</span><span class="rtitle">Dinner</span><span class="datebox sm">26 MAY</span></div><div class="row"><span class="check"></span><span class="rtitle">Football</span><span class="datebox sm">06 JUN</span></div><div class="row"><span class="check on">&#10003;</span><span class="rtitle">Climbing</span><span class="datebox sm">06 JUN</span></div></div>
+        </div>
+      </div></div>
+      <figcaption><b>1 &middot; Home</b><span>Featured meet, status tabs, checklist with add row and date chips.</span></figcaption>
+    </figure>
+
+    <!-- 2 EVENT DETAIL -->
+    <figure>
+      <div class="nframe"><div class="scr">
+        <div class="sb"><span>9:41</span><span class="bat"></span></div>
+        <div class="wrap">
+          <div class="topbar"><span class="back">&lsaquo;</span><span class="topttl">The Boys</span></div>
+          <div class="card2"><div style="display:flex;justify-content:space-between;align-items:center;"><span class="datebox">FRI 28 MAY</span><span class="tag">8H LEFT</span></div><div class="title" style="font-size:22px;margin-top:8px;">Bowling</div><div class="meta" style="font-size:11px;">TenPin Bexleyheath &middot; 16:00</div><div class="feat-bot"><span style="font-size:10px;color:#7d7a86;">Bring your A-game.</span><span class="avs"><i></i><i></i><i></i><b>+5 going</b></span></div></div>
+          <div style="font-family:Archivo;font-weight:800;font-size:14px;margin:16px 2px 10px;">Are you in?</div>
+          <div class="btnG" style="margin-bottom:10px;">&#10003;&nbsp; I'm in</div>
+          <div class="btnO" style="margin-bottom:10px;">I'll go if&hellip;</div>
+          <div class="btnO muted">Can't make it</div>
+        </div>
+      </div></div>
+      <figcaption><b>2 &middot; Event detail</b><span>Event card with countdown sticker, then in / conditional / out.</span></figcaption>
+    </figure>
+
+    <!-- 3 SHEET -->
+    <figure>
+      <div class="nframe"><div class="scr">
+        <div class="sb"><span>9:41</span><span class="bat"></span></div>
+        <div class="wrap">
+          <div class="topbar"><span class="back">&lsaquo;</span><span class="topttl">The Boys</span></div>
+          <div class="card2"><div style="display:flex;justify-content:space-between;align-items:center;"><span class="datebox">FRI 28 MAY</span><span class="tag">8H LEFT</span></div><div class="title" style="font-size:22px;margin-top:8px;">Bowling</div><div class="meta" style="font-size:11px;">TenPin Bexleyheath &middot; 16:00</div></div>
+        </div>
+        <div class="scrim"></div>
+        <div class="sheet">
+          <div class="handle"></div>
+          <div style="font-family:Archivo;font-weight:800;font-size:16px;">I'll go if&hellip;</div>
+          <div style="font-size:9.5px;color:#7d7a86;margin-top:2px;">&hellip;these people are going</div>
+          <div class="seg"><div class="on">At least one</div><div>All of them</div></div>
+          <div class="listbox" style="box-shadow:none;">
+            <div class="row"><span class="av" style="background:#7E6BB0;width:26px;height:26px;font-size:10px;">M</span><span class="rtitle">Marcus</span><span class="check pink on" style="margin-left:auto;">&#10003;</span></div>
+            <div class="row"><span class="av" style="background:#3F7BA8;width:26px;height:26px;font-size:10px;">J</span><span class="rtitle">Jordan</span><span class="check pink on" style="margin-left:auto;">&#10003;</span></div>
+            <div class="row"><span class="av" style="background:#C9823F;width:26px;height:26px;font-size:10px;">S</span><span class="rtitle">Sara</span><span class="check" style="margin-left:auto;"></span></div>
+          </div>
+          <div class="btnP" style="margin-top:12px;">Confirm</div>
+        </div>
+      </div></div>
+      <figcaption><b>3 &middot; "I'll go if&hellip;" sheet</b><span>All / at-least-one toggle, member picker, Confirm.</span></figcaption>
+    </figure>
+
+    <!-- 4 CREATE EVENT -->
+    <figure>
+      <div class="nframe"><div class="scr">
+        <div class="sb"><span>9:41</span><span class="bat"></span></div>
+        <div class="wrap">
+          <div class="topbar"><span class="back">&lsaquo;</span><span class="topttl">Suggest a meet</span></div>
+          <div class="lbl" style="margin-top:0;">Group</div>
+          <div class="chiprow"><span class="chip2 on">The Boys</span><span class="chip2">Reunion</span><span class="chip2">Climbing</span></div>
+          <div class="lbl">Title</div>
+          <div class="field">Bowling</div>
+          <div class="lbl">Location</div>
+          <div class="field">TenPin Bexleyheath</div>
+          <div style="display:flex;gap:10px;">
+            <div style="flex:1;"><div class="lbl">Date</div><div class="field">28 May</div></div>
+            <div style="flex:1;"><div class="lbl">Time</div><div class="field">16:00</div></div>
+          </div>
+          <div style="flex:1;"></div>
+          <div class="btnP">Create</div>
+        </div>
+      </div></div>
+      <figcaption><b>4 &middot; Suggest a meet</b><span>Group chips, boxy fields, pink Create.</span></figcaption>
+    </figure>
+
+    <!-- 5 GROUPS -->
+    <figure>
+      <div class="nframe"><div class="scr">
+        <div class="sb"><span>9:41</span><span class="bat"></span></div>
+        <div class="wrap">
+          <div class="head"><div><div class="over">3 groups</div><div class="h1">Your groups</div></div><div class="avatar">A</div></div>
+          <div class="card2" style="display:flex;align-items:center;gap:11px;margin-bottom:12px;"><span class="av" style="background:#7E6BB0;">TB</span><div><div style="font-family:Archivo;font-weight:800;font-size:15px;">The Boys</div><div class="meta">5 members</div></div><span class="gcaret">&rsaquo;</span></div>
+          <div class="card2" style="display:flex;align-items:center;gap:11px;margin-bottom:12px;"><span class="av" style="background:#C9823F;">HR</span><div><div style="font-family:Archivo;font-weight:800;font-size:15px;">Reunion</div><div class="meta">12 members</div></div><span class="gcaret">&rsaquo;</span></div>
+          <div class="card2" style="display:flex;align-items:center;gap:11px;"><span class="av" style="background:#3F7BA8;">CG</span><div><div style="font-family:Archivo;font-weight:800;font-size:15px;">Climbing</div><div class="meta">8 members</div></div><span class="gcaret">&rsaquo;</span></div>
+          <div style="flex:1;"></div>
+          <div class="btnP">New group</div>
+        </div>
+      </div></div>
+      <figcaption><b>5 &middot; Your groups</b><span>Group rows as boxy cards, pink New group.</span></figcaption>
+    </figure>
+
+    <!-- 6 GROUP DETAIL -->
+    <figure>
+      <div class="nframe"><div class="scr">
+        <div class="sb"><span>9:41</span><span class="bat"></span></div>
+        <div class="wrap">
+          <div class="topbar"><span class="back">&lsaquo;</span><span class="topttl">The Boys</span></div>
+          <div class="lbl" style="margin-top:0;">Group name</div>
+          <div class="field" style="display:flex;justify-content:space-between;align-items:center;">The Boys <span style="font-size:11px;">&#9998;</span></div>
+          <div class="lbl">Members (5)</div>
+          <div class="listbox">
+            <div class="row"><span class="av" style="background:#7E6BB0;width:28px;height:28px;font-size:11px;">M</span><span class="rtitle">Marcus</span><span class="rm">&#10005;</span></div>
+            <div class="row"><span class="av" style="background:#3F7BA8;width:28px;height:28px;font-size:11px;">J</span><span class="rtitle">Jordan</span><span class="rm">&#10005;</span></div>
+            <div class="row"><span class="av" style="background:#C9823F;width:28px;height:28px;font-size:11px;">S</span><span class="rtitle">Sara</span><span class="rm">&#10005;</span></div>
+            <div class="row"><span class="av" style="background:#5F9472;width:28px;height:28px;font-size:11px;">L</span><span class="rtitle">Liam</span><span class="rm">&#10005;</span></div>
+          </div>
+          <div style="flex:1;"></div>
+          <div class="btnO">+ Add to group</div>
+        </div>
+      </div></div>
+      <figcaption><b>6 &middot; Group detail</b><span>Editable name, member list with remove, Add to group.</span></figcaption>
+    </figure>
+
+    <!-- 7 CREATE GROUP -->
+    <figure>
+      <div class="nframe"><div class="scr">
+        <div class="sb"><span>9:41</span><span class="bat"></span></div>
+        <div class="wrap">
+          <div class="topbar"><span class="back">&lsaquo;</span><span class="topttl">New group</span></div>
+          <div class="lbl" style="margin-top:6px;">Group name</div>
+          <div class="field soft">The Boys</div>
+          <div style="font-size:9.5px;color:#7d7a86;margin-top:8px;">You can add members once it's created.</div>
+          <div style="flex:1;"></div>
+          <div class="btnP">Create group</div>
+        </div>
+      </div></div>
+      <figcaption><b>7 &middot; New group</b><span>One field, pink primary. The calm empty state.</span></figcaption>
+    </figure>
+
+  </div>
+</body>
+</html>

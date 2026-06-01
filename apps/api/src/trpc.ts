@@ -1,13 +1,46 @@
-import { initTRPC } from "@trpc/server";
+import { initTRPC, TRPCError } from "@trpc/server";
 import type { CreateFastifyContextOptions } from "@trpc/server/adapters/fastify";
+import { verifyClerkToken } from "./auth/clerk.js";
+import { resolveAuth } from "./auth/resolve.js";
+import { upsertUser } from "./db/users.js";
 
-export function createContext({ req }: CreateFastifyContextOptions) {
-  // Server-authoritative identity. Dev reads an optional header; default to a single
-  // dev user. Real auth replaces this - clients can never spoof who they are here.
-  const raw = req.headers["x-user-id"];
-  const userId = typeof raw === "string" ? raw : "u_dev";
-  // req.log is Fastify's per-request child logger; reusing it ties tRPC log lines to the
-  // same reqId as their HTTP request.
+function headerString(v: string | string[] | undefined): string | undefined {
+  return typeof v === "string" ? v : undefined;
+}
+
+export async function createContext({ req }: CreateFastifyContextOptions) {
+  // Server-authoritative identity. A verified Clerk bearer token wins; otherwise, when
+  // DEV_AUTH_BYPASS is set, fall back to the spoofable x-user-id stub (default u_dev).
+  // userId is nullable here - protectedProcedure does the rejecting.
+  const devBypass = process.env.DEV_AUTH_BYPASS === "1" || process.env.DEV_AUTH_BYPASS === "true";
+
+  const authHeader = headerString(req.headers.authorization);
+  const { userId, claims } = await resolveAuth(
+    {
+      authHeader,
+      userIdHeader: headerString(req.headers["x-user-id"]),
+      devBypass,
+    },
+    verifyClerkToken,
+  );
+
+  // A bearer token that did not verify (bad/expired token, or a server-side CLERK_JWT_KEY
+  // misconfig) degrades to unauthenticated - log it so a silent misconfiguration is
+  // debuggable rather than looking like a plain client error.
+  if (authHeader && !userId) {
+    req.log.warn({ scope: "auth" }, "bearer token present but did not verify");
+  }
+
+  // First-seen real users get a row so groups/RSVPs can reference them. Best-effort: a
+  // transient write failure must not fail an otherwise-valid authed request.
+  if (claims) {
+    try {
+      await upsertUser({ id: claims.sub, name: claims.name, email: claims.email });
+    } catch (err) {
+      req.log.error({ scope: "auth", err }, "user upsert failed (continuing)");
+    }
+  }
+
   return { userId, log: req.log };
 }
 
@@ -33,8 +66,9 @@ const loggingMiddleware = t.middleware(async ({ path, type, ctx, next }) => {
   const start = Date.now();
   const result = await next();
   const ms = Date.now() - start;
-  const base = { scope: "trpc", path, type, userId: ctx.userId, ms };
-  const tail = `user=${ctx.userId} ${ms}ms`;
+  const who = ctx.userId ?? "anon";
+  const base = { scope: "trpc", path, type, userId: who, ms };
+  const tail = `user=${who} ${ms}ms`;
 
   if (result.ok) {
     ctx.log.info(base, `${path} ok  ${tail}`);
@@ -51,3 +85,11 @@ const loggingMiddleware = t.middleware(async ({ path, type, ctx, next }) => {
 
 export const router = t.router;
 export const publicProcedure = t.procedure.use(loggingMiddleware);
+
+// Rejects unauthenticated callers and narrows ctx.userId to a non-null string for the
+// procedure body.
+const requireAuth = t.middleware(({ ctx, next }) => {
+  if (!ctx.userId) throw new TRPCError({ code: "UNAUTHORIZED" });
+  return next({ ctx: { userId: ctx.userId } });
+});
+export const protectedProcedure = publicProcedure.use(requireAuth);

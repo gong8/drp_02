@@ -11,7 +11,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../db/client.js";
 import { events, groupMembers, groups, responses, users } from "../db/schema.js";
-import { publicProcedure, router } from "../trpc.js";
+import { protectedProcedure, router } from "../trpc.js";
 
 type MyStatus = "awaiting" | "going" | "declined";
 
@@ -41,7 +41,7 @@ async function requireMember(groupId: string, userId: string): Promise<void> {
 
 export const eventsRouter = router({
   // Create a concrete meet for a group. The creator sets the time and place up front.
-  create: publicProcedure.input(CreateEventInput).mutation(async ({ ctx, input }) => {
+  create: protectedProcedure.input(CreateEventInput).mutation(async ({ ctx, input }) => {
     await requireMember(input.groupId, ctx.userId);
     const id = `e_${randomUUID()}`;
     await db.insert(events).values({
@@ -61,7 +61,7 @@ export const eventsRouter = router({
 
   // The dashboard: every event in the current user's groups, with this user's status.
   // The client groups these by status (Awaiting / Going / Declined) and then by date.
-  mine: publicProcedure.query(async ({ ctx }) => {
+  mine: protectedProcedure.query(async ({ ctx }) => {
     const memberships = await db
       .select({ groupId: groupMembers.groupId })
       .from(groupMembers)
@@ -89,7 +89,7 @@ export const eventsRouter = router({
 
   // One event in full: details, my current response, the people I can name in a
   // conditional, and the going crowd (only those going are ever listed).
-  get: publicProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
+  get: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
     const [e] = await db.select().from(events).where(eq(events.id, input.id));
     if (!e) return null;
     await requireMember(e.groupId, ctx.userId);
@@ -134,7 +134,7 @@ export const eventsRouter = router({
   }),
 
   // Record (or replace) this user's RSVP.
-  respond: publicProcedure.input(RespondInput).mutation(async ({ ctx, input }) => {
+  respond: protectedProcedure.input(RespondInput).mutation(async ({ ctx, input }) => {
     const [e] = await db.select().from(events).where(eq(events.id, input.eventId));
     if (!e) throw new TRPCError({ code: "NOT_FOUND" });
     await requireMember(e.groupId, ctx.userId);
@@ -153,7 +153,7 @@ export const eventsRouter = router({
 
   // The deadline: lock the event. Conditionals are already resolved live for display;
   // the event always happens, so this just flips the status to resolved.
-  resolve: publicProcedure.input(ResolveInput).mutation(async ({ ctx, input }) => {
+  resolve: protectedProcedure.input(ResolveInput).mutation(async ({ ctx, input }) => {
     const [e] = await db.select().from(events).where(eq(events.id, input.eventId));
     if (!e) throw new TRPCError({ code: "NOT_FOUND" });
     await requireMember(e.groupId, ctx.userId);

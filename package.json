@@ -7,6 +7,7 @@
     "dev": "concurrently -k -n api,mobile -c blue,magenta \"pnpm --filter @bethere/api dev\" \"pnpm --filter @bethere/mobile ios\"",
     "dev:mobile": "pnpm --filter @bethere/mobile start",
     "dev:api": "pnpm --filter @bethere/api dev",
+    "web": "EXPO_PUBLIC_API_URL=https://96mgvmgcbj.us-east-1.awsapprunner.com EXPO_PUBLIC_DEV_AUTH=1 pnpm --filter @bethere/mobile exec expo start --web",
     "test": "pnpm -r --if-present test",
     "typecheck": "pnpm -r --if-present typecheck",
     "lint": "biome check",

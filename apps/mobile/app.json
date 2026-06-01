@@ -3,7 +3,13 @@
     "name": "drp-02",
     "slug": "drp-02",
     "version": "1.0.0",
+    "scheme": "bethere",
     "orientation": "portrait",
-    "platforms": ["ios", "android"]
+    "platforms": ["ios", "android", "web"],
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": ["expo-web-browser", "expo-secure-store"]
   }
 }
