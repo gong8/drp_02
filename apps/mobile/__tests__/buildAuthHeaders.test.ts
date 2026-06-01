@@ -1,4 +1,4 @@
-import { buildAuthHeaders, type AuthHolder } from "../src/lib/auth";
+import { type AuthHolder, buildAuthHeaders } from "../src/lib/auth";
 
 it("returns x-user-id in dev mode", async () => {
   const holder: AuthHolder = { mode: "dev", devUserId: "u_dev", getToken: null };

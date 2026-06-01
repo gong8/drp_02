@@ -2,8 +2,8 @@
 // tRPC client. Kept outside React so the non-React tRPC client can attach the right header.
 
 import { useAuth } from "@clerk/clerk-expo";
-import { createContext, createElement, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
+import { createContext, createElement, useContext, useEffect, useMemo, useState } from "react";
 
 export type AuthMode = "clerk" | "dev" | null;
 
