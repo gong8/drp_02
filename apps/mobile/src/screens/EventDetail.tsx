@@ -6,7 +6,18 @@ import type { MeetupsStackParams } from "../../App";
 import { countdown, formatDate, formatTime } from "../lib/format";
 import { trpc } from "../lib/trpc";
 import { font, ui } from "../theme";
-import { Avatar, BackBar, BottomSheet, Button, Card, DateChip, ScreenBackground, SelectCheck, StickerTag, Toggle } from "../ui";
+import {
+  Avatar,
+  BackBar,
+  BottomSheet,
+  Button,
+  Card,
+  DateChip,
+  ScreenBackground,
+  SelectCheck,
+  StickerTag,
+  Toggle,
+} from "../ui";
 
 type Detail = NonNullable<Awaited<ReturnType<typeof trpc.events.get.query>>>;
 type Member = Detail["members"][number];
@@ -38,7 +49,10 @@ export function EventDetail({ route, navigation }: Props) {
     }, [load]),
   );
 
-  async function answer(kind: "yes" | "no" | "conditional", cond?: { mode: "all" | "any"; targetIds: string[] }) {
+  async function answer(
+    kind: "yes" | "no" | "conditional",
+    cond?: { mode: "all" | "any"; targetIds: string[] },
+  ) {
     if (busy) return;
     setBusy(true);
     try {
@@ -66,59 +80,141 @@ export function EventDetail({ route, navigation }: Props) {
       <ScreenBackground>
         <View style={{ padding: 16 }}>
           <BackBar title="Back" onBack={() => navigation.goBack()} />
-          <Text style={{ fontFamily: font.medium, color: ui.muted }}>{error ? "Couldn't reach the server." : "Event not found."}</Text>
+          <Text style={{ fontFamily: font.medium, color: ui.muted }}>
+            {error ? "Couldn't reach the server." : "Event not found."}
+          </Text>
         </View>
       </ScreenBackground>
     );
   }
 
   const showRespond = editing || (!data.myResponse && !data.resolved);
-  const statusLine = data.myStatus === "going" ? "You're going" : data.myStatus === "declined" ? "You can't make it" : "Awaiting your response";
+  const statusLine =
+    data.myStatus === "going"
+      ? "You're going"
+      : data.myStatus === "declined"
+        ? "You can't make it"
+        : "Awaiting your response";
 
   return (
     <ScreenBackground>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 28 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 28 }}
+        showsVerticalScrollIndicator={false}
+      >
         <BackBar title={data.groupName} onBack={() => navigation.goBack()} />
 
         <Card>
-          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+          <View
+            style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}
+          >
             <DateChip>{formatDate(data.startsAt)}</DateChip>
             {!data.resolved && <StickerTag label={countdown(data.respondByAt)} />}
           </View>
-          <Text style={{ fontFamily: font.display, fontSize: 22, color: ui.ink, marginTop: 8 }}>{data.title}</Text>
+          <Text style={{ fontFamily: font.display, fontSize: 22, color: ui.ink, marginTop: 8 }}>
+            {data.title}
+          </Text>
           <Text style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted, marginTop: 2 }}>
             {data.location} {"·"} {formatTime(data.startsAt)}
           </Text>
-          {data.description ? <Text style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted, marginTop: 6 }}>{data.description}</Text> : null}
+          {data.description ? (
+            <Text style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted, marginTop: 6 }}>
+              {data.description}
+            </Text>
+          ) : null}
         </Card>
 
         {showRespond ? (
           <View style={{ marginTop: 16 }}>
-            <Text style={{ fontFamily: font.display, fontSize: 14, color: ui.ink, marginBottom: 10 }}>Are you in?</Text>
-            <Button label={"✓  I'm in"} variant="affirmative" disabled={busy} onPress={() => answer("yes")} style={{ marginBottom: 10 }} />
-            <Button label="I'll go if..." variant="outline" disabled={busy} onPress={() => { setPicked([]); setSheet(true); }} style={{ marginBottom: 10 }} />
-            <Button label="Can't make it" variant="outline" disabled={busy} onPress={() => answer("no")} />
+            <Text
+              style={{ fontFamily: font.display, fontSize: 14, color: ui.ink, marginBottom: 10 }}
+            >
+              Are you in?
+            </Text>
+            <Button
+              label={"✓  I'm in"}
+              variant="affirmative"
+              disabled={busy}
+              onPress={() => answer("yes")}
+              style={{ marginBottom: 10 }}
+            />
+            <Button
+              label="I'll go if..."
+              variant="outline"
+              disabled={busy}
+              onPress={() => {
+                setPicked([]);
+                setSheet(true);
+              }}
+              style={{ marginBottom: 10 }}
+            />
+            <Button
+              label="Can't make it"
+              variant="outline"
+              disabled={busy}
+              onPress={() => answer("no")}
+            />
           </View>
         ) : (
           <View style={{ marginTop: 16 }}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <Text style={{ fontFamily: font.bold, fontSize: 14, color: ui.ink }}>{statusLine}</Text>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 12,
+              }}
+            >
+              <Text style={{ fontFamily: font.bold, fontSize: 14, color: ui.ink }}>
+                {statusLine}
+              </Text>
               {!data.resolved && (
                 <Pressable onPress={() => setEditing(true)}>
-                  <Text style={{ fontFamily: font.bold, fontSize: 12, color: ui.brand }}>Change</Text>
+                  <Text style={{ fontFamily: font.bold, fontSize: 12, color: ui.brand }}>
+                    Change
+                  </Text>
                 </Pressable>
               )}
             </View>
-            <Text style={{ fontFamily: font.bold, fontSize: 9, letterSpacing: 1, textTransform: "uppercase", color: ui.muted, marginBottom: 8 }}>Who's going</Text>
+            <Text
+              style={{
+                fontFamily: font.bold,
+                fontSize: 9,
+                letterSpacing: 1,
+                textTransform: "uppercase",
+                color: ui.muted,
+                marginBottom: 8,
+              }}
+            >
+              Who's going
+            </Text>
             <Card padding={0}>
               {data.going.map((p, i) => (
-                <View key={p.id} style={{ flexDirection: "row", alignItems: "center", gap: 10, padding: 11, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: ui.hairline }}>
+                <View
+                  key={p.id}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: 11,
+                    borderTopWidth: i === 0 ? 0 : 1,
+                    borderTopColor: ui.hairline,
+                  }}
+                >
                   <Avatar initial={p.name.charAt(0).toUpperCase()} color={p.color} size={26} />
-                  <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>{p.name}</Text>
+                  <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>
+                    {p.name}
+                  </Text>
                   <Text style={{ marginLeft: "auto", color: ui.going }}>{"✓"}</Text>
                 </View>
               ))}
-              {data.going.length === 0 && <Text style={{ fontFamily: font.medium, fontSize: 12, color: ui.muted, padding: 14 }}>No one's confirmed yet.</Text>}
+              {data.going.length === 0 && (
+                <Text
+                  style={{ fontFamily: font.medium, fontSize: 12, color: ui.muted, padding: 14 }}
+                >
+                  No one's confirmed yet.
+                </Text>
+              )}
             </Card>
           </View>
         )}
@@ -126,7 +222,17 @@ export function EventDetail({ route, navigation }: Props) {
 
       <BottomSheet visible={sheet} onClose={() => setSheet(false)}>
         <Text style={{ fontFamily: font.display, fontSize: 16, color: ui.ink }}>I'll go if...</Text>
-        <Text style={{ fontFamily: font.medium, fontSize: 10, color: ui.muted, marginTop: 2, marginBottom: 10 }}>...these people are going</Text>
+        <Text
+          style={{
+            fontFamily: font.medium,
+            fontSize: 10,
+            color: ui.muted,
+            marginTop: 2,
+            marginBottom: 10,
+          }}
+        >
+          ...these people are going
+        </Text>
         <Toggle options={["At least one", "All of them"]} value={mode} onChange={setMode} />
         <View style={{ marginTop: 12, marginBottom: 4 }}>
           {data.members.map((m: Member) => {
@@ -145,7 +251,11 @@ export function EventDetail({ route, navigation }: Props) {
               </Pressable>
             );
           })}
-          {data.members.length === 0 && <Text style={{ fontFamily: font.medium, fontSize: 12, color: ui.muted }}>No one else in this group.</Text>}
+          {data.members.length === 0 && (
+            <Text style={{ fontFamily: font.medium, fontSize: 12, color: ui.muted }}>
+              No one else in this group.
+            </Text>
+          )}
         </View>
         <Button
           label="Confirm"
@@ -153,7 +263,10 @@ export function EventDetail({ route, navigation }: Props) {
           disabled={!picked.length || busy}
           onPress={() => {
             setSheet(false);
-            answer("conditional", { mode: mode === "All of them" ? "all" : "any", targetIds: picked });
+            answer("conditional", {
+              mode: mode === "All of them" ? "all" : "any",
+              targetIds: picked,
+            });
           }}
           style={{ marginTop: 12 }}
         />

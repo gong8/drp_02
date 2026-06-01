@@ -27,12 +27,27 @@ export function CreateGroup({ navigation }: Props) {
 
   return (
     <ScreenBackground>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 24 }}
+        showsVerticalScrollIndicator={false}
+      >
         <BackBar title="New group" onBack={() => navigation.goBack()} />
-        {error && <Text style={{ fontFamily: font.medium, color: ui.brand, marginBottom: 10 }}>Something went wrong. Try again.</Text>}
+        {error && (
+          <Text style={{ fontFamily: font.medium, color: ui.brand, marginBottom: 10 }}>
+            Something went wrong. Try again.
+          </Text>
+        )}
         <Field label="Group name" value={name} onChangeText={setName} placeholder="The Boys" />
-        <Text style={{ fontFamily: font.medium, fontSize: 10, color: ui.muted, marginTop: 8 }}>You can add members once it's created.</Text>
-        <Button label="Create group" variant="primary" disabled={name.trim() === "" || busy} onPress={create} style={{ marginTop: 20 }} />
+        <Text style={{ fontFamily: font.medium, fontSize: 10, color: ui.muted, marginTop: 8 }}>
+          You can add members once it's created.
+        </Text>
+        <Button
+          label="Create group"
+          variant="primary"
+          disabled={name.trim() === "" || busy}
+          onPress={create}
+          style={{ marginTop: 20 }}
+        />
       </ScrollView>
     </ScreenBackground>
   );

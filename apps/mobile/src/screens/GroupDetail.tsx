@@ -74,7 +74,9 @@ export function GroupDetail({ route, navigation }: Props) {
       <ScreenBackground>
         <View style={{ padding: 16 }}>
           <BackBar title="Back" onBack={() => navigation.goBack()} />
-          <Text style={{ fontFamily: font.medium, color: ui.muted }}>{error ? "Couldn't reach the server." : "Group not found."}</Text>
+          <Text style={{ fontFamily: font.medium, color: ui.muted }}>
+            {error ? "Couldn't reach the server." : "Group not found."}
+          </Text>
         </View>
       </ScreenBackground>
     );
@@ -84,7 +86,10 @@ export function GroupDetail({ route, navigation }: Props) {
 
   return (
     <ScreenBackground>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 24 }}
+        showsVerticalScrollIndicator={false}
+      >
         <BackBar title={data.name} onBack={() => navigation.goBack()} />
 
         <Field
@@ -93,33 +98,72 @@ export function GroupDetail({ route, navigation }: Props) {
           onChangeText={setNameDraft}
           right={
             renamed ? (
-              <Pressable disabled={busy} onPress={() => run(() => trpc.groups.rename.mutate({ id: groupId, name: nameDraft.trim() }))}>
+              <Pressable
+                disabled={busy}
+                onPress={() =>
+                  run(() => trpc.groups.rename.mutate({ id: groupId, name: nameDraft.trim() }))
+                }
+              >
                 <Text style={{ fontFamily: font.bold, fontSize: 12, color: ui.brand }}>Save</Text>
               </Pressable>
             ) : undefined
           }
         />
 
-        <Text style={{ fontFamily: font.bold, fontSize: 9, letterSpacing: 1, textTransform: "uppercase", color: ui.ink, marginTop: 16, marginBottom: 6 }}>
+        <Text
+          style={{
+            fontFamily: font.bold,
+            fontSize: 9,
+            letterSpacing: 1,
+            textTransform: "uppercase",
+            color: ui.ink,
+            marginTop: 16,
+            marginBottom: 6,
+          }}
+        >
           Members ({data.members.length})
         </Text>
         <Card padding={0}>
           {data.members.map((m, i) => (
-            <View key={m.id} style={{ flexDirection: "row", alignItems: "center", gap: 10, padding: 11, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: ui.hairline }}>
+            <View
+              key={m.id}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 10,
+                padding: 11,
+                borderTopWidth: i === 0 ? 0 : 1,
+                borderTopColor: ui.hairline,
+              }}
+            >
               <Avatar initial={m.name.charAt(0).toUpperCase()} color={m.color} size={28} />
               <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>{m.name}</Text>
-              <Pressable hitSlop={10} disabled={busy} onPress={() => run(() => trpc.groups.removeMember.mutate({ groupId, userId: m.id }))} style={{ marginLeft: "auto" }}>
+              <Pressable
+                hitSlop={10}
+                disabled={busy}
+                onPress={() =>
+                  run(() => trpc.groups.removeMember.mutate({ groupId, userId: m.id }))
+                }
+                style={{ marginLeft: "auto" }}
+              >
                 <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.muted }}>{"×"}</Text>
               </Pressable>
             </View>
           ))}
         </Card>
 
-        <Button label="+ Add to group" variant="outline" onPress={openAdd} style={{ marginTop: 16 }} />
+        <Button
+          label="+ Add to group"
+          variant="outline"
+          onPress={openAdd}
+          style={{ marginTop: 16 }}
+        />
       </ScrollView>
 
       <BottomSheet visible={addOpen} onClose={() => setAddOpen(false)}>
-        <Text style={{ fontFamily: font.display, fontSize: 16, color: ui.ink, marginBottom: 10 }}>Add to group</Text>
+        <Text style={{ fontFamily: font.display, fontSize: 16, color: ui.ink, marginBottom: 10 }}>
+          Add to group
+        </Text>
         <ScrollView style={{ maxHeight: 280 }} showsVerticalScrollIndicator={false}>
           {addable.map((u) => (
             <Pressable
@@ -133,10 +177,23 @@ export function GroupDetail({ route, navigation }: Props) {
             >
               <Avatar initial={u.name.charAt(0).toUpperCase()} color={u.color} size={26} />
               <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>{u.name}</Text>
-              <Text style={{ marginLeft: "auto", fontFamily: font.display, fontSize: 16, color: ui.brand }}>+</Text>
+              <Text
+                style={{
+                  marginLeft: "auto",
+                  fontFamily: font.display,
+                  fontSize: 16,
+                  color: ui.brand,
+                }}
+              >
+                +
+              </Text>
             </Pressable>
           ))}
-          {addable.length === 0 && <Text style={{ fontFamily: font.medium, fontSize: 12, color: ui.muted }}>Everyone's already in.</Text>}
+          {addable.length === 0 && (
+            <Text style={{ fontFamily: font.medium, fontSize: 12, color: ui.muted }}>
+              Everyone's already in.
+            </Text>
+          )}
         </ScrollView>
       </BottomSheet>
     </ScreenBackground>

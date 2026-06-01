@@ -11,11 +11,17 @@ describe("revealGoing", () => {
 
   it("reveals the IN set once respond-by has passed", () => {
     expect(
-      revealGoing([yes("a"), yes("b")], { respondByAtMs: 1000, status: "open", nowMs: 2000 })?.sort(),
+      revealGoing([yes("a"), yes("b")], {
+        respondByAtMs: 1000,
+        status: "open",
+        nowMs: 2000,
+      })?.sort(),
     ).toEqual(["a", "b"]);
   });
 
   it("reveals immediately when the event is already resolved", () => {
-    expect(revealGoing([yes("a")], { respondByAtMs: 9999, status: "resolved", nowMs: 0 })).toEqual(["a"]);
+    expect(revealGoing([yes("a")], { respondByAtMs: 9999, status: "resolved", nowMs: 0 })).toEqual([
+      "a",
+    ]);
   });
 });

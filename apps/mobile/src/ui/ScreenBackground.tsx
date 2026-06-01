@@ -8,8 +8,15 @@ import { ui } from "../theme";
 export function ScreenBackground({ children }: { children: ReactNode }) {
   const insets = useSafeAreaInsets();
   return (
-    <LinearGradient colors={ui.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }}>
-      <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}>{children}</View>
+    <LinearGradient
+      colors={ui.gradient}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={{ flex: 1 }}
+    >
+      <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}>
+        {children}
+      </View>
     </LinearGradient>
   );
 }

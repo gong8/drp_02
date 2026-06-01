@@ -24,13 +24,39 @@ export function Field({
 }) {
   return (
     <View style={style}>
-      <Text style={{ fontFamily: font.bold, fontSize: 9, letterSpacing: 1, textTransform: "uppercase", color: ui.ink, marginBottom: 5 }}>
+      <Text
+        style={{
+          fontFamily: font.bold,
+          fontSize: 9,
+          letterSpacing: 1,
+          textTransform: "uppercase",
+          color: ui.ink,
+          marginBottom: 5,
+        }}
+      >
         {label}
       </Text>
       <HardShadow radius={ui.rInput} offset={3}>
-        <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: ui.surface, borderWidth: ui.border, borderColor: ui.ink, borderRadius: ui.rInput, paddingHorizontal: 11 }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            backgroundColor: ui.surface,
+            borderWidth: ui.border,
+            borderColor: ui.ink,
+            borderRadius: ui.rInput,
+            paddingHorizontal: 11,
+          }}
+        >
           <TextInput
-            style={{ flex: 1, fontFamily: font.medium, fontSize: 13, color: ui.ink, paddingVertical: 10, minHeight: multiline ? 64 : undefined }}
+            style={{
+              flex: 1,
+              fontFamily: font.medium,
+              fontSize: 13,
+              color: ui.ink,
+              paddingVertical: 10,
+              minHeight: multiline ? 64 : undefined,
+            }}
             value={value}
             onChangeText={onChangeText}
             placeholder={placeholder}

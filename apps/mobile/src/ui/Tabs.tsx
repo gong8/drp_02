@@ -18,9 +18,16 @@ export function Tabs<T extends string>({
           <Pressable
             key={opt}
             onPress={() => onChange(opt)}
-            style={{ backgroundColor: on ? ui.ink : "transparent", borderRadius: ui.rTab, paddingVertical: 5, paddingHorizontal: 11 }}
+            style={{
+              backgroundColor: on ? ui.ink : "transparent",
+              borderRadius: ui.rTab,
+              paddingVertical: 5,
+              paddingHorizontal: 11,
+            }}
           >
-            <Text style={{ fontFamily: font.bold, fontSize: 11, color: on ? "#fff" : ui.muted }}>{opt}</Text>
+            <Text style={{ fontFamily: font.bold, fontSize: 11, color: on ? "#fff" : ui.muted }}>
+              {opt}
+            </Text>
           </Pressable>
         );
       })}

@@ -42,27 +42,73 @@ export function GroupsList({ navigation }: Props) {
 
   return (
     <ScreenBackground>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
-        <Heading overline={`${groups.length} groups`} title="Your groups" right={<Avatar initial="A" color={ui.muted} size={28} />} />
-        {error && <Text style={{ fontFamily: font.medium, color: ui.muted, marginBottom: 12 }}>Couldn't reach the server.</Text>}
+      <ScrollView
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 24 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <Heading
+          overline={`${groups.length} groups`}
+          title="Your groups"
+          right={<Avatar initial="A" color={ui.muted} size={28} />}
+        />
+        {error && (
+          <Text style={{ fontFamily: font.medium, color: ui.muted, marginBottom: 12 }}>
+            Couldn't reach the server.
+          </Text>
+        )}
 
         {groups.map((g) => (
-          <Pressable key={g.id} onPress={() => navigation.navigate("GroupDetail", { groupId: g.id })}>
+          <Pressable
+            key={g.id}
+            onPress={() => navigation.navigate("GroupDetail", { groupId: g.id })}
+          >
             <Card style={{ marginBottom: 12 }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 11 }}>
                 <Avatar initial={initials(g.name)} color={colorFor(g.id)} />
                 <View>
-                  <Text style={{ fontFamily: font.display, fontSize: 15, color: ui.ink }}>{g.name}</Text>
-                  <Text style={{ fontFamily: font.medium, fontSize: 10, color: ui.muted, marginTop: 1 }}>{g.memberCount} members</Text>
+                  <Text style={{ fontFamily: font.display, fontSize: 15, color: ui.ink }}>
+                    {g.name}
+                  </Text>
+                  <Text
+                    style={{ fontFamily: font.medium, fontSize: 10, color: ui.muted, marginTop: 1 }}
+                  >
+                    {g.memberCount} members
+                  </Text>
                 </View>
-                <Text style={{ marginLeft: "auto", fontFamily: font.display, fontSize: 18, color: ui.ink }}>{"›"}</Text>
+                <Text
+                  style={{
+                    marginLeft: "auto",
+                    fontFamily: font.display,
+                    fontSize: 18,
+                    color: ui.ink,
+                  }}
+                >
+                  {"›"}
+                </Text>
               </View>
             </Card>
           </Pressable>
         ))}
-        {groups.length === 0 && <Text style={{ fontFamily: font.medium, fontSize: 12, color: ui.muted, textAlign: "center", marginTop: 16 }}>No groups yet.</Text>}
+        {groups.length === 0 && (
+          <Text
+            style={{
+              fontFamily: font.medium,
+              fontSize: 12,
+              color: ui.muted,
+              textAlign: "center",
+              marginTop: 16,
+            }}
+          >
+            No groups yet.
+          </Text>
+        )}
 
-        <Button label="New group" variant="primary" onPress={() => navigation.navigate("CreateGroup")} style={{ marginTop: 8 }} />
+        <Button
+          label="New group"
+          variant="primary"
+          onPress={() => navigation.navigate("CreateGroup")}
+          style={{ marginTop: 8 }}
+        />
       </ScrollView>
     </ScreenBackground>
   );

@@ -35,7 +35,9 @@ export function SignIn() {
 
   return (
     <ScreenBackground>
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 24 }}>
+      <View
+        style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 24 }}
+      >
         <Text style={{ fontFamily: font.black, fontSize: 44, letterSpacing: -1.5, color: ui.ink }}>
           BeThere
         </Text>

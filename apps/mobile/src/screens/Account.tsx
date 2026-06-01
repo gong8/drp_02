@@ -37,7 +37,9 @@ export function Account() {
             <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: font.display, fontSize: 16, color: ui.ink }}>{name}</Text>
               {email ? (
-                <Text style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted, marginTop: 2 }}>
+                <Text
+                  style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted, marginTop: 2 }}
+                >
                   {email}
                 </Text>
               ) : null}

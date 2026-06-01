@@ -24,7 +24,9 @@ export function Chip({
           paddingHorizontal: 12,
         }}
       >
-        <Text style={{ fontFamily: font.bold, fontSize: 12, color: selected ? "#fff" : ui.ink }}>{label}</Text>
+        <Text style={{ fontFamily: font.bold, fontSize: 12, color: selected ? "#fff" : ui.ink }}>
+          {label}
+        </Text>
       </Pressable>
     </HardShadow>
   );
