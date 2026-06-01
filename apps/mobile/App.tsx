@@ -3,6 +3,10 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { StatusBar } from "expo-status-bar";
+import { useFonts } from "expo-font";
+import { Archivo_800ExtraBold, Archivo_900Black } from "@expo-google-fonts/archivo";
+import { Inter_400Regular, Inter_500Medium, Inter_700Bold } from "@expo-google-fonts/inter";
+import { SpaceMono_700Bold } from "@expo-google-fonts/space-mono";
 import type { ReactNode } from "react";
 import { Platform, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -116,6 +120,15 @@ function Shell({ children }: { children: ReactNode }) {
 }
 
 export default function App() {
+  const [fontsLoaded] = useFonts({
+    Archivo_800ExtraBold,
+    Archivo_900Black,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_700Bold,
+    SpaceMono_700Bold,
+  });
+  if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: "#FCEFE8" }} />;
   return (
     <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
       <DevAuthProvider>
