@@ -2,10 +2,11 @@ import { useSSO } from "@clerk/clerk-expo";
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import { useState } from "react";
-import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Text, View } from "react-native";
 import { useDevAuth } from "../lib/auth";
 import { devAuthEnabled } from "../lib/clerk";
-import { colors, radius, space } from "../theme";
+import { font, ui } from "../theme";
+import { Button, ScreenBackground } from "../ui";
 
 // Completes any pending OAuth redirect (web/native handoff back into the app).
 WebBrowser.maybeCompleteAuthSession();
@@ -33,47 +34,40 @@ export function SignIn() {
   };
 
   return (
-    <View style={styles.root}>
-      <View style={styles.card}>
-        <Text style={styles.brand}>BeThere</Text>
-        <Text style={styles.sub}>Plan real meetups with your groups.</Text>
-
-        <Pressable style={styles.primary} onPress={onGoogle} disabled={busy}>
-          {busy ? (
-            <ActivityIndicator color={colors.surface} />
-          ) : (
-            <Text style={styles.primaryText}>Continue with Google</Text>
-          )}
-        </Pressable>
-
-        {devAuthEnabled ? (
-          <Pressable style={styles.secondary} onPress={signInDev} disabled={busy}>
-            <Text style={styles.secondaryText}>Continue as test user</Text>
-          </Pressable>
-        ) : null}
+    <ScreenBackground>
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 24 }}>
+        <Text style={{ fontFamily: font.black, fontSize: 44, letterSpacing: -1.5, color: ui.ink }}>
+          BeThere
+        </Text>
+        <Text
+          style={{
+            fontFamily: font.medium,
+            fontSize: 14,
+            color: ui.muted,
+            marginTop: 6,
+            marginBottom: 28,
+            textAlign: "center",
+          }}
+        >
+          Plan real meetups with your groups.
+        </Text>
+        <View style={{ width: "100%", maxWidth: 320, gap: 12 }}>
+          <Button
+            label={busy ? "Connecting..." : "Continue with Google"}
+            variant="primary"
+            onPress={onGoogle}
+            disabled={busy}
+          />
+          {devAuthEnabled ? (
+            <Button
+              label="Continue as test user"
+              variant="outline"
+              onPress={signInDev}
+              disabled={busy}
+            />
+          ) : null}
+        </View>
       </View>
-    </View>
+    </ScreenBackground>
   );
 }
-
-const styles = StyleSheet.create({
-  root: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.bg },
-  card: { width: "100%", maxWidth: 360, paddingHorizontal: space.xl, gap: space.md },
-  brand: { fontSize: 34, fontWeight: "700", color: colors.ink, textAlign: "center" },
-  sub: { fontSize: 15, color: colors.muted, textAlign: "center", marginBottom: space.lg },
-  primary: {
-    backgroundColor: colors.accentInk,
-    borderRadius: radius.lg,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
-  primaryText: { color: colors.surface, fontSize: 16, fontWeight: "600" },
-  secondary: {
-    borderWidth: 1,
-    borderColor: colors.line,
-    borderRadius: radius.lg,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
-  secondaryText: { color: colors.ink, fontSize: 16, fontWeight: "600" },
-});
