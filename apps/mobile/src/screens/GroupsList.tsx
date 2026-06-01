@@ -52,11 +52,7 @@ export function GroupsList({ navigation }: Props) {
         contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 24 }}
         showsVerticalScrollIndicator={false}
       >
-        <Heading
-          overline={`${groups.length} groups`}
-          title="Your groups"
-          right={<AccountAvatar />}
-        />
+        <Heading title="Your groups" right={<AccountAvatar />} />
         {error && (
           <Text style={{ fontFamily: font.medium, color: ui.muted, marginBottom: 12 }}>
             Couldn't reach the server.
