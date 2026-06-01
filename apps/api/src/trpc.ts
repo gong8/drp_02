@@ -14,17 +14,32 @@ export async function createContext({ req }: CreateFastifyContextOptions) {
   // userId is nullable here - protectedProcedure does the rejecting.
   const devBypass = process.env.DEV_AUTH_BYPASS === "1" || process.env.DEV_AUTH_BYPASS === "true";
 
+  const authHeader = headerString(req.headers.authorization);
   const { userId, claims } = await resolveAuth(
     {
-      authHeader: headerString(req.headers.authorization),
+      authHeader,
       userIdHeader: headerString(req.headers["x-user-id"]),
       devBypass,
     },
     verifyClerkToken,
   );
 
-  // First-seen real users get a row so groups/RSVPs can reference them.
-  if (claims) await upsertUser({ id: claims.sub, name: claims.name, email: claims.email });
+  // A bearer token that did not verify (bad/expired token, or a server-side CLERK_JWT_KEY
+  // misconfig) degrades to unauthenticated - log it so a silent misconfiguration is
+  // debuggable rather than looking like a plain client error.
+  if (authHeader && !userId) {
+    req.log.warn({ scope: "auth" }, "bearer token present but did not verify");
+  }
+
+  // First-seen real users get a row so groups/RSVPs can reference them. Best-effort: a
+  // transient write failure must not fail an otherwise-valid authed request.
+  if (claims) {
+    try {
+      await upsertUser({ id: claims.sub, name: claims.name, email: claims.email });
+    } catch (err) {
+      req.log.error({ scope: "auth", err }, "user upsert failed (continuing)");
+    }
+  }
 
   return { userId, log: req.log };
 }
