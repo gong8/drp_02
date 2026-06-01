@@ -1,9 +1,10 @@
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ScrollView, Text } from "react-native";
 import type { GroupsStackParams } from "../../App";
 import { trpc } from "../lib/trpc";
-import { colors, radius, space } from "../theme";
+import { font, ui } from "../theme";
+import { BackBar, Button, Field, ScreenBackground } from "../ui";
 
 type Props = NativeStackScreenProps<GroupsStackParams, "CreateGroup">;
 
@@ -25,49 +26,14 @@ export function CreateGroup({ navigation }: Props) {
   }
 
   return (
-    <View style={s.screen}>
-      {error && <Text style={s.err}>Something went wrong. Try again.</Text>}
-      <Text style={s.label}>Group name</Text>
-      <TextInput
-        style={s.input}
-        value={name}
-        onChangeText={setName}
-        placeholder="The Boys"
-        placeholderTextColor={colors.muted}
-        autoFocus
-      />
-      <Pressable
-        style={[s.btn, (name.trim() === "" || busy) && s.dim]}
-        disabled={name.trim() === "" || busy}
-        onPress={create}
-      >
-        <Text style={s.btnLabel}>Create group</Text>
-      </Pressable>
-    </View>
+    <ScreenBackground>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
+        <BackBar title="New group" onBack={() => navigation.goBack()} />
+        {error && <Text style={{ fontFamily: font.medium, color: ui.brand, marginBottom: 10 }}>Something went wrong. Try again.</Text>}
+        <Field label="Group name" value={name} onChangeText={setName} placeholder="The Boys" />
+        <Text style={{ fontFamily: font.medium, fontSize: 10, color: ui.muted, marginTop: 8 }}>You can add members once it's created.</Text>
+        <Button label="Create group" variant="primary" disabled={name.trim() === "" || busy} onPress={create} style={{ marginTop: 20 }} />
+      </ScrollView>
+    </ScreenBackground>
   );
 }
-
-const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg, padding: 22 },
-  err: { fontSize: 14, color: "#C0573F", marginBottom: space.md },
-  label: { fontSize: 13.5, fontWeight: "600", color: colors.muted, marginBottom: 6 },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.line,
-    borderRadius: radius.md,
-    backgroundColor: colors.surface,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: colors.ink,
-  },
-  btn: {
-    marginTop: space.lg,
-    backgroundColor: colors.accent,
-    borderRadius: radius.lg,
-    paddingVertical: 15,
-    alignItems: "center",
-  },
-  btnLabel: { fontSize: 15, fontWeight: "700", color: "#fff" },
-  dim: { opacity: 0.4 },
-});
