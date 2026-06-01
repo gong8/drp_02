@@ -10,6 +10,6 @@
       "bundler": "metro",
       "output": "single"
     },
-    "plugins": ["expo-web-browser", "expo-secure-store"]
+    "plugins": ["expo-web-browser", "expo-secure-store", "expo-font"]
   }
 }
