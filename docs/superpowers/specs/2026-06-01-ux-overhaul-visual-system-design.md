@@ -114,3 +114,12 @@ All seven existing screens, restyled to the above. Behaviour and data unchanged.
 - Chosen direction label: "Rounded + Sticker, Peach to Lavender".
 - Inspiration: user-provided neobrutalist dashboard / help-center reference (gradient background, boxy outlined cards, heavy headings, mono chips).
 - Supersedes the visual identity in `theme.ts` and the aesthetic guardrails noted in `docs/mockups/m2/README.md` for future work.
+
+## 9. Execution addendum (2026-06-01)
+
+A Clerk auth + web feature landed on `dev` after this spec was approved, so the build adapted:
+- **Navigation:** bottom tabs, now THREE - Meetups / Groups / **Account**. Sign-out lives in the Account tab, replacing the old header `AccountButton` (removed).
+- **Auth screens in scope:** `SignIn` and a new `Account` screen were restyled into this system; the Clerk SSO + dev-bypass logic is unchanged.
+- **Home filter:** All / Going / Awaiting / Declined (all four shipped).
+- **Header avatar:** Home and Groups show the real signed-in user's initial via an `AccountAvatar` component (decorative; identity and sign-out are the Account tab).
+- **Data:** `events.mine.goingPreview` items carry `{ color, initial, uid }`; `uid` is the stable list key.

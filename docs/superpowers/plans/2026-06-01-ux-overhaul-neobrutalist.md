@@ -1754,3 +1754,16 @@ git commit -m "fix(mobile): UX overhaul polish from end-to-end pass (DRP-25)"
 - **Placeholder scan:** no TBD/TODO; every code step has complete code; every run step has an expected result.
 - **Type consistency:** primitive prop names are used identically across screens (`Button` label/variant/disabled/onPress; `Field` label/value/onChangeText/right; `Tabs`/`Toggle` options/value/onChange; `Avatar` initial/color/size; `Card` padding/radius/style; `DateChip` small; `StatusCheck` status; `SelectCheck` selected). `events.mine` adds `goingCount: number | null` and `goingPreview: {color,initial}[]`, consumed exactly that way in Dashboard. The conditional sheet maps the UI labels ("At least one"/"All of them") to the API `cond.mode` ("any"/"all") in `answer(...)`.
 - **Open risks called out:** RN hard-shadow technique (Task 6) and Field/`right` slot are the only non-obvious pieces; both have full code. Description field intentionally dropped from CreateEvent (noted, reversible).
+
+---
+
+## Execution addendum (2026-06-01)
+
+A Clerk auth + web feature landed on `dev` after this plan was written, so several tasks were adapted during execution (all on `feat/drp-25-ux-overhaul`):
+- **Task 10 reworked:** `App.tsx` keeps `ClerkProvider > DevAuthProvider > SafeAreaProvider > Shell > Gate`; native headers are hidden; the bottom tabs became THREE - Meetups / Groups / **Account**. A new `Account` screen (`apps/mobile/src/screens/Account.tsx`) holds sign-out for both Clerk and dev users, and the orphaned `AccountButton` was deleted.
+- **Added screens/components:** restyled `SignIn`; an `AccountAvatar` component (`apps/mobile/src/components/AccountAvatar.tsx`) for the Home/Groups header initial.
+- **Home:** the `Declined` filter tab was added, so the filter is All / Going / Awaiting / Declined (per the spec).
+- **API:** `events.mine.goingPreview` items include `uid` (used as a stable React key).
+- **ScreenBackground** applies only the top safe-area inset (the bottom tab bar owns the bottom).
+
+All gates green at completion: `pnpm lint`, `pnpm typecheck`, `pnpm test` (23 tests).

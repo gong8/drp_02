@@ -1,47 +1,33 @@
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { useCallback, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback, useMemo, useState } from "react";
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
-import { countdown, dateKey, formatDate, formatTime } from "../lib/format";
+import { AccountAvatar } from "../components/AccountAvatar";
+import { countdown, formatTime } from "../lib/format";
 import { trpc } from "../lib/trpc";
-import { colors, radius, space, status } from "../theme";
+import { font, ui } from "../theme";
+import {
+  Avatar,
+  Card,
+  DateChip,
+  Heading,
+  ScreenBackground,
+  StatusCheck,
+  StickerTag,
+  Tabs,
+} from "../ui";
 
 type Ev = Awaited<ReturnType<typeof trpc.events.mine.query>>[number];
 type Props = NativeStackScreenProps<MeetupsStackParams, "Dashboard">;
-
-const SECTIONS = [
-  {
-    key: "awaiting",
-    label: "Awaiting Your Response",
-    color: status.pending,
-    soft: status.pendingSoft,
-  },
-  { key: "going", label: "Going", color: status.going, soft: status.goingSoft },
-  { key: "declined", label: "Declined", color: status.declined, soft: status.declinedSoft },
-] as const;
-
-function byDate(events: Ev[]): { key: string; date: string; items: Ev[] }[] {
-  const sorted = [...events].sort(
-    (a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
-  );
-  const groups: { key: string; date: string; items: Ev[] }[] = [];
-  for (const e of sorted) {
-    const key = dateKey(e.startsAt);
-    let g = groups.find((x) => x.key === key);
-    if (!g) {
-      g = { key, date: formatDate(e.startsAt), items: [] };
-      groups.push(g);
-    }
-    g.items.push(e);
-  }
-  return groups;
-}
+const FILTERS = ["All", "Going", "Awaiting", "Declined"] as const;
+type Filter = (typeof FILTERS)[number];
 
 export function Dashboard({ navigation }: Props) {
   const [events, setEvents] = useState<Ev[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [filter, setFilter] = useState<Filter>("All");
 
   useFocusEffect(
     useCallback(() => {
@@ -57,134 +43,177 @@ export function Dashboard({ navigation }: Props) {
     }, []),
   );
 
+  // Featured = the soonest meet still awaiting my response.
+  const featured = useMemo(() => {
+    return [...events]
+      .filter((e) => e.myStatus === "awaiting")
+      .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())[0];
+  }, [events]);
+
+  const list = useMemo(() => {
+    const rest = events.filter((e) => e.id !== featured?.id);
+    const matches = (e: Ev) =>
+      filter === "All" ||
+      (filter === "Going" && e.myStatus === "going") ||
+      (filter === "Awaiting" && e.myStatus === "awaiting") ||
+      (filter === "Declined" && e.myStatus === "declined");
+    return rest
+      .filter(matches)
+      .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+  }, [events, featured, filter]);
+
   if (loading) {
     return (
-      <View style={s.center}>
-        <ActivityIndicator color={colors.accent} />
-      </View>
-    );
-  }
-  if (error) {
-    return (
-      <View style={s.center}>
-        <Text style={s.calm}>Couldn't reach the server.</Text>
-      </View>
+      <ScreenBackground>
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <ActivityIndicator color={ui.ink} />
+        </View>
+      </ScreenBackground>
     );
   }
 
   return (
-    <View style={s.screen}>
-      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
-        {SECTIONS.map((sec) => {
-          const inSec = events.filter((e) => e.myStatus === sec.key);
-          if (inSec.length === 0) return null;
-          return (
-            <View key={sec.key} style={s.section}>
-              <View style={[s.sectionHead, { backgroundColor: sec.soft }]}>
-                <Text style={[s.sectionLabel, { color: sec.color }]}>{sec.label}</Text>
-              </View>
-              {byDate(inSec).map((d) => (
-                <View key={d.key}>
-                  <Text style={s.dateHead}>{d.date}</Text>
-                  {d.items.map((e) => (
-                    <Pressable
-                      key={e.id}
-                      style={s.card}
-                      onPress={() => navigation.navigate("EventDetail", { eventId: e.id })}
-                    >
-                      <Text style={s.group}>{e.groupName}</Text>
-                      <View style={s.cardRow}>
-                        <Text style={s.title}>{e.title}</Text>
-                        <Text style={s.time}>{formatTime(e.startsAt)}</Text>
-                      </View>
-                      <View style={s.cardRow}>
-                        <View style={[s.pill, { backgroundColor: sec.soft }]}>
-                          <Text style={[s.pillText, { color: sec.color }]}>
-                            {sec.key === "awaiting"
-                              ? `Pending ${countdown(e.respondByAt)}`
-                              : sec.label}
-                          </Text>
-                        </View>
-                        <Text style={s.place}>{e.location}</Text>
-                      </View>
-                    </Pressable>
-                  ))}
-                </View>
-              ))}
-            </View>
-          );
-        })}
-        {events.length === 0 && <Text style={s.calm}>No meets yet. Suggest one below.</Text>}
-      </ScrollView>
+    <ScreenBackground>
+      <ScrollView
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 24 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <Heading
+          overline={`${events.length} this week`}
+          title="Your meets"
+          right={<AccountAvatar />}
+        />
 
-      <View style={s.footer}>
-        <Pressable style={s.btn} onPress={() => navigation.navigate("CreateEvent")}>
-          <Text style={s.btnLabel}>Suggest a Meetup!!!!!!!</Text>
-        </Pressable>
-      </View>
-    </View>
+        {error && (
+          <Text style={{ fontFamily: font.medium, color: ui.muted, marginBottom: 12 }}>
+            Couldn't reach the server.
+          </Text>
+        )}
+
+        {featured && (
+          <Pressable onPress={() => navigation.navigate("EventDetail", { eventId: featured.id })}>
+            <Card style={{ marginBottom: 16 }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ fontFamily: font.display, fontSize: 18, color: ui.ink }}>
+                  {featured.title}
+                </Text>
+                <StickerTag label={`RSVP ${countdown(featured.respondByAt)}`} />
+              </View>
+              <Text
+                style={{ fontFamily: font.medium, fontSize: 10, color: ui.muted, marginTop: 2 }}
+              >
+                {featured.groupName} {"·"} {featured.location}
+              </Text>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginTop: 11,
+                }}
+              >
+                <DateChip>{formatTime(featured.startsAt)}</DateChip>
+                {featured.goingCount === null ? (
+                  <Text style={{ fontFamily: font.medium, fontSize: 9, color: ui.muted }}>
+                    Who's in shows after the timer
+                  </Text>
+                ) : (
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    {featured.goingPreview.map((p, i) => (
+                      <View key={p.uid} style={{ marginLeft: i === 0 ? 0 : -6 }}>
+                        <Avatar initial={p.initial} color={p.color} size={18} />
+                      </View>
+                    ))}
+                    <Text
+                      style={{ fontFamily: font.bold, fontSize: 9, color: ui.muted, marginLeft: 5 }}
+                    >
+                      +{featured.goingCount} going
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </Card>
+          </Pressable>
+        )}
+
+        <Tabs options={FILTERS} value={filter} onChange={setFilter} />
+
+        <Card padding={0}>
+          <Pressable
+            onPress={() => navigation.navigate("CreateEvent")}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              padding: 11,
+              borderBottomWidth: 1,
+              borderBottomColor: ui.ink,
+              borderStyle: "dashed",
+            }}
+          >
+            <Text style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted }}>
+              Suggest a meet...
+            </Text>
+            <View
+              style={{
+                marginLeft: "auto",
+                width: 24,
+                height: 24,
+                borderRadius: 7,
+                borderWidth: 1,
+                borderColor: ui.ink,
+                backgroundColor: ui.brand,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Text
+                style={{ fontFamily: font.display, fontSize: 14, color: "#fff", marginTop: -1 }}
+              >
+                +
+              </Text>
+            </View>
+          </Pressable>
+          {list.map((e) => (
+            <Pressable
+              key={e.id}
+              onPress={() => navigation.navigate("EventDetail", { eventId: e.id })}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 9,
+                padding: 11,
+                borderTopWidth: 1,
+                borderTopColor: ui.hairline,
+              }}
+            >
+              <StatusCheck status={e.myStatus} />
+              <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>{e.title}</Text>
+              <View style={{ marginLeft: "auto" }}>
+                <DateChip small>{formatTime(e.startsAt)}</DateChip>
+              </View>
+            </Pressable>
+          ))}
+          {list.length === 0 && (
+            <Text
+              style={{
+                fontFamily: font.medium,
+                fontSize: 12,
+                color: ui.muted,
+                padding: 14,
+                textAlign: "center",
+              }}
+            >
+              Nothing here yet.
+            </Text>
+          )}
+        </Card>
+      </ScrollView>
+    </ScreenBackground>
   );
 }
-
-const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
-  scroll: { paddingHorizontal: 18, paddingTop: 8, paddingBottom: 24 },
-  center: {
-    flex: 1,
-    backgroundColor: colors.bg,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 22,
-  },
-  calm: { fontSize: 15, color: colors.muted, textAlign: "center", marginTop: 24 },
-  section: { marginBottom: space.lg },
-  sectionHead: {
-    borderRadius: radius.md,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    marginBottom: space.sm,
-  },
-  sectionLabel: { fontSize: 14, fontWeight: "700" },
-  dateHead: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: colors.muted,
-    marginTop: space.sm,
-    marginBottom: 6,
-  },
-  card: {
-    borderWidth: 1,
-    borderColor: colors.line,
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
-    padding: 14,
-    marginBottom: space.sm,
-  },
-  group: { fontSize: 12.5, fontWeight: "600", color: colors.muted, marginBottom: 4 },
-  cardRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 4,
-  },
-  title: { fontSize: 17, fontWeight: "700", color: colors.ink },
-  time: { fontSize: 15, fontWeight: "600", color: colors.accentInk },
-  place: {
-    fontSize: 13,
-    fontWeight: "500",
-    color: colors.muted,
-    flexShrink: 1,
-    textAlign: "right",
-    marginLeft: 8,
-  },
-  pill: { borderRadius: 999, paddingVertical: 4, paddingHorizontal: 10 },
-  pillText: { fontSize: 12, fontWeight: "700" },
-  footer: { paddingHorizontal: 18, paddingBottom: 16, paddingTop: space.sm },
-  btn: {
-    backgroundColor: colors.accent,
-    borderRadius: radius.lg,
-    paddingVertical: 15,
-    alignItems: "center",
-  },
-  btnLabel: { fontSize: 15, fontWeight: "700", color: "#fff" },
-});
