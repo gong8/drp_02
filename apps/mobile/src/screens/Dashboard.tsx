@@ -466,9 +466,9 @@ export function Dashboard({ navigation }: Props) {
               setFloats(f);
               setHasGroups(g.length > 0);
               setError(false);
-              // Schedule local deadline/moment reminders from the freshest payload (no-op unless
-              // something reminder-relevant changed). Device-local; fine for supervised demos.
-              syncReminders(e);
+              // Schedule local deadline/moment/brewing reminders from the freshest payload (no-op
+              // unless something reminder-relevant changed). Device-local; fine for supervised demos.
+              syncReminders(e, f);
             }
           })
           .catch(() => active && setError(true))
