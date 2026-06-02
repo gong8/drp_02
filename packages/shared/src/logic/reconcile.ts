@@ -60,7 +60,9 @@ export function reconcileFloat(
   const ideaVotes: CandidateReactionInput[] = votes
     .filter((v) => ideaIds.includes(v.suggestionId))
     .map((v) => ({ candidateId: v.suggestionId, userId: v.userId }));
-  const ideaBackers = new Map(tallyCandidates(ideaIds, ideaVotes).map((t) => [t.candidateId, t.userIds]));
+  const ideaBackers = new Map(
+    tallyCandidates(ideaIds, ideaVotes).map((t) => [t.candidateId, t.userIds]),
+  );
 
   const ideasByCreated = [...ideas].sort((a, b) => a.createdAtMs - b.createdAtMs);
   let winner: { id: string; text: string; backers: string[] } | null = null;
@@ -93,7 +95,12 @@ export function reconcileFloat(
   }
 
   if (bestTime && bestTime.n >= TIME_CONSENSUS) {
-    return { kind: "moment", ideaId: winner.id, ideaText: winner.text, startsAtMs: bestTime.startsAtMs };
+    return {
+      kind: "moment",
+      ideaId: winner.id,
+      ideaText: winner.text,
+      startsAtMs: bestTime.startsAtMs,
+    };
   }
 
   // 4. Hot idea, no agreed time -> collecting fallback. Prefer the float's own time chips; if it has

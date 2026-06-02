@@ -12,7 +12,7 @@ import {
   responses,
   users,
 } from "./schema.js";
-import { candId, dayAt, DEMO_USERS, GROUPS, PLANS } from "./seed-data.js";
+import { candId, DEMO_USERS, dayAt, GROUPS, PLANS } from "./seed-data.js";
 
 async function insertDemoData(): Promise<void> {
   for (const u of DEMO_USERS) {
@@ -35,7 +35,8 @@ async function insertDemoData(): Promise<void> {
     // Floats carry no candidates; their startsAt is a window-default placeholder and respondByAt
     // falls back to the tip deadline.
     const startsAt = chosen?.startsAt ?? sorted[0]?.startsAt ?? p.lockAt ?? dayAt(2, 19);
-    const respondByAt = p.momentEndsAt ?? sorted[sorted.length - 1]?.startsAt ?? p.lockAt ?? startsAt;
+    const respondByAt =
+      p.momentEndsAt ?? sorted[sorted.length - 1]?.startsAt ?? p.lockAt ?? startsAt;
 
     await db.insert(events).values({
       id: p.id,

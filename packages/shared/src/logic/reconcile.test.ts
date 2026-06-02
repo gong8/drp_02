@@ -6,7 +6,11 @@ import {
   reconcileFloat,
 } from "./reconcile.js";
 
-const idea = (id: string, text: string, createdAtMs = 0): ReconcileIdea => ({ id, text, createdAtMs });
+const idea = (id: string, text: string, createdAtMs = 0): ReconcileIdea => ({
+  id,
+  text,
+  createdAtMs,
+});
 const time = (id: string, startsAtMs: number, createdAtMs = 0): ReconcileTime => ({
   id,
   startsAtMs,
@@ -23,7 +27,13 @@ describe("reconcileFloat", () => {
   });
 
   it("fizzles when the winning idea is below min-heat (a one-person float cannot tip)", () => {
-    const res = reconcileFloat([idea("i1", "bowling")], [time("t1", 1000)], votes("i1", ["a"]), 2, []);
+    const res = reconcileFloat(
+      [idea("i1", "bowling")],
+      [time("t1", 1000)],
+      votes("i1", ["a"]),
+      2,
+      [],
+    );
     expect(res).toEqual({ kind: "fizzle" });
   });
 
