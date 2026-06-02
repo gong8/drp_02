@@ -12,9 +12,9 @@ import {
   BottomSheet,
   Button,
   Card,
-  Chip,
   DateChip,
-  DateTimeField,
+  DateTimePill,
+  HardShadow,
   ScreenBackground,
   SelectCheck,
   StickerTag,
@@ -88,7 +88,8 @@ export function EventDetail({ route, navigation }: Props) {
       load();
       // The 1s ticker only drives the live moment countdown, so only run it during the moment.
       const tick = setInterval(() => {
-        if (active && phaseRef.current === "moment") setNow(Date.now());
+        if (active && (phaseRef.current === "moment" || phaseRef.current === "collecting"))
+          setNow(Date.now());
       }, 1000);
       // Poll while the plan is live so the tally, countdown and reveal converge without a refresh.
       const poll = setInterval(() => {
@@ -234,12 +235,13 @@ export function EventDetail({ route, navigation }: Props) {
   }
 
   const liveMsLeft = data.momentEndsAt ? new Date(data.momentEndsAt).getTime() - now : 0;
+  const liveMsToLock = data.lockAt ? new Date(data.lockAt).getTime() - now : 0;
   const whenLine =
     data.chosenStartsAt && data.phase !== "collecting" ? formatSlot(data.chosenStartsAt) : null;
 
   function headerSticker() {
     if (!data) return null;
-    if (data.phase === "collecting") return <StickerTag label="Coming together" />;
+    // Collecting uses the prominent countdown banner instead of a sticker.
     if (data.phase === "moment")
       return <StickerTag label={`Locks ${formatCountdown(liveMsLeft)}`} />;
     if (data.phase === "cleared") return <StickerTag label="It's on" />;
@@ -260,6 +262,61 @@ export function EventDetail({ route, navigation }: Props) {
         showsVerticalScrollIndicator={false}
       >
         <BackBar title={data.groupName} onBack={() => navigation.goBack()} />
+
+        {data.phase === "collecting" && data.lockAt && (
+          <HardShadow radius={ui.rCard} offset={4} style={{ marginBottom: 14 }}>
+            <View
+              style={{
+                backgroundColor: ui.brand,
+                borderWidth: ui.border,
+                borderColor: ui.ink,
+                borderRadius: ui.rCard,
+                paddingVertical: 12,
+                paddingHorizontal: 14,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <View>
+                <Text
+                  style={{
+                    fontFamily: font.bold,
+                    fontSize: 9,
+                    letterSpacing: 1.4,
+                    textTransform: "uppercase",
+                    color: "#fff",
+                  }}
+                >
+                  Locks in
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: font.black,
+                    fontSize: 26,
+                    letterSpacing: -1,
+                    color: "#fff",
+                    marginTop: 2,
+                  }}
+                >
+                  {formatCountdown(liveMsToLock)}
+                </Text>
+              </View>
+              <Text
+                style={{
+                  fontFamily: font.bold,
+                  fontSize: 10,
+                  color: "#fff",
+                  opacity: 0.92,
+                  maxWidth: 120,
+                  textAlign: "right",
+                }}
+              >
+                best-supported time wins
+              </Text>
+            </View>
+          </HardShadow>
+        )}
 
         <Card>
           <View
@@ -423,15 +480,17 @@ function CollectingView({
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("");
   const newIso = isoFrom(newDate, newTime);
-  // The slot the server would lock: most reactors, earliest as a tiebreak. Counts are creator-only,
-  // so this matches the winner; used only to label the dev-only force-lock button.
-  const best = [...data.candidates]
-    .filter((c) => c.count !== null)
-    .sort(
-      (a, b) =>
-        (b.count ?? 0) - (a.count ?? 0) ||
-        new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
-    )[0];
+
+  // Shared table-row style; the first row overrides to no top divider.
+  const row = {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 10,
+    padding: 12,
+    borderTopWidth: 1,
+    borderTopColor: ui.hairline,
+  };
+
   return (
     <View style={{ marginTop: 16 }}>
       <Text style={{ fontFamily: font.display, fontSize: 14, color: ui.ink, marginBottom: 4 }}>
@@ -447,14 +506,7 @@ function CollectingView({
             <Pressable
               key={c.id}
               onPress={() => onToggle(c.id)}
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 10,
-                padding: 12,
-                borderTopWidth: i === 0 ? 0 : 1,
-                borderTopColor: ui.hairline,
-              }}
+              style={{ ...row, borderTopWidth: i === 0 ? 0 : 1 }}
             >
               <SelectCheck selected={on} />
               <View>
@@ -467,66 +519,49 @@ function CollectingView({
                   </Text>
                 ) : null}
               </View>
-              {c.count !== null && (
-                <View style={{ marginLeft: "auto" }}>
-                  <DateChip small>{`${c.count} free`}</DateChip>
-                </View>
-              )}
             </Pressable>
           );
         })}
-      </Card>
 
-      {/* A distinct, mutually-exclusive opt-out - ticking it clears the times above and stops pings. */}
-      <Pressable
-        onPress={onToggleOptOut}
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 10,
-          marginTop: 10,
-          padding: 12,
-          borderWidth: ui.border,
-          borderColor: optedOut ? ui.ink : ui.hairline,
-          borderRadius: ui.rInput,
-          borderStyle: "dashed",
-          backgroundColor: optedOut ? "rgba(0,0,0,0.04)" : "transparent",
-        }}
-      >
-        <View
-          style={{
-            width: 18,
-            height: 18,
-            borderRadius: 5,
-            borderWidth: 1.5,
-            borderColor: ui.ink,
-            backgroundColor: optedOut ? ui.ink : "transparent",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          {optedOut && <Text style={{ fontSize: 11, color: "#fff" }}>{"✓"}</Text>}
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>
-            I can't make it
-          </Text>
-          <Text style={{ fontFamily: font.medium, fontSize: 10, color: ui.muted }}>
-            You won't be asked again - tap a time to rejoin.
-          </Text>
-        </View>
-      </Pressable>
+        {!addOpen && (
+          <Pressable onPress={() => setAddOpen(true)} style={row}>
+            <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.brand }}>
+              + Add a time
+            </Text>
+          </Pressable>
+        )}
+
+        {/* Opt-out: a distinct, tinted last row of the same table (mutually exclusive). */}
+        <Pressable onPress={onToggleOptOut} style={{ ...row, backgroundColor: "#F1EEF6" }}>
+          <View
+            style={{
+              width: 18,
+              height: 18,
+              borderRadius: 5,
+              borderWidth: 1.5,
+              borderColor: ui.ink,
+              backgroundColor: optedOut ? ui.ink : "transparent",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {optedOut && <Text style={{ fontSize: 11, color: "#fff" }}>{"✓"}</Text>}
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>
+              I can't make it
+            </Text>
+            <Text style={{ fontFamily: font.medium, fontSize: 10, color: ui.muted }}>
+              you won't be asked again - tap a time to rejoin
+            </Text>
+          </View>
+        </Pressable>
+      </Card>
 
       <SaveStatus state={saveState} onRetry={onRetry} />
 
-      {!optedOut && picked.length === 0 && saveState === "idle" && (
-        <Text style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted, marginTop: 8 }}>
-          None of these? Add a time below, or tap "I can't make it".
-        </Text>
-      )}
-
-      {addOpen ? (
-        <Card style={{ marginTop: 16 }}>
+      {addOpen && (
+        <Card style={{ marginTop: 14 }}>
           <Text
             style={{
               fontFamily: font.bold,
@@ -534,42 +569,23 @@ function CollectingView({
               letterSpacing: 1,
               textTransform: "uppercase",
               color: ui.ink,
+              marginBottom: 10,
             }}
           >
             Add a time
           </Text>
-          <Text
-            style={{
-              fontFamily: font.medium,
-              fontSize: 11,
-              color: ui.muted,
-              marginTop: 3,
-              marginBottom: 12,
-            }}
-          >
-            Propose another time for everyone to react to.
-          </Text>
-          <View style={{ flexDirection: "row", gap: 10, alignItems: "flex-end" }}>
-            <DateTimeField
-              mode="date"
-              value={newDate}
-              onChange={setNewDate}
-              minimumDate={new Date()}
-              style={{ flex: 1 }}
-            />
-            <DateTimeField
-              mode="time"
-              value={newTime}
-              onChange={setNewTime}
-              minuteInterval={15}
-              style={{ flex: 1 }}
-            />
-          </View>
+          <DateTimePill
+            dateValue={newDate}
+            timeValue={newTime}
+            onDate={setNewDate}
+            onTime={setNewTime}
+            minimumDate={new Date()}
+          />
           <View
             style={{
               flexDirection: "row",
               gap: 16,
-              marginTop: 16,
+              marginTop: 14,
               alignItems: "center",
               justifyContent: "flex-end",
             }}
@@ -584,7 +600,7 @@ function CollectingView({
             >
               <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.muted }}>Cancel</Text>
             </Pressable>
-            <View style={{ width: 120 }}>
+            <View style={{ width: 110 }}>
               <Button
                 label="Add"
                 variant="primary"
@@ -600,37 +616,16 @@ function CollectingView({
             </View>
           </View>
         </Card>
-      ) : (
-        <View style={{ marginTop: 16, flexDirection: "row" }}>
-          <Chip label="+ Add a time" onPress={() => setAddOpen(true)} />
-        </View>
       )}
 
-      {!addOpen && data.lockAt && (
-        <Text
-          style={{
-            fontFamily: font.medium,
-            fontSize: 11,
-            color: ui.muted,
-            marginTop: 18,
-            textAlign: "center",
-            lineHeight: 16,
-          }}
-        >
-          {`Locks ${formatSlot(data.lockAt)} - the best-supported time wins, automatically.`}
-        </Text>
-      )}
-
-      {/* No manual lock for the creator (pure deadline); this dev-only button forces it for demos. */}
-      {!addOpen && __DEV__ && data.isCreator && (
-        <View style={{ marginTop: 12 }}>
+      {/* No manual lock for members (pure deadline); this dev-only button forces it for demos. */}
+      {__DEV__ && data.isCreator && (
+        <View style={{ marginTop: 16 }}>
           <Button
-            label={
-              best ? `Force lock now (dev) - ${formatSlot(best.startsAt)}` : "Force lock now (dev)"
-            }
+            label="Force lock now (dev)"
             variant="outline"
             disabled={busy}
-            onPress={() => onLock(best?.id)}
+            onPress={() => onLock()}
           />
         </View>
       )}
@@ -719,19 +714,9 @@ function MomentView({
         </>
       ) : (
         <>
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 12,
-            }}
-          >
-            <Text style={{ fontFamily: font.bold, fontSize: 14, color: ui.ink, flexShrink: 1 }}>
-              {lockedHeading}
-            </Text>
-            <Chip label="Change answer" onPress={onEdit} />
-          </View>
+          <Text style={{ fontFamily: font.bold, fontSize: 14, color: ui.ink, marginBottom: 12 }}>
+            {lockedHeading}
+          </Text>
           <Card>
             <Text
               style={{ fontFamily: font.medium, fontSize: 12, color: ui.muted, lineHeight: 18 }}
@@ -739,6 +724,13 @@ function MomentView({
               Locked in. Who's in is revealed when the timer ends - hang tight.
             </Text>
           </Card>
+          <Button
+            label="Change my answer"
+            variant="outline"
+            disabled={busy}
+            onPress={onEdit}
+            style={{ marginTop: 12 }}
+          />
         </>
       )}
     </View>
