@@ -78,3 +78,22 @@ curl -fsS $B/trpc/groups.mine | head -c 200   # should reflect the current schem
 ```
 If a procedure the app calls returns 404, the deployed image is older than the app - check for
 a rolled-back deploy (the CD warning, or `list-operations`).
+
+## Reset live demo data
+
+Wipe + reinstall the demo seed on the live API WITHOUT a redeploy. Gated by the
+`ADMIN_RESET_TOKEN` env var on the App Runner service - the endpoint returns 403 if the var is
+unset, so it is inert anywhere the secret is not configured (e.g. local dev, which already
+reseeds on every boot).
+
+```bash
+ADMIN_RESET_TOKEN=<the secret> pnpm reseed:live
+# or directly:
+ADMIN_RESET_TOKEN=<the secret> curl -fsS -X POST \
+  https://96mgvmgcbj.us-east-1.awsapprunner.com/admin/reseed -H "x-admin-token: $ADMIN_RESET_TOKEN"
+# -> {"ok":true}
+```
+
+The token lives only in the App Runner service env (and the team password manager) - never in git.
+It wipes ALL data and restores `apps/api/src/db/seed.ts`'s demo, so give the team a heads-up first.
+To rotate, update `ADMIN_RESET_TOKEN` in the App Runner console (one deploy).

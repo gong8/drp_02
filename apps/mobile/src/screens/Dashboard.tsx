@@ -1,5 +1,6 @@
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
@@ -273,7 +274,7 @@ export function Dashboard({ navigation }: Props) {
     <ScreenBackground>
       <View style={{ flex: 1 }}>
         <ScrollView
-          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 16 }}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 104 }}
           showsVerticalScrollIndicator={false}
         >
           <Heading title="Your meets" />
@@ -379,7 +380,21 @@ export function Dashboard({ navigation }: Props) {
             ))}
         </ScrollView>
 
-        <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 20 }}>
+        {/* Floating CTA: a transparent-to-page-colour scrim lets the list fade out underneath it
+            instead of leaving a flat dead band of gradient behind the button. */}
+        <LinearGradient
+          colors={["transparent", ui.gradient[1]]}
+          pointerEvents="box-none"
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            paddingHorizontal: 16,
+            paddingTop: 34,
+            paddingBottom: 18,
+          }}
+        >
           {hasGroups && !error ? (
             <BigButton
               label="Suggest a meetup"
@@ -391,7 +406,7 @@ export function Dashboard({ navigation }: Props) {
               onPress={() => navigation.getParent()?.navigate("Groups", { screen: "CreateGroup" })}
             />
           )}
-        </View>
+        </LinearGradient>
       </View>
     </ScreenBackground>
   );

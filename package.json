@@ -10,6 +10,7 @@
     "phone": "bash scripts/phone.sh",
     "kill": "bash scripts/kill-ports.sh",
     "web": "bash scripts/web.sh",
+    "reseed:live": "bash infra/reseed-live.sh",
     "test": "pnpm -r --if-present test",
     "typecheck": "pnpm -r --if-present typecheck",
     "lint": "biome check",
