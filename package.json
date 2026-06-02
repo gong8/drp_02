@@ -9,7 +9,7 @@
     "dev:api": "pnpm --filter @bethere/api dev",
     "phone": "bash scripts/phone.sh",
     "kill": "bash scripts/kill-ports.sh",
-    "web": "EXPO_PUBLIC_API_URL=https://96mgvmgcbj.us-east-1.awsapprunner.com EXPO_PUBLIC_DEV_AUTH=1 pnpm --filter @bethere/mobile exec expo start --web",
+    "web": "bash scripts/web.sh",
     "test": "pnpm -r --if-present test",
     "typecheck": "pnpm -r --if-present typecheck",
     "lint": "biome check",
