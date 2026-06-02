@@ -4,7 +4,8 @@ import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ui } from "../theme";
 
-// Full-screen peach-to-lavender gradient behind every screen, with safe-area top padding.
+// Full-screen peach-to-lavender gradient behind every screen, with safe-area top padding plus a
+// comfortable gap so headers and the back button never sit flush against the status bar / notch.
 export function ScreenBackground({ children }: { children: ReactNode }) {
   const insets = useSafeAreaInsets();
   return (
@@ -14,7 +15,7 @@ export function ScreenBackground({ children }: { children: ReactNode }) {
       end={{ x: 1, y: 1 }}
       style={{ flex: 1 }}
     >
-      <View style={{ flex: 1, paddingTop: insets.top }}>{children}</View>
+      <View style={{ flex: 1, paddingTop: insets.top + 14 }}>{children}</View>
     </LinearGradient>
   );
 }
