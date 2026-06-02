@@ -17,6 +17,7 @@ import { CreateEvent } from "./src/screens/CreateEvent";
 import { CreateGroup } from "./src/screens/CreateGroup";
 import { Dashboard } from "./src/screens/Dashboard";
 import { EventDetail } from "./src/screens/EventDetail";
+import { FloatBoard } from "./src/screens/FloatBoard";
 import { GroupDetail } from "./src/screens/GroupDetail";
 import { GroupsList } from "./src/screens/GroupsList";
 import { SignIn } from "./src/screens/SignIn";
@@ -26,6 +27,7 @@ export type MeetupsStackParams = {
   Dashboard: undefined;
   EventDetail: { eventId: string };
   CreateEvent: undefined;
+  FloatBoard: { floatId: string };
 };
 export type GroupsStackParams = {
   GroupsList: undefined;
@@ -45,6 +47,7 @@ function MeetupsStackScreen() {
       <MeetupsStack.Screen name="Dashboard" component={Dashboard} />
       <MeetupsStack.Screen name="EventDetail" component={EventDetail} />
       <MeetupsStack.Screen name="CreateEvent" component={CreateEvent} />
+      <MeetupsStack.Screen name="FloatBoard" component={FloatBoard} />
     </MeetupsStack.Navigator>
   );
 }
