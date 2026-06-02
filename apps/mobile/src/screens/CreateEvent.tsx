@@ -298,12 +298,8 @@ export function CreateEvent({ navigation }: Props) {
           ) : (
             <View style={{ marginTop: 10 }}>
               {rows.map((r) => (
-                <View
-                  key={r.id}
-                  style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 }}
-                >
+                <View key={r.id} style={{ position: "relative", marginBottom: 10 }}>
                   <DateTimePill
-                    style={{ flex: 1 }}
                     dateValue={r.date}
                     timeValue={r.time}
                     onDate={(t) =>
@@ -314,13 +310,35 @@ export function CreateEvent({ navigation }: Props) {
                     }
                     minimumDate={new Date()}
                   />
+                  {/* Removing a time: a tidy circular badge on the corner, floated (absolute) so the
+                      pill keeps its full width and never resizes. */}
                   {rows.length > 1 && (
                     <Pressable
                       onPress={() => setRows((rs) => rs.filter((x) => x.id !== r.id))}
-                      hitSlop={8}
+                      hitSlop={12}
+                      style={{
+                        position: "absolute",
+                        top: -8,
+                        right: -8,
+                        width: 22,
+                        height: 22,
+                        borderRadius: 11,
+                        backgroundColor: ui.surface,
+                        borderWidth: ui.border,
+                        borderColor: ui.ink,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
                     >
-                      <Text style={{ fontFamily: font.bold, fontSize: 18, color: ui.muted }}>
-                        ✕
+                      <Text
+                        style={{
+                          fontFamily: font.bold,
+                          fontSize: 13,
+                          lineHeight: 13,
+                          color: ui.ink,
+                        }}
+                      >
+                        ×
                       </Text>
                     </Pressable>
                   )}
