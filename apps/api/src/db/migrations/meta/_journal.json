@@ -22,6 +22,13 @@
       "when": 1780339365747,
       "tag": "0002_windy_bruce_banner",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1780420306595,
+      "tag": "0003_red_the_initiative",
+      "breakpoints": true
     }
   ]
 }

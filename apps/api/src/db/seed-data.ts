@@ -65,6 +65,9 @@ export interface Plan {
   quorum: number;
   phase: PlanPhase;
   candidates: Cand[];
+  // When a collecting plan auto-locks the winning slot and opens the moment. Must sit before the
+  // earliest candidate. Null/absent for exact plans (no collecting phase).
+  lockAt?: Date;
   chosenSuffix?: string;
   momentStartsAt?: Date;
   momentEndsAt?: Date;
@@ -84,6 +87,7 @@ export const PLANS: Plan[] = [
     contingent: true,
     quorum: 3,
     phase: "collecting",
+    lockAt: dayAt(1, 18),
     candidates: [
       { suffix: "c1", startsAt: dayAt(2, 18), reactedBy: ["u_dev", "u_adi", "u_lily", "u_joe"] },
       { suffix: "c2", startsAt: dayAt(2, 20), reactedBy: ["u_dev", "u_nathan", "u_bethan"] },
@@ -100,6 +104,7 @@ export const PLANS: Plan[] = [
     contingent: true,
     quorum: 2,
     phase: "collecting",
+    lockAt: dayAt(1, 12),
     candidates: [
       { suffix: "c1", startsAt: dayAt(1, 19), reactedBy: ["u_adi", "u_joe"] },
       { suffix: "c2", startsAt: dayAt(2, 19), reactedBy: ["u_adi"] },
@@ -231,6 +236,11 @@ export function seedIntegrityErrors(
       errors.push(`plan ${p.id}: phase ${p.phase} requires a chosenSuffix`);
     if (p.phase === "collecting" && p.chosenSuffix) {
       errors.push(`plan ${p.id}: collecting plan should not have a chosenSuffix`);
+    }
+    if (p.lockAt && p.candidates.length > 0) {
+      const earliest = Math.min(...p.candidates.map((c) => c.startsAt.getTime()));
+      if (p.lockAt.getTime() > earliest)
+        errors.push(`plan ${p.id}: lockAt is after the earliest candidate`);
     }
 
     for (const r of p.responses ?? []) {
