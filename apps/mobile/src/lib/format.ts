@@ -34,6 +34,19 @@ export function formatTime(iso: string): string {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
+// Build a UTC ISO instant from the picker's local "YYYY-MM-DD" + "HH:mm" strings. Uses the numeric
+// Date constructor (always local time, in every engine) rather than `new Date("YYYY-MM-DDTHH:mm")`:
+// a string with no offset is parsed as UTC by Hermes (React Native), which lands times an hour off
+// in zones like BST. null until both parts are present and valid.
+export function isoFrom(date: string, time: string): string | null {
+  if (!date || !time) return null;
+  const [y, mo, d] = date.split("-").map(Number);
+  const [h, mi] = time.split(":").map(Number);
+  if ([y, mo, d, h, mi].some((n) => Number.isNaN(n))) return null;
+  const dt = new Date(y, mo - 1, d, h, mi, 0, 0);
+  return Number.isNaN(dt.getTime()) ? null : dt.toISOString();
+}
+
 // A stable per-day key for grouping a list of events under date headers.
 export function dateKey(iso: string): string {
   const d = new Date(iso);
@@ -65,4 +78,45 @@ export function colorFor(id: string): string {
 export function initials(name: string): string {
   const parts = name.trim().split(/\s+/);
   return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase();
+}
+
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTHS_SHORT = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+// "2026-06-03T19:00..." -> "Wed 3 Jun, 19:00" - the compact label for a candidate slot.
+export function formatSlot(iso: string): string {
+  const d = new Date(iso);
+  return `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}, ${formatTime(iso)}`;
+}
+
+// "evening" -> "Evening".
+export function partOfDayLabel(part: string | null | undefined): string {
+  if (!part) return "";
+  return part.charAt(0).toUpperCase() + part.slice(1);
+}
+
+// A live moment countdown: "12:34" under an hour, "3h 04m" / "2d 3h" beyond. Empty once passed.
+export function formatCountdown(ms: number): string {
+  if (ms <= 0) return "0:00";
+  const totalMins = Math.floor(ms / 60000);
+  if (totalMins < 60) {
+    const secs = Math.floor((ms % 60000) / 1000);
+    return `${totalMins}:${String(secs).padStart(2, "0")}`;
+  }
+  const hours = Math.floor(totalMins / 60);
+  if (hours < 24) return `${hours}h ${String(totalMins % 60).padStart(2, "0")}m`;
+  return `${Math.floor(hours / 24)}d ${hours % 24}h`;
 }

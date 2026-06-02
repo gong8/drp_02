@@ -2,7 +2,7 @@ import { Text } from "react-native";
 import { font, ui } from "../theme";
 import { HardShadow } from "./HardShadow";
 
-export function StickerTag({ label }: { label: string }) {
+export function StickerTag({ label, color = ui.brand }: { label: string; color?: string }) {
   return (
     <HardShadow radius={ui.rSmall} offset={2} style={{ transform: [{ rotate: "4deg" }] }}>
       <Text
@@ -10,7 +10,7 @@ export function StickerTag({ label }: { label: string }) {
           fontFamily: font.mono,
           fontSize: 9,
           color: "#fff",
-          backgroundColor: ui.brand,
+          backgroundColor: color,
           borderRadius: ui.rSmall,
           paddingHorizontal: 7,
           paddingVertical: 3,

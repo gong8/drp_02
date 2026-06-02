@@ -15,6 +15,13 @@
       "when": 1780319927315,
       "tag": "0001_broad_warhawk",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1780339365747,
+      "tag": "0002_windy_bruce_banner",
+      "breakpoints": true
     }
   ]
 }

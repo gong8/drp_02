@@ -4,9 +4,15 @@ Persistent guidance for Claude Code in this repo. These cover things you can't i
 
 ## Project
 
-`drp_02` is **BeThere**, a group meetup-coordination app (Expo mobile + Fastify/tRPC backend). Model: a creator posts a **concrete event** (title, date, time, place) to a group; members RSVP **yes / no / "I'll go if [people]"**; a per-user dashboard groups events by **Awaiting / Going / Declined**, and groups support membership CRUD.
+`drp_02` is **BeThere**, a group meetup-coordination app (Expo mobile + Fastify/tRPC backend). The current model is the **convergence model** (M3, merged to `dev` via DRP-29): a creator floats one plan to a group and the only fork they choose is how precisely to pin the time (`whenMode`):
 
-> An earlier **loose-availability** model (availability -> auto-match -> blind timed moment) is **archived in `archive/loose-availability/`**: excluded from the build, do not edit it, but it may be restored in a later iteration. Authoritative M2 design: `docs/mockups/m2/ALL_MOCKUPS.pdf`.
+- **exact** - a fixed time; skips collecting, opens straight into a blind timed **moment**, always happens.
+- **options** - a short menu of fixed times; members react ("works for me"), best-supported wins.
+- **fuzzy** - a loose window (timescale + part-of-day band) expanded into day candidates members react to.
+
+Everything after the `when` is shared: a plan moves `collecting -> moment -> cleared` (or a silent `fizzled`); during the moment members RSVP **yes / no / "I'll go if [people]"** (conditionals resolved server-side); a per-user dashboard groups plans by **Reacting / Awaiting / Going / Declined**; groups support membership CRUD. Full design: `ARCHITECTURE.md`.
+
+> The original standalone **loose-availability** prototype still lives in `archive/loose-availability/` (excluded from the build, do not edit it); its ideas were folded back into the convergence model. M2 concrete-event mockups: `docs/mockups/m2/ALL_MOCKUPS.pdf`.
 
 ## Stack & layout
 
@@ -66,7 +72,7 @@ Track all work in Linear (team **DRP_02**) via the Linear MCP, religiously - it 
 
 - Drizzle schema: `apps/api/src/db/schema.ts`. Generate/apply: `pnpm --filter @bethere/api db:generate` / `db:migrate`. The API also runs `migrate` + seed on boot (`SEED_ON_BOOT`: `reset` local default / `if-empty` live / `off`).
 - **`drizzle-kit generate` is interactive** and hangs in a non-TTY when it can't tell a rename from a create. If you reset the migration baseline, reset the local DB too (`docker compose down -v && pnpm db:up`).
-- **Auth is a dev stub:** `ctx.userId` comes from an optional `x-user-id` header (default `u_dev`) and is spoofable. The open/unauthenticated API + open CORS are deliberate (see `docs/tech-debt.md`) - don't "fix" them as bugs.
+- **Auth: Clerk + a dev bypass.** `createContext` (`apps/api/src/trpc.ts`) verifies a Clerk bearer token when `CLERK_JWT_KEY` is set; `protectedProcedure` 401s unauthenticated callers. For local dev and M2 prod, `DEV_AUTH_BYPASS=1` falls back to a spoofable `x-user-id` header (default `u_dev`) when no valid token is present. The open CORS (`origin: true`) and the bypass are deliberate for M2 (see `docs/tech-debt.md`) - don't "fix" them as bugs. A global rate-limit (`@fastify/rate-limit`, keyed on client IP) is the guard against abuse while the API is open.
 
 ## Docs
 

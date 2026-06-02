@@ -5,6 +5,7 @@ export { Button } from "./Button";
 export { Card } from "./Card";
 export { Chip } from "./Chip";
 export { DateChip } from "./DateChip";
+export { DateTimeField } from "./DateTimeField";
 export { Field } from "./Field";
 export { HardShadow } from "./HardShadow";
 export { Heading } from "./Heading";

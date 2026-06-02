@@ -1,0 +1,212 @@
+import DateTimePicker, {
+  DateTimePickerAndroid,
+  type DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
+import { useState } from "react";
+import { Platform, Pressable, Text, View } from "react-native";
+import { font, ui } from "../theme";
+import { BottomSheet } from "./BottomSheet";
+import type { DateTimeFieldProps } from "./DateTimeField.types";
+import { HardShadow } from "./HardShadow";
+
+// Themed wrapper around the inbuilt native date/time picker
+// (@react-native-community/datetimepicker, bundled in Expo Go). The trigger mirrors the
+// `Field` look; tapping opens the native picker - on iOS inside our `BottomSheet`
+// (date = inline calendar tinted with brand pink; time = wheel snapped to `minuteInterval`),
+// on Android via the imperative dialog. Output strings match `isoFrom` in CreateEvent.
+
+function pad(n: number): string {
+  return n < 10 ? `0${n}` : `${n}`;
+}
+
+function toDateString(d: Date): string {
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+function toTimeString(d: Date): string {
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function roundUpToInterval(d: Date, interval: number): Date {
+  const out = new Date(d);
+  out.setSeconds(0, 0);
+  const rem = out.getMinutes() % interval;
+  if (rem !== 0) out.setMinutes(out.getMinutes() + (interval - rem));
+  return out;
+}
+
+// Seed the picker from the current value, falling back to a sensible "now". Parse via numeric
+// components (always local) - never `new Date("...T...")`, which Hermes interprets as UTC.
+function seed(mode: "date" | "time", value: string, interval: number): Date {
+  const now = new Date();
+  if (mode === "date") {
+    if (value) {
+      const [y, mo, d] = value.split("-").map(Number);
+      if (![y, mo, d].some((n) => Number.isNaN(n))) return new Date(y, mo - 1, d, 12, 0, 0, 0);
+    }
+    return now;
+  }
+  if (value) {
+    const [h, mi] = value.split(":").map(Number);
+    if (![h, mi].some((n) => Number.isNaN(n))) {
+      const t = new Date();
+      t.setHours(h, mi, 0, 0);
+      return t;
+    }
+  }
+  return roundUpToInterval(now, interval);
+}
+
+// Friendly trigger label (e.g. "Fri, 5 Jun" / "4:00 PM"); null when unset. Same component-based
+// parse so the label matches the wheel exactly (no timezone-less string parsing).
+function displayValue(mode: "date" | "time", value: string): string | null {
+  if (!value) return null;
+  if (mode === "date") {
+    const [y, mo, d] = value.split("-").map(Number);
+    if ([y, mo, d].some((n) => Number.isNaN(n))) return value;
+    return new Date(y, mo - 1, d, 12, 0, 0, 0).toLocaleDateString(undefined, {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    });
+  }
+  const [h, mi] = value.split(":").map(Number);
+  if ([h, mi].some((n) => Number.isNaN(n))) return value;
+  const t = new Date();
+  t.setHours(h, mi, 0, 0);
+  return t.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+
+export function DateTimeField({
+  label,
+  mode,
+  value,
+  onChange,
+  minuteInterval = 15,
+  minimumDate,
+  style,
+}: DateTimeFieldProps) {
+  const [open, setOpen] = useState(false);
+  const [temp, setTemp] = useState<Date>(() => seed(mode, value, minuteInterval));
+
+  const shown = displayValue(mode, value);
+  const placeholder = mode === "date" ? "Pick a date" : "Pick a time";
+
+  function commit(d: Date) {
+    onChange(mode === "date" ? toDateString(d) : toTimeString(d));
+  }
+
+  function openPicker() {
+    const initial = seed(mode, value, minuteInterval);
+    setTemp(initial);
+    if (Platform.OS === "android") {
+      DateTimePickerAndroid.open({
+        value: initial,
+        mode,
+        is24Hour: false,
+        minuteInterval: mode === "time" ? minuteInterval : undefined,
+        minimumDate: mode === "date" ? minimumDate : undefined,
+        display: mode === "date" ? "calendar" : "clock",
+        onChange: (event: DateTimePickerEvent, date?: Date) => {
+          if (event.type === "set" && date) commit(date);
+        },
+      });
+      return;
+    }
+    setOpen(true);
+  }
+
+  return (
+    <View style={style}>
+      {label ? (
+        <Text
+          style={{
+            fontFamily: font.bold,
+            fontSize: 9,
+            letterSpacing: 1,
+            textTransform: "uppercase",
+            color: ui.ink,
+            marginBottom: 5,
+          }}
+        >
+          {label}
+        </Text>
+      ) : null}
+      <HardShadow radius={ui.rInput} offset={3}>
+        <Pressable
+          onPress={openPicker}
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            backgroundColor: ui.surface,
+            borderWidth: ui.border,
+            borderColor: ui.ink,
+            borderRadius: ui.rInput,
+            paddingHorizontal: 11,
+            paddingVertical: 11,
+          }}
+        >
+          <Text
+            numberOfLines={1}
+            style={{
+              flex: 1,
+              fontFamily: font.medium,
+              fontSize: 13,
+              color: shown ? ui.ink : ui.muted,
+            }}
+          >
+            {shown ?? placeholder}
+          </Text>
+          <Text style={{ fontFamily: font.bold, fontSize: 11, color: ui.muted, marginLeft: 6 }}>
+            {"▾"}
+          </Text>
+        </Pressable>
+      </HardShadow>
+
+      {Platform.OS === "ios" && (
+        <BottomSheet
+          visible={open}
+          onClose={() => {
+            // Dismissing accepts whatever the picker is showing - including the seeded default the
+            // user never scrolled (onChange only fires on an actual change, so without this an
+            // untouched value would never be committed).
+            commit(temp);
+            setOpen(false);
+          }}
+        >
+          <Text
+            style={{
+              fontFamily: font.bold,
+              fontSize: 9,
+              letterSpacing: 1,
+              textTransform: "uppercase",
+              color: ui.ink,
+              marginBottom: 10,
+            }}
+          >
+            {placeholder}
+          </Text>
+          <View style={{ width: "100%", alignItems: "center" }}>
+            <DateTimePicker
+              value={temp}
+              mode={mode}
+              display={mode === "date" ? "inline" : "spinner"}
+              themeVariant="light"
+              accentColor={ui.brand}
+              textColor={ui.ink}
+              minimumDate={mode === "date" ? minimumDate : undefined}
+              minuteInterval={mode === "time" ? minuteInterval : undefined}
+              onChange={(_event: DateTimePickerEvent, date?: Date) => {
+                if (!date) return;
+                // Save live - no Done button. The pink-highlighted selection is the confirmation;
+                // the sheet is dismissed by tapping the backdrop (same for date and time).
+                setTemp(date);
+                commit(date);
+              }}
+            />
+          </View>
+        </BottomSheet>
+      )}
+    </View>
+  );
+}
