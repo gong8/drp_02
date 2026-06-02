@@ -53,6 +53,41 @@ function SectionLabel({ children, color }: { children: string; color: string }) 
   );
 }
 
+// The loud anchor: a full-bleed "Action required" banner (same edge-to-edge motif as the moment /
+// lock countdown banners), sitting above the action cards.
+function ActionBanner({ count }: { count: number }) {
+  return (
+    <View
+      style={{
+        marginHorizontal: -16,
+        marginBottom: 14,
+        backgroundColor: ui.brand,
+        borderColor: ui.ink,
+        borderTopWidth: ui.border,
+        borderBottomWidth: ui.border,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+      }}
+    >
+      <Text
+        style={{
+          fontFamily: font.black,
+          fontSize: 14,
+          letterSpacing: 1,
+          textTransform: "uppercase",
+          color: "#fff",
+        }}
+      >
+        Action required
+      </Text>
+      <Text style={{ fontFamily: font.bold, fontSize: 14, color: "#fff" }}>{count}</Text>
+    </View>
+  );
+}
+
 // The muted right-side line in a card footer - a nudge or a quiet note.
 function Hint({ children }: { children: string }) {
   return (
@@ -173,6 +208,21 @@ function MeetCard({ e, onPress, last }: { e: Ev; onPress: () => void; last?: boo
         </View>
       </Card>
     </Pressable>
+  );
+}
+
+// Plans that already happened, tucked behind a quiet toggle so the screen stays forward-looking.
+function PastSection({ plans, onOpen }: { plans: Ev[]; onOpen: (id: string) => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <View style={{ marginTop: 6 }}>
+      <Pressable onPress={() => setOpen((o) => !o)} hitSlop={8} style={{ paddingVertical: 10 }}>
+        <Text style={{ fontFamily: font.bold, fontSize: 12, color: ui.muted, textAlign: "center" }}>
+          {open ? "Hide past" : `Show past (${plans.length})`}
+        </Text>
+      </Pressable>
+      {open ? plans.map((e) => <MeetCard key={e.id} e={e} onPress={() => onOpen(e.id)} />) : null}
+    </View>
   );
 }
 
@@ -338,16 +388,22 @@ export function Dashboard({ navigation }: Props) {
 
   const actionIds = useMemo(() => new Set(actionItems.map((e) => e.id)), [actionItems]);
 
-  // Everything else (no tabs): plans I'm going to float to the top for quick access; declined sink;
-  // ties break by soonest.
-  const list = useMemo(() => {
-    const rank = (e: Ev) => (e.myStatus === "going" ? 0 : e.myStatus === "declined" ? 2 : 1);
+  // Below the banner, no tabs. "Coming up" = plans not needing action that haven't happened yet,
+  // soonest first (reads like a calendar). Past = already-happened plans, hidden behind a toggle.
+  const coming = useMemo(() => {
+    const t = Date.now();
+    const happened = (e: Ev) => e.phase === "cleared" && new Date(e.startsAt).getTime() < t;
     return events
-      .filter((e) => !actionIds.has(e.id))
-      .sort(
-        (a, b) =>
-          rank(a) - rank(b) || new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
-      );
+      .filter((e) => !actionIds.has(e.id) && !happened(e))
+      .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+  }, [events, actionIds]);
+  const pastList = useMemo(() => {
+    const t = Date.now();
+    return events
+      .filter(
+        (e) => !actionIds.has(e.id) && e.phase === "cleared" && new Date(e.startsAt).getTime() < t,
+      )
+      .sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime());
   }, [events, actionIds]);
 
   if (loading) {
@@ -396,8 +452,8 @@ export function Dashboard({ navigation }: Props) {
             ) : (
               <>
                 {actionItems.length > 0 && (
-                  <View style={{ marginBottom: 32 }}>
-                    <SectionLabel color={ui.brand}>Needs you</SectionLabel>
+                  <View style={{ marginBottom: 28 }}>
+                    <ActionBanner count={actionItems.length} />
                     {actionItems.map((e, i) => (
                       <ActionCard
                         key={e.id}
@@ -410,10 +466,10 @@ export function Dashboard({ navigation }: Props) {
                   </View>
                 )}
 
-                {list.length > 0 && (
-                  <View>
+                {coming.length > 0 && (
+                  <View style={{ marginBottom: 4 }}>
                     <SectionLabel color={ui.muted}>Coming up</SectionLabel>
-                    {list.map((e) => (
+                    {coming.map((e) => (
                       <MeetCard
                         key={e.id}
                         e={e}
@@ -423,7 +479,14 @@ export function Dashboard({ navigation }: Props) {
                   </View>
                 )}
 
-                {actionItems.length === 0 && list.length === 0 && (
+                {pastList.length > 0 && (
+                  <PastSection
+                    plans={pastList}
+                    onOpen={(id) => navigation.navigate("EventDetail", { eventId: id })}
+                  />
+                )}
+
+                {actionItems.length === 0 && coming.length === 0 && pastList.length === 0 && (
                   <Card>
                     <Text
                       style={{
