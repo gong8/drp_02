@@ -209,16 +209,121 @@ function CountBadge({ n }: { n: number }) {
   );
 }
 
+// What the user must do, by phase.
+function actionVerb(e: Ev): string {
+  return e.phase === "moment" ? "Say if you're in" : "Pick your times";
+}
+
+// Live ms to the relevant deadline (the lock for collecting, the close for a moment).
+function deadlineMs(e: Ev, now: number): number {
+  const iso = e.phase === "moment" ? e.momentEndsAt : e.lockAt;
+  return iso ? Math.max(0, new Date(iso).getTime() - now) : 0;
+}
+
+// Fraction of the window still left (1 = just opened, 0 = at the deadline) for the drain bar.
+function remainingFrac(e: Ev, now: number): number {
+  let start: number | null = null;
+  let end: number | null = null;
+  if (e.phase === "moment" && e.momentEndsAt) {
+    end = new Date(e.momentEndsAt).getTime();
+    start = e.momentStartsAt ? new Date(e.momentStartsAt).getTime() : end - 3_600_000;
+  } else if (e.phase === "collecting" && e.lockAt) {
+    end = new Date(e.lockAt).getTime();
+    start = new Date(e.createdAt).getTime();
+  }
+  if (start === null || end === null || end <= start) return 1;
+  return Math.max(0, Math.min(1, (end - now) / (end - start)));
+}
+
+// An Action Required card: title + group, the explicit action + a live deadline, a draining bar
+// (green -> pink as time runs low), then the specific time (moment) or option count (collecting).
+function ActionCard({
+  e,
+  now,
+  onPress,
+  last,
+}: {
+  e: Ev;
+  now: number;
+  onPress: () => void;
+  last?: boolean;
+}) {
+  const frac = remainingFrac(e, now);
+  const hot = frac < 0.25;
+  const spec = e.phase === "moment" ? formatSlot(e.startsAt) : `${e.candidateCount} options`;
+  return (
+    <Pressable onPress={onPress}>
+      <Card padding={12} style={{ marginBottom: last ? 0 : 10 }}>
+        <Text style={{ fontFamily: font.display, fontSize: 16, color: ui.ink }}>{e.title}</Text>
+        <Text style={{ fontFamily: font.medium, fontSize: 10, color: ui.muted, marginTop: 1 }}>
+          {e.groupName}
+        </Text>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "baseline",
+            gap: 8,
+            marginTop: 11,
+            marginBottom: 7,
+          }}
+        >
+          <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.brand, flexShrink: 1 }}>
+            {`${actionVerb(e)} ›`}
+          </Text>
+          <Text style={{ fontFamily: font.mono, fontSize: 11, color: hot ? ui.brand : ui.ink }}>
+            {`${e.phase === "moment" ? "closes" : "locks"} ${formatCountdown(deadlineMs(e, now))}`}
+          </Text>
+        </View>
+        <View
+          style={{
+            height: 12,
+            borderWidth: ui.border,
+            borderColor: ui.ink,
+            borderRadius: 999,
+            backgroundColor: ui.surface,
+            overflow: "hidden",
+          }}
+        >
+          <View
+            style={{
+              height: "100%",
+              width: `${Math.round(frac * 100)}%`,
+              backgroundColor: hot ? ui.brand : ui.going,
+            }}
+          />
+        </View>
+        <Text
+          style={{
+            fontFamily: font.mono,
+            fontSize: 10,
+            letterSpacing: 0.5,
+            color: ui.muted,
+            marginTop: 8,
+          }}
+        >
+          {spec.toUpperCase()}
+        </Text>
+      </Card>
+    </Pressable>
+  );
+}
+
 export function Dashboard({ navigation }: Props) {
   const [events, setEvents] = useState<Ev[]>([]);
   const [hasGroups, setHasGroups] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [filter, setFilter] = useState<Filter>("All");
+  // Local clock so the Action Required countdowns + drain bars tick live (the poll is only every 5s).
+  const [now, setNow] = useState(Date.now());
 
   useFocusEffect(
     useCallback(() => {
       let active = true;
+      const tick = setInterval(() => {
+        if (active) setNow(Date.now());
+      }, 1000);
       const fetchAll = () =>
         Promise.all([trpc.events.mine.query(), trpc.groups.mine.query()])
           .then(([e, g]) => {
@@ -239,6 +344,7 @@ export function Dashboard({ navigation }: Props) {
       return () => {
         active = false;
         clearInterval(poll);
+        clearInterval(tick);
       };
     }, []),
   );
@@ -351,9 +457,10 @@ export function Dashboard({ navigation }: Props) {
                       </View>
 
                       {actionItems.map((e, i) => (
-                        <MeetCard
+                        <ActionCard
                           key={e.id}
                           e={e}
+                          now={now}
                           last={i === actionItems.length - 1}
                           onPress={() => navigation.navigate("EventDetail", { eventId: e.id })}
                         />
