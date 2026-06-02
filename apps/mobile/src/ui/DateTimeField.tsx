@@ -91,7 +91,6 @@ export function DateTimeField({
   const [temp, setTemp] = useState<Date>(() => seed(mode, value, minuteInterval));
 
   const shown = displayValue(mode, value);
-  const placeholder = mode === "date" ? "Pick a date" : "Pick a time";
 
   function commit(d: Date) {
     onChange(mode === "date" ? toDateString(d) : toTimeString(d));
@@ -142,9 +141,9 @@ export function DateTimeField({
     >
       <Text
         numberOfLines={1}
-        style={{ flex: 1, fontFamily: font.medium, fontSize: 13, color: shown ? ui.ink : ui.muted }}
+        style={{ flex: 1, fontFamily: font.medium, fontSize: 13, color: ui.ink }}
       >
-        {shown ?? placeholder}
+        {shown}
       </Text>
       <Text style={{ fontFamily: font.bold, fontSize: 11, color: ui.muted, marginLeft: 6 }}>
         {"▾"}
@@ -187,18 +186,6 @@ export function DateTimeField({
             setOpen(false);
           }}
         >
-          <Text
-            style={{
-              fontFamily: font.bold,
-              fontSize: 9,
-              letterSpacing: 1,
-              textTransform: "uppercase",
-              color: ui.ink,
-              marginBottom: 10,
-            }}
-          >
-            {placeholder}
-          </Text>
           <View style={{ width: "100%", alignItems: "center" }}>
             <DateTimePicker
               value={temp}
