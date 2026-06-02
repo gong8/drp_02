@@ -12,7 +12,7 @@ export function Chip({
   onPress: () => void;
 }) {
   return (
-    <HardShadow radius={ui.rChip} offset={2} style={{ marginRight: 8, marginBottom: 8 }}>
+    <HardShadow radius={ui.rChip} offset={3} style={{ marginRight: 8, marginBottom: 8 }}>
       <Pressable
         onPress={onPress}
         style={{
