@@ -91,6 +91,8 @@ export function DateTimeField({
   const [temp, setTemp] = useState<Date>(() => seed(mode, value, minuteInterval));
 
   const shown = displayValue(mode, value);
+  // Shown only on the empty trigger; the picker sheet itself has no redundant title.
+  const placeholder = mode === "date" ? "Pick a date" : "Pick a time";
 
   function commit(d: Date) {
     onChange(mode === "date" ? toDateString(d) : toTimeString(d));
@@ -141,9 +143,9 @@ export function DateTimeField({
     >
       <Text
         numberOfLines={1}
-        style={{ flex: 1, fontFamily: font.medium, fontSize: 13, color: ui.ink }}
+        style={{ flex: 1, fontFamily: font.medium, fontSize: 13, color: shown ? ui.ink : ui.muted }}
       >
-        {shown}
+        {shown ?? placeholder}
       </Text>
       <Text style={{ fontFamily: font.bold, fontSize: 11, color: ui.muted, marginLeft: 6 }}>
         {"▾"}
