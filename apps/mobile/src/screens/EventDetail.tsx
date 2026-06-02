@@ -25,6 +25,7 @@ type Detail = NonNullable<Awaited<ReturnType<typeof trpc.events.get.query>>>;
 type Member = Detail["members"][number];
 type Cand = Detail["candidates"][number];
 type Mode = "At least one" | "All of them";
+type SaveState = "idle" | "saving" | "saved" | "error";
 type Props = NativeStackScreenProps<MeetupsStackParams, "EventDetail">;
 
 export function EventDetail({ route, navigation }: Props) {
@@ -42,6 +43,9 @@ export function EventDetail({ route, navigation }: Props) {
   const [condPicked, setCondPicked] = useState<string[]>([]);
   // collecting reactions (seeded once from the server, then edited locally)
   const [reactPicked, setReactPicked] = useState<string[]>([]);
+  const [optedOutLocal, setOptedOutLocal] = useState(false);
+  // Surfaces whether the latest tap (a reaction or the opt-out) has been persisted yet.
+  const [saveState, setSaveState] = useState<SaveState>("idle");
   const seededFor = useRef<string>("");
   const phaseRef = useRef<string>("");
   // Auto-save: the latest reaction set waiting to be persisted + its debounce timer (no submit btn).
@@ -70,7 +74,11 @@ export function EventDetail({ route, navigation }: Props) {
     if (pendingPicks.current) {
       const worksCandidateIds = pendingPicks.current;
       pendingPicks.current = null;
-      trpc.events.react.mutate({ eventId, worksCandidateIds }).catch(() => {});
+      setSaveState("saving");
+      trpc.events.react
+        .mutate({ eventId, worksCandidateIds })
+        .then(() => setSaveState("saved"))
+        .catch(() => setSaveState("error"));
     }
   }, [eventId]);
 
@@ -102,20 +110,59 @@ export function EventDetail({ route, navigation }: Props) {
   useEffect(() => {
     if (data && data.phase === "collecting" && seededFor.current !== eventId) {
       setReactPicked(data.myReactionCandidateIds);
+      setOptedOutLocal(data.iOptedOut);
       seededFor.current = eventId;
     }
   }, [data, eventId]);
 
   // Tapping a candidate IS the answer - toggle optimistically and save after a short debounce, so
-  // there is no separate "submit" step competing with the creator's lock.
+  // there is no separate "submit" step competing with the deadline. Tapping a time also rejoins
+  // anyone who had opted out.
   function toggleReact(id: string) {
+    setOptedOutLocal(false);
     setReactPicked((p) => {
       const next = p.includes(id) ? p.filter((x) => x !== id) : [...p, id];
       pendingPicks.current = next;
       return next;
     });
+    setSaveState("saving");
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(flushReact, 500);
+  }
+
+  // "I can't make it" - a reversible, private exit. Opting out clears local picks; tapping it again
+  // (or any time above) rejoins. Optimistic, with the same save-state feedback as a reaction.
+  async function toggleOptOut() {
+    const next = !optedOutLocal;
+    setOptedOutLocal(next);
+    if (next) {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      pendingPicks.current = null;
+      setReactPicked([]);
+    }
+    setSaveState("saving");
+    try {
+      await trpc.events.setOptOut.mutate({ eventId, out: next });
+      setSaveState("saved");
+      await load();
+    } catch {
+      setOptedOutLocal(!next);
+      setSaveState("error");
+    }
+  }
+
+  // Re-send the current intent after a failed save (tap on the error status).
+  function retrySave() {
+    setSaveState("saving");
+    if (optedOutLocal) {
+      trpc.events.setOptOut
+        .mutate({ eventId, out: true })
+        .then(() => setSaveState("saved"))
+        .catch(() => setSaveState("error"));
+    } else {
+      pendingPicks.current = reactPicked;
+      flushReact();
+    }
   }
 
   async function lock(candidateId?: string) {
@@ -240,8 +287,12 @@ export function EventDetail({ route, navigation }: Props) {
           <CollectingView
             data={data}
             picked={reactPicked}
+            optedOut={optedOutLocal}
+            saveState={saveState}
             busy={busy}
             onToggle={toggleReact}
+            onToggleOptOut={toggleOptOut}
+            onRetry={retrySave}
             onLock={lock}
             onAddCandidate={addCandidate}
           />
@@ -344,19 +395,27 @@ export function EventDetail({ route, navigation }: Props) {
   );
 }
 
-// Collecting: tap which candidate times work; members confirm, the creator sees the tally + locks.
+// Collecting: tap which candidate times work, or opt out; the plan auto-locks at its deadline.
 function CollectingView({
   data,
   picked,
+  optedOut,
+  saveState,
   busy,
   onToggle,
+  onToggleOptOut,
+  onRetry,
   onLock,
   onAddCandidate,
 }: {
   data: Detail;
   picked: string[];
+  optedOut: boolean;
+  saveState: SaveState;
   busy: boolean;
   onToggle: (id: string) => void;
+  onToggleOptOut: () => void;
+  onRetry: () => void;
   onLock: (candidateId?: string) => void;
   onAddCandidate: (startsAt: string) => void;
 }) {
@@ -364,8 +423,8 @@ function CollectingView({
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("");
   const newIso = isoFrom(newDate, newTime);
-  // The slot the creator would lock: most reactors, earliest as a tiebreak. Counts are creator-only
-  // (null for members, who never see the organizer zone), so this is the same winner the server picks.
+  // The slot the server would lock: most reactors, earliest as a tiebreak. Counts are creator-only,
+  // so this matches the winner; used only to label the dev-only force-lock button.
   const best = [...data.candidates]
     .filter((c) => c.count !== null)
     .sort(
@@ -379,11 +438,11 @@ function CollectingView({
         Which of these work?
       </Text>
       <Text style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted, marginBottom: 10 }}>
-        Tap the times you can make - saved automatically, private to you.
+        Tap the times you can make - private to you.
       </Text>
       <Card padding={0}>
         {data.candidates.map((c: Cand, i: number) => {
-          const on = picked.includes(c.id);
+          const on = !optedOut && picked.includes(c.id);
           return (
             <Pressable
               key={c.id}
@@ -418,9 +477,51 @@ function CollectingView({
         })}
       </Card>
 
-      {picked.length === 0 && (
+      {/* A distinct, mutually-exclusive opt-out - ticking it clears the times above and stops pings. */}
+      <Pressable
+        onPress={onToggleOptOut}
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 10,
+          marginTop: 10,
+          padding: 12,
+          borderWidth: ui.border,
+          borderColor: optedOut ? ui.ink : ui.hairline,
+          borderRadius: ui.rInput,
+          borderStyle: "dashed",
+          backgroundColor: optedOut ? "rgba(0,0,0,0.04)" : "transparent",
+        }}
+      >
+        <View
+          style={{
+            width: 18,
+            height: 18,
+            borderRadius: 5,
+            borderWidth: 1.5,
+            borderColor: ui.ink,
+            backgroundColor: optedOut ? ui.ink : "transparent",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {optedOut && <Text style={{ fontSize: 11, color: "#fff" }}>{"✓"}</Text>}
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>
+            I can't make it
+          </Text>
+          <Text style={{ fontFamily: font.medium, fontSize: 10, color: ui.muted }}>
+            You won't be asked again - tap a time to rejoin.
+          </Text>
+        </View>
+      </Pressable>
+
+      <SaveStatus state={saveState} onRetry={onRetry} />
+
+      {!optedOut && picked.length === 0 && saveState === "idle" && (
         <Text style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted, marginTop: 8 }}>
-          Nothing works? Leaving them all unticked is a fine answer.
+          None of these? Add a time below, or tap "I can't make it".
         </Text>
       )}
 
@@ -505,49 +606,60 @@ function CollectingView({
         </View>
       )}
 
-      {!addOpen && data.isCreator && (
-        <View style={{ marginTop: 24 }}>
-          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
-            <View style={{ flex: 1, height: ui.border, backgroundColor: ui.hairline }} />
-            <Text
-              style={{
-                fontFamily: font.bold,
-                fontSize: 9,
-                letterSpacing: 1.5,
-                textTransform: "uppercase",
-                color: ui.muted,
-                marginHorizontal: 10,
-              }}
-            >
-              Organizer
-            </Text>
-            <View style={{ flex: 1, height: ui.border, backgroundColor: ui.hairline }} />
-          </View>
-          <Card>
-            <Text
-              style={{
-                fontFamily: font.medium,
-                fontSize: 12,
-                color: ui.muted,
-                marginBottom: 12,
-                lineHeight: 18,
-              }}
-            >
-              {data.readyToLock && best
-                ? `Enough people are free. Lock in ${formatSlot(best.startsAt)} to open the moment - everyone RSVPs, and it can't change after.`
-                : "Once enough people can make a time, lock the winning slot here to open the moment."}
-            </Text>
-            <Button
-              label={
-                data.readyToLock && best ? `Lock in ${formatSlot(best.startsAt)}` : "Lock it in"
-              }
-              variant={data.readyToLock ? "affirmative" : "outline"}
-              disabled={busy || !data.readyToLock}
-              onPress={() => onLock(best?.id)}
-            />
-          </Card>
+      {!addOpen && data.lockAt && (
+        <Text
+          style={{
+            fontFamily: font.medium,
+            fontSize: 11,
+            color: ui.muted,
+            marginTop: 18,
+            textAlign: "center",
+            lineHeight: 16,
+          }}
+        >
+          {`Locks ${formatSlot(data.lockAt)} - the best-supported time wins, automatically.`}
+        </Text>
+      )}
+
+      {/* No manual lock for the creator (pure deadline); this dev-only button forces it for demos. */}
+      {!addOpen && __DEV__ && data.isCreator && (
+        <View style={{ marginTop: 12 }}>
+          <Button
+            label={
+              best ? `Force lock now (dev) - ${formatSlot(best.startsAt)}` : "Force lock now (dev)"
+            }
+            variant="outline"
+            disabled={busy}
+            onPress={() => onLock(best?.id)}
+          />
         </View>
       )}
+    </View>
+  );
+}
+
+// Tiny inline indicator for the auto-save: "Saving..." -> "Saved", or a tappable retry on failure.
+function SaveStatus({ state, onRetry }: { state: SaveState; onRetry: () => void }) {
+  if (state === "idle") return null;
+  if (state === "error") {
+    return (
+      <Pressable onPress={onRetry} hitSlop={8} style={{ marginTop: 10 }}>
+        <Text style={{ fontFamily: font.bold, fontSize: 11, color: ui.brand }}>
+          Couldn't save - tap to retry
+        </Text>
+      </Pressable>
+    );
+  }
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 10 }}>
+      {state === "saving" ? (
+        <ActivityIndicator size="small" color={ui.muted} />
+      ) : (
+        <Text style={{ fontSize: 12, color: ui.going }}>{"✓"}</Text>
+      )}
+      <Text style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted }}>
+        {state === "saving" ? "Saving..." : "Saved - private to you"}
+      </Text>
     </View>
   );
 }
@@ -615,12 +727,10 @@ function MomentView({
               marginBottom: 12,
             }}
           >
-            <Text style={{ fontFamily: font.bold, fontSize: 14, color: ui.ink }}>
+            <Text style={{ fontFamily: font.bold, fontSize: 14, color: ui.ink, flexShrink: 1 }}>
               {lockedHeading}
             </Text>
-            <Pressable onPress={onEdit}>
-              <Text style={{ fontFamily: font.bold, fontSize: 12, color: ui.brand }}>Change</Text>
-            </Pressable>
+            <Chip label="Change answer" onPress={onEdit} />
           </View>
           <Card>
             <Text
