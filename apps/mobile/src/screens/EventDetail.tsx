@@ -3,7 +3,14 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
-import { formatCountdown, formatSlot, isoFrom, partOfDayLabel } from "../lib/format";
+import {
+  clock12,
+  dayUpper,
+  formatCountdown,
+  formatSlot,
+  isoFrom,
+  partOfDayLabel,
+} from "../lib/format";
 import { trpc } from "../lib/trpc";
 import { font, ui } from "../theme";
 import {
@@ -12,7 +19,6 @@ import {
   BottomSheet,
   Button,
   Card,
-  DateChip,
   DateTimePill,
   ScreenBackground,
   SelectCheck,
@@ -235,8 +241,10 @@ export function EventDetail({ route, navigation }: Props) {
 
   const liveMsLeft = data.momentEndsAt ? new Date(data.momentEndsAt).getTime() - now : 0;
   const liveMsToLock = data.lockAt ? new Date(data.lockAt).getTime() - now : 0;
-  const whenLine =
-    data.chosenStartsAt && data.phase !== "collecting" ? formatSlot(data.chosenStartsAt) : null;
+  // The chosen time, shown as a hero banner once a slot is locked (moment/cleared); collecting has
+  // no single time yet.
+  const heroIso = data.chosenStartsAt && data.phase !== "collecting" ? data.chosenStartsAt : null;
+  const heroClock = heroIso ? clock12(heroIso) : null;
 
   function headerSticker() {
     if (!data) return null;
@@ -268,26 +276,75 @@ export function EventDetail({ route, navigation }: Props) {
           <CountdownBanner label="Closes in" ms={liveMsLeft} note="who's in reveals then" />
         )}
 
-        <Card>
-          <View
-            style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}
-          >
-            {whenLine ? <DateChip>{whenLine}</DateChip> : <View />}
-            {headerSticker()}
+        <Card padding={0}>
+          {heroIso && heroClock ? (
+            <View
+              style={{
+                paddingHorizontal: 16,
+                paddingTop: 14,
+                paddingBottom: 12,
+                borderBottomWidth: ui.border,
+                borderBottomColor: ui.ink,
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+              }}
+            >
+              <View>
+                <Text
+                  style={{ fontFamily: font.mono, fontSize: 12, letterSpacing: 1, color: ui.muted }}
+                >
+                  {dayUpper(heroIso)}
+                </Text>
+                <View style={{ flexDirection: "row", alignItems: "flex-end", marginTop: 3 }}>
+                  <Text
+                    style={{ fontFamily: font.mono, fontSize: 34, lineHeight: 36, color: ui.ink }}
+                  >
+                    {heroClock.time}
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: font.mono,
+                      fontSize: 16,
+                      color: ui.muted,
+                      marginLeft: 5,
+                      marginBottom: 3,
+                    }}
+                  >
+                    {heroClock.ampm}
+                  </Text>
+                </View>
+              </View>
+              {headerSticker()}
+            </View>
+          ) : null}
+          <View style={{ paddingHorizontal: 16, paddingTop: heroIso ? 14 : 16, paddingBottom: 16 }}>
+            <Text
+              style={{ fontFamily: font.display, fontSize: 24, letterSpacing: -0.5, color: ui.ink }}
+            >
+              {data.title}
+            </Text>
+            {data.location ? (
+              <Text
+                style={{ fontFamily: font.medium, fontSize: 12, color: ui.muted, marginTop: 4 }}
+              >
+                at <Text style={{ fontFamily: font.bold, color: ui.ink }}>{data.location}</Text>
+              </Text>
+            ) : null}
+            {data.description ? (
+              <Text
+                style={{
+                  fontFamily: font.medium,
+                  fontSize: 12,
+                  color: ui.muted,
+                  marginTop: 8,
+                  lineHeight: 18,
+                }}
+              >
+                {data.description}
+              </Text>
+            ) : null}
           </View>
-          <Text style={{ fontFamily: font.display, fontSize: 22, color: ui.ink, marginTop: 8 }}>
-            {data.title}
-          </Text>
-          {data.location ? (
-            <Text style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted, marginTop: 2 }}>
-              {data.location}
-            </Text>
-          ) : null}
-          {data.description ? (
-            <Text style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted, marginTop: 6 }}>
-              {data.description}
-            </Text>
-          ) : null}
         </Card>
 
         {data.phase === "collecting" && (
