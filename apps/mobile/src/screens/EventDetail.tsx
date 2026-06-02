@@ -14,7 +14,6 @@ import {
   Card,
   DateChip,
   DateTimePill,
-  HardShadow,
   ScreenBackground,
   SelectCheck,
   StickerTag,
@@ -241,9 +240,7 @@ export function EventDetail({ route, navigation }: Props) {
 
   function headerSticker() {
     if (!data) return null;
-    // Collecting uses the prominent countdown banner instead of a sticker.
-    if (data.phase === "moment")
-      return <StickerTag label={`Locks ${formatCountdown(liveMsLeft)}`} />;
+    // Collecting + moment use the full-bleed countdown banner instead of a sticker.
     if (data.phase === "cleared") return <StickerTag label="It's on" />;
     return null;
   }
@@ -265,58 +262,10 @@ export function EventDetail({ route, navigation }: Props) {
         showsVerticalScrollIndicator={false}
       >
         {data.phase === "collecting" && data.lockAt && (
-          <HardShadow radius={ui.rCard} offset={4} style={{ marginBottom: 14 }}>
-            <View
-              style={{
-                backgroundColor: ui.brand,
-                borderWidth: ui.border,
-                borderColor: ui.ink,
-                borderRadius: ui.rCard,
-                paddingVertical: 12,
-                paddingHorizontal: 14,
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <View>
-                <Text
-                  style={{
-                    fontFamily: font.bold,
-                    fontSize: 9,
-                    letterSpacing: 1.4,
-                    textTransform: "uppercase",
-                    color: "#fff",
-                  }}
-                >
-                  Locks in
-                </Text>
-                <Text
-                  style={{
-                    fontFamily: font.black,
-                    fontSize: 26,
-                    letterSpacing: -1,
-                    color: "#fff",
-                    marginTop: 2,
-                  }}
-                >
-                  {formatCountdown(liveMsToLock)}
-                </Text>
-              </View>
-              <Text
-                style={{
-                  fontFamily: font.bold,
-                  fontSize: 10,
-                  color: "#fff",
-                  opacity: 0.92,
-                  maxWidth: 120,
-                  textAlign: "right",
-                }}
-              >
-                best-supported time wins
-              </Text>
-            </View>
-          </HardShadow>
+          <CountdownBanner label="Locks in" ms={liveMsToLock} note="best-supported time wins" />
+        )}
+        {data.phase === "moment" && (
+          <CountdownBanner label="Closes in" ms={liveMsLeft} note="who's in reveals then" />
         )}
 
         <Card>
@@ -450,6 +399,66 @@ export function EventDetail({ route, navigation }: Props) {
         />
       </BottomSheet>
     </ScreenBackground>
+  );
+}
+
+// A full-bleed countdown bar for the time-pressured phases (the collecting deadline and the moment
+// reveal). Stretches edge-to-edge with top/bottom ink rules - visually distinct from rounded cards.
+function CountdownBanner({ label, ms, note }: { label: string; ms: number; note: string }) {
+  return (
+    <View
+      style={{
+        marginHorizontal: -16,
+        marginTop: -2,
+        marginBottom: 14,
+        backgroundColor: ui.brand,
+        borderColor: ui.ink,
+        borderTopWidth: ui.border,
+        borderBottomWidth: ui.border,
+        paddingVertical: 14,
+        paddingHorizontal: 16,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+      }}
+    >
+      <View>
+        <Text
+          style={{
+            fontFamily: font.bold,
+            fontSize: 9,
+            letterSpacing: 1.4,
+            textTransform: "uppercase",
+            color: "#fff",
+          }}
+        >
+          {label}
+        </Text>
+        <Text
+          style={{
+            fontFamily: font.black,
+            fontSize: 28,
+            letterSpacing: -1,
+            color: "#fff",
+            marginTop: 2,
+          }}
+        >
+          {formatCountdown(ms)}
+        </Text>
+      </View>
+      <Text
+        style={{
+          fontFamily: font.bold,
+          fontSize: 10,
+          color: "#fff",
+          opacity: 0.92,
+          maxWidth: 130,
+          textAlign: "right",
+        }}
+      >
+        {note}
+      </Text>
+    </View>
   );
 }
 
