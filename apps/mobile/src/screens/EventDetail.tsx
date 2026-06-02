@@ -217,6 +217,22 @@ export function EventDetail({ route, navigation }: Props) {
     }
   }
 
+  // "Change my answer" un-commits: it clears the response so the plan returns to Action Required
+  // until a new answer is given, then reopens the choices.
+  async function changeAnswer() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await trpc.events.unrespond.mutate({ eventId });
+      setEditing(true);
+      await load();
+    } catch {
+      setError(true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (loading) {
     return (
       <ScreenBackground>
@@ -367,7 +383,7 @@ export function EventDetail({ route, navigation }: Props) {
             data={data}
             busy={busy}
             editing={editing}
-            onEdit={() => setEditing(true)}
+            onEdit={changeAnswer}
             statusLine={statusLine}
             onYes={() => answer("yes")}
             onNo={() => answer("no")}

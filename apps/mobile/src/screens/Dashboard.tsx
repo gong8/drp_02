@@ -355,7 +355,10 @@ export function Dashboard({ navigation }: Props) {
     return events
       .filter(
         (e) =>
-          (e.phase === "moment" && e.myStatus === "awaiting") ||
+          // Moment: still required until you've answered at all (yes/no/conditional). Collecting:
+          // until you've ticked a time (and haven't opted out). Either choice removes it; reversing
+          // the choice (untick all / "Change" the answer) brings it back.
+          (e.phase === "moment" && !e.iResponded) ||
           (e.phase === "collecting" && !e.iReacted && e.myStatus !== "declined"),
       )
       .sort((a, b) => {
@@ -370,11 +373,17 @@ export function Dashboard({ navigation }: Props) {
   const actionIds = useMemo(() => new Set(actionItems.map((e) => e.id)), [actionItems]);
 
   // The browsable archive below: everything not awaiting my action, segmented by the status tabs.
+  // Plans I'm going to float to the top (quick access right after I commit); declined sink; ties
+  // break by soonest.
   const list = useMemo(() => {
+    const rank = (e: Ev) => (e.myStatus === "going" ? 0 : e.myStatus === "declined" ? 2 : 1);
     return events
       .filter((e) => !actionIds.has(e.id))
       .filter((e) => matchesFilter(e, filter))
-      .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+      .sort(
+        (a, b) =>
+          rank(a) - rank(b) || new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
+      );
   }, [events, actionIds, filter]);
 
   if (loading) {
