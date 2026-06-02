@@ -4,7 +4,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
-import { formatCountdown, formatTime } from "../lib/format";
+import { formatCountdown, formatSlot } from "../lib/format";
+import { syncReminders } from "../lib/notifications";
 import { trpc } from "../lib/trpc";
 import { font, ui } from "../theme";
 import {
@@ -78,14 +79,20 @@ function CardFooter({ e }: { e: Ev }) {
     return (
       <>
         <DateChip>{`${e.candidateCount} times`}</DateChip>
-        <Hint>{e.iReacted ? "You've picked your times" : "Tap to pick times"}</Hint>
+        <Hint>
+          {e.myStatus === "declined"
+            ? "You're sitting this out"
+            : e.iReacted
+              ? "You've picked your times"
+              : "Tap to pick times"}
+        </Hint>
       </>
     );
   }
   if (e.phase === "cleared") {
     return (
       <>
-        <DateChip>{formatTime(e.startsAt)}</DateChip>
+        <DateChip>{formatSlot(e.startsAt)}</DateChip>
         {e.goingCount ? (
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             {e.goingPreview.map((p, j) => (
@@ -106,7 +113,7 @@ function CardFooter({ e }: { e: Ev }) {
   // moment - the blind countdown
   return (
     <>
-      <DateChip>{formatTime(e.startsAt)}</DateChip>
+      <DateChip>{formatSlot(e.startsAt)}</DateChip>
       <Hint>Who's in shows after the timer</Hint>
     </>
   );
@@ -116,7 +123,8 @@ function CardFooter({ e }: { e: Ev }) {
 // pastel badge. Pink while a plan still wants you (pick times / live lock), green once you're
 // locked in. A settled plan you're not in wears nothing; absence is the signal.
 function cardSticker(e: Ev) {
-  if (e.phase === "collecting") return <StickerTag label="Which times?" />;
+  if (e.phase === "collecting")
+    return e.myStatus === "declined" ? null : <StickerTag label="Which times?" />;
   if (e.phase === "moment") return <StickerTag label={`Locks ${formatCountdown(e.msLeft ?? 0)}`} />;
   if (e.phase === "cleared" && e.myStatus === "going")
     return <StickerTag label="You're in" color={ui.going} />;
@@ -218,6 +226,9 @@ export function Dashboard({ navigation }: Props) {
               setEvents(e);
               setHasGroups(g.length > 0);
               setError(false);
+              // Schedule local deadline/moment reminders from the freshest payload (no-op unless
+              // something reminder-relevant changed). Device-local; fine for supervised demos.
+              syncReminders(e);
             }
           })
           .catch(() => active && setError(true))
@@ -239,7 +250,7 @@ export function Dashboard({ navigation }: Props) {
       .filter(
         (e) =>
           (e.phase === "moment" && e.myStatus === "awaiting") ||
-          (e.phase === "collecting" && !e.iReacted),
+          (e.phase === "collecting" && !e.iReacted && e.myStatus !== "declined"),
       )
       .sort((a, b) => {
         const am = a.phase === "moment";
