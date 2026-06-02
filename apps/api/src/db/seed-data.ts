@@ -175,3 +175,68 @@ export const PLANS: Plan[] = [
 export function candId(planId: string, suffix: string): string {
   return `${planId}_${suffix}`;
 }
+
+// Pure structural checks on the demo data: referential integrity + model coherence. Runs without a
+// DB so unit tests (and a quick local sanity check) catch a stale reference the moment it appears.
+export function seedIntegrityErrors(
+  users: { id: string }[] = DEMO_USERS,
+  groups: { id: string; members: string[] }[] = GROUPS,
+  plans: Plan[] = PLANS,
+): string[] {
+  const errors: string[] = [];
+  const userIds = new Set(users.map((u) => u.id));
+  const groupById = new Map(groups.map((g) => [g.id, g]));
+
+  for (const g of groups) {
+    for (const m of g.members) {
+      if (!userIds.has(m)) errors.push(`group ${g.id}: member ${m} is not a known user`);
+    }
+  }
+
+  for (const p of plans) {
+    const g = groupById.get(p.groupId);
+    if (!g) {
+      errors.push(`plan ${p.id}: unknown group ${p.groupId}`);
+      continue;
+    }
+    const members = new Set(g.members);
+    if (!userIds.has(p.createdBy))
+      errors.push(`plan ${p.id}: creator ${p.createdBy} is not a known user`);
+    if (!members.has(p.createdBy))
+      errors.push(`plan ${p.id}: creator ${p.createdBy} is not in group ${p.groupId}`);
+
+    if (p.candidates.length === 0) errors.push(`plan ${p.id}: has no candidates`);
+    if (p.whenMode === "exact" && p.candidates.length !== 1) {
+      errors.push(
+        `plan ${p.id}: exact plan must have exactly 1 candidate, has ${p.candidates.length}`,
+      );
+    }
+
+    const suffixes = new Set<string>();
+    for (const c of p.candidates) {
+      if (suffixes.has(c.suffix))
+        errors.push(`plan ${p.id}: duplicate candidate suffix ${c.suffix}`);
+      suffixes.add(c.suffix);
+      for (const u of c.reactedBy ?? []) {
+        if (!members.has(u))
+          errors.push(`plan ${p.id}: reaction by ${u} who is not in group ${p.groupId}`);
+      }
+    }
+
+    if (p.chosenSuffix && !suffixes.has(p.chosenSuffix)) {
+      errors.push(`plan ${p.id}: chosenSuffix ${p.chosenSuffix} matches no candidate`);
+    }
+    const needsChosen = p.phase === "moment" || p.phase === "cleared" || p.phase === "fizzled";
+    if (needsChosen && !p.chosenSuffix)
+      errors.push(`plan ${p.id}: phase ${p.phase} requires a chosenSuffix`);
+    if (p.phase === "collecting" && p.chosenSuffix) {
+      errors.push(`plan ${p.id}: collecting plan should not have a chosenSuffix`);
+    }
+
+    for (const r of p.responses ?? []) {
+      if (!members.has(r.userId))
+        errors.push(`plan ${p.id}: response by ${r.userId} who is not in group ${p.groupId}`);
+    }
+  }
+  return errors;
+}
