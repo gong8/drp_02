@@ -502,6 +502,10 @@ export const eventsRouter = router({
           msLeft: e.momentEndsAt ? Math.max(0, e.momentEndsAt.getTime() - Date.now()) : null,
           myStatus,
           iReacted,
+          // Whether the caller has a moment answer on record (any of yes/no/conditional). Drives
+          // "is this still Action Required" for the moment, where myStatus alone can't tell a blind
+          // conditional ("awaiting") from a genuine no-answer.
+          iResponded: resp.some((r) => r.userId === ctx.userId),
           candidateCount,
           isCreator,
           readyToLock,
@@ -628,6 +632,23 @@ export const eventsRouter = router({
       .where(and(eq(eventOptOuts.eventId, input.eventId), eq(eventOptOuts.userId, ctx.userId)));
     return { recorded: true as const };
   }),
+
+  // Clear the caller's moment answer (the "Change" action): they return to un-answered, so the plan
+  // goes back to Action Required until they answer again.
+  unrespond: protectedProcedure
+    .input(z.object({ eventId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const [e] = await db.select().from(events).where(eq(events.id, input.eventId));
+      if (!e) throw new TRPCError({ code: "NOT_FOUND" });
+      await requireMember(e.groupId, ctx.userId);
+      if (e.phase !== "moment") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "the moment is not open" });
+      }
+      await db
+        .delete(responses)
+        .where(and(eq(responses.eventId, input.eventId), eq(responses.userId, ctx.userId)));
+      return { ok: true as const };
+    }),
 
   // Settle the moment once its countdown has ended: cleared (quorum met or non-contingent) or a
   // silent fizzle. Idempotent and safe to call early (it no-ops until the deadline passes).
