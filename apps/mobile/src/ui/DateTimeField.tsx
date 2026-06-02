@@ -6,7 +6,6 @@ import { useState } from "react";
 import { Platform, Pressable, Text, View } from "react-native";
 import { font, ui } from "../theme";
 import { BottomSheet } from "./BottomSheet";
-import { Button } from "./Button";
 import type { DateTimeFieldProps } from "./DateTimeField.types";
 import { HardShadow } from "./HardShadow";
 
@@ -179,19 +178,16 @@ export function DateTimeField({
               minimumDate={mode === "date" ? minimumDate : undefined}
               minuteInterval={mode === "time" ? minuteInterval : undefined}
               onChange={(_event: DateTimePickerEvent, date?: Date) => {
-                if (date) setTemp(date);
+                if (!date) return;
+                setTemp(date);
+                // Save live - no Done button. A date is a single terminal tap, so close the sheet
+                // as soon as it's chosen; the time wheel has no discrete "selected" event, so it
+                // keeps saving as you scroll and is dismissed by tapping the backdrop.
+                commit(date);
+                if (mode === "date") setOpen(false);
               }}
             />
           </View>
-          <Button
-            label="Done"
-            variant="primary"
-            onPress={() => {
-              commit(temp);
-              setOpen(false);
-            }}
-            style={{ marginTop: 8 }}
-          />
         </BottomSheet>
       )}
     </View>

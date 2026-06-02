@@ -5,7 +5,7 @@ import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-nati
 import type { MeetupsStackParams } from "../../App";
 import { trpc } from "../lib/trpc";
 import { font, ui } from "../theme";
-import { BackBar, Button, Chip, DateTimeField, Field, ScreenBackground } from "../ui";
+import { BackBar, Button, Card, Chip, DateTimeField, Field, ScreenBackground } from "../ui";
 
 type Group = Awaited<ReturnType<typeof trpc.groups.mine.query>>[number];
 type Props = NativeStackScreenProps<MeetupsStackParams, "CreateEvent">;
@@ -15,8 +15,8 @@ type Props = NativeStackScreenProps<MeetupsStackParams, "CreateEvent">;
 // Option values derive from the shared Zod enums (WhenMode / Timescale / PartOfDay).
 const MODES: { mode: WhenMode; label: string; hint: string }[] = [
   { mode: "exact", label: "Set a time", hint: "It's happening - who's in?" },
-  // Hidden for iteration 1 (one concrete time only). Backend/JSX below stay intact.
-  // Iteration 2: { mode: "options", label: "A few options", hint: "People pick what works, you lock it." },
+  { mode: "options", label: "A few options", hint: "People pick what works, you lock it." },
+  // Hidden until iteration 3 (loose "whenever suits" window). Backend/JSX below stay intact.
   // Iteration 3: { mode: "fuzzy", label: "Whenever suits", hint: "Float it - we'll find a time together." },
 ];
 
@@ -256,43 +256,58 @@ export function CreateEvent({ navigation }: Props) {
         {mode === "options" && (
           <View style={{ marginTop: 8 }}>
             {optionRows.map((r, i) => (
-              <View
-                key={r.id}
-                style={{ flexDirection: "row", gap: 10, alignItems: "flex-end", marginBottom: 10 }}
-              >
-                <Field
-                  label={`Option ${i + 1} date`}
-                  value={r.date}
-                  onChangeText={(t) =>
-                    setOptionRows((rows) =>
-                      rows.map((x) => (x.id === r.id ? { ...x, date: t } : x)),
-                    )
-                  }
-                  placeholder="2026-06-05"
-                  style={{ flex: 1 }}
-                />
-                <Field
-                  label="Time"
-                  value={r.time}
-                  onChangeText={(t) =>
-                    setOptionRows((rows) =>
-                      rows.map((x) => (x.id === r.id ? { ...x, time: t } : x)),
-                    )
-                  }
-                  placeholder="18:10"
-                  style={{ width: 96 }}
-                />
-                {optionRows.length > 2 && (
-                  <Pressable
-                    onPress={() => setOptionRows((rows) => rows.filter((x) => x.id !== r.id))}
-                    style={{ paddingBottom: 12 }}
+              <Card key={r.id} style={{ marginBottom: 10 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
+                  <Text
+                    style={{
+                      fontFamily: font.bold,
+                      fontSize: 9,
+                      letterSpacing: 1,
+                      textTransform: "uppercase",
+                      color: ui.ink,
+                    }}
                   >
-                    <Text style={{ fontFamily: font.display, fontSize: 18, color: ui.muted }}>
-                      {"×"}
-                    </Text>
-                  </Pressable>
-                )}
-              </View>
+                    {`Option ${i + 1}`}
+                  </Text>
+                  {optionRows.length > 2 && (
+                    <Pressable
+                      onPress={() => setOptionRows((rows) => rows.filter((x) => x.id !== r.id))}
+                      hitSlop={8}
+                      style={{ marginLeft: "auto" }}
+                    >
+                      <Text style={{ fontFamily: font.bold, fontSize: 11, color: ui.brand }}>
+                        Remove
+                      </Text>
+                    </Pressable>
+                  )}
+                </View>
+                <View style={{ flexDirection: "row", gap: 10 }}>
+                  <DateTimeField
+                    label="Date"
+                    mode="date"
+                    value={r.date}
+                    onChange={(t) =>
+                      setOptionRows((rows) =>
+                        rows.map((x) => (x.id === r.id ? { ...x, date: t } : x)),
+                      )
+                    }
+                    minimumDate={new Date()}
+                    style={{ flex: 1 }}
+                  />
+                  <DateTimeField
+                    label="Time"
+                    mode="time"
+                    value={r.time}
+                    onChange={(t) =>
+                      setOptionRows((rows) =>
+                        rows.map((x) => (x.id === r.id ? { ...x, time: t } : x)),
+                      )
+                    }
+                    minuteInterval={15}
+                    style={{ flex: 1 }}
+                  />
+                </View>
+              </Card>
             ))}
             {optionRows.length < 6 && (
               <Chip

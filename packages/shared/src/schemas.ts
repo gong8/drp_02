@@ -63,6 +63,14 @@ export const ReactInput = z.object({
 });
 export type ReactInput = z.infer<typeof ReactInput>;
 
+// Network boundary for events.addCandidate - any group member proposes a new concrete time while
+// the plan is still collecting. `startsAt` is an ISO string, like one entry of an options menu.
+export const AddCandidateInput = z.object({
+  eventId: z.string(),
+  startsAt: z.string(),
+});
+export type AddCandidateInput = z.infer<typeof AddCandidateInput>;
+
 // Network boundary for events.lock - the creator opens the blind moment on a slot. `candidateId`
 // omitted means the server picks the best-supported candidate. `momentMinutes` sets the countdown.
 export const LockInput = z.object({

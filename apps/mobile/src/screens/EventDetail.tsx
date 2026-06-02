@@ -12,7 +12,9 @@ import {
   BottomSheet,
   Button,
   Card,
+  Chip,
   DateChip,
+  DateTimeField,
   ScreenBackground,
   SelectCheck,
   StickerTag,
@@ -24,6 +26,14 @@ type Member = Detail["members"][number];
 type Cand = Detail["candidates"][number];
 type Mode = "At least one" | "All of them";
 type Props = NativeStackScreenProps<MeetupsStackParams, "EventDetail">;
+
+// Compose an ISO instant from the DateTimeField's "YYYY-MM-DD" + "HH:mm" strings; null until both
+// are set (mirrors the helper in CreateEvent).
+function isoFrom(date: string, time: string): string | null {
+  if (!date || !time) return null;
+  const d = new Date(`${date}T${time}:00`);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
 
 export function EventDetail({ route, navigation }: Props) {
   const { eventId } = route.params;
@@ -103,6 +113,20 @@ export function EventDetail({ route, navigation }: Props) {
     setBusy(true);
     try {
       await trpc.events.lock.mutate({ eventId, momentMinutes: 60 });
+      await load();
+    } catch {
+      setError(true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // Anyone in the group can float a new time into the menu while collecting; refetch so it shows.
+  async function addCandidate(startsAt: string) {
+    if (busy || !data) return;
+    setBusy(true);
+    try {
+      await trpc.events.addCandidate.mutate({ eventId, startsAt });
       await load();
     } catch {
       setError(true);
@@ -210,6 +234,7 @@ export function EventDetail({ route, navigation }: Props) {
             }
             onReact={react}
             onLock={lock}
+            onAddCandidate={addCandidate}
           />
         )}
 
@@ -318,6 +343,7 @@ function CollectingView({
   onToggle,
   onReact,
   onLock,
+  onAddCandidate,
 }: {
   data: Detail;
   picked: string[];
@@ -325,7 +351,12 @@ function CollectingView({
   onToggle: (id: string) => void;
   onReact: () => void;
   onLock: () => void;
+  onAddCandidate: (startsAt: string) => void;
 }) {
+  const [addOpen, setAddOpen] = useState(false);
+  const [newDate, setNewDate] = useState("");
+  const [newTime, setNewTime] = useState("");
+  const newIso = isoFrom(newDate, newTime);
   return (
     <View style={{ marginTop: 16 }}>
       <Text style={{ fontFamily: font.display, fontSize: 14, color: ui.ink, marginBottom: 4 }}>
@@ -370,6 +401,81 @@ function CollectingView({
           );
         })}
       </Card>
+
+      {addOpen ? (
+        <Card style={{ marginTop: 16 }}>
+          <Text
+            style={{
+              fontFamily: font.bold,
+              fontSize: 9,
+              letterSpacing: 1,
+              textTransform: "uppercase",
+              color: ui.ink,
+            }}
+          >
+            Add a time
+          </Text>
+          <Text
+            style={{
+              fontFamily: font.medium,
+              fontSize: 11,
+              color: ui.muted,
+              marginTop: 3,
+              marginBottom: 12,
+            }}
+          >
+            Propose another time for everyone to react to.
+          </Text>
+          <View style={{ flexDirection: "row", gap: 10, alignItems: "flex-end" }}>
+            <DateTimeField
+              label="Date"
+              mode="date"
+              value={newDate}
+              onChange={setNewDate}
+              minimumDate={new Date()}
+              style={{ flex: 1 }}
+            />
+            <DateTimeField
+              label="Time"
+              mode="time"
+              value={newTime}
+              onChange={setNewTime}
+              minuteInterval={15}
+              style={{ flex: 1 }}
+            />
+          </View>
+          <View style={{ flexDirection: "row", gap: 12, marginTop: 14, alignItems: "center" }}>
+            <Pressable
+              onPress={() => {
+                setNewDate("");
+                setNewTime("");
+                setAddOpen(false);
+              }}
+              style={{ paddingVertical: 12, paddingHorizontal: 4 }}
+            >
+              <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.muted }}>Cancel</Text>
+            </Pressable>
+            <View style={{ flex: 1 }}>
+              <Button
+                label="Add"
+                variant="primary"
+                disabled={busy || !newIso}
+                onPress={() => {
+                  if (!newIso) return;
+                  onAddCandidate(newIso);
+                  setNewDate("");
+                  setNewTime("");
+                  setAddOpen(false);
+                }}
+              />
+            </View>
+          </View>
+        </Card>
+      ) : (
+        <View style={{ marginTop: 16, flexDirection: "row" }}>
+          <Chip label="+ Add a time" onPress={() => setAddOpen(true)} />
+        </View>
+      )}
 
       <Button
         label="These work for me"

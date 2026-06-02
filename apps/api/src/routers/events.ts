@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import {
+  AddCandidateInput,
   CreateEventInput,
   clears,
   expandWindow,
@@ -224,6 +225,34 @@ export const eventsRouter = router({
         .values({ eventId: input.eventId, candidateId, userId: ctx.userId });
     }
     return { recorded: true as const };
+  }),
+
+  // Any group member (not just the creator) can propose a new concrete time while the plan is still
+  // collecting - the crowd simply gains another slot to react to. New candidates carry no
+  // part-of-day and no author. Identical minutes are de-duped so two proposers can't clutter the list.
+  addCandidate: protectedProcedure.input(AddCandidateInput).mutation(async ({ ctx, input }) => {
+    const [e] = await db.select().from(events).where(eq(events.id, input.eventId));
+    if (!e) throw new TRPCError({ code: "NOT_FOUND" });
+    await requireMember(e.groupId, ctx.userId);
+    if (e.phase !== "collecting") {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "plan is not collecting" });
+    }
+    const startsAt = new Date(input.startsAt);
+    if (Number.isNaN(startsAt.getTime())) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "invalid time" });
+    }
+    const existing = await candidatesFor(input.eventId);
+    const dup = existing.find((c) => c.startsAt.getTime() === startsAt.getTime());
+    if (dup) return { id: dup.id };
+    const id = `${input.eventId}_c_${randomUUID()}`;
+    await db.insert(eventCandidates).values({
+      id,
+      eventId: input.eventId,
+      startsAt,
+      partOfDay: null,
+      label: null,
+    });
+    return { id };
   }),
 
   // The creator locks the winning slot, opening the blind timed moment. With no candidateId we pick
