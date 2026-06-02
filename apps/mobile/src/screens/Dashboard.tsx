@@ -195,11 +195,12 @@ function CountBadge({ n }: { n: number }) {
     >
       <Text
         style={{
-          fontFamily: font.mono,
+          fontFamily: font.bold,
           fontSize: 12,
-          lineHeight: 14,
+          lineHeight: 12,
           color: ui.ink,
           textAlign: "center",
+          textAlignVertical: "center",
           includeFontPadding: false,
         }}
       >
