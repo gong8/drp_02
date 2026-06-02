@@ -5,7 +5,7 @@ import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-nati
 import type { MeetupsStackParams } from "../../App";
 import { trpc } from "../lib/trpc";
 import { font, ui } from "../theme";
-import { BackBar, Button, Chip, Field, ScreenBackground } from "../ui";
+import { BackBar, Button, Chip, DateTimeField, Field, ScreenBackground } from "../ui";
 
 type Group = Awaited<ReturnType<typeof trpc.groups.mine.query>>[number];
 type Props = NativeStackScreenProps<MeetupsStackParams, "CreateEvent">;
@@ -15,8 +15,9 @@ type Props = NativeStackScreenProps<MeetupsStackParams, "CreateEvent">;
 // Option values derive from the shared Zod enums (WhenMode / Timescale / PartOfDay).
 const MODES: { mode: WhenMode; label: string; hint: string }[] = [
   { mode: "exact", label: "Set a time", hint: "It's happening - who's in?" },
-  { mode: "options", label: "A few options", hint: "People pick what works, you lock it." },
-  { mode: "fuzzy", label: "Whenever suits", hint: "Float it - we'll find a time together." },
+  // Hidden for iteration 1 (one concrete time only). Backend/JSX below stay intact.
+  // Iteration 2: { mode: "options", label: "A few options", hint: "People pick what works, you lock it." },
+  // Iteration 3: { mode: "fuzzy", label: "Whenever suits", hint: "Float it - we'll find a time together." },
 ];
 
 const TIMESCALES: { value: Timescale; label: string }[] = [
@@ -233,18 +234,20 @@ export function CreateEvent({ navigation }: Props) {
 
         {mode === "exact" && (
           <View style={{ flexDirection: "row", gap: 10, marginTop: 8 }}>
-            <Field
+            <DateTimeField
               label="Date"
+              mode="date"
               value={date}
-              onChangeText={setDate}
-              placeholder="2026-06-05"
+              onChange={setDate}
+              minimumDate={new Date()}
               style={{ flex: 1 }}
             />
-            <Field
+            <DateTimeField
               label="Time"
+              mode="time"
               value={time}
-              onChangeText={setTime}
-              placeholder="16:00"
+              onChange={setTime}
+              minuteInterval={15}
               style={{ flex: 1 }}
             />
           </View>
