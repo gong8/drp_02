@@ -1,13 +1,23 @@
 # BeThere
 
-A group meetup-coordination app: a creator posts a concrete event (title, date, time, place) to a group, and members RSVP **yes / no / "I'll go if [people]"**. A per-user dashboard groups events by **Awaiting / Going / Declined**, and groups support membership CRUD. Built as a pnpm monorepo: an Expo mobile client talking to a Fastify + tRPC backend over a shared, end-to-end-typed API.
+A group meetup-coordination app. A creator floats one plan to a group and chooses only how precisely to pin the time; the plan then converges on a blind timed **moment** where members RSVP **yes / no / "I'll go if [people]"**, and either clears (it's on) or quietly fizzles. A per-user dashboard groups plans by **Reacting / Awaiting / Going / Declined**, and groups support membership CRUD. Built as a pnpm monorepo: an Expo mobile client talking to a Fastify + tRPC backend over a shared, end-to-end-typed API.
+
+## How a plan works
+
+The only choice the creator makes is how precisely to pin the time:
+
+- **Set a time** (exact) - it's happening; opens straight into the moment and always clears.
+- **A few options** - a short menu of times; members react ("works for me"), the creator locks the best-supported slot.
+- **Whenever suits** (fuzzy) - a loose window expanded into day candidates; members react, then the creator locks a slot.
+
+Once a slot is locked (or instantly, for an exact time) the plan runs a blind **moment**: members commit, nobody sees who else is in until it ends, and it clears if enough commit (or always, for an exact plan) or silently fizzles. See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full model.
 
 ## Structure
 
 - `apps/mobile` - Expo / React Native client (TypeScript)
 - `apps/api` - Fastify + tRPC backend (Drizzle + Postgres)
 - `packages/shared` - shared Zod schemas and types (the single source of truth for the API contract)
-- `archive/` - earlier loose-availability prototype, excluded from the build, kept for a later iteration
+- `archive/` - the original standalone loose-availability prototype, excluded from the build; its ideas were folded back into the current convergence model
 
 ## Stack
 

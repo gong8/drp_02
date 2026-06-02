@@ -4,9 +4,15 @@ Persistent guidance for Claude Code in this repo. These cover things you can't i
 
 ## Project
 
-`drp_02` is **BeThere**, a group meetup-coordination app (Expo mobile + Fastify/tRPC backend). Model: a creator posts a **concrete event** (title, date, time, place) to a group; members RSVP **yes / no / "I'll go if [people]"**; a per-user dashboard groups events by **Awaiting / Going / Declined**, and groups support membership CRUD.
+`drp_02` is **BeThere**, a group meetup-coordination app (Expo mobile + Fastify/tRPC backend). The current model is the **convergence model** (M3, merged to `dev` via DRP-29): a creator floats one plan to a group and the only fork they choose is how precisely to pin the time (`whenMode`):
 
-> An earlier **loose-availability** model (availability -> auto-match -> blind timed moment) is **archived in `archive/loose-availability/`**: excluded from the build, do not edit it, but it may be restored in a later iteration. Authoritative M2 design: `docs/mockups/m2/ALL_MOCKUPS.pdf`.
+- **exact** - a fixed time; skips collecting, opens straight into a blind timed **moment**, always happens.
+- **options** - a short menu of fixed times; members react ("works for me"), best-supported wins.
+- **fuzzy** - a loose window (timescale + part-of-day band) expanded into day candidates members react to.
+
+Everything after the `when` is shared: a plan moves `collecting -> moment -> cleared` (or a silent `fizzled`); during the moment members RSVP **yes / no / "I'll go if [people]"** (conditionals resolved server-side); a per-user dashboard groups plans by **Reacting / Awaiting / Going / Declined**; groups support membership CRUD. Full design: `ARCHITECTURE.md`.
+
+> The original standalone **loose-availability** prototype still lives in `archive/loose-availability/` (excluded from the build, do not edit it); its ideas were folded back into the convergence model. M2 concrete-event mockups: `docs/mockups/m2/ALL_MOCKUPS.pdf`.
 
 ## Stack & layout
 
