@@ -1,13 +1,21 @@
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 import type { MeetupsStackParams } from "../../App";
 import { formatSlot, isoFrom } from "../lib/format";
 import { defaultLockAt } from "../lib/lock";
 import { type QuickPick, quickPicks } from "../lib/quickpicks";
 import { trpc } from "../lib/trpc";
 import { font, ui } from "../theme";
-import { BackBar, Button, Card, Chip, DateTimeField, Field, ScreenBackground, Toggle } from "../ui";
+import { BackBar, Button, Card, Chip, DateTimePill, Field, ScreenBackground, Toggle } from "../ui";
 
 type Group = Awaited<ReturnType<typeof trpc.groups.mine.query>>[number];
 type Props = NativeStackScreenProps<MeetupsStackParams, "CreateEvent">;
@@ -86,13 +94,13 @@ export function CreateEvent({ navigation }: Props) {
   const lockToSend = lockEdit && lockOverrideIso && !lockInvalid ? lockOverrideIso : undefined;
 
   const missing = !groupId
-    ? "Pick a group"
+    ? "a group"
     : title.trim() === ""
-      ? "Add a title"
+      ? "a title"
       : (concrete ? exactIso === null : optionIsos.length < 1)
-        ? "Add a time"
+        ? "a time"
         : lockInvalid
-          ? "Lock-in must be before your earliest time"
+          ? "a valid lock-in time"
           : null;
 
   function applyQuickPick(qp: QuickPick) {
@@ -180,263 +188,232 @@ export function CreateEvent({ navigation }: Props) {
 
   return (
     <ScreenBackground>
-      <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 24 }}
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <BackBar title="Suggest a meet" onBack={() => navigation.goBack()} />
-        {error && (
-          <Text style={{ fontFamily: font.medium, color: ui.brand, marginBottom: 10 }}>
-            Something went wrong. Try again.
-          </Text>
-        )}
-        <Text
-          style={{
-            fontFamily: font.medium,
-            fontSize: 11,
-            color: ui.muted,
-            marginBottom: 12,
-            lineHeight: 16,
-          }}
+        <ScrollView
+          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 24 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
         >
-          Only the group, a title and a time are needed - everything tagged "optional" can wait.
-        </Text>
-
-        <Overline>Group</Overline>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", marginBottom: 6 }}>
-          {groups.map((g) => (
-            <Chip
-              key={g.id}
-              label={g.name}
-              selected={groupId === g.id}
-              onPress={() => setGroupId(g.id)}
-            />
-          ))}
-        </View>
-
-        <Field
-          label="Title"
-          value={title}
-          onChangeText={setTitle}
-          placeholder="Bowling"
-          style={{ marginTop: 8 }}
-        />
-        <Field
-          label="Location"
-          optional
-          value={location}
-          onChangeText={setLocation}
-          placeholder="TenPin Bexleyheath"
-          style={{ marginTop: 12 }}
-        />
-        <Field
-          label="Notes"
-          optional
-          value={description}
-          onChangeText={setDescription}
-          placeholder="Come at 6, we'll eat around 8"
-          multiline
-          style={{ marginTop: 12 }}
-        />
-
-        <View style={{ marginTop: 18 }}>
-          <Overline>When</Overline>
-          <Toggle
-            options={["Flexible", "Fixed"]}
-            value={concrete ? "Fixed" : "Flexible"}
-            onChange={(v) => setConcrete(v === "Fixed")}
-          />
+          <BackBar title="Suggest a meet" onBack={() => navigation.goBack()} />
+          {error && (
+            <Text style={{ fontFamily: font.medium, color: ui.brand, marginBottom: 10 }}>
+              Something went wrong. Try again.
+            </Text>
+          )}
           <Text
             style={{
               fontFamily: font.medium,
               fontSize: 11,
               color: ui.muted,
-              marginTop: 6,
+              marginBottom: 12,
               lineHeight: 16,
             }}
           >
-            {concrete
-              ? "One set time - it's happening, who's in?"
-              : "Offer a time or two; people react and it locks at a deadline."}
+            Only the group, a title and a time are needed - everything tagged "optional" can wait.
           </Text>
-        </View>
 
-        {/* Quick picks prefill the pickers - in flexible mode they fill the next empty slot. */}
-        <View style={{ flexDirection: "row", flexWrap: "wrap", marginTop: 10 }}>
-          {picks.map((qp) => (
-            <Chip key={qp.key} label={qp.label} onPress={() => applyQuickPick(qp)} />
-          ))}
-        </View>
-
-        {concrete ? (
-          <View style={{ flexDirection: "row", gap: 10, marginTop: 10 }}>
-            <DateTimeField
-              mode="date"
-              value={rows[0].date}
-              onChange={(t) => setRows((rs) => rs.map((r, i) => (i === 0 ? { ...r, date: t } : r)))}
-              minimumDate={new Date()}
-              style={{ flex: 1 }}
-            />
-            <DateTimeField
-              mode="time"
-              value={rows[0].time}
-              onChange={(t) => setRows((rs) => rs.map((r, i) => (i === 0 ? { ...r, time: t } : r)))}
-              minuteInterval={15}
-              style={{ flex: 1 }}
-            />
+          <Overline>Group</Overline>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", marginBottom: 6 }}>
+            {groups.map((g) => (
+              <Chip
+                key={g.id}
+                label={g.name}
+                selected={groupId === g.id}
+                onPress={() => setGroupId(g.id)}
+              />
+            ))}
           </View>
-        ) : (
-          <View style={{ marginTop: 10 }}>
-            {rows.map((r, i) => (
-              <Card key={r.id} style={{ marginBottom: 10 }}>
-                <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
-                  <Text
-                    style={{
-                      fontFamily: font.bold,
-                      fontSize: 9,
-                      letterSpacing: 1,
-                      textTransform: "uppercase",
-                      color: ui.ink,
-                    }}
-                  >
-                    {rows.length > 1 ? `Option ${i + 1}` : "Time"}
-                  </Text>
+
+          <Field
+            label="Title"
+            value={title}
+            onChangeText={setTitle}
+            placeholder="Bowling"
+            style={{ marginTop: 8 }}
+          />
+          <Field
+            label="Location"
+            optional
+            value={location}
+            onChangeText={setLocation}
+            placeholder="TenPin Bexleyheath"
+            style={{ marginTop: 12 }}
+          />
+          <Field
+            label="Notes"
+            optional
+            value={description}
+            onChangeText={setDescription}
+            placeholder="Come at 6, we'll eat around 8"
+            multiline
+            style={{ marginTop: 12 }}
+          />
+
+          <View style={{ marginTop: 18 }}>
+            <Overline>When</Overline>
+            <Toggle
+              options={["Flexible", "Fixed"]}
+              value={concrete ? "Fixed" : "Flexible"}
+              onChange={(v) => setConcrete(v === "Fixed")}
+            />
+            <Text
+              style={{
+                fontFamily: font.medium,
+                fontSize: 11,
+                color: ui.muted,
+                marginTop: 6,
+                lineHeight: 16,
+              }}
+            >
+              {concrete
+                ? "One set time - it's happening, who's in?"
+                : "Offer a time or two; people react and it locks at a deadline."}
+            </Text>
+          </View>
+
+          {/* Quick picks prefill the pickers - in flexible mode they fill the next empty slot. */}
+          <View style={{ flexDirection: "row", flexWrap: "wrap", marginTop: 10 }}>
+            {picks.map((qp) => (
+              <Chip key={qp.key} label={qp.label} onPress={() => applyQuickPick(qp)} />
+            ))}
+          </View>
+
+          {concrete ? (
+            <DateTimePill
+              style={{ marginTop: 10 }}
+              dateValue={rows[0].date}
+              timeValue={rows[0].time}
+              onDate={(t) => setRows((rs) => rs.map((r, i) => (i === 0 ? { ...r, date: t } : r)))}
+              onTime={(t) => setRows((rs) => rs.map((r, i) => (i === 0 ? { ...r, time: t } : r)))}
+              minimumDate={new Date()}
+            />
+          ) : (
+            <View style={{ marginTop: 10 }}>
+              {rows.map((r) => (
+                <View
+                  key={r.id}
+                  style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 }}
+                >
+                  <DateTimePill
+                    style={{ flex: 1 }}
+                    dateValue={r.date}
+                    timeValue={r.time}
+                    onDate={(t) =>
+                      setRows((rs) => rs.map((x) => (x.id === r.id ? { ...x, date: t } : x)))
+                    }
+                    onTime={(t) =>
+                      setRows((rs) => rs.map((x) => (x.id === r.id ? { ...x, time: t } : x)))
+                    }
+                    minimumDate={new Date()}
+                  />
                   {rows.length > 1 && (
                     <Pressable
                       onPress={() => setRows((rs) => rs.filter((x) => x.id !== r.id))}
                       hitSlop={8}
-                      style={{ marginLeft: "auto" }}
                     >
-                      <Text style={{ fontFamily: font.bold, fontSize: 11, color: ui.brand }}>
-                        Remove
+                      <Text style={{ fontFamily: font.bold, fontSize: 18, color: ui.muted }}>
+                        ✕
                       </Text>
                     </Pressable>
                   )}
                 </View>
-                <View style={{ flexDirection: "row", gap: 10 }}>
-                  <DateTimeField
-                    mode="date"
-                    value={r.date}
-                    onChange={(t) =>
-                      setRows((rs) => rs.map((x) => (x.id === r.id ? { ...x, date: t } : x)))
-                    }
-                    minimumDate={new Date()}
-                    style={{ flex: 1 }}
-                  />
-                  <DateTimeField
-                    mode="time"
-                    value={r.time}
-                    onChange={(t) =>
-                      setRows((rs) => rs.map((x) => (x.id === r.id ? { ...x, time: t } : x)))
-                    }
-                    minuteInterval={15}
-                    style={{ flex: 1 }}
-                  />
-                </View>
-              </Card>
-            ))}
-            {rows.length < 6 && (
-              <Chip
-                label="+ Add a time"
-                onPress={() =>
-                  setRows((rs) => [...rs, { id: `o${nextRowId.current++}`, date: "", time: "" }])
-                }
-              />
-            )}
+              ))}
+              {rows.length < 6 && (
+                <Chip
+                  label="+ Add a time"
+                  onPress={() =>
+                    setRows((rs) => [...rs, { id: `o${nextRowId.current++}`, date: "", time: "" }])
+                  }
+                />
+              )}
 
-            {/* Lock-in deadline (flexible only). */}
-            <View style={{ marginTop: 18 }}>
-              <Overline>Locks in</Overline>
-              {lockEdit ? (
-                <Card>
-                  <View style={{ flexDirection: "row", gap: 10 }}>
-                    <DateTimeField
-                      mode="date"
-                      value={lockDate}
-                      onChange={setLockDate}
+              {/* Lock-in deadline (flexible only). */}
+              <View style={{ marginTop: 18 }}>
+                <Overline>Locks in</Overline>
+                {lockEdit ? (
+                  <Card>
+                    <DateTimePill
+                      dateValue={lockDate}
+                      timeValue={lockTime}
+                      onDate={setLockDate}
+                      onTime={setLockTime}
                       minimumDate={new Date()}
-                      style={{ flex: 1 }}
                     />
-                    <DateTimeField
-                      mode="time"
-                      value={lockTime}
-                      onChange={setLockTime}
-                      minuteInterval={15}
-                      style={{ flex: 1 }}
-                    />
-                  </View>
-                  {lockInvalid && (
+                    {lockInvalid && (
+                      <Text
+                        style={{
+                          fontFamily: font.medium,
+                          fontSize: 11,
+                          color: ui.brand,
+                          marginTop: 8,
+                        }}
+                      >
+                        The deadline has to be before your earliest time.
+                      </Text>
+                    )}
+                    <View style={{ flexDirection: "row", marginTop: 12 }}>
+                      <Chip
+                        label="Use default"
+                        onPress={() => {
+                          setLockEdit(false);
+                          setLockDate("");
+                          setLockTime("");
+                        }}
+                      />
+                    </View>
+                  </Card>
+                ) : (
+                  <Card>
+                    <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>
+                      {autoLockIso ? `Locks ${formatSlot(autoLockIso)}` : "Pick a time first"}
+                    </Text>
                     <Text
                       style={{
                         fontFamily: font.medium,
                         fontSize: 11,
-                        color: ui.brand,
-                        marginTop: 8,
+                        color: ui.muted,
+                        marginTop: 3,
                       }}
                     >
-                      The deadline has to be before your earliest time.
+                      the evening before - best-supported time wins
                     </Text>
-                  )}
-                  <Pressable
-                    hitSlop={8}
-                    style={{ marginTop: 10 }}
-                    onPress={() => {
-                      setLockEdit(false);
-                      setLockDate("");
-                      setLockTime("");
-                    }}
-                  >
-                    <Text style={{ fontFamily: font.bold, fontSize: 12, color: ui.muted }}>
-                      Use the default
-                    </Text>
-                  </Pressable>
-                </Card>
-              ) : (
-                <Card>
-                  <Text
-                    style={{
-                      fontFamily: font.medium,
-                      fontSize: 12,
-                      color: ui.ink,
-                      lineHeight: 18,
-                    }}
-                  >
-                    {autoLockIso
-                      ? `Auto-locks ${formatSlot(autoLockIso)} - the evening before. People react until then; the best-supported time wins.`
-                      : "Add a time and we'll lock it the evening before, automatically."}
-                  </Text>
-                  {autoLockIso && (
-                    <View style={{ flexDirection: "row", marginTop: 10 }}>
-                      <Chip label="Change deadline" onPress={startEditLock} />
-                    </View>
-                  )}
-                </Card>
-              )}
+                    {autoLockIso && (
+                      <View style={{ flexDirection: "row", marginTop: 10 }}>
+                        <Chip label="Change" onPress={startEditLock} />
+                      </View>
+                    )}
+                  </Card>
+                )}
+              </View>
             </View>
-          </View>
-        )}
+          )}
 
-        {missing && (
-          <Text
-            style={{
-              fontFamily: font.medium,
-              fontSize: 11,
-              color: ui.muted,
-              marginTop: 18,
-              textAlign: "center",
-            }}
-          >
-            {missing}
-          </Text>
-        )}
-        <Button
-          label={concrete ? "Start the moment" : "Float it"}
-          variant="primary"
-          disabled={!!missing || busy}
-          onPress={create}
-          style={{ marginTop: missing ? 8 : 22 }}
-        />
-      </ScrollView>
+          <Button
+            label={concrete ? "Start the moment" : "Float it"}
+            variant="primary"
+            disabled={!!missing || busy}
+            onPress={create}
+            style={{ marginTop: 22 }}
+          />
+          {missing && (
+            <Text
+              style={{
+                fontFamily: font.medium,
+                fontSize: 12,
+                color: ui.muted,
+                marginTop: 10,
+                textAlign: "center",
+              }}
+            >
+              {`Add ${missing} to continue`}
+            </Text>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
     </ScreenBackground>
   );
 }
