@@ -8,7 +8,7 @@ export type MinuteInterval = 1 | 2 | 3 | 4 | 5 | 6 | 10 | 12 | 15 | 20 | 30;
 // `date` / `time` state and `isoFrom` helper in CreateEvent - "YYYY-MM-DD" for date mode,
 // "HH:mm" (24h) for time mode, "" when nothing is picked yet.
 export type DateTimeFieldProps = {
-  label: string;
+  label?: string;
   mode: "date" | "time";
   value: string;
   onChange: (next: string) => void;

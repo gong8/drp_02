@@ -3,6 +3,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
+import { isoFrom } from "../lib/format";
 import { trpc } from "../lib/trpc";
 import { font, ui } from "../theme";
 import { BackBar, Button, Card, Chip, DateTimeField, Field, ScreenBackground } from "../ui";
@@ -49,12 +50,6 @@ function Overline({ children }: { children: string }) {
       {children}
     </Text>
   );
-}
-
-function isoFrom(date: string, time: string): string | null {
-  if (!date || !time) return null;
-  const d = new Date(`${date}T${time}:00`);
-  return Number.isNaN(d.getTime()) ? null : d.toISOString();
 }
 
 export function CreateEvent({ navigation }: Props) {
@@ -235,7 +230,6 @@ export function CreateEvent({ navigation }: Props) {
         {mode === "exact" && (
           <View style={{ flexDirection: "row", gap: 10, marginTop: 8 }}>
             <DateTimeField
-              label="Date"
               mode="date"
               value={date}
               onChange={setDate}
@@ -243,7 +237,6 @@ export function CreateEvent({ navigation }: Props) {
               style={{ flex: 1 }}
             />
             <DateTimeField
-              label="Time"
               mode="time"
               value={time}
               onChange={setTime}
@@ -283,7 +276,6 @@ export function CreateEvent({ navigation }: Props) {
                 </View>
                 <View style={{ flexDirection: "row", gap: 10 }}>
                   <DateTimeField
-                    label="Date"
                     mode="date"
                     value={r.date}
                     onChange={(t) =>
@@ -295,7 +287,6 @@ export function CreateEvent({ navigation }: Props) {
                     style={{ flex: 1 }}
                   />
                   <DateTimeField
-                    label="Time"
                     mode="time"
                     value={r.time}
                     onChange={(t) =>

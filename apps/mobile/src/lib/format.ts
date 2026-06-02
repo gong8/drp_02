@@ -34,6 +34,19 @@ export function formatTime(iso: string): string {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
+// Build a UTC ISO instant from the picker's local "YYYY-MM-DD" + "HH:mm" strings. Uses the numeric
+// Date constructor (always local time, in every engine) rather than `new Date("YYYY-MM-DDTHH:mm")`:
+// a string with no offset is parsed as UTC by Hermes (React Native), which lands times an hour off
+// in zones like BST. null until both parts are present and valid.
+export function isoFrom(date: string, time: string): string | null {
+  if (!date || !time) return null;
+  const [y, mo, d] = date.split("-").map(Number);
+  const [h, mi] = time.split(":").map(Number);
+  if ([y, mo, d, h, mi].some((n) => Number.isNaN(n))) return null;
+  const dt = new Date(y, mo - 1, d, h, mi, 0, 0);
+  return Number.isNaN(dt.getTime()) ? null : dt.toISOString();
+}
+
 // A stable per-day key for grouping a list of events under date headers.
 export function dateKey(iso: string): string {
   const d = new Date(iso);

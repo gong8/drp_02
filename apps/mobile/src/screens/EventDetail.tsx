@@ -3,7 +3,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
-import { formatCountdown, formatSlot, partOfDayLabel } from "../lib/format";
+import { formatCountdown, formatSlot, isoFrom, partOfDayLabel } from "../lib/format";
 import { trpc } from "../lib/trpc";
 import { font, ui } from "../theme";
 import {
@@ -27,14 +27,6 @@ type Cand = Detail["candidates"][number];
 type Mode = "At least one" | "All of them";
 type Props = NativeStackScreenProps<MeetupsStackParams, "EventDetail">;
 
-// Compose an ISO instant from the DateTimeField's "YYYY-MM-DD" + "HH:mm" strings; null until both
-// are set (mirrors the helper in CreateEvent).
-function isoFrom(date: string, time: string): string | null {
-  if (!date || !time) return null;
-  const d = new Date(`${date}T${time}:00`);
-  return Number.isNaN(d.getTime()) ? null : d.toISOString();
-}
-
 export function EventDetail({ route, navigation }: Props) {
   const { eventId } = route.params;
   const [data, setData] = useState<Detail | null>(null);
@@ -52,6 +44,9 @@ export function EventDetail({ route, navigation }: Props) {
   const [reactPicked, setReactPicked] = useState<string[]>([]);
   const seededFor = useRef<string>("");
   const phaseRef = useRef<string>("");
+  // Auto-save: the latest reaction set waiting to be persisted + its debounce timer (no submit btn).
+  const pendingPicks = useRef<string[] | null>(null);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const load = useCallback(() => {
     return trpc.events.get
@@ -62,6 +57,21 @@ export function EventDetail({ route, navigation }: Props) {
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
+  }, [eventId]);
+
+  // Persist the current reaction set, debounced (see toggleReact). Deliberately NOT followed by a
+  // refetch: that would clobber the optimistic picks and flicker; the 5s poll refreshes the tally
+  // and lock-readiness on its own. Failures are swallowed (the next poll reconciles).
+  const flushReact = useCallback(() => {
+    if (saveTimer.current) {
+      clearTimeout(saveTimer.current);
+      saveTimer.current = null;
+    }
+    if (pendingPicks.current) {
+      const worksCandidateIds = pendingPicks.current;
+      pendingPicks.current = null;
+      trpc.events.react.mutate({ eventId, worksCandidateIds }).catch(() => {});
+    }
   }, [eventId]);
 
   useFocusEffect(
@@ -80,8 +90,9 @@ export function EventDetail({ route, navigation }: Props) {
         active = false;
         clearInterval(tick);
         clearInterval(poll);
+        flushReact(); // persist any reaction tap not yet saved before leaving the screen
       };
-    }, [load]),
+    }, [load, flushReact]),
   );
 
   phaseRef.current = data?.phase ?? "";
@@ -95,24 +106,25 @@ export function EventDetail({ route, navigation }: Props) {
     }
   }, [data, eventId]);
 
-  async function react() {
-    if (busy || !data) return;
-    setBusy(true);
-    try {
-      await trpc.events.react.mutate({ eventId, worksCandidateIds: reactPicked });
-      await load();
-    } catch {
-      setError(true);
-    } finally {
-      setBusy(false);
-    }
+  // Tapping a candidate IS the answer - toggle optimistically and save after a short debounce, so
+  // there is no separate "submit" step competing with the creator's lock.
+  function toggleReact(id: string) {
+    setReactPicked((p) => {
+      const next = p.includes(id) ? p.filter((x) => x !== id) : [...p, id];
+      pendingPicks.current = next;
+      return next;
+    });
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(flushReact, 500);
   }
 
-  async function lock() {
+  async function lock(candidateId?: string) {
     if (busy) return;
     setBusy(true);
     try {
-      await trpc.events.lock.mutate({ eventId, momentMinutes: 60 });
+      await trpc.events.lock.mutate(
+        candidateId ? { eventId, candidateId, momentMinutes: 60 } : { eventId, momentMinutes: 60 },
+      );
       await load();
     } catch {
       setError(true);
@@ -229,10 +241,7 @@ export function EventDetail({ route, navigation }: Props) {
             data={data}
             picked={reactPicked}
             busy={busy}
-            onToggle={(id) =>
-              setReactPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]))
-            }
-            onReact={react}
+            onToggle={toggleReact}
             onLock={lock}
             onAddCandidate={addCandidate}
           />
@@ -341,7 +350,6 @@ function CollectingView({
   picked,
   busy,
   onToggle,
-  onReact,
   onLock,
   onAddCandidate,
 }: {
@@ -349,21 +357,29 @@ function CollectingView({
   picked: string[];
   busy: boolean;
   onToggle: (id: string) => void;
-  onReact: () => void;
-  onLock: () => void;
+  onLock: (candidateId?: string) => void;
   onAddCandidate: (startsAt: string) => void;
 }) {
   const [addOpen, setAddOpen] = useState(false);
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("");
   const newIso = isoFrom(newDate, newTime);
+  // The slot the creator would lock: most reactors, earliest as a tiebreak. Counts are creator-only
+  // (null for members, who never see the organizer zone), so this is the same winner the server picks.
+  const best = [...data.candidates]
+    .filter((c) => c.count !== null)
+    .sort(
+      (a, b) =>
+        (b.count ?? 0) - (a.count ?? 0) ||
+        new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
+    )[0];
   return (
     <View style={{ marginTop: 16 }}>
       <Text style={{ fontFamily: font.display, fontSize: 14, color: ui.ink, marginBottom: 4 }}>
         Which of these work?
       </Text>
       <Text style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted, marginBottom: 10 }}>
-        Tap the times you could make. Private - only you see your picks.
+        Tap the times you can make - saved automatically, private to you.
       </Text>
       <Card padding={0}>
         {data.candidates.map((c: Cand, i: number) => {
@@ -402,6 +418,12 @@ function CollectingView({
         })}
       </Card>
 
+      {picked.length === 0 && (
+        <Text style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted, marginTop: 8 }}>
+          Nothing works? Leaving them all unticked is a fine answer.
+        </Text>
+      )}
+
       {addOpen ? (
         <Card style={{ marginTop: 16 }}>
           <Text
@@ -428,7 +450,6 @@ function CollectingView({
           </Text>
           <View style={{ flexDirection: "row", gap: 10, alignItems: "flex-end" }}>
             <DateTimeField
-              label="Date"
               mode="date"
               value={newDate}
               onChange={setNewDate}
@@ -436,7 +457,6 @@ function CollectingView({
               style={{ flex: 1 }}
             />
             <DateTimeField
-              label="Time"
               mode="time"
               value={newTime}
               onChange={setNewTime}
@@ -444,18 +464,26 @@ function CollectingView({
               style={{ flex: 1 }}
             />
           </View>
-          <View style={{ flexDirection: "row", gap: 12, marginTop: 14, alignItems: "center" }}>
+          <View
+            style={{
+              flexDirection: "row",
+              gap: 16,
+              marginTop: 16,
+              alignItems: "center",
+              justifyContent: "flex-end",
+            }}
+          >
             <Pressable
+              hitSlop={8}
               onPress={() => {
                 setNewDate("");
                 setNewTime("");
                 setAddOpen(false);
               }}
-              style={{ paddingVertical: 12, paddingHorizontal: 4 }}
             >
               <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.muted }}>Cancel</Text>
             </Pressable>
-            <View style={{ flex: 1 }}>
+            <View style={{ width: 120 }}>
               <Button
                 label="Add"
                 variant="primary"
@@ -477,27 +505,47 @@ function CollectingView({
         </View>
       )}
 
-      <Button
-        label="These work for me"
-        variant="primary"
-        disabled={busy}
-        onPress={onReact}
-        style={{ marginTop: 14 }}
-      />
-
-      {data.isCreator && (
-        <View style={{ marginTop: 18 }}>
-          <Text style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted, marginBottom: 8 }}>
-            {data.readyToLock
-              ? "Enough people are free - lock in the moment when you're ready."
-              : "You'll be able to lock once enough people can make a time."}
-          </Text>
-          <Button
-            label="Lock it in"
-            variant={data.readyToLock ? "affirmative" : "outline"}
-            disabled={busy}
-            onPress={onLock}
-          />
+      {!addOpen && data.isCreator && (
+        <View style={{ marginTop: 24 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
+            <View style={{ flex: 1, height: ui.border, backgroundColor: ui.hairline }} />
+            <Text
+              style={{
+                fontFamily: font.bold,
+                fontSize: 9,
+                letterSpacing: 1.5,
+                textTransform: "uppercase",
+                color: ui.muted,
+                marginHorizontal: 10,
+              }}
+            >
+              Organizer
+            </Text>
+            <View style={{ flex: 1, height: ui.border, backgroundColor: ui.hairline }} />
+          </View>
+          <Card>
+            <Text
+              style={{
+                fontFamily: font.medium,
+                fontSize: 12,
+                color: ui.muted,
+                marginBottom: 12,
+                lineHeight: 18,
+              }}
+            >
+              {data.readyToLock && best
+                ? `Enough people are free. Lock in ${formatSlot(best.startsAt)} to open the moment - everyone RSVPs, and it can't change after.`
+                : "Once enough people can make a time, lock the winning slot here to open the moment."}
+            </Text>
+            <Button
+              label={
+                data.readyToLock && best ? `Lock in ${formatSlot(best.startsAt)}` : "Lock it in"
+              }
+              variant={data.readyToLock ? "affirmative" : "outline"}
+              disabled={busy || !data.readyToLock}
+              onPress={() => onLock(best?.id)}
+            />
+          </Card>
         </View>
       )}
     </View>

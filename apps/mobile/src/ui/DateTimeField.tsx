@@ -35,38 +35,46 @@ function roundUpToInterval(d: Date, interval: number): Date {
   return out;
 }
 
-// Seed the picker from the current value, falling back to a sensible "now".
+// Seed the picker from the current value, falling back to a sensible "now". Parse via numeric
+// components (always local) - never `new Date("...T...")`, which Hermes interprets as UTC.
 function seed(mode: "date" | "time", value: string, interval: number): Date {
   const now = new Date();
   if (mode === "date") {
     if (value) {
-      const d = new Date(`${value}T00:00:00`);
-      if (!Number.isNaN(d.getTime())) return d;
+      const [y, mo, d] = value.split("-").map(Number);
+      if (![y, mo, d].some((n) => Number.isNaN(n))) return new Date(y, mo - 1, d, 12, 0, 0, 0);
     }
     return now;
   }
   if (value) {
-    const d = new Date(`1970-01-01T${value}:00`);
-    if (!Number.isNaN(d.getTime())) {
+    const [h, mi] = value.split(":").map(Number);
+    if (![h, mi].some((n) => Number.isNaN(n))) {
       const t = new Date();
-      t.setHours(d.getHours(), d.getMinutes(), 0, 0);
+      t.setHours(h, mi, 0, 0);
       return t;
     }
   }
   return roundUpToInterval(now, interval);
 }
 
-// Friendly trigger label (e.g. "Fri, 5 Jun" / "4:00 PM"); null when unset.
+// Friendly trigger label (e.g. "Fri, 5 Jun" / "4:00 PM"); null when unset. Same component-based
+// parse so the label matches the wheel exactly (no timezone-less string parsing).
 function displayValue(mode: "date" | "time", value: string): string | null {
   if (!value) return null;
   if (mode === "date") {
-    const d = new Date(`${value}T00:00:00`);
-    if (Number.isNaN(d.getTime())) return value;
-    return d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
+    const [y, mo, d] = value.split("-").map(Number);
+    if ([y, mo, d].some((n) => Number.isNaN(n))) return value;
+    return new Date(y, mo - 1, d, 12, 0, 0, 0).toLocaleDateString(undefined, {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    });
   }
-  const d = new Date(`1970-01-01T${value}:00`);
-  if (Number.isNaN(d.getTime())) return value;
-  return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  const [h, mi] = value.split(":").map(Number);
+  if ([h, mi].some((n) => Number.isNaN(n))) return value;
+  const t = new Date();
+  t.setHours(h, mi, 0, 0);
+  return t.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 }
 
 export function DateTimeField({
@@ -110,18 +118,20 @@ export function DateTimeField({
 
   return (
     <View style={style}>
-      <Text
-        style={{
-          fontFamily: font.bold,
-          fontSize: 9,
-          letterSpacing: 1,
-          textTransform: "uppercase",
-          color: ui.ink,
-          marginBottom: 5,
-        }}
-      >
-        {label}
-      </Text>
+      {label ? (
+        <Text
+          style={{
+            fontFamily: font.bold,
+            fontSize: 9,
+            letterSpacing: 1,
+            textTransform: "uppercase",
+            color: ui.ink,
+            marginBottom: 5,
+          }}
+        >
+          {label}
+        </Text>
+      ) : null}
       <HardShadow radius={ui.rInput} offset={3}>
         <Pressable
           onPress={openPicker}
@@ -154,7 +164,16 @@ export function DateTimeField({
       </HardShadow>
 
       {Platform.OS === "ios" && (
-        <BottomSheet visible={open} onClose={() => setOpen(false)}>
+        <BottomSheet
+          visible={open}
+          onClose={() => {
+            // Dismissing accepts whatever the picker is showing - including the seeded default the
+            // user never scrolled (onChange only fires on an actual change, so without this an
+            // untouched value would never be committed).
+            commit(temp);
+            setOpen(false);
+          }}
+        >
           <Text
             style={{
               fontFamily: font.bold,
@@ -179,12 +198,10 @@ export function DateTimeField({
               minuteInterval={mode === "time" ? minuteInterval : undefined}
               onChange={(_event: DateTimePickerEvent, date?: Date) => {
                 if (!date) return;
+                // Save live - no Done button. The pink-highlighted selection is the confirmation;
+                // the sheet is dismissed by tapping the backdrop (same for date and time).
                 setTemp(date);
-                // Save live - no Done button. A date is a single terminal tap, so close the sheet
-                // as soon as it's chosen; the time wheel has no discrete "selected" event, so it
-                // keeps saving as you scroll and is dismissed by tapping the backdrop.
                 commit(date);
-                if (mode === "date") setOpen(false);
               }}
             />
           </View>

@@ -31,18 +31,20 @@ export function DateTimeField({
 
   return (
     <View style={style}>
-      <Text
-        style={{
-          fontFamily: font.bold,
-          fontSize: 9,
-          letterSpacing: 1,
-          textTransform: "uppercase",
-          color: ui.ink,
-          marginBottom: 5,
-        }}
-      >
-        {label}
-      </Text>
+      {label ? (
+        <Text
+          style={{
+            fontFamily: font.bold,
+            fontSize: 9,
+            letterSpacing: 1,
+            textTransform: "uppercase",
+            color: ui.ink,
+            marginBottom: 5,
+          }}
+        >
+          {label}
+        </Text>
+      ) : null}
       <input
         type={isDate ? "date" : "time"}
         value={value}
