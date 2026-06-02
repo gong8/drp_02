@@ -8,7 +8,16 @@ import { formatCountdown, formatSlot } from "../lib/format";
 import { syncReminders } from "../lib/notifications";
 import { trpc } from "../lib/trpc";
 import { font, ui } from "../theme";
-import { Avatar, Card, DateChip, HardShadow, Heading, ScreenBackground, StickerTag } from "../ui";
+import {
+  Avatar,
+  Card,
+  DateChip,
+  HardShadow,
+  Heading,
+  ScreenBackground,
+  StickerTag,
+  Tabs,
+} from "../ui";
 
 function BigButton({ label, onPress }: { label: string; onPress: () => void }) {
   return (
@@ -34,23 +43,15 @@ function BigButton({ label, onPress }: { label: string; onPress: () => void }) {
 type Ev = Awaited<ReturnType<typeof trpc.events.mine.query>>[number];
 type Props = NativeStackScreenProps<MeetupsStackParams, "Dashboard">;
 
-// A quiet uppercase section heading - pink for "needs you", muted for the calm sections.
-function SectionLabel({ children, color }: { children: string; color: string }) {
-  return (
-    <Text
-      style={{
-        fontFamily: font.bold,
-        fontSize: 10,
-        letterSpacing: 1.4,
-        textTransform: "uppercase",
-        color,
-        marginBottom: 12,
-        marginLeft: 2,
-      }}
-    >
-      {children}
-    </Text>
-  );
+const FILTERS = ["All", "Going", "Awaiting", "Declined"] as const;
+type Filter = (typeof FILTERS)[number];
+
+function matchesFilter(e: Ev, filter: Filter): boolean {
+  if (filter === "All") return true;
+  if (filter === "Going") return e.myStatus === "going";
+  if (filter === "Declined") return e.myStatus === "declined";
+  // "Awaiting" gathers everything still wanting your input: a live moment or a collecting plan.
+  return e.myStatus === "awaiting" || e.myStatus === "reacting";
 }
 
 // The loud anchor: a full-bleed pink panel (edge-to-edge, ink rules top + bottom, same motif as the
@@ -324,6 +325,7 @@ export function Dashboard({ navigation }: Props) {
   const [hasGroups, setHasGroups] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [filter, setFilter] = useState<Filter>("All");
   // Local clock so the Action Required countdowns + drain bars tick live (the poll is only every 5s).
   const [now, setNow] = useState(Date.now());
 
@@ -381,15 +383,22 @@ export function Dashboard({ navigation }: Props) {
 
   const actionIds = useMemo(() => new Set(actionItems.map((e) => e.id)), [actionItems]);
 
-  // Below the banner, no tabs. "Coming up" = plans not needing action that haven't happened yet,
-  // soonest first (reads like a calendar). Plans that already happened are not surfaced here.
-  const coming = useMemo(() => {
+  // Below the banner: every other plan (history included), filtered by the tabs. Upcoming first
+  // (soonest), then past most-recent-first - so "All" doubles as your history.
+  const list = useMemo(() => {
     const t = Date.now();
-    const happened = (e: Ev) => e.phase === "cleared" && new Date(e.startsAt).getTime() < t;
+    const upcoming = (e: Ev) => new Date(e.startsAt).getTime() >= t;
     return events
-      .filter((e) => !actionIds.has(e.id) && !happened(e))
-      .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
-  }, [events, actionIds]);
+      .filter((e) => !actionIds.has(e.id) && matchesFilter(e, filter))
+      .sort((a, b) => {
+        const ua = upcoming(a);
+        const ub = upcoming(b);
+        if (ua !== ub) return ua ? -1 : 1;
+        const ta = new Date(a.startsAt).getTime();
+        const tb = new Date(b.startsAt).getTime();
+        return ua ? ta - tb : tb - ta;
+      });
+  }, [events, actionIds, filter]);
 
   if (loading) {
     return (
@@ -450,20 +459,16 @@ export function Dashboard({ navigation }: Props) {
                   </ActionPanel>
                 )}
 
-                {coming.length > 0 && (
-                  <View style={{ marginBottom: 4 }}>
-                    <SectionLabel color={ui.muted}>Coming up</SectionLabel>
-                    {coming.map((e) => (
-                      <MeetCard
-                        key={e.id}
-                        e={e}
-                        onPress={() => navigation.navigate("EventDetail", { eventId: e.id })}
-                      />
-                    ))}
-                  </View>
-                )}
+                <Tabs options={FILTERS} value={filter} onChange={setFilter} />
 
-                {actionItems.length === 0 && coming.length === 0 && (
+                {list.map((e) => (
+                  <MeetCard
+                    key={e.id}
+                    e={e}
+                    onPress={() => navigation.navigate("EventDetail", { eventId: e.id })}
+                  />
+                ))}
+                {list.length === 0 && (
                   <Card>
                     <Text
                       style={{
@@ -472,10 +477,9 @@ export function Dashboard({ navigation }: Props) {
                         color: ui.muted,
                         textAlign: "center",
                         paddingVertical: 10,
-                        lineHeight: 19,
                       }}
                     >
-                      Nothing on yet. Suggest a meetup to get the group together.
+                      Nothing here yet.
                     </Text>
                   </Card>
                 )}
