@@ -8,16 +8,7 @@ import { formatCountdown, formatSlot } from "../lib/format";
 import { syncReminders } from "../lib/notifications";
 import { trpc } from "../lib/trpc";
 import { font, ui } from "../theme";
-import {
-  Avatar,
-  Card,
-  DateChip,
-  HardShadow,
-  Heading,
-  ScreenBackground,
-  StickerTag,
-  Tabs,
-} from "../ui";
+import { Avatar, Card, DateChip, HardShadow, Heading, ScreenBackground, StickerTag } from "../ui";
 
 function BigButton({ label, onPress }: { label: string; onPress: () => void }) {
   return (
@@ -42,15 +33,24 @@ function BigButton({ label, onPress }: { label: string; onPress: () => void }) {
 
 type Ev = Awaited<ReturnType<typeof trpc.events.mine.query>>[number];
 type Props = NativeStackScreenProps<MeetupsStackParams, "Dashboard">;
-const FILTERS = ["All", "Going", "Awaiting", "Declined"] as const;
-type Filter = (typeof FILTERS)[number];
 
-function matchesFilter(e: Ev, filter: Filter): boolean {
-  if (filter === "All") return true;
-  if (filter === "Going") return e.myStatus === "going";
-  if (filter === "Declined") return e.myStatus === "declined";
-  // "Awaiting" gathers everything still wanting your input: a live moment or a collecting plan.
-  return e.myStatus === "awaiting" || e.myStatus === "reacting";
+// A quiet uppercase section heading - pink for "needs you", muted for the calm sections.
+function SectionLabel({ children, color }: { children: string; color: string }) {
+  return (
+    <Text
+      style={{
+        fontFamily: font.bold,
+        fontSize: 10,
+        letterSpacing: 1.4,
+        textTransform: "uppercase",
+        color,
+        marginBottom: 12,
+        marginLeft: 2,
+      }}
+    >
+      {children}
+    </Text>
+  );
 }
 
 // The muted right-side line in a card footer - a nudge or a quiet note.
@@ -176,40 +176,6 @@ function MeetCard({ e, onPress, last }: { e: Ev; onPress: () => void; last?: boo
   );
 }
 
-// The white, ink-bordered count chip that sits on the pink action tray. Fixed circle + killed font
-// padding so the number lands dead-centre on every platform.
-function CountBadge({ n }: { n: number }) {
-  return (
-    <View
-      style={{
-        minWidth: 26,
-        height: 26,
-        borderRadius: 13,
-        paddingHorizontal: 6,
-        backgroundColor: ui.surface,
-        borderWidth: ui.border,
-        borderColor: ui.ink,
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <Text
-        style={{
-          fontFamily: font.bold,
-          fontSize: 12,
-          lineHeight: 12,
-          color: ui.ink,
-          textAlign: "center",
-          textAlignVertical: "center",
-          includeFontPadding: false,
-        }}
-      >
-        {n}
-      </Text>
-    </View>
-  );
-}
-
 // What the user must do, by phase.
 function actionVerb(e: Ev): string {
   return e.phase === "moment" ? "Say if you're in" : "Pick your times";
@@ -315,7 +281,6 @@ export function Dashboard({ navigation }: Props) {
   const [hasGroups, setHasGroups] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [filter, setFilter] = useState<Filter>("All");
   // Local clock so the Action Required countdowns + drain bars tick live (the poll is only every 5s).
   const [now, setNow] = useState(Date.now());
 
@@ -373,19 +338,17 @@ export function Dashboard({ navigation }: Props) {
 
   const actionIds = useMemo(() => new Set(actionItems.map((e) => e.id)), [actionItems]);
 
-  // The browsable archive below: everything not awaiting my action, segmented by the status tabs.
-  // Plans I'm going to float to the top (quick access right after I commit); declined sink; ties
-  // break by soonest.
+  // Everything else (no tabs): plans I'm going to float to the top for quick access; declined sink;
+  // ties break by soonest.
   const list = useMemo(() => {
     const rank = (e: Ev) => (e.myStatus === "going" ? 0 : e.myStatus === "declined" ? 2 : 1);
     return events
       .filter((e) => !actionIds.has(e.id))
-      .filter((e) => matchesFilter(e, filter))
       .sort(
         (a, b) =>
           rank(a) - rank(b) || new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
       );
-  }, [events, actionIds, filter]);
+  }, [events, actionIds]);
 
   if (loading) {
     return (
@@ -433,73 +396,46 @@ export function Dashboard({ navigation }: Props) {
             ) : (
               <>
                 {actionItems.length > 0 && (
-                  <HardShadow radius={ui.rCard} style={{ marginBottom: 20 }}>
-                    <View
-                      style={{
-                        backgroundColor: ui.brand,
-                        borderWidth: ui.border,
-                        borderColor: ui.ink,
-                        borderRadius: ui.rCard,
-                        padding: 12,
-                      }}
-                    >
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          marginBottom: 12,
-                          paddingHorizontal: 2,
-                        }}
-                      >
-                        <Text
-                          style={{
-                            fontFamily: font.black,
-                            fontSize: 16,
-                            letterSpacing: 0.3,
-                            textTransform: "uppercase",
-                            color: "#fff",
-                          }}
-                        >
-                          Action required
-                        </Text>
-                        <CountBadge n={actionItems.length} />
-                      </View>
-
-                      {actionItems.map((e, i) => (
-                        <ActionCard
-                          key={e.id}
-                          e={e}
-                          now={now}
-                          last={i === actionItems.length - 1}
-                          onPress={() => navigation.navigate("EventDetail", { eventId: e.id })}
-                        />
-                      ))}
-                    </View>
-                  </HardShadow>
+                  <View style={{ marginBottom: 32 }}>
+                    <SectionLabel color={ui.brand}>Needs you</SectionLabel>
+                    {actionItems.map((e, i) => (
+                      <ActionCard
+                        key={e.id}
+                        e={e}
+                        now={now}
+                        last={i === actionItems.length - 1}
+                        onPress={() => navigation.navigate("EventDetail", { eventId: e.id })}
+                      />
+                    ))}
+                  </View>
                 )}
 
-                <Tabs options={FILTERS} value={filter} onChange={setFilter} />
+                {list.length > 0 && (
+                  <View>
+                    <SectionLabel color={ui.muted}>Coming up</SectionLabel>
+                    {list.map((e) => (
+                      <MeetCard
+                        key={e.id}
+                        e={e}
+                        onPress={() => navigation.navigate("EventDetail", { eventId: e.id })}
+                      />
+                    ))}
+                  </View>
+                )}
 
-                {list.map((e) => (
-                  <MeetCard
-                    key={e.id}
-                    e={e}
-                    onPress={() => navigation.navigate("EventDetail", { eventId: e.id })}
-                  />
-                ))}
-                {list.length === 0 && (
+                {actionItems.length === 0 && list.length === 0 && (
                   <Card>
                     <Text
                       style={{
                         fontFamily: font.medium,
-                        fontSize: 12,
+                        fontSize: 13,
                         color: ui.muted,
                         textAlign: "center",
-                        paddingVertical: 6,
+                        paddingVertical: 10,
+                        lineHeight: 19,
                       }}
                     >
-                      Nothing here yet.
+                      Nothing on yet. Suggest a meetup to get the group together.
                     </Text>
                   </Card>
                 )}
