@@ -7,6 +7,7 @@ import { fastifyTRPCPlugin } from "@trpc/server/adapters/fastify";
 import { sql } from "drizzle-orm";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import Fastify from "fastify";
+import { isAuthorizedReset } from "./admin/reset-auth.js";
 import { db } from "./db/client.js";
 import { reseedDemo, seedDemoIfEmpty } from "./db/seed.js";
 import { logger } from "./logger.js";
@@ -52,6 +53,21 @@ await server.register(cors, { origin: true });
 await server.register(fastifyTRPCPlugin, {
   prefix: "/trpc",
   trpcOptions: { router: appRouter, createContext },
+});
+
+// Ops-only: wipe + reinstall the demo seed without a redeploy. Disabled (403) unless
+// ADMIN_RESET_TOKEN is set; the secret is checked in constant time. Destructive, so it logs loudly.
+// Deliberately a raw route, NOT a tRPC procedure, so it stays out of the mobile client's typed surface.
+server.post("/admin/reseed", async (req, reply) => {
+  const header = req.headers["x-admin-token"];
+  const provided = typeof header === "string" ? header : undefined;
+  if (!isAuthorizedReset(provided, process.env.ADMIN_RESET_TOKEN)) {
+    return reply.code(403).send({ error: "forbidden" });
+  }
+  req.log.warn({ scope: "admin" }, "admin reseed invoked");
+  await reseedDemo();
+  req.log.warn({ scope: "admin" }, "admin reseed completed");
+  return { ok: true as const };
 });
 
 // DANGER, one-shot escape hatch: DB_RESET_ON_BOOT=true drops and recreates the public
