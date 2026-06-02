@@ -12,16 +12,16 @@ export function Chip({
   onPress: () => void;
 }) {
   return (
-    <HardShadow radius={ui.rChip} offset={3} style={{ marginRight: 8, marginBottom: 8 }}>
+    <HardShadow radius={ui.rInput} offset={3} style={{ marginRight: 8, marginBottom: 8 }}>
       <Pressable
         onPress={onPress}
         style={{
           backgroundColor: selected ? ui.ink : ui.surface,
           borderWidth: ui.border,
           borderColor: ui.ink,
-          borderRadius: ui.rChip,
-          paddingVertical: 6,
-          paddingHorizontal: 12,
+          borderRadius: ui.rInput,
+          paddingVertical: 7,
+          paddingHorizontal: 13,
         }}
       >
         <Text style={{ fontFamily: font.bold, fontSize: 12, color: selected ? "#fff" : ui.ink }}>
