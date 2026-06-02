@@ -13,20 +13,22 @@ import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-cont
 import { DevAuthProvider, useAuthBridge } from "./src/lib/auth";
 import { publishableKey, tokenCache } from "./src/lib/clerk";
 import { Account } from "./src/screens/Account";
-import { CreateEvent } from "./src/screens/CreateEvent";
 import { CreateGroup } from "./src/screens/CreateGroup";
+import { CreateWizard } from "./src/screens/CreateWizard";
 import { Dashboard } from "./src/screens/Dashboard";
 import { EventDetail } from "./src/screens/EventDetail";
 import { FloatBoard } from "./src/screens/FloatBoard";
 import { GroupDetail } from "./src/screens/GroupDetail";
 import { GroupsList } from "./src/screens/GroupsList";
+import { NewDial } from "./src/screens/NewDial";
 import { SignIn } from "./src/screens/SignIn";
 import { font, ui } from "./src/theme";
 
 export type MeetupsStackParams = {
   Dashboard: undefined;
   EventDetail: { eventId: string };
-  CreateEvent: undefined;
+  NewDial: undefined;
+  CreateWizard: { branch: "float" | "rough" | "set" };
   FloatBoard: { floatId: string };
 };
 export type GroupsStackParams = {
@@ -46,7 +48,8 @@ function MeetupsStackScreen() {
     <MeetupsStack.Navigator screenOptions={stackHeader}>
       <MeetupsStack.Screen name="Dashboard" component={Dashboard} />
       <MeetupsStack.Screen name="EventDetail" component={EventDetail} />
-      <MeetupsStack.Screen name="CreateEvent" component={CreateEvent} />
+      <MeetupsStack.Screen name="NewDial" component={NewDial} />
+      <MeetupsStack.Screen name="CreateWizard" component={CreateWizard} />
       <MeetupsStack.Screen name="FloatBoard" component={FloatBoard} />
     </MeetupsStack.Navigator>
   );

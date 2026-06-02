@@ -641,10 +641,7 @@ export function Dashboard({ navigation }: Props) {
           }}
         >
           {hasGroups && !error ? (
-            <BigButton
-              label="Suggest a meetup"
-              onPress={() => navigation.navigate("CreateEvent")}
-            />
+            <BigButton label="New meetup" onPress={() => navigation.navigate("NewDial")} />
           ) : (
             <BigButton
               label="Create a group"
