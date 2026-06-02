@@ -10,6 +10,7 @@ export function Field({
   placeholder,
   multiline = false,
   editable = true,
+  optional = false,
   right,
   style,
 }: {
@@ -19,23 +20,30 @@ export function Field({
   placeholder?: string;
   multiline?: boolean;
   editable?: boolean;
+  optional?: boolean;
   right?: ReactNode;
   style?: ViewStyle;
 }) {
   return (
     <View style={style}>
-      <Text
-        style={{
-          fontFamily: font.bold,
-          fontSize: 9,
-          letterSpacing: 1,
-          textTransform: "uppercase",
-          color: ui.ink,
-          marginBottom: 5,
-        }}
-      >
-        {label}
-      </Text>
+      <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 5 }}>
+        <Text
+          style={{
+            fontFamily: font.bold,
+            fontSize: 9,
+            letterSpacing: 1,
+            textTransform: "uppercase",
+            color: ui.ink,
+          }}
+        >
+          {label}
+        </Text>
+        {optional && (
+          <Text style={{ fontFamily: font.medium, fontSize: 9, color: ui.muted, marginLeft: 6 }}>
+            optional
+          </Text>
+        )}
+      </View>
       <HardShadow radius={ui.rInput} offset={3}>
         <View
           style={{

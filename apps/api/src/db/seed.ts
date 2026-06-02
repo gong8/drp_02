@@ -45,6 +45,7 @@ async function insertDemoData(): Promise<void> {
       contingent: p.contingent,
       quorum: p.quorum,
       phase: p.phase,
+      lockAt: p.lockAt ?? null,
       chosenCandidateId: chosen ? candId(p.id, chosen.suffix) : null,
       momentStartsAt: p.momentStartsAt ?? null,
       momentEndsAt: p.momentEndsAt ?? null,

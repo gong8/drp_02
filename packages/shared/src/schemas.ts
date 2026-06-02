@@ -36,8 +36,9 @@ export type PlanPhase = z.infer<typeof PlanPhase>;
 export const WhenInput = z.discriminatedUnion("mode", [
   // One fixed time - the plan is set; it skips collecting and always happens.
   z.object({ mode: z.literal("exact"), startsAt: z.string() }),
-  // A short menu of fixed times (e.g. cinema showtimes) - people react, best-supported wins.
-  z.object({ mode: z.literal("options"), options: z.array(z.string()).min(2).max(6) }),
+  // One or more proposed times people react to - the best-supported slot wins. A single time is
+  // allowed: it starts as one candidate that the group can react to and add alternatives around.
+  z.object({ mode: z.literal("options"), options: z.array(z.string()).min(1).max(6) }),
   // A loose window - expanded into day candidates at the chosen band; people react.
   z.object({ mode: z.literal("fuzzy"), timescale: Timescale, band: PartOfDay }),
 ]);
@@ -50,6 +51,10 @@ export const CreateEventInput = z.object({
   description: z.string().max(500).optional(),
   location: z.string().max(120).optional(),
   when: WhenInput,
+  // When collecting auto-locks the winning slot and opens the moment (ISO string). Only meaningful
+  // for options/fuzzy plans; ignored for exact. Defaulted server-side ("the day before") when
+  // omitted, and validated to sit after now and no later than the earliest proposed slot.
+  lockAt: z.string().optional(),
   // Min people (incl. resolved conditionals) for the moment to clear. Defaulted server-side.
   quorum: z.number().int().min(1).max(50).optional(),
 });
@@ -70,6 +75,15 @@ export const AddCandidateInput = z.object({
   startsAt: z.string(),
 });
 export type AddCandidateInput = z.infer<typeof AddCandidateInput>;
+
+// Network boundary for events.setOptOut - a member bows out of a collecting plan ("I can't make
+// it"). `out: true` clears their reactions and excludes them from the convergence and reminders;
+// `out: false` rejoins them to a neutral, undecided state. Private - no one else sees it.
+export const SetOptOutInput = z.object({
+  eventId: z.string(),
+  out: z.boolean(),
+});
+export type SetOptOutInput = z.infer<typeof SetOptOutInput>;
 
 // Network boundary for events.lock - the creator opens the blind moment on a slot. `candidateId`
 // omitted means the server picks the best-supported candidate. `momentMinutes` sets the countdown.

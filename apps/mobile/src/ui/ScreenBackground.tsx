@@ -4,8 +4,17 @@ import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ui } from "../theme";
 
-// Full-screen peach-to-lavender gradient behind every screen, with safe-area top padding.
-export function ScreenBackground({ children }: { children: ReactNode }) {
+// Full-screen peach-to-lavender gradient behind every screen, with safe-area top padding plus a
+// comfortable gap so headers and the back button never sit flush against the status bar / notch.
+// `header` (a screen title or back bar) is pinned at the top; only the `children` (the ScrollView)
+// scroll beneath it. Pass the screen's title/back-bar as `header` and a flex:1 ScrollView as children.
+export function ScreenBackground({
+  header,
+  children,
+}: {
+  header?: ReactNode;
+  children: ReactNode;
+}) {
   const insets = useSafeAreaInsets();
   return (
     <LinearGradient
@@ -14,7 +23,10 @@ export function ScreenBackground({ children }: { children: ReactNode }) {
       end={{ x: 1, y: 1 }}
       style={{ flex: 1 }}
     >
-      <View style={{ flex: 1, paddingTop: insets.top }}>{children}</View>
+      <View style={{ flex: 1, paddingTop: insets.top + 14 }}>
+        {header ? <View style={{ paddingHorizontal: 16 }}>{header}</View> : null}
+        {children}
+      </View>
     </LinearGradient>
   );
 }

@@ -69,6 +69,9 @@ export const events = pgTable("events", {
   contingent: boolean("contingent").notNull().default(false),
   quorum: integer("quorum").notNull().default(1),
   phase: planPhaseEnum("phase").notNull().default("collecting"),
+  // When collecting auto-locks the winning slot and opens the moment. Null for exact plans (which
+  // open the moment at creation). Drives the deadline + auto-lock; settled lazily on read.
+  lockAt: timestamp("lock_at"),
   chosenCandidateId: text("chosen_candidate_id"),
   momentStartsAt: timestamp("moment_starts_at"),
   momentEndsAt: timestamp("moment_ends_at"),
@@ -103,6 +106,22 @@ export const candidateReactions = pgTable(
       .references(() => users.id),
   },
   (t) => ({ pk: primaryKey({ columns: [t.candidateId, t.userId] }) }),
+);
+
+// A member who has bowed out of a collecting plan ("I can't make it"). One row per (event, user)
+// while they are opted out; deleted when they rejoin. Their reactions are cleared on opt-out, so
+// they drop out of the tally/quorum automatically. Private - never exposed to other members.
+export const eventOptOuts = pgTable(
+  "event_opt_outs",
+  {
+    eventId: text("event_id")
+      .notNull()
+      .references(() => events.id),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id),
+  },
+  (t) => ({ pk: primaryKey({ columns: [t.eventId, t.userId] }) }),
 );
 
 // A member's commitment during the moment. `cond` carries the "I will make it if…" target set.

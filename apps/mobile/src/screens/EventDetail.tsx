@@ -3,7 +3,14 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
-import { formatCountdown, formatSlot, isoFrom, partOfDayLabel } from "../lib/format";
+import {
+  clock12,
+  dayUpper,
+  formatCountdown,
+  formatSlot,
+  isoFrom,
+  partOfDayLabel,
+} from "../lib/format";
 import { trpc } from "../lib/trpc";
 import { font, ui } from "../theme";
 import {
@@ -12,9 +19,7 @@ import {
   BottomSheet,
   Button,
   Card,
-  Chip,
-  DateChip,
-  DateTimeField,
+  DateTimePill,
   ScreenBackground,
   SelectCheck,
   StickerTag,
@@ -25,6 +30,7 @@ type Detail = NonNullable<Awaited<ReturnType<typeof trpc.events.get.query>>>;
 type Member = Detail["members"][number];
 type Cand = Detail["candidates"][number];
 type Mode = "At least one" | "All of them";
+type SaveState = "idle" | "saving" | "saved" | "error";
 type Props = NativeStackScreenProps<MeetupsStackParams, "EventDetail">;
 
 export function EventDetail({ route, navigation }: Props) {
@@ -42,6 +48,9 @@ export function EventDetail({ route, navigation }: Props) {
   const [condPicked, setCondPicked] = useState<string[]>([]);
   // collecting reactions (seeded once from the server, then edited locally)
   const [reactPicked, setReactPicked] = useState<string[]>([]);
+  const [optedOutLocal, setOptedOutLocal] = useState(false);
+  // Surfaces whether the latest tap (a reaction or the opt-out) has been persisted yet.
+  const [saveState, setSaveState] = useState<SaveState>("idle");
   const seededFor = useRef<string>("");
   const phaseRef = useRef<string>("");
   // Auto-save: the latest reaction set waiting to be persisted + its debounce timer (no submit btn).
@@ -70,7 +79,11 @@ export function EventDetail({ route, navigation }: Props) {
     if (pendingPicks.current) {
       const worksCandidateIds = pendingPicks.current;
       pendingPicks.current = null;
-      trpc.events.react.mutate({ eventId, worksCandidateIds }).catch(() => {});
+      setSaveState("saving");
+      trpc.events.react
+        .mutate({ eventId, worksCandidateIds })
+        .then(() => setSaveState("saved"))
+        .catch(() => setSaveState("error"));
     }
   }, [eventId]);
 
@@ -80,7 +93,8 @@ export function EventDetail({ route, navigation }: Props) {
       load();
       // The 1s ticker only drives the live moment countdown, so only run it during the moment.
       const tick = setInterval(() => {
-        if (active && phaseRef.current === "moment") setNow(Date.now());
+        if (active && (phaseRef.current === "moment" || phaseRef.current === "collecting"))
+          setNow(Date.now());
       }, 1000);
       // Poll while the plan is live so the tally, countdown and reveal converge without a refresh.
       const poll = setInterval(() => {
@@ -102,20 +116,59 @@ export function EventDetail({ route, navigation }: Props) {
   useEffect(() => {
     if (data && data.phase === "collecting" && seededFor.current !== eventId) {
       setReactPicked(data.myReactionCandidateIds);
+      setOptedOutLocal(data.iOptedOut);
       seededFor.current = eventId;
     }
   }, [data, eventId]);
 
   // Tapping a candidate IS the answer - toggle optimistically and save after a short debounce, so
-  // there is no separate "submit" step competing with the creator's lock.
+  // there is no separate "submit" step competing with the deadline. Tapping a time also rejoins
+  // anyone who had opted out.
   function toggleReact(id: string) {
+    setOptedOutLocal(false);
     setReactPicked((p) => {
       const next = p.includes(id) ? p.filter((x) => x !== id) : [...p, id];
       pendingPicks.current = next;
       return next;
     });
+    setSaveState("saving");
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(flushReact, 500);
+  }
+
+  // "I can't make it" - a reversible, private exit. Opting out clears local picks; tapping it again
+  // (or any time above) rejoins. Optimistic, with the same save-state feedback as a reaction.
+  async function toggleOptOut() {
+    const next = !optedOutLocal;
+    setOptedOutLocal(next);
+    if (next) {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      pendingPicks.current = null;
+      setReactPicked([]);
+    }
+    setSaveState("saving");
+    try {
+      await trpc.events.setOptOut.mutate({ eventId, out: next });
+      setSaveState("saved");
+      await load();
+    } catch {
+      setOptedOutLocal(!next);
+      setSaveState("error");
+    }
+  }
+
+  // Re-send the current intent after a failed save (tap on the error status).
+  function retrySave() {
+    setSaveState("saving");
+    if (optedOutLocal) {
+      trpc.events.setOptOut
+        .mutate({ eventId, out: true })
+        .then(() => setSaveState("saved"))
+        .catch(() => setSaveState("error"));
+    } else {
+      pendingPicks.current = reactPicked;
+      flushReact();
+    }
   }
 
   async function lock(candidateId?: string) {
@@ -164,6 +217,22 @@ export function EventDetail({ route, navigation }: Props) {
     }
   }
 
+  // "Change my answer" un-commits: it clears the response so the plan returns to Action Required
+  // until a new answer is given, then reopens the choices.
+  async function changeAnswer() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await trpc.events.unrespond.mutate({ eventId });
+      setEditing(true);
+      await load();
+    } catch {
+      setError(true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (loading) {
     return (
       <ScreenBackground>
@@ -187,14 +256,15 @@ export function EventDetail({ route, navigation }: Props) {
   }
 
   const liveMsLeft = data.momentEndsAt ? new Date(data.momentEndsAt).getTime() - now : 0;
-  const whenLine =
-    data.chosenStartsAt && data.phase !== "collecting" ? formatSlot(data.chosenStartsAt) : null;
+  const liveMsToLock = data.lockAt ? new Date(data.lockAt).getTime() - now : 0;
+  // The chosen time, shown as a hero banner once a slot is locked (moment/cleared); collecting has
+  // no single time yet.
+  const heroIso = data.chosenStartsAt && data.phase !== "collecting" ? data.chosenStartsAt : null;
+  const heroClock = heroIso ? clock12(heroIso) : null;
 
   function headerSticker() {
     if (!data) return null;
-    if (data.phase === "collecting") return <StickerTag label="Coming together" />;
-    if (data.phase === "moment")
-      return <StickerTag label={`Locks ${formatCountdown(liveMsLeft)}`} />;
+    // Collecting + moment use the full-bleed countdown banner instead of a sticker.
     if (data.phase === "cleared") return <StickerTag label="It's on" />;
     return null;
   }
@@ -207,41 +277,102 @@ export function EventDetail({ route, navigation }: Props) {
         : "Awaiting your answer";
 
   return (
-    <ScreenBackground>
+    <ScreenBackground
+      header={<BackBar title={data.groupName} onBack={() => navigation.goBack()} />}
+    >
       <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 28 }}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 2, paddingBottom: 28 }}
         showsVerticalScrollIndicator={false}
       >
-        <BackBar title={data.groupName} onBack={() => navigation.goBack()} />
+        {data.phase === "collecting" && data.lockAt && (
+          <CountdownBanner label="Locks in" ms={liveMsToLock} note="best-supported time wins" />
+        )}
+        {data.phase === "moment" && (
+          <CountdownBanner label="Closes in" ms={liveMsLeft} note="who's in reveals then" />
+        )}
 
-        <Card>
-          <View
-            style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}
-          >
-            {whenLine ? <DateChip>{whenLine}</DateChip> : <View />}
-            {headerSticker()}
+        <Card padding={0}>
+          {heroIso && heroClock ? (
+            <View
+              style={{
+                paddingHorizontal: 16,
+                paddingTop: 14,
+                paddingBottom: 12,
+                borderBottomWidth: ui.border,
+                borderBottomColor: ui.ink,
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+              }}
+            >
+              <View>
+                <Text
+                  style={{ fontFamily: font.mono, fontSize: 12, letterSpacing: 1, color: ui.muted }}
+                >
+                  {dayUpper(heroIso)}
+                </Text>
+                <View style={{ flexDirection: "row", alignItems: "flex-end", marginTop: 3 }}>
+                  <Text
+                    style={{ fontFamily: font.mono, fontSize: 34, lineHeight: 36, color: ui.ink }}
+                  >
+                    {heroClock.time}
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: font.mono,
+                      fontSize: 16,
+                      color: ui.muted,
+                      marginLeft: 5,
+                      marginBottom: 3,
+                    }}
+                  >
+                    {heroClock.ampm}
+                  </Text>
+                </View>
+              </View>
+              {headerSticker()}
+            </View>
+          ) : null}
+          <View style={{ paddingHorizontal: 16, paddingTop: heroIso ? 14 : 16, paddingBottom: 16 }}>
+            <Text
+              style={{ fontFamily: font.display, fontSize: 24, letterSpacing: -0.5, color: ui.ink }}
+            >
+              {data.title}
+            </Text>
+            {data.location ? (
+              <Text
+                style={{ fontFamily: font.medium, fontSize: 12, color: ui.muted, marginTop: 4 }}
+              >
+                at <Text style={{ fontFamily: font.bold, color: ui.ink }}>{data.location}</Text>
+              </Text>
+            ) : null}
+            {data.description ? (
+              <Text
+                style={{
+                  fontFamily: font.medium,
+                  fontSize: 12,
+                  color: ui.muted,
+                  marginTop: 8,
+                  lineHeight: 18,
+                }}
+              >
+                {data.description}
+              </Text>
+            ) : null}
           </View>
-          <Text style={{ fontFamily: font.display, fontSize: 22, color: ui.ink, marginTop: 8 }}>
-            {data.title}
-          </Text>
-          {data.location ? (
-            <Text style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted, marginTop: 2 }}>
-              {data.location}
-            </Text>
-          ) : null}
-          {data.description ? (
-            <Text style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted, marginTop: 6 }}>
-              {data.description}
-            </Text>
-          ) : null}
         </Card>
 
         {data.phase === "collecting" && (
           <CollectingView
             data={data}
             picked={reactPicked}
+            optedOut={optedOutLocal}
+            saveState={saveState}
             busy={busy}
             onToggle={toggleReact}
+            onToggleOptOut={toggleOptOut}
+            onRetry={retrySave}
             onLock={lock}
             onAddCandidate={addCandidate}
           />
@@ -252,7 +383,7 @@ export function EventDetail({ route, navigation }: Props) {
             data={data}
             busy={busy}
             editing={editing}
-            onEdit={() => setEditing(true)}
+            onEdit={changeAnswer}
             statusLine={statusLine}
             onYes={() => answer("yes")}
             onNo={() => answer("no")}
@@ -344,19 +475,87 @@ export function EventDetail({ route, navigation }: Props) {
   );
 }
 
-// Collecting: tap which candidate times work; members confirm, the creator sees the tally + locks.
+// A full-bleed countdown bar for the time-pressured phases (the collecting deadline and the moment
+// reveal). Stretches edge-to-edge with top/bottom ink rules - visually distinct from rounded cards.
+function CountdownBanner({ label, ms, note }: { label: string; ms: number; note: string }) {
+  return (
+    <View
+      style={{
+        marginHorizontal: -16,
+        marginTop: -2,
+        marginBottom: 14,
+        backgroundColor: ui.brand,
+        borderColor: ui.ink,
+        borderTopWidth: ui.border,
+        borderBottomWidth: ui.border,
+        paddingVertical: 14,
+        paddingHorizontal: 16,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+      }}
+    >
+      <View>
+        <Text
+          style={{
+            fontFamily: font.bold,
+            fontSize: 9,
+            letterSpacing: 1.4,
+            textTransform: "uppercase",
+            color: "#fff",
+          }}
+        >
+          {label}
+        </Text>
+        <Text
+          style={{
+            fontFamily: font.black,
+            fontSize: 28,
+            letterSpacing: -1,
+            color: "#fff",
+            marginTop: 2,
+          }}
+        >
+          {formatCountdown(ms)}
+        </Text>
+      </View>
+      <Text
+        style={{
+          fontFamily: font.bold,
+          fontSize: 10,
+          color: "#fff",
+          opacity: 0.92,
+          maxWidth: 130,
+          textAlign: "right",
+        }}
+      >
+        {note}
+      </Text>
+    </View>
+  );
+}
+
+// Collecting: tap which candidate times work, or opt out; the plan auto-locks at its deadline.
 function CollectingView({
   data,
   picked,
+  optedOut,
+  saveState,
   busy,
   onToggle,
+  onToggleOptOut,
+  onRetry,
   onLock,
   onAddCandidate,
 }: {
   data: Detail;
   picked: string[];
+  optedOut: boolean;
+  saveState: SaveState;
   busy: boolean;
   onToggle: (id: string) => void;
+  onToggleOptOut: () => void;
+  onRetry: () => void;
   onLock: (candidateId?: string) => void;
   onAddCandidate: (startsAt: string) => void;
 }) {
@@ -364,38 +563,33 @@ function CollectingView({
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("");
   const newIso = isoFrom(newDate, newTime);
-  // The slot the creator would lock: most reactors, earliest as a tiebreak. Counts are creator-only
-  // (null for members, who never see the organizer zone), so this is the same winner the server picks.
-  const best = [...data.candidates]
-    .filter((c) => c.count !== null)
-    .sort(
-      (a, b) =>
-        (b.count ?? 0) - (a.count ?? 0) ||
-        new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
-    )[0];
+
+  // Shared table-row style; the first row overrides to no top divider.
+  const row = {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 10,
+    padding: 12,
+    borderTopWidth: 1,
+    borderTopColor: ui.hairline,
+  };
+
   return (
     <View style={{ marginTop: 16 }}>
       <Text style={{ fontFamily: font.display, fontSize: 14, color: ui.ink, marginBottom: 4 }}>
         Which of these work?
       </Text>
       <Text style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted, marginBottom: 10 }}>
-        Tap the times you can make - saved automatically, private to you.
+        Tap the times you can make - private to you.
       </Text>
       <Card padding={0}>
         {data.candidates.map((c: Cand, i: number) => {
-          const on = picked.includes(c.id);
+          const on = !optedOut && picked.includes(c.id);
           return (
             <Pressable
               key={c.id}
               onPress={() => onToggle(c.id)}
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 10,
-                padding: 12,
-                borderTopWidth: i === 0 ? 0 : 1,
-                borderTopColor: ui.hairline,
-              }}
+              style={{ ...row, borderTopWidth: i === 0 ? 0 : 1 }}
             >
               <SelectCheck selected={on} />
               <View>
@@ -408,24 +602,49 @@ function CollectingView({
                   </Text>
                 ) : null}
               </View>
-              {c.count !== null && (
-                <View style={{ marginLeft: "auto" }}>
-                  <DateChip small>{`${c.count} free`}</DateChip>
-                </View>
-              )}
             </Pressable>
           );
         })}
+
+        {!addOpen && (
+          <Pressable onPress={() => setAddOpen(true)} style={row}>
+            <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.brand }}>
+              + Add a time
+            </Text>
+          </Pressable>
+        )}
+
+        {/* Opt-out: a distinct, tinted last row of the same table (mutually exclusive). */}
+        <Pressable onPress={onToggleOptOut} style={{ ...row, backgroundColor: "#F1EEF6" }}>
+          <View
+            style={{
+              width: 18,
+              height: 18,
+              borderRadius: 5,
+              borderWidth: 1.5,
+              borderColor: ui.ink,
+              backgroundColor: optedOut ? ui.ink : "transparent",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {optedOut && <Text style={{ fontSize: 11, color: "#fff" }}>{"✓"}</Text>}
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>
+              I can't make it
+            </Text>
+            <Text style={{ fontFamily: font.medium, fontSize: 10, color: ui.muted }}>
+              you won't be asked again - tap a time to rejoin
+            </Text>
+          </View>
+        </Pressable>
       </Card>
 
-      {picked.length === 0 && (
-        <Text style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted, marginTop: 8 }}>
-          Nothing works? Leaving them all unticked is a fine answer.
-        </Text>
-      )}
+      <SaveStatus state={saveState} onRetry={onRetry} />
 
-      {addOpen ? (
-        <Card style={{ marginTop: 16 }}>
+      {addOpen && (
+        <Card style={{ marginTop: 14 }}>
           <Text
             style={{
               fontFamily: font.bold,
@@ -433,42 +652,23 @@ function CollectingView({
               letterSpacing: 1,
               textTransform: "uppercase",
               color: ui.ink,
+              marginBottom: 10,
             }}
           >
             Add a time
           </Text>
-          <Text
-            style={{
-              fontFamily: font.medium,
-              fontSize: 11,
-              color: ui.muted,
-              marginTop: 3,
-              marginBottom: 12,
-            }}
-          >
-            Propose another time for everyone to react to.
-          </Text>
-          <View style={{ flexDirection: "row", gap: 10, alignItems: "flex-end" }}>
-            <DateTimeField
-              mode="date"
-              value={newDate}
-              onChange={setNewDate}
-              minimumDate={new Date()}
-              style={{ flex: 1 }}
-            />
-            <DateTimeField
-              mode="time"
-              value={newTime}
-              onChange={setNewTime}
-              minuteInterval={15}
-              style={{ flex: 1 }}
-            />
-          </View>
+          <DateTimePill
+            dateValue={newDate}
+            timeValue={newTime}
+            onDate={setNewDate}
+            onTime={setNewTime}
+            minimumDate={new Date()}
+          />
           <View
             style={{
               flexDirection: "row",
               gap: 16,
-              marginTop: 16,
+              marginTop: 14,
               alignItems: "center",
               justifyContent: "flex-end",
             }}
@@ -483,7 +683,7 @@ function CollectingView({
             >
               <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.muted }}>Cancel</Text>
             </Pressable>
-            <View style={{ width: 120 }}>
+            <View style={{ width: 110 }}>
               <Button
                 label="Add"
                 variant="primary"
@@ -499,55 +699,45 @@ function CollectingView({
             </View>
           </View>
         </Card>
-      ) : (
-        <View style={{ marginTop: 16, flexDirection: "row" }}>
-          <Chip label="+ Add a time" onPress={() => setAddOpen(true)} />
-        </View>
       )}
 
-      {!addOpen && data.isCreator && (
-        <View style={{ marginTop: 24 }}>
-          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
-            <View style={{ flex: 1, height: ui.border, backgroundColor: ui.hairline }} />
-            <Text
-              style={{
-                fontFamily: font.bold,
-                fontSize: 9,
-                letterSpacing: 1.5,
-                textTransform: "uppercase",
-                color: ui.muted,
-                marginHorizontal: 10,
-              }}
-            >
-              Organizer
-            </Text>
-            <View style={{ flex: 1, height: ui.border, backgroundColor: ui.hairline }} />
-          </View>
-          <Card>
-            <Text
-              style={{
-                fontFamily: font.medium,
-                fontSize: 12,
-                color: ui.muted,
-                marginBottom: 12,
-                lineHeight: 18,
-              }}
-            >
-              {data.readyToLock && best
-                ? `Enough people are free. Lock in ${formatSlot(best.startsAt)} to open the moment - everyone RSVPs, and it can't change after.`
-                : "Once enough people can make a time, lock the winning slot here to open the moment."}
-            </Text>
-            <Button
-              label={
-                data.readyToLock && best ? `Lock in ${formatSlot(best.startsAt)}` : "Lock it in"
-              }
-              variant={data.readyToLock ? "affirmative" : "outline"}
-              disabled={busy || !data.readyToLock}
-              onPress={() => onLock(best?.id)}
-            />
-          </Card>
+      {/* No manual lock for members (pure deadline); this dev-only button forces it for demos. */}
+      {__DEV__ && data.isCreator && (
+        <View style={{ marginTop: 16 }}>
+          <Button
+            label="Force lock now (dev)"
+            variant="outline"
+            disabled={busy}
+            onPress={() => onLock()}
+          />
         </View>
       )}
+    </View>
+  );
+}
+
+// Tiny inline indicator for the auto-save: "Saving..." -> "Saved", or a tappable retry on failure.
+function SaveStatus({ state, onRetry }: { state: SaveState; onRetry: () => void }) {
+  if (state === "idle") return null;
+  if (state === "error") {
+    return (
+      <Pressable onPress={onRetry} hitSlop={8} style={{ marginTop: 10 }}>
+        <Text style={{ fontFamily: font.bold, fontSize: 11, color: ui.brand }}>
+          Couldn't save - tap to retry
+        </Text>
+      </Pressable>
+    );
+  }
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 10 }}>
+      {state === "saving" ? (
+        <ActivityIndicator size="small" color={ui.muted} />
+      ) : (
+        <Text style={{ fontSize: 12, color: ui.going }}>{"✓"}</Text>
+      )}
+      <Text style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted }}>
+        {state === "saving" ? "Saving..." : "Saved - private to you"}
+      </Text>
     </View>
   );
 }
@@ -607,21 +797,9 @@ function MomentView({
         </>
       ) : (
         <>
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 12,
-            }}
-          >
-            <Text style={{ fontFamily: font.bold, fontSize: 14, color: ui.ink }}>
-              {lockedHeading}
-            </Text>
-            <Pressable onPress={onEdit}>
-              <Text style={{ fontFamily: font.bold, fontSize: 12, color: ui.brand }}>Change</Text>
-            </Pressable>
-          </View>
+          <Text style={{ fontFamily: font.bold, fontSize: 14, color: ui.ink, marginBottom: 12 }}>
+            {lockedHeading}
+          </Text>
           <Card>
             <Text
               style={{ fontFamily: font.medium, fontSize: 12, color: ui.muted, lineHeight: 18 }}
@@ -629,6 +807,13 @@ function MomentView({
               Locked in. Who's in is revealed when the timer ends - hang tight.
             </Text>
           </Card>
+          <Button
+            label="Change my answer"
+            variant="outline"
+            disabled={busy}
+            onPress={onEdit}
+            style={{ marginTop: 12 }}
+          />
         </>
       )}
     </View>

@@ -46,12 +46,12 @@ export function GroupsList({ navigation }: Props) {
   }
 
   return (
-    <ScreenBackground>
+    <ScreenBackground header={<Heading title="Your groups" />}>
       <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 24 }}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 2, paddingBottom: 24 }}
         showsVerticalScrollIndicator={false}
       >
-        <Heading title="Your groups" />
         {error && (
           <Text style={{ fontFamily: font.medium, color: ui.muted, marginBottom: 12 }}>
             Couldn't reach the server.

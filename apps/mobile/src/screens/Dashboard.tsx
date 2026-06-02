@@ -1,10 +1,11 @@
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
-import { useCallback, useMemo, useState } from "react";
+import { type ReactNode, useCallback, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
-import { formatCountdown, formatTime } from "../lib/format";
+import { formatCountdown, formatSlot } from "../lib/format";
+import { syncReminders } from "../lib/notifications";
 import { trpc } from "../lib/trpc";
 import { font, ui } from "../theme";
 import {
@@ -41,6 +42,7 @@ function BigButton({ label, onPress }: { label: string; onPress: () => void }) {
 
 type Ev = Awaited<ReturnType<typeof trpc.events.mine.query>>[number];
 type Props = NativeStackScreenProps<MeetupsStackParams, "Dashboard">;
+
 const FILTERS = ["All", "Going", "Awaiting", "Declined"] as const;
 type Filter = (typeof FILTERS)[number];
 
@@ -50,6 +52,49 @@ function matchesFilter(e: Ev, filter: Filter): boolean {
   if (filter === "Declined") return e.myStatus === "declined";
   // "Awaiting" gathers everything still wanting your input: a live moment or a collecting plan.
   return e.myStatus === "awaiting" || e.myStatus === "reacting";
+}
+
+// The loud anchor: a full-bleed pink panel (edge-to-edge, ink rules top + bottom, same motif as the
+// timer banners) that COVERS the whole "Action required" section - heading plus the action cards.
+function ActionPanel({ count, children }: { count: number; children: ReactNode }) {
+  return (
+    <View
+      style={{
+        marginHorizontal: -16,
+        marginBottom: 28,
+        backgroundColor: ui.brand,
+        borderColor: ui.ink,
+        borderTopWidth: ui.border,
+        borderBottomWidth: ui.border,
+        paddingHorizontal: 16,
+        paddingTop: 14,
+        paddingBottom: 16,
+      }}
+    >
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 14,
+        }}
+      >
+        <Text
+          style={{
+            fontFamily: font.black,
+            fontSize: 14,
+            letterSpacing: 1,
+            textTransform: "uppercase",
+            color: "#fff",
+          }}
+        >
+          Action required
+        </Text>
+        <Text style={{ fontFamily: font.bold, fontSize: 14, color: "#fff" }}>{count}</Text>
+      </View>
+      {children}
+    </View>
+  );
 }
 
 // The muted right-side line in a card footer - a nudge or a quiet note.
@@ -78,14 +123,20 @@ function CardFooter({ e }: { e: Ev }) {
     return (
       <>
         <DateChip>{`${e.candidateCount} times`}</DateChip>
-        <Hint>{e.iReacted ? "You've picked your times" : "Tap to pick times"}</Hint>
+        <Hint>
+          {e.myStatus === "declined"
+            ? "You're sitting this out"
+            : e.iReacted
+              ? "You've picked your times"
+              : "Tap to pick times"}
+        </Hint>
       </>
     );
   }
   if (e.phase === "cleared") {
     return (
       <>
-        <DateChip>{formatTime(e.startsAt)}</DateChip>
+        <DateChip>{formatSlot(e.startsAt)}</DateChip>
         {e.goingCount ? (
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             {e.goingPreview.map((p, j) => (
@@ -106,7 +157,7 @@ function CardFooter({ e }: { e: Ev }) {
   // moment - the blind countdown
   return (
     <>
-      <DateChip>{formatTime(e.startsAt)}</DateChip>
+      <DateChip>{formatSlot(e.startsAt)}</DateChip>
       <Hint>Who's in shows after the timer</Hint>
     </>
   );
@@ -116,7 +167,8 @@ function CardFooter({ e }: { e: Ev }) {
 // pastel badge. Pink while a plan still wants you (pick times / live lock), green once you're
 // locked in. A settled plan you're not in wears nothing; absence is the signal.
 function cardSticker(e: Ev) {
-  if (e.phase === "collecting") return <StickerTag label="Which times?" />;
+  if (e.phase === "collecting")
+    return e.myStatus === "declined" ? null : <StickerTag label="Which times?" />;
   if (e.phase === "moment") return <StickerTag label={`Locks ${formatCountdown(e.msLeft ?? 0)}`} />;
   if (e.phase === "cleared" && e.myStatus === "going")
     return <StickerTag label="You're in" color={ui.going} />;
@@ -168,36 +220,103 @@ function MeetCard({ e, onPress, last }: { e: Ev; onPress: () => void; last?: boo
   );
 }
 
-// The white, ink-bordered count chip that sits on the pink action tray. Fixed circle + killed font
-// padding so the number lands dead-centre on every platform.
-function CountBadge({ n }: { n: number }) {
+// What the user must do, by phase.
+function actionVerb(e: Ev): string {
+  return e.phase === "moment" ? "Say if you're in" : "Pick your times";
+}
+
+// Live ms to the relevant deadline (the lock for collecting, the close for a moment).
+function deadlineMs(e: Ev, now: number): number {
+  const iso = e.phase === "moment" ? e.momentEndsAt : e.lockAt;
+  return iso ? Math.max(0, new Date(iso).getTime() - now) : 0;
+}
+
+// Fraction of the window still left (1 = just opened, 0 = at the deadline) for the drain bar.
+function remainingFrac(e: Ev, now: number): number {
+  let start: number | null = null;
+  let end: number | null = null;
+  if (e.phase === "moment" && e.momentEndsAt) {
+    end = new Date(e.momentEndsAt).getTime();
+    start = e.momentStartsAt ? new Date(e.momentStartsAt).getTime() : end - 3_600_000;
+  } else if (e.phase === "collecting" && e.lockAt) {
+    end = new Date(e.lockAt).getTime();
+    start = new Date(e.createdAt).getTime();
+  }
+  if (start === null || end === null || end <= start) return 1;
+  return Math.max(0, Math.min(1, (end - now) / (end - start)));
+}
+
+// An Action Required card: title + group, the explicit action + a live deadline, a draining bar
+// (green -> pink as time runs low), then the specific time (moment) or option count (collecting).
+function ActionCard({
+  e,
+  now,
+  onPress,
+  last,
+}: {
+  e: Ev;
+  now: number;
+  onPress: () => void;
+  last?: boolean;
+}) {
+  const frac = remainingFrac(e, now);
+  const hot = frac < 0.25;
+  const spec = e.phase === "moment" ? formatSlot(e.startsAt) : `${e.candidateCount} options`;
   return (
-    <View
-      style={{
-        minWidth: 26,
-        height: 26,
-        borderRadius: 13,
-        paddingHorizontal: 6,
-        backgroundColor: ui.surface,
-        borderWidth: ui.border,
-        borderColor: ui.ink,
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <Text
-        style={{
-          fontFamily: font.mono,
-          fontSize: 12,
-          lineHeight: 14,
-          color: ui.ink,
-          textAlign: "center",
-          includeFontPadding: false,
-        }}
-      >
-        {n}
-      </Text>
-    </View>
+    <Pressable onPress={onPress}>
+      <Card padding={12} style={{ marginBottom: last ? 0 : 10 }}>
+        <Text style={{ fontFamily: font.display, fontSize: 16, color: ui.ink }}>{e.title}</Text>
+        <Text style={{ fontFamily: font.medium, fontSize: 10, color: ui.muted, marginTop: 1 }}>
+          {e.groupName}
+        </Text>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "baseline",
+            gap: 8,
+            marginTop: 11,
+            marginBottom: 7,
+          }}
+        >
+          <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.brand, flexShrink: 1 }}>
+            {`${actionVerb(e)} ›`}
+          </Text>
+          <Text style={{ fontFamily: font.mono, fontSize: 11, color: hot ? ui.brand : ui.ink }}>
+            {`${e.phase === "moment" ? "closes" : "locks"} ${formatCountdown(deadlineMs(e, now))}`}
+          </Text>
+        </View>
+        <View
+          style={{
+            height: 12,
+            borderWidth: ui.border,
+            borderColor: ui.ink,
+            borderRadius: 999,
+            backgroundColor: ui.surface,
+            overflow: "hidden",
+          }}
+        >
+          <View
+            style={{
+              height: "100%",
+              width: `${Math.round(frac * 100)}%`,
+              backgroundColor: hot ? ui.brand : ui.going,
+            }}
+          />
+        </View>
+        <Text
+          style={{
+            fontFamily: font.mono,
+            fontSize: 10,
+            letterSpacing: 0.5,
+            color: ui.muted,
+            marginTop: 8,
+          }}
+        >
+          {spec.toUpperCase()}
+        </Text>
+      </Card>
+    </Pressable>
   );
 }
 
@@ -207,10 +326,15 @@ export function Dashboard({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [filter, setFilter] = useState<Filter>("All");
+  // Local clock so the Action Required countdowns + drain bars tick live (the poll is only every 5s).
+  const [now, setNow] = useState(Date.now());
 
   useFocusEffect(
     useCallback(() => {
       let active = true;
+      const tick = setInterval(() => {
+        if (active) setNow(Date.now());
+      }, 1000);
       const fetchAll = () =>
         Promise.all([trpc.events.mine.query(), trpc.groups.mine.query()])
           .then(([e, g]) => {
@@ -218,6 +342,9 @@ export function Dashboard({ navigation }: Props) {
               setEvents(e);
               setHasGroups(g.length > 0);
               setError(false);
+              // Schedule local deadline/moment reminders from the freshest payload (no-op unless
+              // something reminder-relevant changed). Device-local; fine for supervised demos.
+              syncReminders(e);
             }
           })
           .catch(() => active && setError(true))
@@ -228,6 +355,7 @@ export function Dashboard({ navigation }: Props) {
       return () => {
         active = false;
         clearInterval(poll);
+        clearInterval(tick);
       };
     }, []),
   );
@@ -238,8 +366,11 @@ export function Dashboard({ navigation }: Props) {
     return events
       .filter(
         (e) =>
-          (e.phase === "moment" && e.myStatus === "awaiting") ||
-          (e.phase === "collecting" && !e.iReacted),
+          // Moment: still required until you've answered at all (yes/no/conditional). Collecting:
+          // until you've ticked a time (and haven't opted out). Either choice removes it; reversing
+          // the choice (untick all / "Change" the answer) brings it back.
+          (e.phase === "moment" && !e.iResponded) ||
+          (e.phase === "collecting" && !e.iReacted && e.myStatus !== "declined"),
       )
       .sort((a, b) => {
         const am = a.phase === "moment";
@@ -252,12 +383,21 @@ export function Dashboard({ navigation }: Props) {
 
   const actionIds = useMemo(() => new Set(actionItems.map((e) => e.id)), [actionItems]);
 
-  // The browsable archive below: everything not awaiting my action, segmented by the status tabs.
+  // Below the banner: every other plan (history included), filtered by the tabs. Upcoming first
+  // (soonest), then past most-recent-first - so "All" doubles as your history.
   const list = useMemo(() => {
+    const t = Date.now();
+    const upcoming = (e: Ev) => new Date(e.startsAt).getTime() >= t;
     return events
-      .filter((e) => !actionIds.has(e.id))
-      .filter((e) => matchesFilter(e, filter))
-      .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+      .filter((e) => !actionIds.has(e.id) && matchesFilter(e, filter))
+      .sort((a, b) => {
+        const ua = upcoming(a);
+        const ub = upcoming(b);
+        if (ua !== ub) return ua ? -1 : 1;
+        const ta = new Date(a.startsAt).getTime();
+        const tb = new Date(b.startsAt).getTime();
+        return ua ? ta - tb : tb - ta;
+      });
   }, [events, actionIds, filter]);
 
   if (loading) {
@@ -271,14 +411,13 @@ export function Dashboard({ navigation }: Props) {
   }
 
   return (
-    <ScreenBackground>
+    <ScreenBackground header={<Heading title="Your meets" />}>
       <View style={{ flex: 1 }}>
         <ScrollView
-          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 104 }}
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 2, paddingBottom: 104 }}
           showsVerticalScrollIndicator={false}
         >
-          <Heading title="Your meets" />
-
           {error && (
             <Text style={{ fontFamily: font.medium, color: ui.muted, marginBottom: 12 }}>
               Couldn't reach the server.
@@ -307,49 +446,17 @@ export function Dashboard({ navigation }: Props) {
             ) : (
               <>
                 {actionItems.length > 0 && (
-                  <HardShadow radius={ui.rCard} style={{ marginBottom: 20 }}>
-                    <View
-                      style={{
-                        backgroundColor: ui.brand,
-                        borderWidth: ui.border,
-                        borderColor: ui.ink,
-                        borderRadius: ui.rCard,
-                        padding: 12,
-                      }}
-                    >
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          marginBottom: 12,
-                          paddingHorizontal: 2,
-                        }}
-                      >
-                        <Text
-                          style={{
-                            fontFamily: font.black,
-                            fontSize: 16,
-                            letterSpacing: 0.3,
-                            textTransform: "uppercase",
-                            color: "#fff",
-                          }}
-                        >
-                          Action required
-                        </Text>
-                        <CountBadge n={actionItems.length} />
-                      </View>
-
-                      {actionItems.map((e, i) => (
-                        <MeetCard
-                          key={e.id}
-                          e={e}
-                          last={i === actionItems.length - 1}
-                          onPress={() => navigation.navigate("EventDetail", { eventId: e.id })}
-                        />
-                      ))}
-                    </View>
-                  </HardShadow>
+                  <ActionPanel count={actionItems.length}>
+                    {actionItems.map((e, i) => (
+                      <ActionCard
+                        key={e.id}
+                        e={e}
+                        now={now}
+                        last={i === actionItems.length - 1}
+                        onPress={() => navigation.navigate("EventDetail", { eventId: e.id })}
+                      />
+                    ))}
+                  </ActionPanel>
                 )}
 
                 <Tabs options={FILTERS} value={filter} onChange={setFilter} />
@@ -366,10 +473,10 @@ export function Dashboard({ navigation }: Props) {
                     <Text
                       style={{
                         fontFamily: font.medium,
-                        fontSize: 12,
+                        fontSize: 13,
                         color: ui.muted,
                         textAlign: "center",
-                        paddingVertical: 6,
+                        paddingVertical: 10,
                       }}
                     >
                       Nothing here yet.

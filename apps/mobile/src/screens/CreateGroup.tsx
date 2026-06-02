@@ -26,12 +26,12 @@ export function CreateGroup({ navigation }: Props) {
   }
 
   return (
-    <ScreenBackground>
+    <ScreenBackground header={<BackBar title="New group" onBack={() => navigation.goBack()} />}>
       <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 24 }}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 2, paddingBottom: 24 }}
         showsVerticalScrollIndicator={false}
       >
-        <BackBar title="New group" onBack={() => navigation.goBack()} />
         {error && (
           <Text style={{ fontFamily: font.medium, color: ui.brand, marginBottom: 10 }}>
             Something went wrong. Try again.

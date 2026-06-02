@@ -56,6 +56,7 @@ Run `pnpm lint`, `pnpm typecheck`, and `pnpm test` before opening any PR.
 - **Only branch (`feat/*` → PR into `dev`) for a massive feature** worth isolating.
 - To ship: PR `dev` → `main` (the only branch permitted to merge into `main`).
 - CI runs on PRs into `main`; CD (backend deploy + Android build) runs on push to `main`.
+- **Commit in modular chunks - IMPORTANT.** When a big task is underway, don't pile everything into one giant commit at the end. Commit each self-contained, working step as you go (one logical change per commit), so history stays bisectable and progress is never at risk. If you've completed a coherent unit of work, commit it.
 
 Full model: `CONTRIBUTING.md`.
 

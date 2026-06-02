@@ -102,6 +102,22 @@ export function formatSlot(iso: string): string {
   return `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}, ${formatTime(iso)}`;
 }
 
+// "2026-06-06T19:00..." -> "SAT 6 JUN" - the uppercase day line for the plan-detail time hero.
+export function dayUpper(iso: string): string {
+  const d = new Date(iso);
+  return `${WEEKDAYS[d.getDay()].toUpperCase()} ${d.getDate()} ${MONTHS_SHORT[d.getMonth()].toUpperCase()}`;
+}
+
+// "...T19:00..." -> { time: "7:00", ampm: "PM" } - 12-hour clock split for the time hero.
+export function clock12(iso: string): { time: string; ampm: string } {
+  const d = new Date(iso);
+  let h = d.getHours();
+  const ampm = h < 12 ? "AM" : "PM";
+  h %= 12;
+  if (h === 0) h = 12;
+  return { time: `${h}:${String(d.getMinutes()).padStart(2, "0")}`, ampm };
+}
+
 // "evening" -> "Evening".
 export function partOfDayLabel(part: string | null | undefined): string {
   if (!part) return "";

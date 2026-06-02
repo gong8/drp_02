@@ -85,13 +85,12 @@ export function GroupDetail({ route, navigation }: Props) {
   const renamed = nameDraft.trim() !== "" && nameDraft.trim() !== data.name;
 
   return (
-    <ScreenBackground>
+    <ScreenBackground header={<BackBar title={data.name} onBack={() => navigation.goBack()} />}>
       <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 24 }}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 2, paddingBottom: 24 }}
         showsVerticalScrollIndicator={false}
       >
-        <BackBar title={data.name} onBack={() => navigation.goBack()} />
-
         <Field
           label="Group name"
           value={nameDraft}

@@ -22,6 +22,9 @@ export function Card({
           borderWidth: ui.border,
           borderColor: ui.ink,
           borderRadius: radius,
+          // Clip full-bleed rows (e.g. the tinted opt-out row) to the rounded corners so their
+          // square edges never poke past the card.
+          overflow: "hidden",
           padding,
         }}
       >
