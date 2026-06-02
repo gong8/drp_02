@@ -1,7 +1,7 @@
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
-import { useCallback, useMemo, useState } from "react";
+import { type ReactNode, useCallback, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
 import { formatCountdown, formatSlot } from "../lib/format";
@@ -53,37 +53,45 @@ function SectionLabel({ children, color }: { children: string; color: string }) 
   );
 }
 
-// The loud anchor: a full-bleed "Action required" banner (same edge-to-edge motif as the moment /
-// lock countdown banners), sitting above the action cards.
-function ActionBanner({ count }: { count: number }) {
+// The loud anchor: a full-bleed pink panel (edge-to-edge, ink rules top + bottom, same motif as the
+// timer banners) that COVERS the whole "Action required" section - heading plus the action cards.
+function ActionPanel({ count, children }: { count: number; children: ReactNode }) {
   return (
     <View
       style={{
         marginHorizontal: -16,
-        marginBottom: 14,
+        marginBottom: 28,
         backgroundColor: ui.brand,
         borderColor: ui.ink,
         borderTopWidth: ui.border,
         borderBottomWidth: ui.border,
-        paddingVertical: 12,
         paddingHorizontal: 16,
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
+        paddingTop: 14,
+        paddingBottom: 16,
       }}
     >
-      <Text
+      <View
         style={{
-          fontFamily: font.black,
-          fontSize: 14,
-          letterSpacing: 1,
-          textTransform: "uppercase",
-          color: "#fff",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 14,
         }}
       >
-        Action required
-      </Text>
-      <Text style={{ fontFamily: font.bold, fontSize: 14, color: "#fff" }}>{count}</Text>
+        <Text
+          style={{
+            fontFamily: font.black,
+            fontSize: 14,
+            letterSpacing: 1,
+            textTransform: "uppercase",
+            color: "#fff",
+          }}
+        >
+          Action required
+        </Text>
+        <Text style={{ fontFamily: font.bold, fontSize: 14, color: "#fff" }}>{count}</Text>
+      </View>
+      {children}
     </View>
   );
 }
@@ -208,21 +216,6 @@ function MeetCard({ e, onPress, last }: { e: Ev; onPress: () => void; last?: boo
         </View>
       </Card>
     </Pressable>
-  );
-}
-
-// Plans that already happened, tucked behind a quiet toggle so the screen stays forward-looking.
-function PastSection({ plans, onOpen }: { plans: Ev[]; onOpen: (id: string) => void }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <View style={{ marginTop: 6 }}>
-      <Pressable onPress={() => setOpen((o) => !o)} hitSlop={8} style={{ paddingVertical: 10 }}>
-        <Text style={{ fontFamily: font.bold, fontSize: 12, color: ui.muted, textAlign: "center" }}>
-          {open ? "Hide past" : `Show past (${plans.length})`}
-        </Text>
-      </Pressable>
-      {open ? plans.map((e) => <MeetCard key={e.id} e={e} onPress={() => onOpen(e.id)} />) : null}
-    </View>
   );
 }
 
@@ -389,21 +382,13 @@ export function Dashboard({ navigation }: Props) {
   const actionIds = useMemo(() => new Set(actionItems.map((e) => e.id)), [actionItems]);
 
   // Below the banner, no tabs. "Coming up" = plans not needing action that haven't happened yet,
-  // soonest first (reads like a calendar). Past = already-happened plans, hidden behind a toggle.
+  // soonest first (reads like a calendar). Plans that already happened are not surfaced here.
   const coming = useMemo(() => {
     const t = Date.now();
     const happened = (e: Ev) => e.phase === "cleared" && new Date(e.startsAt).getTime() < t;
     return events
       .filter((e) => !actionIds.has(e.id) && !happened(e))
       .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
-  }, [events, actionIds]);
-  const pastList = useMemo(() => {
-    const t = Date.now();
-    return events
-      .filter(
-        (e) => !actionIds.has(e.id) && e.phase === "cleared" && new Date(e.startsAt).getTime() < t,
-      )
-      .sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime());
   }, [events, actionIds]);
 
   if (loading) {
@@ -452,8 +437,7 @@ export function Dashboard({ navigation }: Props) {
             ) : (
               <>
                 {actionItems.length > 0 && (
-                  <View style={{ marginBottom: 28 }}>
-                    <ActionBanner count={actionItems.length} />
+                  <ActionPanel count={actionItems.length}>
                     {actionItems.map((e, i) => (
                       <ActionCard
                         key={e.id}
@@ -463,7 +447,7 @@ export function Dashboard({ navigation }: Props) {
                         onPress={() => navigation.navigate("EventDetail", { eventId: e.id })}
                       />
                     ))}
-                  </View>
+                  </ActionPanel>
                 )}
 
                 {coming.length > 0 && (
@@ -479,14 +463,7 @@ export function Dashboard({ navigation }: Props) {
                   </View>
                 )}
 
-                {pastList.length > 0 && (
-                  <PastSection
-                    plans={pastList}
-                    onOpen={(id) => navigation.navigate("EventDetail", { eventId: id })}
-                  />
-                )}
-
-                {actionItems.length === 0 && coming.length === 0 && pastList.length === 0 && (
+                {actionItems.length === 0 && coming.length === 0 && (
                   <Card>
                     <Text
                       style={{
