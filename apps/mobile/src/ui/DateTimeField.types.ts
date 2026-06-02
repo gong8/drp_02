@@ -14,5 +14,8 @@ export type DateTimeFieldProps = {
   onChange: (next: string) => void;
   minuteInterval?: MinuteInterval; // time mode only
   minimumDate?: Date; // date mode only
+  // `bare` strips the trigger's own border/shadow/label so it can sit flush as one half of a
+  // `DateTimePill` (date | time share a single outer box). Used everywhere the two go together.
+  bare?: boolean;
   style?: ViewStyle;
 };

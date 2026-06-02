@@ -21,6 +21,7 @@ export function DateTimeField({
   onChange,
   minuteInterval = 15,
   minimumDate,
+  bare = false,
   style,
 }: DateTimeFieldProps) {
   const isDate = mode === "date";
@@ -31,7 +32,7 @@ export function DateTimeField({
 
   return (
     <View style={style}>
-      {label ? (
+      {label && !bare ? (
         <Text
           style={{
             fontFamily: font.bold,
@@ -55,15 +56,15 @@ export function DateTimeField({
         style={{
           width: "100%",
           boxSizing: "border-box",
-          backgroundColor: ui.surface,
-          border: `${ui.border}px solid ${ui.ink}`,
-          borderRadius: ui.rInput,
-          padding: "10px 11px",
+          backgroundColor: bare ? "transparent" : ui.surface,
+          // `bare` drops its own frame so the DateTimePill container provides the single box.
+          border: bare ? "none" : `${ui.border}px solid ${ui.ink}`,
+          borderRadius: bare ? 0 : ui.rInput,
+          padding: bare ? "12px" : "10px 11px",
           fontFamily: font.medium,
           fontSize: 13,
           color: ui.ink,
-          // Match the neobrutalist hard shadow used by Field (offset 3, no blur).
-          boxShadow: `3px 3px 0 0 ${ui.ink}`,
+          boxShadow: bare ? "none" : `3px 3px 0 0 ${ui.ink}`,
           // Tints the calendar/time popup selection in supporting browsers.
           accentColor: ui.brand,
           outline: "none",

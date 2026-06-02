@@ -84,6 +84,7 @@ export function DateTimeField({
   onChange,
   minuteInterval = 15,
   minimumDate,
+  bare = false,
   style,
 }: DateTimeFieldProps) {
   const [open, setOpen] = useState(false);
@@ -116,9 +117,44 @@ export function DateTimeField({
     setOpen(true);
   }
 
+  const trigger = (
+    <Pressable
+      onPress={openPicker}
+      style={
+        bare
+          ? {
+              flexDirection: "row",
+              alignItems: "center",
+              paddingHorizontal: 12,
+              paddingVertical: 13,
+            }
+          : {
+              flexDirection: "row",
+              alignItems: "center",
+              backgroundColor: ui.surface,
+              borderWidth: ui.border,
+              borderColor: ui.ink,
+              borderRadius: ui.rInput,
+              paddingHorizontal: 11,
+              paddingVertical: 11,
+            }
+      }
+    >
+      <Text
+        numberOfLines={1}
+        style={{ flex: 1, fontFamily: font.medium, fontSize: 13, color: shown ? ui.ink : ui.muted }}
+      >
+        {shown ?? placeholder}
+      </Text>
+      <Text style={{ fontFamily: font.bold, fontSize: 11, color: ui.muted, marginLeft: 6 }}>
+        {"▾"}
+      </Text>
+    </Pressable>
+  );
+
   return (
     <View style={style}>
-      {label ? (
+      {label && !bare ? (
         <Text
           style={{
             fontFamily: font.bold,
@@ -132,36 +168,13 @@ export function DateTimeField({
           {label}
         </Text>
       ) : null}
-      <HardShadow radius={ui.rInput} offset={3}>
-        <Pressable
-          onPress={openPicker}
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            backgroundColor: ui.surface,
-            borderWidth: ui.border,
-            borderColor: ui.ink,
-            borderRadius: ui.rInput,
-            paddingHorizontal: 11,
-            paddingVertical: 11,
-          }}
-        >
-          <Text
-            numberOfLines={1}
-            style={{
-              flex: 1,
-              fontFamily: font.medium,
-              fontSize: 13,
-              color: shown ? ui.ink : ui.muted,
-            }}
-          >
-            {shown ?? placeholder}
-          </Text>
-          <Text style={{ fontFamily: font.bold, fontSize: 11, color: ui.muted, marginLeft: 6 }}>
-            {"▾"}
-          </Text>
-        </Pressable>
-      </HardShadow>
+      {bare ? (
+        trigger
+      ) : (
+        <HardShadow radius={ui.rInput} offset={3}>
+          {trigger}
+        </HardShadow>
+      )}
 
       {Platform.OS === "ios" && (
         <BottomSheet
