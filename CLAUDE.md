@@ -66,7 +66,7 @@ Track all work in Linear (team **DRP_02**) via the Linear MCP, religiously - it 
 
 - Drizzle schema: `apps/api/src/db/schema.ts`. Generate/apply: `pnpm --filter @bethere/api db:generate` / `db:migrate`. The API also runs `migrate` + seed on boot (`SEED_ON_BOOT`: `reset` local default / `if-empty` live / `off`).
 - **`drizzle-kit generate` is interactive** and hangs in a non-TTY when it can't tell a rename from a create. If you reset the migration baseline, reset the local DB too (`docker compose down -v && pnpm db:up`).
-- **Auth is a dev stub:** `ctx.userId` comes from an optional `x-user-id` header (default `u_dev`) and is spoofable. The open/unauthenticated API + open CORS are deliberate (see `docs/tech-debt.md`) - don't "fix" them as bugs.
+- **Auth: Clerk + a dev bypass.** `createContext` (`apps/api/src/trpc.ts`) verifies a Clerk bearer token when `CLERK_JWT_KEY` is set; `protectedProcedure` 401s unauthenticated callers. For local dev and M2 prod, `DEV_AUTH_BYPASS=1` falls back to a spoofable `x-user-id` header (default `u_dev`) when no valid token is present. The open CORS (`origin: true`) and the bypass are deliberate for M2 (see `docs/tech-debt.md`) - don't "fix" them as bugs. A global rate-limit (`@fastify/rate-limit`, keyed on client IP) is the guard against abuse while the API is open.
 
 ## Docs
 

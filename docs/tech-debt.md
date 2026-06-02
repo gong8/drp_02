@@ -3,14 +3,17 @@
 Known shortcuts we've taken deliberately. Each entry says *why it's OK for now* and
 *what would trigger fixing it*, so we don't fix the wrong thing or fix it too early.
 
-## API is unauthenticated / open
+## API auth runs in dev-bypass on the live backend
 
-**Logged:** 2026-05-28 · **Area:** `apps/api` · **Severity:** medium (low while in private testing)
+**Logged:** 2026-05-28 · **Updated:** 2026-06-02 · **Area:** `apps/api` · **Severity:** medium (low while in private testing)
 
-**What:** The live backend has no authentication. `createContext` defaults the user to
-`u_dev` from an `x-user-id` header (`apps/api/src/trpc.ts`), so anyone who knows the URL
-(`https://96mgvmgcbj.us-east-1.awsapprunner.com`) can impersonate any user and read/write
+**What:** Clerk bearer-token verification is wired (`createContext` in `apps/api/src/trpc.ts`,
+`auth/clerk.ts`) and `protectedProcedure` 401s unauthenticated callers. **But** the M2 backend
+runs with `DEV_AUTH_BYPASS=1` and no `CLERK_JWT_KEY`, so identity still falls back to the
+spoofable `x-user-id` header (default `u_dev`). Anyone who knows the URL
+(`https://96mgvmgcbj.us-east-1.awsapprunner.com`) can still impersonate any user and read/write
 data with a plain `curl`. CORS is also wide open (`origin: true` in `apps/api/src/index.ts`).
+A global IP-keyed rate-limit (`@fastify/rate-limit`) is the only abuse guard while the API is open.
 
 **Why CORS is *not* the fix here:** CORS is a *browser* mechanism, enforced by the browser,
 not the server. Our only client is the Expo **React Native** app (`platforms: [ios, android]`),
@@ -30,8 +33,10 @@ data. Options, cheapest → proper:
 2. **Shared `x-api-key` gate** - a Fastify hook checking a secret header; the app sends it.
    ~15 lines. Deters casual abuse but the key is extractable from a shipped app, so it is
    *not* real security.
-3. **Per-user auth** (real tokens / sessions) - the actual fix. Its own piece of work; ties
-   into a real `users` identity instead of the `u_dev` stub.
+3. **Turn off the dev bypass** (the actual fix) - set `CLERK_JWT_KEY` and drop
+   `DEV_AUTH_BYPASS` on the live backend so only verified Clerk tokens authenticate. The
+   verification path already exists; this is a config + rollout step plus removing the
+   `x-user-id` fallback, not new auth plumbing.
 
 ## Real-time is polling; no real push notifications
 
