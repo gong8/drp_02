@@ -15,10 +15,19 @@ export const responseKindEnum = pgEnum("response_kind", ["yes", "no", "condition
 
 // How precisely the creator pinned the `when` - the spine of the convergence model.
 export const whenModeEnum = pgEnum("when_mode", ["exact", "options", "fuzzy"]);
-// Plan lifecycle: collecting reactions -> blind moment -> cleared / fizzled.
-export const planPhaseEnum = pgEnum("plan_phase", ["collecting", "moment", "cleared", "fizzled"]);
+// Plan lifecycle: a float brews in "floating", everything else collects reactions -> blind moment
+// -> cleared / fizzled. "floating" is appended last so the enum migration stays append-only.
+export const planPhaseEnum = pgEnum("plan_phase", [
+  "collecting",
+  "moment",
+  "cleared",
+  "fizzled",
+  "floating",
+]);
 // Rough time-of-day band a fuzzy candidate sits in.
 export const partOfDayEnum = pgEnum("part_of_day", ["morning", "afternoon", "evening", "late"]);
+// Which collaborative axis a float suggestion sits on: a fused what+where idea, or a loose time band.
+export const floatAxisEnum = pgEnum("float_axis", ["idea", "time"]);
 
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
@@ -68,6 +77,13 @@ export const events = pgTable("events", {
   whenMode: whenModeEnum("when_mode").notNull().default("exact"),
   contingent: boolean("contingent").notNull().default(false),
   quorum: integer("quorum").notNull().default(1),
+  // A float is unsigned (createdByUserId is stored for accountability but never surfaced) and
+  // ownerless. It lives in phase "floating"; this flag persists after it tips so the originator
+  // stays hidden forever (isCreator is forced false whenever it is set).
+  isAnonymous: boolean("is_anonymous").notNull().default(false),
+  // Floats only: the min distinct +1 backers the winning idea needs for the float to tip; below
+  // this it fizzles silently. >= 2 so a one-person float can never tip and self-reveal.
+  minHeat: integer("min_heat").notNull().default(2),
   phase: planPhaseEnum("phase").notNull().default("collecting"),
   // When collecting auto-locks the winning slot and opens the moment. Null for exact plans (which
   // open the moment at creation). Drives the deadline + auto-lock; settled lazily on read.
@@ -122,6 +138,46 @@ export const eventOptOuts = pgTable(
       .references(() => users.id),
   },
   (t) => ({ pk: primaryKey({ columns: [t.eventId, t.userId] }) }),
+);
+
+// A chip on a float, on one of two axes: a free-text IDEA ("bowling", "the pub" - fused what+where)
+// or a loose TIME band (a day at a part-of-day). Any group member adds rows; others +1 them.
+// Mirrors eventCandidates. `createdByUserId` is stored for accountability but NEVER surfaced.
+export const floatSuggestions = pgTable("float_suggestions", {
+  id: text("id").primaryKey(),
+  eventId: text("event_id")
+    .notNull()
+    .references(() => events.id),
+  axis: floatAxisEnum("axis").notNull(),
+  // IDEA: the free-text label. TIME: optional human label (the band + startsAt carry the meaning).
+  text: text("text"),
+  // TIME only: the rough band, resolved to a concrete hour at crystallize via PART_HOUR (window.ts).
+  partOfDay: partOfDayEnum("part_of_day"),
+  // TIME only: the concrete slot this band sits on. Null for IDEA chips.
+  startsAt: timestamp("starts_at"),
+  createdByUserId: text("created_by_user_id")
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// A +1 on a float suggestion - INTEREST, not commitment (like a candidate reaction, never an RSVP).
+// One row per (suggestion, user), toggled on/off. Counts are public (the loud register); the
+// `userId` is NEVER surfaced - only aggregate counts and the caller's own state leave the server.
+export const floatVotes = pgTable(
+  "float_votes",
+  {
+    eventId: text("event_id")
+      .notNull()
+      .references(() => events.id),
+    suggestionId: text("suggestion_id")
+      .notNull()
+      .references(() => floatSuggestions.id),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id),
+  },
+  (t) => ({ pk: primaryKey({ columns: [t.suggestionId, t.userId] }) }),
 );
 
 // A member's commitment during the moment. `cond` carries the "I will make it if…" target set.
