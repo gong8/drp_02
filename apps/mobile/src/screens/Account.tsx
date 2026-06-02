@@ -25,12 +25,12 @@ export function Account() {
   };
 
   return (
-    <ScreenBackground>
+    <ScreenBackground header={<Heading title="Account" />}>
       <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 24 }}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 2, paddingBottom: 24 }}
         showsVerticalScrollIndicator={false}
       >
-        <Heading title="Account" />
         <Card style={{ marginBottom: 20 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
             <Avatar initial={name.charAt(0).toUpperCase()} color={ui.brand} size={44} />

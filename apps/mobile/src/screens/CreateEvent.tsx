@@ -162,12 +162,14 @@ export function CreateEvent({ navigation }: Props) {
 
   if (!error && groups.length === 0) {
     return (
-      <ScreenBackground>
+      <ScreenBackground
+        header={<BackBar title="Suggest a meet" onBack={() => navigation.goBack()} />}
+      >
         <ScrollView
-          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 24 }}
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 2, paddingBottom: 24 }}
           showsVerticalScrollIndicator={false}
         >
-          <BackBar title="Suggest a meet" onBack={() => navigation.goBack()} />
           <Text
             style={{
               fontFamily: font.medium,
@@ -187,18 +189,20 @@ export function CreateEvent({ navigation }: Props) {
   const picks = quickPicks();
 
   return (
-    <ScreenBackground>
+    <ScreenBackground
+      header={<BackBar title="Suggest a meet" onBack={() => navigation.goBack()} />}
+    >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView
-          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 24 }}
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 2, paddingBottom: 24 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
-          <BackBar title="Suggest a meet" onBack={() => navigation.goBack()} />
           {error && (
             <Text style={{ fontFamily: font.medium, color: ui.brand, marginBottom: 10 }}>
               Something went wrong. Try again.

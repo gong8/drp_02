@@ -256,13 +256,14 @@ export function EventDetail({ route, navigation }: Props) {
         : "Awaiting your answer";
 
   return (
-    <ScreenBackground>
+    <ScreenBackground
+      header={<BackBar title={data.groupName} onBack={() => navigation.goBack()} />}
+    >
       <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 28 }}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 2, paddingBottom: 28 }}
         showsVerticalScrollIndicator={false}
       >
-        <BackBar title={data.groupName} onBack={() => navigation.goBack()} />
-
         {data.phase === "collecting" && data.lockAt && (
           <HardShadow radius={ui.rCard} offset={4} style={{ marginBottom: 14 }}>
             <View

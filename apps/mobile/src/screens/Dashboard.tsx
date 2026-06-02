@@ -282,14 +282,13 @@ export function Dashboard({ navigation }: Props) {
   }
 
   return (
-    <ScreenBackground>
+    <ScreenBackground header={<Heading title="Your meets" />}>
       <View style={{ flex: 1 }}>
         <ScrollView
-          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 104 }}
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 2, paddingBottom: 104 }}
           showsVerticalScrollIndicator={false}
         >
-          <Heading title="Your meets" />
-
           {error && (
             <Text style={{ fontFamily: font.medium, color: ui.muted, marginBottom: 12 }}>
               Couldn't reach the server.
