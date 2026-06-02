@@ -120,6 +120,26 @@ pick, conditional resolve, default lock-in time) is pure and unit-tested in `pac
 **When to fix:** stand up a lightweight tRPC-procedure harness (an in-process caller against a
 disposable test database) and run it in CI if this graduates past the demo stage.
 
+## Mobile can't *value*-import `@bethere/shared` (Metro vs `.js`-suffixed barrel)
+
+**Logged:** 2026-06-02 · **Area:** `apps/mobile` / `packages/shared` · **Severity:** low
+
+**What:** `packages/shared/src/index.ts` re-exports with explicit `.js` extensions
+(`export * from "./logic/candidates.js"`) because `apps/api` is ESM and needs them. `tsx`/`tsc`
+resolve `.js`->`.ts`, but **Metro does not**. The mobile app consumes shared only as *types*
+everywhere (erased at build time), so this never surfaced - until iteration 3 added a *value* import
+(`import { defaultLockAt } from "@bethere/shared"` in `CreateEvent.tsx`), which made Metro try to
+bundle the barrel and fail: `Unable to resolve "./logic/candidates.js"`. Worked around by copying the
+one helper into `apps/mobile/src/lib/lock.ts` and removing the cross-package value import.
+
+**Why it's acceptable for now:** mobile needs almost no shared *runtime* logic (just `defaultLockAt`
+so far); a tiny duplicated pure function is cheaper and lower-risk than a bundler-config change made
+blind (no device to test it against).
+
+**When to fix:** if mobile needs to share more runtime logic, make shared Metro-consumable - either a
+`metro.config.js` `resolveRequest` that maps `.js`->`.ts`, a build step emitting real `.js`, or
+extensionless barrel imports plus a `package.json` `exports` map that satisfies both ESM and Metro.
+
 ## `lockAt` is a tz-naive `timestamp`
 
 **Logged:** 2026-06-02 · **Area:** `apps/api` · **Severity:** low

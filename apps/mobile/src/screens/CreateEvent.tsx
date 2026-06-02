@@ -1,9 +1,9 @@
-import { defaultLockAt } from "@bethere/shared";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
 import { formatSlot, isoFrom } from "../lib/format";
+import { defaultLockAt } from "../lib/lock";
 import { type QuickPick, quickPicks } from "../lib/quickpicks";
 import { trpc } from "../lib/trpc";
 import { font, ui } from "../theme";
