@@ -100,9 +100,7 @@ const port = Number(process.env.PORT ?? 3000);
 const restoreLevel = server.log.level;
 server.log.level = "warn";
 try {
-  // HOST="::" binds both IPv6 and IPv4 (dual-stack) - needed on IPv6-only networks
-  // (e.g. eduroam/Imperial-WPA NAT64+CLAT) where the phone can only reach us over IPv6.
-  await server.listen({ port, host: process.env.HOST ?? "0.0.0.0" });
+  await server.listen({ port, host: "0.0.0.0" });
   server.log.level = restoreLevel;
   server.log.info({ scope: "boot", port }, `API listening on http://localhost:${port}`);
 } catch (err) {
