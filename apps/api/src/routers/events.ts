@@ -528,21 +528,17 @@ export const eventsRouter = router({
 
     const cands = await candidatesFor(e.id);
     const reactions = await reactionsFor(e.id);
-    const tally = tallyCandidates(
-      cands.map((c) => c.id),
-      reactions,
-    );
-    const tallyMap = new Map(tally.map((t) => [t.candidateId, t.userIds.length]));
     const myReacts = new Set(
       reactions.filter((r) => r.userId === ctx.userId).map((r) => r.candidateId),
     );
+    // Per-candidate counts are deliberately NOT returned: nobody (not even the creator) sees how
+    // many are free for each slot before the lock. The auto-lock picks the winner server-side.
     const candidates = cands.map((c) => ({
       id: c.id,
       startsAt: c.startsAt.toISOString(),
       partOfDay: c.partOfDay,
       label: c.label,
       worksForMe: myReacts.has(c.id),
-      count: isCreator ? (tallyMap.get(c.id) ?? 0) : null,
     }));
     const readyToLock =
       isCreator &&
