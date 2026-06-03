@@ -13,6 +13,8 @@ import {
 } from "../lib/format";
 import { addCandidateHorizon } from "../lib/lock";
 import { trpc } from "../lib/trpc";
+import { useBusyAction } from "../lib/useBusyAction";
+import { TICK_MS, useLiveClock } from "../lib/useLiveClock";
 import { font, ui } from "../theme";
 import {
   Avatar,
@@ -21,7 +23,10 @@ import {
   Button,
   Card,
   DateTimePill,
+  DetailError,
+  PersonRow,
   ScreenBackground,
+  ScreenLoading,
   SelectCheck,
   StickerTag,
   Toggle,
@@ -40,7 +45,6 @@ export function EventDetail({ route, navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [now, setNow] = useState(Date.now());
 
   // moment conditional sheet
   const [editing, setEditing] = useState(false);
@@ -69,6 +73,9 @@ export function EventDetail({ route, navigation }: Props) {
       .finally(() => setLoading(false));
   }, [eventId]);
 
+  // Busy-guarded mutate-then-reload runner shared by lock/addCandidate/answer/changeAnswer.
+  const runAction = useBusyAction({ busy, setBusy, setError, load });
+
   // Persist the current reaction set, debounced (see toggleReact). Deliberately NOT followed by a
   // refetch: that would clobber the optimistic picks and flicker; the 5s poll refreshes the tally
   // and lock-readiness on its own. Failures are swallowed (the next poll reconciles).
@@ -88,22 +95,22 @@ export function EventDetail({ route, navigation }: Props) {
     }
   }, [eventId]);
 
+  // The 1s ticker only drives the live moment countdown, so only run it during the moment.
+  const now = useLiveClock(
+    TICK_MS,
+    useCallback(() => phaseRef.current === "moment" || phaseRef.current === "collecting", []),
+  );
+
   useFocusEffect(
     useCallback(() => {
       let active = true;
       load();
-      // The 1s ticker only drives the live moment countdown, so only run it during the moment.
-      const tick = setInterval(() => {
-        if (active && (phaseRef.current === "moment" || phaseRef.current === "collecting"))
-          setNow(Date.now());
-      }, 1000);
       // Poll while the plan is live so the tally, countdown and reveal converge without a refresh.
       const poll = setInterval(() => {
         if (active && phaseRef.current !== "cleared" && phaseRef.current !== "fizzled") load();
       }, 5000);
       return () => {
         active = false;
-        clearInterval(tick);
         clearInterval(poll);
         flushReact(); // persist any reaction tap not yet saved before leaving the screen
       };
@@ -172,89 +179,48 @@ export function EventDetail({ route, navigation }: Props) {
     }
   }
 
-  async function lock(candidateId?: string) {
-    if (busy) return;
-    setBusy(true);
-    try {
-      await trpc.events.lock.mutate(
+  function lock(candidateId?: string) {
+    return runAction(() =>
+      trpc.events.lock.mutate(
         candidateId ? { eventId, candidateId, momentMinutes: 60 } : { eventId, momentMinutes: 60 },
-      );
-      await load();
-    } catch {
-      setError(true);
-    } finally {
-      setBusy(false);
-    }
+      ),
+    );
   }
 
   // Anyone in the group can float a new time into the menu while collecting; refetch so it shows.
-  async function addCandidate(startsAt: string) {
-    if (busy || !data) return;
-    setBusy(true);
-    try {
-      await trpc.events.addCandidate.mutate({ eventId, startsAt });
-      await load();
-    } catch {
-      setError(true);
-    } finally {
-      setBusy(false);
-    }
+  function addCandidate(startsAt: string) {
+    if (!data) return;
+    return runAction(() => trpc.events.addCandidate.mutate({ eventId, startsAt }));
   }
 
-  async function answer(
+  function answer(
     kind: "yes" | "no" | "conditional",
     cond?: { mode: "all" | "any"; targetIds: string[] },
   ) {
-    if (busy) return;
-    setBusy(true);
-    try {
+    return runAction(async () => {
       await trpc.events.respond.mutate(cond ? { eventId, kind, cond } : { eventId, kind });
       setEditing(false);
-      await load();
-    } catch {
-      setError(true);
-    } finally {
-      setBusy(false);
-    }
+    });
   }
 
   // "Change my answer" un-commits: it clears the response so the plan returns to Action Required
   // until a new answer is given, then reopens the choices.
-  async function changeAnswer() {
-    if (busy) return;
-    setBusy(true);
-    try {
+  function changeAnswer() {
+    return runAction(async () => {
       await trpc.events.unrespond.mutate({ eventId });
       setEditing(true);
-      await load();
-    } catch {
-      setError(true);
-    } finally {
-      setBusy(false);
-    }
+    });
   }
 
-  if (loading) {
+  if (loading) return <ScreenLoading />;
+  if (error || !data)
     return (
-      <ScreenBackground>
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator color={ui.ink} />
-        </View>
-      </ScreenBackground>
+      <DetailError
+        error={error}
+        onBack={() => navigation.goBack()}
+        notFoundLabel="Plan not found."
+      />
     );
-  }
-  if (error || !data) {
-    return (
-      <ScreenBackground>
-        <View style={{ padding: 16 }}>
-          <BackBar title="Back" onBack={() => navigation.goBack()} />
-          <Text style={{ fontFamily: font.medium, color: ui.muted }}>
-            {error ? "Couldn't reach the server." : "Plan not found."}
-          </Text>
-        </View>
-      </ScreenBackground>
-    );
-  }
 
   const liveMsLeft = data.momentEndsAt ? new Date(data.momentEndsAt).getTime() - now : 0;
   const liveMsToLock = data.lockAt ? new Date(data.lockAt).getTime() - now : 0;
@@ -624,20 +590,7 @@ function CollectingView({
 
         {/* Opt-out: a distinct, tinted last row of the same table (mutually exclusive). */}
         <Pressable onPress={onToggleOptOut} style={{ ...row, backgroundColor: "#F1EEF6" }}>
-          <View
-            style={{
-              width: 18,
-              height: 18,
-              borderRadius: 5,
-              borderWidth: 1.5,
-              borderColor: ui.ink,
-              backgroundColor: optedOut ? ui.ink : "transparent",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {optedOut && <Text style={{ fontSize: 11, color: "#fff" }}>{"✓"}</Text>}
-          </View>
+          <SelectCheck selected={optedOut} accent={ui.ink} />
           <View style={{ flex: 1 }}>
             <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>
               I can't make it
@@ -850,21 +803,13 @@ function RevealView({ data, statusLine }: { data: Detail; statusLine: string }) 
       </Text>
       <Card padding={0}>
         {data.going.map((p, i) => (
-          <View
+          <PersonRow
             key={p.id}
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 10,
-              padding: 11,
-              borderTopWidth: i === 0 ? 0 : 1,
-              borderTopColor: ui.hairline,
-            }}
-          >
-            <Avatar initial={p.name.charAt(0).toUpperCase()} color={p.color} size={26} />
-            <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>{p.name}</Text>
-            <Text style={{ marginLeft: "auto", color: ui.going }}>{"✓"}</Text>
-          </View>
+            name={p.name}
+            color={p.color}
+            index={i}
+            right={<Text style={{ marginLeft: "auto", color: ui.going }}>{"✓"}</Text>}
+          />
         ))}
         {data.going.length === 0 && (
           <Text style={{ fontFamily: font.medium, fontSize: 12, color: ui.muted, padding: 14 }}>

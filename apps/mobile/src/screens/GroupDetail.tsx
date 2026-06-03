@@ -1,11 +1,22 @@
-import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text } from "react-native";
 import type { GroupsStackParams } from "../../App";
 import { trpc } from "../lib/trpc";
+import { useFetchOnFocus } from "../lib/useFetchOnFocus";
 import { font, ui } from "../theme";
-import { Avatar, BackBar, BottomSheet, Button, Card, Field, ScreenBackground } from "../ui";
+import {
+  Avatar,
+  BackBar,
+  BottomSheet,
+  Button,
+  Card,
+  DetailError,
+  Field,
+  PersonRow,
+  ScreenBackground,
+  ScreenLoading,
+} from "../ui";
 
 type Detail = NonNullable<Awaited<ReturnType<typeof trpc.groups.get.query>>>;
 type Addable = Awaited<ReturnType<typeof trpc.groups.addableUsers.query>>;
@@ -32,11 +43,7 @@ export function GroupDetail({ route, navigation }: Props) {
       .finally(() => setLoading(false));
   }, [groupId]);
 
-  useFocusEffect(
-    useCallback(() => {
-      load();
-    }, [load]),
-  );
+  useFetchOnFocus(load);
 
   async function run(fn: () => Promise<unknown>) {
     if (busy) return;
@@ -60,27 +67,15 @@ export function GroupDetail({ route, navigation }: Props) {
     }
   }
 
-  if (loading) {
+  if (loading) return <ScreenLoading />;
+  if (error || !data)
     return (
-      <ScreenBackground>
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator color={ui.ink} />
-        </View>
-      </ScreenBackground>
+      <DetailError
+        error={error}
+        onBack={() => navigation.goBack()}
+        notFoundLabel="Group not found."
+      />
     );
-  }
-  if (error || !data) {
-    return (
-      <ScreenBackground>
-        <View style={{ padding: 16 }}>
-          <BackBar title="Back" onBack={() => navigation.goBack()} />
-          <Text style={{ fontFamily: font.medium, color: ui.muted }}>
-            {error ? "Couldn't reach the server." : "Group not found."}
-          </Text>
-        </View>
-      </ScreenBackground>
-    );
-  }
 
   const renamed = nameDraft.trim() !== "" && nameDraft.trim() !== data.name;
 
@@ -124,30 +119,27 @@ export function GroupDetail({ route, navigation }: Props) {
         </Text>
         <Card padding={0}>
           {data.members.map((m, i) => (
-            <View
+            <PersonRow
               key={m.id}
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 10,
-                padding: 11,
-                borderTopWidth: i === 0 ? 0 : 1,
-                borderTopColor: ui.hairline,
-              }}
-            >
-              <Avatar initial={m.name.charAt(0).toUpperCase()} color={m.color} size={28} />
-              <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>{m.name}</Text>
-              <Pressable
-                hitSlop={10}
-                disabled={busy}
-                onPress={() =>
-                  run(() => trpc.groups.removeMember.mutate({ groupId, userId: m.id }))
-                }
-                style={{ marginLeft: "auto" }}
-              >
-                <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.muted }}>{"×"}</Text>
-              </Pressable>
-            </View>
+              name={m.name}
+              color={m.color}
+              index={i}
+              avatarSize={28}
+              right={
+                <Pressable
+                  hitSlop={10}
+                  disabled={busy}
+                  onPress={() =>
+                    run(() => trpc.groups.removeMember.mutate({ groupId, userId: m.id }))
+                  }
+                  style={{ marginLeft: "auto" }}
+                >
+                  <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.muted }}>
+                    {"×"}
+                  </Text>
+                </Pressable>
+              }
+            />
           ))}
         </Card>
 

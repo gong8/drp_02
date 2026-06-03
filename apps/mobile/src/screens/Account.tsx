@@ -1,6 +1,6 @@
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { ScrollView, Text, View } from "react-native";
-import { useDevAuth } from "../lib/auth";
+import { useDevAuth, useDisplayName } from "../lib/auth";
 import { font, ui } from "../theme";
 import { Avatar, Button, Card, Heading, ScreenBackground } from "../ui";
 
@@ -11,7 +11,7 @@ export function Account() {
   const { user } = useUser();
   const { devUser, signOutDev } = useDevAuth();
 
-  const name = devUser ? "Test user" : (user?.firstName ?? user?.username ?? "Account");
+  const name = useDisplayName("Account");
   const email = devUser
     ? "Signed in with the dev bypass"
     : (user?.emailAddresses?.[0]?.emailAddress ?? "");

@@ -1,20 +1,22 @@
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { type ReactNode, useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from "react-native";
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
-import { formatSlot, isoFrom } from "../lib/format";
+import { formatSlot, isoFrom, splitIso } from "../lib/format";
 import { defaultLockAtForOptions } from "../lib/lock";
 import { trpc } from "../lib/trpc";
 import { font, ui } from "../theme";
-import { BackBar, Button, Card, Chip, DateTimePill, Field, ScreenBackground, Toggle } from "../ui";
+import {
+  BackBar,
+  Button,
+  Card,
+  Chip,
+  DateTimePill,
+  Field,
+  ScreenBackground,
+  ScreenLoading,
+  Toggle,
+} from "../ui";
 
 type Group = Awaited<ReturnType<typeof trpc.groups.mine.query>>[number];
 type Branch = "float" | "rough" | "set";
@@ -31,16 +33,6 @@ const TITLES: Record<Branch, string> = {
   rough: "Rough plan",
   set: "It's set",
 };
-
-// Split an ISO instant back into the picker's local "YYYY-MM-DD" / "HH:mm" strings.
-function splitIso(iso: string): { date: string; time: string } {
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return {
-    date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
-    time: `${pad(d.getHours())}:${pad(d.getMinutes())}`,
-  };
-}
 
 export function CreateWizard({ route, navigation }: Props) {
   const { branch } = route.params;
@@ -67,6 +59,9 @@ export function CreateWizard({ route, navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
+
+  const updateRow = (id: string, patch: Partial<Row>) =>
+    setRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
 
   useEffect(() => {
     trpc.groups.mine
@@ -184,15 +179,7 @@ export function CreateWizard({ route, navigation }: Props) {
     else navigation.goBack();
   }
 
-  if (loading) {
-    return (
-      <ScreenBackground>
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator color={ui.ink} />
-        </View>
-      </ScreenBackground>
-    );
-  }
+  if (loading) return <ScreenLoading />;
 
   const nextLabel = !last
     ? "Next"
@@ -292,8 +279,8 @@ export function CreateWizard({ route, navigation }: Props) {
               <DateTimePill
                 dateValue={rows[0].date}
                 timeValue={rows[0].time}
-                onDate={(t) => setRows((rs) => rs.map((r, i) => (i === 0 ? { ...r, date: t } : r)))}
-                onTime={(t) => setRows((rs) => rs.map((r, i) => (i === 0 ? { ...r, time: t } : r)))}
+                onDate={(t) => updateRow(rows[0].id, { date: t })}
+                onTime={(t) => updateRow(rows[0].id, { time: t })}
                 minimumDate={new Date()}
               />
             </Step>
@@ -309,43 +296,12 @@ export function CreateWizard({ route, navigation }: Props) {
                   <DateTimePill
                     dateValue={r.date}
                     timeValue={r.time}
-                    onDate={(t) =>
-                      setRows((rs) => rs.map((x) => (x.id === r.id ? { ...x, date: t } : x)))
-                    }
-                    onTime={(t) =>
-                      setRows((rs) => rs.map((x) => (x.id === r.id ? { ...x, time: t } : x)))
-                    }
+                    onDate={(t) => updateRow(r.id, { date: t })}
+                    onTime={(t) => updateRow(r.id, { time: t })}
                     minimumDate={new Date()}
                   />
                   {rows.length > 1 && (
-                    <Pressable
-                      onPress={() => setRows((rs) => rs.filter((x) => x.id !== r.id))}
-                      hitSlop={12}
-                      style={{
-                        position: "absolute",
-                        top: -8,
-                        right: -8,
-                        width: 22,
-                        height: 22,
-                        borderRadius: 11,
-                        backgroundColor: ui.surface,
-                        borderWidth: ui.border,
-                        borderColor: ui.ink,
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontFamily: font.bold,
-                          fontSize: 13,
-                          lineHeight: 13,
-                          color: ui.ink,
-                        }}
-                      >
-                        ×
-                      </Text>
-                    </Pressable>
+                    <RemoveDot onPress={() => setRows((rs) => rs.filter((x) => x.id !== r.id))} />
                   )}
                 </View>
               ))}
@@ -513,6 +469,30 @@ function RemovableChip({ label, onRemove }: { label: string; onRemove: () => voi
     >
       <Text style={{ fontFamily: font.bold, fontSize: 12, color: "#fff" }}>{label}</Text>
       <Text style={{ fontFamily: font.bold, fontSize: 13, lineHeight: 13, color: "#fff" }}>×</Text>
+    </Pressable>
+  );
+}
+
+function RemoveDot({ onPress }: { onPress: () => void }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      hitSlop={12}
+      style={{
+        position: "absolute",
+        top: -8,
+        right: -8,
+        width: 22,
+        height: 22,
+        borderRadius: 11,
+        backgroundColor: ui.surface,
+        borderWidth: ui.border,
+        borderColor: ui.ink,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Text style={{ fontFamily: font.bold, fontSize: 13, lineHeight: 13, color: ui.ink }}>×</Text>
     </Pressable>
   );
 }

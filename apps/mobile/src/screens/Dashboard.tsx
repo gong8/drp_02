@@ -2,43 +2,25 @@ import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
 import { type ReactNode, useCallback, useMemo, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
 import { formatCountdown, formatSlot } from "../lib/format";
 import { syncReminders } from "../lib/notifications";
 import { trpc } from "../lib/trpc";
+import { useLiveClock } from "../lib/useLiveClock";
 import { font, ui } from "../theme";
 import {
   Avatar,
+  Button,
   Card,
   DateChip,
-  HardShadow,
+  DrainBar,
   Heading,
   ScreenBackground,
+  ScreenLoading,
   StickerTag,
   Tabs,
 } from "../ui";
-
-function BigButton({ label, onPress }: { label: string; onPress: () => void }) {
-  return (
-    <HardShadow radius={ui.rButton}>
-      <Pressable
-        onPress={onPress}
-        style={{
-          backgroundColor: ui.brand,
-          borderWidth: ui.border,
-          borderColor: ui.ink,
-          borderRadius: ui.rButton,
-          paddingVertical: 18,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Text style={{ fontFamily: font.display, fontSize: 17, color: "#fff" }}>{label}</Text>
-      </Pressable>
-    </HardShadow>
-  );
-}
 
 type Ev = Awaited<ReturnType<typeof trpc.events.mine.query>>[number];
 type Float = Awaited<ReturnType<typeof trpc.floats.mine.query>>[number];
@@ -55,15 +37,29 @@ function matchesFilter(e: Ev, filter: Filter): boolean {
   return e.myStatus === "awaiting" || e.myStatus === "reacting";
 }
 
-// The loud anchor: a full-bleed pink panel (edge-to-edge, ink rules top + bottom, same motif as the
-// timer banners) that COVERS the whole "Action required" section - heading plus the action cards.
-function ActionPanel({ count, children }: { count: number; children: ReactNode }) {
+// A full-bleed banded section (edge-to-edge, ink rules top + bottom, same motif as the timer
+// banners) that COVERS a whole group of cards - an uppercase heading + count over the children.
+// Two tones share this shell: the loud pink "Action required" (wants an urgent answer) and the
+// calmer lavender "Brewing" (wants a pile-on). Tone drives the band fill and the heading/count ink.
+function SectionBand({
+  title,
+  count,
+  tone,
+  children,
+}: {
+  title: string;
+  count: number;
+  tone: "action" | "brewing";
+  children: ReactNode;
+}) {
+  const bg = tone === "action" ? ui.brand : ui.gradient[1];
+  const fg = tone === "action" ? "#fff" : ui.ink;
   return (
     <View
       style={{
         marginHorizontal: -16,
         marginBottom: 28,
-        backgroundColor: ui.brand,
+        backgroundColor: bg,
         borderColor: ui.ink,
         borderTopWidth: ui.border,
         borderBottomWidth: ui.border,
@@ -86,12 +82,12 @@ function ActionPanel({ count, children }: { count: number; children: ReactNode }
             fontSize: 14,
             letterSpacing: 1,
             textTransform: "uppercase",
-            color: "#fff",
+            color: fg,
           }}
         >
-          Action required
+          {title}
         </Text>
-        <Text style={{ fontFamily: font.bold, fontSize: 14, color: "#fff" }}>{count}</Text>
+        <Text style={{ fontFamily: font.bold, fontSize: 14, color: fg }}>{count}</Text>
       </View>
       {children}
     </View>
@@ -178,13 +174,10 @@ function cardSticker(e: Ev) {
 
 // One plan as a card, built from the same parts as the featured card so the screen reads as a set:
 // title + sticker, the group/place line, then the phase footer. Declined plans sit back, dimmed.
-function MeetCard({ e, onPress, last }: { e: Ev; onPress: () => void; last?: boolean }) {
+function MeetCard({ e, onPress }: { e: Ev; onPress: () => void }) {
   return (
     <Pressable onPress={onPress}>
-      <Card
-        padding={14}
-        style={{ marginBottom: last ? 0 : 11, opacity: e.myStatus === "declined" ? 0.6 : 1 }}
-      >
+      <Card padding={14} style={{ marginBottom: 11, opacity: e.myStatus === "declined" ? 0.6 : 1 }}>
         <View
           style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}
         >
@@ -287,24 +280,7 @@ function ActionCard({
             {`${e.phase === "moment" ? "closes" : "locks"} ${formatCountdown(deadlineMs(e, now))}`}
           </Text>
         </View>
-        <View
-          style={{
-            height: 12,
-            borderWidth: ui.border,
-            borderColor: ui.ink,
-            borderRadius: 999,
-            backgroundColor: ui.surface,
-            overflow: "hidden",
-          }}
-        >
-          <View
-            style={{
-              height: "100%",
-              width: `${Math.round(frac * 100)}%`,
-              backgroundColor: hot ? ui.brand : ui.going,
-            }}
-          />
-        </View>
+        <DrainBar frac={frac} hot={hot} />
         <Text
           style={{
             fontFamily: font.mono,
@@ -318,49 +294,6 @@ function ActionCard({
         </Text>
       </Card>
     </Pressable>
-  );
-}
-
-// A calmer cousin of ActionPanel: a full-bleed lavender band that holds the brewing floats, clearly
-// distinct from the loud pink "Action required" (these want a pile-on, not an urgent answer).
-function BrewingZone({ count, children }: { count: number; children: ReactNode }) {
-  return (
-    <View
-      style={{
-        marginHorizontal: -16,
-        marginBottom: 28,
-        backgroundColor: ui.gradient[1],
-        borderColor: ui.ink,
-        borderTopWidth: ui.border,
-        borderBottomWidth: ui.border,
-        paddingHorizontal: 16,
-        paddingTop: 14,
-        paddingBottom: 16,
-      }}
-    >
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: 14,
-        }}
-      >
-        <Text
-          style={{
-            fontFamily: font.black,
-            fontSize: 14,
-            letterSpacing: 1,
-            textTransform: "uppercase",
-            color: ui.ink,
-          }}
-        >
-          Brewing
-        </Text>
-        <Text style={{ fontFamily: font.bold, fontSize: 14, color: ui.ink }}>{count}</Text>
-      </View>
-      {children}
-    </View>
   );
 }
 
@@ -408,24 +341,7 @@ function FloatCard({
             {`auto-tips ${formatCountdown(tipMs)}`}
           </Text>
         </View>
-        <View
-          style={{
-            height: 12,
-            borderWidth: ui.border,
-            borderColor: ui.ink,
-            borderRadius: 999,
-            backgroundColor: ui.surface,
-            overflow: "hidden",
-          }}
-        >
-          <View
-            style={{
-              height: "100%",
-              width: `${Math.round(frac * 100)}%`,
-              backgroundColor: hot ? ui.brand : ui.going,
-            }}
-          />
-        </View>
+        <DrainBar frac={frac} hot={hot} />
         <Text
           style={{
             fontFamily: font.mono,
@@ -450,14 +366,11 @@ export function Dashboard({ navigation }: Props) {
   const [error, setError] = useState(false);
   const [filter, setFilter] = useState<Filter>("All");
   // Local clock so the Action Required countdowns + drain bars tick live (the poll is only every 5s).
-  const [now, setNow] = useState(Date.now());
+  const now = useLiveClock();
 
   useFocusEffect(
     useCallback(() => {
       let active = true;
-      const tick = setInterval(() => {
-        if (active) setNow(Date.now());
-      }, 1000);
       const fetchAll = () =>
         Promise.all([trpc.events.mine.query(), trpc.groups.mine.query(), trpc.floats.mine.query()])
           .then(([e, g, f]) => {
@@ -479,7 +392,6 @@ export function Dashboard({ navigation }: Props) {
       return () => {
         active = false;
         clearInterval(poll);
-        clearInterval(tick);
       };
     }, []),
   );
@@ -524,15 +436,7 @@ export function Dashboard({ navigation }: Props) {
       });
   }, [events, actionIds, filter]);
 
-  if (loading) {
-    return (
-      <ScreenBackground>
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator color={ui.ink} />
-        </View>
-      </ScreenBackground>
-    );
-  }
+  if (loading) return <ScreenLoading />;
 
   return (
     <ScreenBackground header={<Heading title="Your meets" />}>
@@ -570,7 +474,7 @@ export function Dashboard({ navigation }: Props) {
             ) : (
               <>
                 {actionItems.length > 0 && (
-                  <ActionPanel count={actionItems.length}>
+                  <SectionBand title="Action required" count={actionItems.length} tone="action">
                     {actionItems.map((e, i) => (
                       <ActionCard
                         key={e.id}
@@ -580,11 +484,11 @@ export function Dashboard({ navigation }: Props) {
                         onPress={() => navigation.navigate("EventDetail", { eventId: e.id })}
                       />
                     ))}
-                  </ActionPanel>
+                  </SectionBand>
                 )}
 
                 {floats.length > 0 && (
-                  <BrewingZone count={floats.length}>
+                  <SectionBand title="Brewing" count={floats.length} tone="brewing">
                     {floats.map((f, i) => (
                       <FloatCard
                         key={f.id}
@@ -594,7 +498,7 @@ export function Dashboard({ navigation }: Props) {
                         onPress={() => navigation.navigate("FloatBoard", { floatId: f.id })}
                       />
                     ))}
-                  </BrewingZone>
+                  </SectionBand>
                 )}
 
                 <Tabs options={FILTERS} value={filter} onChange={setFilter} />
@@ -641,9 +545,10 @@ export function Dashboard({ navigation }: Props) {
           }}
         >
           {hasGroups && !error ? (
-            <BigButton label="New meetup" onPress={() => navigation.navigate("NewDial")} />
+            <Button size="lg" label="New meetup" onPress={() => navigation.navigate("NewDial")} />
           ) : (
-            <BigButton
+            <Button
+              size="lg"
               label="Create a group"
               onPress={() => navigation.getParent()?.navigate("Groups", { screen: "CreateGroup" })}
             />

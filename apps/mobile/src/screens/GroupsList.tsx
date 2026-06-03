@@ -1,12 +1,12 @@
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import type { GroupsStackParams } from "../../App";
 import { colorFor, initials } from "../lib/format";
 import { trpc } from "../lib/trpc";
 import { font, ui } from "../theme";
-import { Avatar, Button, Card, Heading, ScreenBackground } from "../ui";
+import { Avatar, Button, Card, Heading, ScreenBackground, ScreenLoading } from "../ui";
 
 type Group = Awaited<ReturnType<typeof trpc.groups.mine.query>>[number];
 type Props = NativeStackScreenProps<GroupsStackParams, "GroupsList">;
@@ -35,15 +35,7 @@ export function GroupsList({ navigation }: Props) {
     }, []),
   );
 
-  if (loading) {
-    return (
-      <ScreenBackground>
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator color={ui.ink} />
-        </View>
-      </ScreenBackground>
-    );
-  }
+  if (loading) return <ScreenLoading />;
 
   return (
     <ScreenBackground header={<Heading title="Your groups" />}>
