@@ -5,7 +5,7 @@ export type MinuteInterval = 1 | 2 | 3 | 4 | 5 | 6 | 10 | 12 | 15 | 20 | 30;
 
 // Shared prop shape for the native (DateTimeField.tsx) and web (DateTimeField.web.tsx)
 // implementations. `value` stays a plain string so it drops straight into the existing
-// `date` / `time` state and `isoFrom` helper in CreateEvent - "YYYY-MM-DD" for date mode,
+// `date` / `time` state and `isoFrom` in lib/format - "YYYY-MM-DD" for date mode,
 // "HH:mm" (24h) for time mode, "" when nothing is picked yet.
 export type DateTimeFieldProps = {
   label?: string;

@@ -8,6 +8,7 @@ export { DateChip } from "./DateChip";
 export { DateTimeField } from "./DateTimeField";
 export { DateTimePill } from "./DateTimePill";
 export { Field } from "./Field";
+export { FloatChip } from "./FloatChip";
 export { HardShadow } from "./HardShadow";
 export { Heading } from "./Heading";
 export { ScreenBackground } from "./ScreenBackground";

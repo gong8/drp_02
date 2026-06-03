@@ -12,6 +12,7 @@ import {
   ResolveInput,
   RespondInput,
   type ResponseInput,
+  reconcileFloat,
   resolveIn,
   revealGoing,
   SetOptOutInput,
@@ -26,6 +27,8 @@ import {
   eventCandidates,
   eventOptOuts,
   events,
+  floatSuggestions,
+  floatVotes,
   groupMembers,
   groups,
   responses,
@@ -140,6 +143,132 @@ async function settleCollecting(e: EventRow): Promise<void> {
   e.startsAt = chosen.startsAt;
 }
 
+// A float left this far past its tip deadline (a dormant group nobody opened) fizzles rather than
+// resurrecting a stale idea into a live plan.
+const FLOAT_STALE_MS = 7 * 24 * 60 * 60 * 1000;
+
+// Lazily tip a float whose deadline (`lockAt`) has passed (no scheduler), mirroring settleCollecting.
+// reconcileFloat crystallizes the chips into a concrete outcome: a clear idea + an agreed time opens
+// the blind moment; a hot idea with no agreed time opens a short collecting round on the proposed
+// times; a cold idea (or a stale one) fizzles silently. `isAnonymous` stays set forever, so the
+// resulting plan is named for RSVPs while the originator is never surfaced. Mutates + persists.
+export async function settleFloating(e: EventRow): Promise<void> {
+  if (e.phase !== "floating" || !e.lockAt || Date.now() < e.lockAt.getTime()) return;
+  if (Date.now() - e.lockAt.getTime() > FLOAT_STALE_MS) {
+    await db
+      .update(events)
+      .set({ phase: "fizzled", status: "resolved" })
+      .where(eq(events.id, e.id));
+    e.phase = "fizzled";
+    return;
+  }
+
+  const sugg = await db.select().from(floatSuggestions).where(eq(floatSuggestions.eventId, e.id));
+  const allVotes = await db.select().from(floatVotes).where(eq(floatVotes.eventId, e.id));
+  const ideas = sugg
+    .filter((s) => s.axis === "idea")
+    .map((s) => ({ id: s.id, text: s.text ?? "", createdAtMs: s.createdAt.getTime() }));
+  const times = sugg
+    .filter((s) => s.axis === "time")
+    .map((s) => ({
+      id: s.id,
+      startsAtMs: (s.startsAt ?? e.startsAt).getTime(),
+      createdAtMs: s.createdAt.getTime(),
+    }));
+  // Collecting-fallback candidates when the float grew no time chips: a few days from the window
+  // placeholder at its band hour, future only.
+  const windowSlotsMs =
+    times.length > 0
+      ? []
+      : Array.from({ length: 5 }, (_, i) => {
+          const d = new Date(e.startsAt);
+          d.setDate(d.getDate() + i);
+          return d.getTime();
+        }).filter((ms) => ms >= Date.now());
+
+  const result = reconcileFloat(
+    ideas,
+    times,
+    allVotes.map((v) => ({ suggestionId: v.suggestionId, userId: v.userId })),
+    e.minHeat,
+    windowSlotsMs,
+  );
+
+  if (result.kind === "fizzle") {
+    await db
+      .update(events)
+      .set({ phase: "fizzled", status: "resolved" })
+      .where(eq(events.id, e.id));
+    e.phase = "fizzled";
+    return;
+  }
+
+  const now = new Date();
+  if (result.kind === "moment") {
+    const chosenStartsAt = new Date(result.startsAtMs);
+    const endsAt = momentEnd(now, DEFAULT_MOMENT_MINUTES, chosenStartsAt);
+    await db
+      .update(events)
+      .set({
+        phase: "moment",
+        title: result.ideaText,
+        startsAt: chosenStartsAt,
+        momentStartsAt: now,
+        momentEndsAt: endsAt,
+        respondByAt: endsAt,
+      })
+      .where(eq(events.id, e.id));
+    e.phase = "moment";
+    e.title = result.ideaText;
+    e.startsAt = chosenStartsAt;
+    e.momentStartsAt = now;
+    e.momentEndsAt = endsAt;
+    // TODO push (notifications seam): "the float caught on: <idea>, <time> - you in?"
+    return;
+  }
+
+  // collecting: the idea is hot but the time is unresolved - crystallize the idea as the title and
+  // open a normal collecting round on the proposed (future) times so the group can converge a slot.
+  const slots = [...new Set(result.candidateStartsAtMs)]
+    .filter((ms) => ms > Date.now())
+    .sort((a, b) => a - b);
+  if (slots.length === 0) {
+    await db
+      .update(events)
+      .set({ phase: "fizzled", status: "resolved" })
+      .where(eq(events.id, e.id));
+    e.phase = "fizzled";
+    return;
+  }
+  const lockAt = new Date(
+    defaultLockAt(slots[0], now.getTime(), DEFAULT_MOMENT_MINUTES * 60 * 1000),
+  );
+  await db
+    .update(events)
+    .set({
+      phase: "collecting",
+      title: result.ideaText,
+      startsAt: new Date(slots[0]),
+      respondByAt: new Date(slots[slots.length - 1]),
+      lockAt,
+    })
+    .where(eq(events.id, e.id));
+  for (let i = 0; i < slots.length; i++) {
+    await db.insert(eventCandidates).values({
+      id: `${e.id}_d${i + 1}`,
+      eventId: e.id,
+      startsAt: new Date(slots[i]),
+      partOfDay: null,
+      label: null,
+    });
+  }
+  e.phase = "collecting";
+  e.title = result.ideaText;
+  e.startsAt = new Date(slots[0]);
+  e.lockAt = lockAt;
+  // TODO push (notifications seam): "the float caught on: <idea> - which time works?"
+}
+
 // This user's status. During a blind moment we only ever reflect their OWN answer (we cannot leak
 // others); once revealed we use the full resolved IN set.
 function statusFor(userId: string, resp: ResponseInput[], revealed: string[] | null): MyStatus {
@@ -184,7 +313,7 @@ async function goingPreview(revealed: string[] | null): Promise<{
 
 // Caller must belong to the group. Identity (ctx.userId) is a dev stub today, so this is
 // correctness/scoping rather than real auth - see docs/tech-debt.md for the auth gap.
-async function requireMember(groupId: string, userId: string): Promise<void> {
+export async function requireMember(groupId: string, userId: string): Promise<void> {
   const m = await db
     .select()
     .from(groupMembers)
@@ -394,6 +523,12 @@ export const eventsRouter = router({
     const [e] = await db.select().from(events).where(eq(events.id, input.eventId));
     if (!e) throw new TRPCError({ code: "NOT_FOUND" });
     await requireMember(e.groupId, ctx.userId);
+    if (e.isAnonymous) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "a float is ownerless - it tips on its own",
+      });
+    }
     if (e.createdByUserId !== ctx.userId) {
       throw new TRPCError({ code: "FORBIDDEN", message: "only the creator can lock the moment" });
     }
@@ -447,14 +582,17 @@ export const eventsRouter = router({
     const rows = await db.select().from(events).where(inArray(events.groupId, groupIds));
     const out = await Promise.all(
       rows.map(async (e) => {
+        await settleFloating(e);
         await settleCollecting(e);
         await settlePhase(e);
+        if (e.phase === "floating") return null; // still brewing: shown in the Brewing zone (floats.mine)
         if (e.phase === "fizzled") return null; // silent: a fizzle leaves no trace
         const [g] = await db.select().from(groups).where(eq(groups.id, e.groupId));
         const resp = await responsesFor(e.id);
         const revealed = revealedGoing(e, resp);
         const { goingCount, preview } = await goingPreview(revealed);
-        const isCreator = e.createdByUserId === ctx.userId;
+        // A float stays unsigned forever: the originator is never flagged as creator, even post-tip.
+        const isCreator = !e.isAnonymous && e.createdByUserId === ctx.userId;
         const iOpted = (await optedOut(e.id)).has(ctx.userId);
 
         let myStatus: MyStatus;
@@ -523,13 +661,16 @@ export const eventsRouter = router({
     const [e] = await db.select().from(events).where(eq(events.id, input.id));
     if (!e) return null;
     await requireMember(e.groupId, ctx.userId);
+    await settleFloating(e);
     await settleCollecting(e);
     await settlePhase(e);
+    if (e.phase === "floating") return null; // a still-brewing float is read via floats.get
     const [g] = await db.select().from(groups).where(eq(groups.id, e.groupId));
 
     const resp = await responsesFor(e.id);
     const revealed = revealedGoing(e, resp);
-    const isCreator = e.createdByUserId === ctx.userId;
+    // A float stays unsigned forever: the originator is never flagged as creator, even post-tip.
+    const isCreator = !e.isAnonymous && e.createdByUserId === ctx.userId;
     const iOptedOut = (await optedOut(e.id)).has(ctx.userId);
 
     const cands = await candidatesFor(e.id);
