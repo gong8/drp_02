@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import type { MeetupsStackParams } from "../../App";
 import { formatSlot, isoFrom } from "../lib/format";
-import { defaultLockAt } from "../lib/lock";
+import { defaultLockAtForOptions } from "../lib/lock";
 import { trpc } from "../lib/trpc";
 import { font, ui } from "../theme";
 import { BackBar, Button, Card, Chip, DateTimePill, Field, ScreenBackground, Toggle } from "../ui";
@@ -87,7 +87,7 @@ export function CreateWizard({ route, navigation }: Props) {
     ? Math.min(...optionIsos.map((iso) => new Date(iso).getTime()))
     : null;
   const autoLockIso =
-    earliestMs != null ? new Date(defaultLockAt(earliestMs, Date.now())).toISOString() : null;
+    earliestMs != null ? new Date(defaultLockAtForOptions(earliestMs, Date.now())).toISOString() : null;
   const lockOverrideIso = lockEdit ? isoFrom(lockDate, lockTime) : null;
   const lockInvalid =
     !!lockOverrideIso && earliestMs != null && new Date(lockOverrideIso).getTime() >= earliestMs;
