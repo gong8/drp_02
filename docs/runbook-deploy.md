@@ -97,3 +97,40 @@ ADMIN_RESET_TOKEN=<the secret> curl -fsS -X POST \
 The token lives only in the App Runner service env (and the team password manager) - never in git.
 It wipes ALL data and restores `apps/api/src/db/seed.ts`'s demo, so give the team a heads-up first.
 To rotate, update `ADMIN_RESET_TOKEN` in the App Runner console (one deploy).
+
+## The dev stack (isolated mirror of prod)
+
+`dev` has its own backend + database so in-flight work (which runs ahead of `main`) can be
+exercised without touching prod. It mirrors the prod stack and **reuses** prod's shared infra
+(default VPC + subnets, the `bethere-api` ECR repo, the `bethere-apprunner-ecr-role` pull role,
+the `bethere-vpc-conn` connector, and the `bethere-rds-sg` security group). Provisioning record:
+`infra/aws-deploy-dev.sh`. Linear: DRP-31.
+
+| | prod (`main`) | dev (`dev`) |
+| --- | --- | --- |
+| App Runner service | `bethere-api` | `bethere-api-dev` |
+| ECR tag (auto-deploy) | `:latest` | `:dev` |
+| API URL | `https://96mgvmgcbj.us-east-1.awsapprunner.com` | `https://wumksaeb3j.us-east-1.awsapprunner.com` |
+| RDS instance | `bethere-db` | `bethere-db-dev` |
+| CD workflow | `.github/workflows/deploy-api.yml` | `.github/workflows/deploy-api-dev.yml` |
+| Vercel web | Production (branch `main`) | Preview (branch `dev`) |
+
+- dev service ARN:
+  `arn:aws:apprunner:us-east-1:208569836255:service/bethere-api-dev/f6c777627a7e473989fe9514709d16c6`
+- A separate ECR **tag** is what isolates the two: each App Runner service auto-deploys only on
+  pushes to its own tag, so a `dev` push (`:dev`) never disturbs prod (`:latest`).
+- Everything in this runbook applies to dev by swapping the service ARN / URL / RDS identifier
+  for the `-dev` ones above (deploy flow, the silent-rollback failure mode, `DB_RESET_ON_BOOT`,
+  the manual-reset fallback, `/admin/reseed`). The dev `ADMIN_RESET_TOKEN` is a separate secret
+  from prod's (both live only in the service env + the team password manager).
+- Local credentials for the dev stack (DB password, RDS endpoint, admin token) live in the
+  gitignored `infra/.deploy-state-dev.local`.
+
+## The dev web (Vercel)
+
+`vercel.json`'s `ignoreCommand` builds for `main` (production) and `dev` (preview); other
+branches are skipped. The `dev` branch gets a stable preview URL
+(`bethere-git-dev-<team>.vercel.app`). The web build bakes its API URL at build time, so the
+**Preview**-scoped Vercel env vars point dev at the dev API:
+`EXPO_PUBLIC_API_URL=https://wumksaeb3j.us-east-1.awsapprunner.com`,
+`EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` (same Clerk app as prod), `EXPO_PUBLIC_DEV_AUTH=1`.
