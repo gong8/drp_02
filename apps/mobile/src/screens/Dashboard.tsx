@@ -495,7 +495,7 @@ export function Dashboard({ navigation }: Props) {
                         f={f}
                         now={now}
                         last={i === floats.length - 1}
-                        onPress={() => navigation.navigate("FloatBoard", { floatId: f.id })}
+                        onPress={() => navigation.navigate("FloatBoard", { eventId: f.id })}
                       />
                     ))}
                   </SectionBand>

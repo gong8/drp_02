@@ -30,7 +30,7 @@ type Props = NativeStackScreenProps<MeetupsStackParams, "FloatBoard">;
 const BANDS = ["morning", "afternoon", "evening", "late"] as const;
 
 export function FloatBoard({ route, navigation }: Props) {
-  const { floatId } = route.params;
+  const { eventId } = route.params;
   const [board, setBoard] = useState<Brew | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -42,7 +42,7 @@ export function FloatBoard({ route, navigation }: Props) {
 
   const load = useCallback(() => {
     return trpc.floats.get
-      .query({ id: floatId })
+      .query({ id: eventId })
       .then((d) => {
         if (!d) {
           setError(true);
@@ -58,7 +58,7 @@ export function FloatBoard({ route, navigation }: Props) {
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [floatId, navigation]);
+  }, [eventId, navigation]);
 
   useFocusEffect(
     useCallback(() => {
@@ -85,18 +85,17 @@ export function FloatBoard({ route, navigation }: Props) {
     setBoard(flip);
     pending.current.add(id);
     trpc.floats.toggleVote
-      .mutate({ eventId: floatId, suggestionId: id })
+      .mutate({ eventId, suggestionId: id })
       .catch(() => setBoard(flip))
       .finally(() => pending.current.delete(id));
   }
 
   const runAction = useBusyAction({ busy, setBusy, setError, load });
 
-  const addIdea = (text: string) =>
-    runAction(() => trpc.floats.addIdea.mutate({ eventId: floatId, text }));
+  const addIdea = (text: string) => runAction(() => trpc.floats.addIdea.mutate({ eventId, text }));
 
   const addTime = (dayIso: string, band: PartOfDay) =>
-    runAction(() => trpc.floats.addTime.mutate({ eventId: floatId, day: dayIso, band }));
+    runAction(() => trpc.floats.addTime.mutate({ eventId, day: dayIso, band }));
 
   if (loading) return <ScreenLoading />;
   if (error || !board) {
@@ -187,7 +186,7 @@ export function FloatBoard({ route, navigation }: Props) {
             {board.times.map((c) => (
               <FloatChip
                 key={c.id}
-                label={`${shortDayLabel(new Date(c.startsAt ?? board.createdAt))} · ${partOfDayLabel(c.band)}`}
+                label={`${shortDayLabel(new Date(c.startsAt ?? board.createdAt))} · ${partOfDayLabel(c.partOfDay)}`}
                 count={c.count}
                 mine={c.mine}
                 onPress={() => toggle(c.id, "time")}

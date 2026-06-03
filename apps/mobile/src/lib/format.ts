@@ -1,3 +1,5 @@
+import type { PartOfDay } from "@bethere/shared";
+
 // Zero-pad a small number to two digits ("3" -> "03"); shared by every time/date string builder.
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
@@ -94,7 +96,7 @@ export function clock12(iso: string): { time: string; ampm: string } {
 }
 
 // "evening" -> "Evening".
-export function partOfDayLabel(part: string | null | undefined): string {
+export function partOfDayLabel(part: PartOfDay | null | undefined): string {
   if (!part) return "";
   return part.charAt(0).toUpperCase() + part.slice(1);
 }

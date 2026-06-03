@@ -142,7 +142,7 @@ export function CreateWizard({ route, navigation }: Props) {
         });
         navigation.reset({
           index: 1,
-          routes: [{ name: "Dashboard" }, { name: "FloatBoard", params: { floatId: id } }],
+          routes: [{ name: "Dashboard" }, { name: "FloatBoard", params: { eventId: id } }],
         });
         return;
       }

@@ -309,7 +309,11 @@ export const floatsRouter = router({
       .sort((a, b) => b.count - a.count);
     const times = sugg
       .filter((s) => s.axis === "time")
-      .map((s) => ({ ...base(s), band: s.partOfDay, startsAt: s.startsAt?.toISOString() ?? null }))
+      .map((s) => ({
+        ...base(s),
+        partOfDay: s.partOfDay,
+        startsAt: s.startsAt?.toISOString() ?? null,
+      }))
       .sort((a, b) => (a.startsAt ?? "").localeCompare(b.startsAt ?? ""));
 
     return {
