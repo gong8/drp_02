@@ -16,6 +16,11 @@ export type Conditional = z.infer<typeof Conditional>;
 export const PartOfDay = z.enum(["morning", "afternoon", "evening", "late"]);
 export type PartOfDay = z.infer<typeof PartOfDay>;
 
+// The two axes of a float's suggestion chips: an `idea` (a fused what+where) or a `time` (a loose
+// band). Single source of truth for the union the DB `floatAxisEnum` and the seed/mobile use.
+export const FloatAxis = z.enum(["idea", "time"]);
+export type FloatAxis = z.infer<typeof FloatAxis>;
+
 // How loose a fuzzy plan's window is. Expanded into concrete day candidates server-side.
 export const Timescale = z.enum(["tonight", "this_week", "this_weekend", "next_two_weeks"]);
 export type Timescale = z.infer<typeof Timescale>;
@@ -61,18 +66,22 @@ export const CreateEventInput = z.object({
 });
 export type CreateEventInput = z.infer<typeof CreateEventInput>;
 
+// Shared base for every per-event mutation/query input: an `{ eventId }` envelope. The event-axis
+// inputs below `.extend(...)` it so the field is defined once and the routers can `.input(ByEvent)`
+// directly for the bare-eventId procedures.
+export const ByEvent = z.object({ eventId: z.string() });
+export type ByEvent = z.infer<typeof ByEvent>;
+
 // Network boundary for events.react - replace the caller's "these times work for me" taps.
 // An empty array means "none of these work".
-export const ReactInput = z.object({
-  eventId: z.string(),
+export const ReactInput = ByEvent.extend({
   worksCandidateIds: z.array(z.string()),
 });
 export type ReactInput = z.infer<typeof ReactInput>;
 
 // Network boundary for events.addCandidate - any group member proposes a new concrete time while
 // the plan is still collecting. `startsAt` is an ISO string, like one entry of an options menu.
-export const AddCandidateInput = z.object({
-  eventId: z.string(),
+export const AddCandidateInput = ByEvent.extend({
   startsAt: z.string(),
 });
 export type AddCandidateInput = z.infer<typeof AddCandidateInput>;
@@ -80,40 +89,55 @@ export type AddCandidateInput = z.infer<typeof AddCandidateInput>;
 // Network boundary for events.setOptOut - a member bows out of a collecting plan ("I can't make
 // it"). `out: true` clears their reactions and excludes them from the convergence and reminders;
 // `out: false` rejoins them to a neutral, undecided state. Private - no one else sees it.
-export const SetOptOutInput = z.object({
-  eventId: z.string(),
+export const SetOptOutInput = ByEvent.extend({
   out: z.boolean(),
 });
 export type SetOptOutInput = z.infer<typeof SetOptOutInput>;
 
 // Network boundary for events.lock - the creator opens the blind moment on a slot. `candidateId`
 // omitted means the server picks the best-supported candidate. `momentMinutes` sets the countdown.
-export const LockInput = z.object({
-  eventId: z.string(),
+export const LockInput = ByEvent.extend({
   candidateId: z.string().optional(),
   momentMinutes: z.number().int().min(1).max(1440).optional(),
 });
 export type LockInput = z.infer<typeof LockInput>;
 
 // Network boundary for events.respond - a commitment during the moment.
-export const RespondInput = z
-  .object({
-    eventId: z.string(),
-    kind: ResponseKind,
-    cond: Conditional.optional(),
-  })
-  .refine((v) => v.kind !== "conditional" || !!v.cond, {
-    message: "conditional responses require `cond`",
-  });
+export const RespondInput = ByEvent.extend({
+  kind: ResponseKind,
+  cond: Conditional.optional(),
+}).refine((v) => v.kind !== "conditional" || !!v.cond, {
+  message: "conditional responses require `cond`",
+});
 export type RespondInput = z.infer<typeof RespondInput>;
 
-// Network boundary for events.resolve - resolve the moment at (or after) its deadline.
-export const ResolveInput = z.object({ eventId: z.string() });
+// Network boundary for events.resolve - resolve the moment at (or after) its deadline. Just an
+// `{ eventId }` envelope, so it aliases the shared ByEvent base.
+export const ResolveInput = ByEvent;
 export type ResolveInput = z.infer<typeof ResolveInput>;
 
+// The group-name rule, single-sourced so create and rename validate identically.
+export const GroupName = z.string().min(1).max(60);
+
 // Network boundary for groups.create.
-export const CreateGroupInput = z.object({ name: z.string().min(1).max(60) });
+export const CreateGroupInput = z.object({ name: GroupName });
 export type CreateGroupInput = z.infer<typeof CreateGroupInput>;
+
+// Network boundary for groups.rename - reuses the shared GroupName rule.
+export const RenameGroupInput = z.object({ id: z.string(), name: GroupName });
+export type RenameGroupInput = z.infer<typeof RenameGroupInput>;
+
+// Shared `{ id }` envelope for the bare-id queries (events.get, groups.get, floats.get).
+export const ByIdInput = z.object({ id: z.string() });
+export type ByIdInput = z.infer<typeof ByIdInput>;
+
+// Shared `{ groupId }` envelope (groups.addableUsers).
+export const ByGroupInput = z.object({ groupId: z.string() });
+export type ByGroupInput = z.infer<typeof ByGroupInput>;
+
+// Shared `{ groupId, userId }` ref for membership mutations (groups.addMember / removeMember).
+export const GroupMemberRef = z.object({ groupId: z.string(), userId: z.string() });
+export type GroupMemberRef = z.infer<typeof GroupMemberRef>;
 
 // The loose window a float lives in: a timescale plus an optional part-of-day band (defaulted server
 // -side). Drives the tip-deadline default and the collecting fallback when the float grows no times.
@@ -133,17 +157,16 @@ export const CreateFloatInput = z.object({
 export type CreateFloatInput = z.infer<typeof CreateFloatInput>;
 
 // Network boundary for floats.addIdea - any member drops a free-text IDEA chip (fused what+where).
-export const AddIdeaInput = z.object({ eventId: z.string(), text: z.string().min(1).max(80) });
+export const AddIdeaInput = ByEvent.extend({ text: z.string().min(1).max(80) });
 export type AddIdeaInput = z.infer<typeof AddIdeaInput>;
 
 // Network boundary for floats.addTime - any member drops a loose TIME band (a day at a part-of-day).
-export const AddTimeInput = z.object({
-  eventId: z.string(),
+export const AddTimeInput = ByEvent.extend({
   day: z.string(),
   band: PartOfDay,
 });
 export type AddTimeInput = z.infer<typeof AddTimeInput>;
 
 // Network boundary for floats.toggleVote - one-tap +1/un-+1 on any chip. Interest, not commitment.
-export const ToggleVoteInput = z.object({ eventId: z.string(), suggestionId: z.string() });
+export const ToggleVoteInput = ByEvent.extend({ suggestionId: z.string() });
 export type ToggleVoteInput = z.infer<typeof ToggleVoteInput>;

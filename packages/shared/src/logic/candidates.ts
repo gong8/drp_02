@@ -47,3 +47,21 @@ export function pickWinningCandidate(
   }
   return best;
 }
+
+/**
+ * Pick the quorum winner, else the most-reacted candidate id ("lock the best anyway").
+ * Tie-breaks toward the earlier candidate in display order (inherited from the helpers above).
+ * WARNING: `[0]` is only safe when candidateIds is non-empty - callers must guard an empty slate.
+ */
+export function pickWinnerOrBestId(
+  candidateIds: string[],
+  reactions: CandidateReactionInput[],
+  quorum: number,
+): string {
+  return (
+    pickWinningCandidate(candidateIds, reactions, quorum)?.candidateId ??
+    [...tallyCandidates(candidateIds, reactions)].sort(
+      (a, b) => b.userIds.length - a.userIds.length,
+    )[0].candidateId
+  );
+}

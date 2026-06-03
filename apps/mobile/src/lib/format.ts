@@ -1,37 +1,10 @@
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
-function ordinal(n: number): string {
-  const rem10 = n % 10;
-  const rem100 = n % 100;
-  if (rem10 === 1 && rem100 !== 11) return `${n}st`;
-  if (rem10 === 2 && rem100 !== 12) return `${n}nd`;
-  if (rem10 === 3 && rem100 !== 13) return `${n}rd`;
-  return `${n}th`;
-}
-
-// "2026-05-28T16:00:00.000Z" -> "28th May 2026"
-export function formatDate(iso: string): string {
-  const d = new Date(iso);
-  return `${ordinal(d.getDate())} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
-}
+// Zero-pad a small number to two digits ("3" -> "03"); shared by every time/date string builder.
+const pad2 = (n: number) => String(n).padStart(2, "0");
 
 // "...T16:00..." -> "16:00"
-export function formatTime(iso: string): string {
+function formatTime(iso: string): string {
   const d = new Date(iso);
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 }
 
 // Build a UTC ISO instant from the picker's local "YYYY-MM-DD" + "HH:mm" strings. Uses the numeric
@@ -47,23 +20,25 @@ export function isoFrom(date: string, time: string): string | null {
   return Number.isNaN(dt.getTime()) ? null : dt.toISOString();
 }
 
-// A stable per-day key for grouping a list of events under date headers.
-export function dateKey(iso: string): string {
-  const d = new Date(iso);
-  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+// Date -> the picker's local "YYYY-MM-DD" string (the forward of isoFrom's date half).
+export function dateStringFrom(d: Date): string {
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
-// Time remaining until `iso`, e.g. "8h 49m" or "3d 4h". Empty once passed.
-export function countdown(iso: string): string {
-  const ms = new Date(iso).getTime() - Date.now();
-  if (ms <= 0) return "now";
-  const mins = Math.floor(ms / 60000);
-  const days = Math.floor(mins / (60 * 24));
-  const hours = Math.floor((mins % (60 * 24)) / 60);
-  const m = mins % 60;
-  if (days > 0) return `${days}d ${hours}h`;
-  if (hours > 0) return `${hours}h ${m}m`;
-  return `${m}m`;
+// Date -> the picker's local "HH:mm" string (the forward of isoFrom's time half).
+export function timeStringFrom(d: Date): string {
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
+// ISO instant -> the picker's local { date, time } strings. The literal inverse of isoFrom.
+export function splitIso(iso: string): { date: string; time: string } {
+  const d = new Date(iso);
+  return { date: dateStringFrom(d), time: timeStringFrom(d) };
+}
+
+// Date -> "Wed 4 Jun" short day label (shared by FloatBoard + DateTimeField).
+export function shortDayLabel(d: Date): string {
+  return d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
 }
 
 const AVATAR_COLORS = ["#5F9472", "#C9823F", "#7E6BB0", "#3F7BA8", "#B0654F"] as const;
@@ -115,7 +90,7 @@ export function clock12(iso: string): { time: string; ampm: string } {
   const ampm = h < 12 ? "AM" : "PM";
   h %= 12;
   if (h === 0) h = 12;
-  return { time: `${h}:${String(d.getMinutes()).padStart(2, "0")}`, ampm };
+  return { time: `${h}:${pad2(d.getMinutes())}`, ampm };
 }
 
 // "evening" -> "Evening".
@@ -130,9 +105,9 @@ export function formatCountdown(ms: number): string {
   const totalMins = Math.floor(ms / 60000);
   if (totalMins < 60) {
     const secs = Math.floor((ms % 60000) / 1000);
-    return `${totalMins}:${String(secs).padStart(2, "0")}`;
+    return `${totalMins}:${pad2(secs)}`;
   }
   const hours = Math.floor(totalMins / 60);
-  if (hours < 24) return `${hours}h ${String(totalMins % 60).padStart(2, "0")}m`;
+  if (hours < 24) return `${hours}h ${pad2(totalMins % 60)}m`;
   return `${Math.floor(hours / 24)}d ${hours % 24}h`;
 }

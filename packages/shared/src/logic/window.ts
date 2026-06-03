@@ -13,13 +13,17 @@ export interface WindowSlot {
   partOfDay: PartOfDay;
 }
 
-function atBand(day: Date, band: PartOfDay): Date {
+// Resolve a day to its concrete instant at the given band's hour (band -> PART_HOUR). Exported so
+// callers reuse the single band-hour resolution instead of re-rolling setHours.
+export function atBand(day: Date, band: PartOfDay): Date {
   const d = new Date(day);
   d.setHours(PART_HOUR[band], 0, 0, 0);
   return d;
 }
 
-function addDays(base: Date, n: number): Date {
+// N days from a base date (a fresh Date, base untouched). Exported as the single source of truth for
+// day-relative stepping so callers stop re-rolling `new Date; setDate(getDate()+n)`.
+export function addDays(base: Date, n: number): Date {
   const d = new Date(base);
   d.setDate(d.getDate() + n);
   return d;
