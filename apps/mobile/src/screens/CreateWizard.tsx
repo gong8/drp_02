@@ -87,7 +87,9 @@ export function CreateWizard({ route, navigation }: Props) {
     ? Math.min(...optionIsos.map((iso) => new Date(iso).getTime()))
     : null;
   const autoLockIso =
-    earliestMs != null ? new Date(defaultLockAtForOptions(earliestMs, Date.now())).toISOString() : null;
+    earliestMs != null
+      ? new Date(defaultLockAtForOptions(earliestMs, Date.now())).toISOString()
+      : null;
   const lockOverrideIso = lockEdit ? isoFrom(lockDate, lockTime) : null;
   const lockInvalid =
     !!lockOverrideIso && earliestMs != null && new Date(lockOverrideIso).getTime() >= earliestMs;

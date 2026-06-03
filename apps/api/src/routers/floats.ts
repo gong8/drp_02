@@ -79,7 +79,9 @@ export const floatsRouter = router({
       }
       tipAt = t;
     } else {
-      tipAt = new Date(defaultLockAtForWindow(lastMs, Date.now(), DEFAULT_MOMENT_MINUTES * 60 * 1000));
+      tipAt = new Date(
+        defaultLockAtForWindow(lastMs, Date.now(), DEFAULT_MOMENT_MINUTES * 60 * 1000),
+      );
     }
 
     const minHeat = input.minHeat ?? DEFAULT_MIN_HEAT;

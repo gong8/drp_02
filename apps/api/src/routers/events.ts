@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import {
   AddCandidateInput,
-  CreateEventInput,
   addCandidateHorizon,
+  CreateEventInput,
   clears,
   defaultLockAtForOptions,
   defaultLockAtForWindow,
@@ -243,7 +243,11 @@ export async function settleFloating(e: EventRow): Promise<void> {
     return;
   }
   const lockAt = new Date(
-    defaultLockAtForWindow(slots[slots.length - 1], now.getTime(), DEFAULT_MOMENT_MINUTES * 60 * 1000),
+    defaultLockAtForWindow(
+      slots[slots.length - 1],
+      now.getTime(),
+      DEFAULT_MOMENT_MINUTES * 60 * 1000,
+    ),
   );
   await db
     .update(events)
