@@ -21,6 +21,7 @@ export function DateTimeField({
   onChange,
   minuteInterval = 15,
   minimumDate,
+  maximumDate,
   bare = false,
   style,
 }: DateTimeFieldProps) {
@@ -28,6 +29,10 @@ export function DateTimeField({
   const min =
     isDate && minimumDate
       ? `${minimumDate.getFullYear()}-${pad(minimumDate.getMonth() + 1)}-${pad(minimumDate.getDate())}`
+      : undefined;
+  const max =
+    isDate && maximumDate
+      ? `${maximumDate.getFullYear()}-${pad(maximumDate.getMonth() + 1)}-${pad(maximumDate.getDate())}`
       : undefined;
 
   return (
@@ -50,6 +55,7 @@ export function DateTimeField({
         type={isDate ? "date" : "time"}
         value={value}
         min={min}
+        max={max}
         // <input type="time"> step is in seconds; 15 min = 900s constrains the minute stepper.
         step={isDate ? undefined : minuteInterval * 60}
         onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}

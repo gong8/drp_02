@@ -84,6 +84,7 @@ export function DateTimeField({
   onChange,
   minuteInterval = 15,
   minimumDate,
+  maximumDate,
   bare = false,
   style,
 }: DateTimeFieldProps) {
@@ -108,6 +109,7 @@ export function DateTimeField({
         is24Hour: false,
         minuteInterval: mode === "time" ? minuteInterval : undefined,
         minimumDate: mode === "date" ? minimumDate : undefined,
+        maximumDate: mode === "date" ? maximumDate : undefined,
         display: mode === "date" ? "calendar" : "clock",
         onChange: (event: DateTimePickerEvent, date?: Date) => {
           if (event.type === "set" && date) commit(date);
@@ -197,6 +199,7 @@ export function DateTimeField({
               accentColor={ui.brand}
               textColor={ui.ink}
               minimumDate={mode === "date" ? minimumDate : undefined}
+              maximumDate={mode === "date" ? maximumDate : undefined}
               minuteInterval={mode === "time" ? minuteInterval : undefined}
               onChange={(_event: DateTimePickerEvent, date?: Date) => {
                 if (!date) return;

@@ -13,6 +13,7 @@ export function DateTimePill({
   onDate,
   onTime,
   minimumDate,
+  maximumDate,
   minuteInterval = 15,
   style,
 }: {
@@ -21,6 +22,7 @@ export function DateTimePill({
   onDate: (next: string) => void;
   onTime: (next: string) => void;
   minimumDate?: Date;
+  maximumDate?: Date;
   minuteInterval?: MinuteInterval;
   style?: ViewStyle;
 }) {
@@ -44,6 +46,7 @@ export function DateTimePill({
             value={dateValue}
             onChange={onDate}
             minimumDate={minimumDate}
+            maximumDate={maximumDate}
             style={{ flex: 1 }}
           />
           <View style={{ width: ui.border, backgroundColor: ui.ink }} />

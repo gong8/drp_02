@@ -11,6 +11,7 @@ import {
   isoFrom,
   partOfDayLabel,
 } from "../lib/format";
+import { addCandidateHorizon } from "../lib/lock";
 import { trpc } from "../lib/trpc";
 import { font, ui } from "../theme";
 import {
@@ -564,6 +565,13 @@ function CollectingView({
   const [newTime, setNewTime] = useState("");
   const newIso = isoFrom(newDate, newTime);
 
+  const candTimes = data.candidates.map((c: Cand) => new Date(c.startsAt).getTime());
+  const lockMs = data.lockAt ? new Date(data.lockAt).getTime() : Date.now();
+  const addMin = new Date(Math.max(Date.now(), lockMs));
+  const addMax = new Date(
+    addCandidateHorizon(Math.min(...candTimes), Math.max(...candTimes), data.whenMode === "fuzzy"),
+  );
+
   // Shared table-row style; the first row overrides to no top divider.
   const row = {
     flexDirection: "row" as const,
@@ -662,7 +670,8 @@ function CollectingView({
             timeValue={newTime}
             onDate={setNewDate}
             onTime={setNewTime}
-            minimumDate={new Date()}
+            minimumDate={addMin}
+            maximumDate={addMax}
           />
           <View
             style={{
