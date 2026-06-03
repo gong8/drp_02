@@ -9,6 +9,7 @@ export function Heading({ title }: { title: string }) {
         fontSize: 27,
         letterSpacing: -1,
         color: ui.ink,
+        marginTop: 3,
         marginBottom: 13,
       }}
     >
