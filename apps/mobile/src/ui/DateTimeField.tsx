@@ -13,7 +13,7 @@ import { HardShadow } from "./HardShadow";
 // (@react-native-community/datetimepicker, bundled in Expo Go). The trigger mirrors the
 // `Field` look; tapping opens the native picker - on iOS inside our `BottomSheet`
 // (date = inline calendar tinted with brand pink; time = wheel snapped to `minuteInterval`),
-// on Android via the imperative dialog. Output strings match `isoFrom` in CreateEvent.
+// on Android via the imperative dialog. Output strings match `isoFrom` in lib/format.
 
 function pad(n: number): string {
   return n < 10 ? `0${n}` : `${n}`;

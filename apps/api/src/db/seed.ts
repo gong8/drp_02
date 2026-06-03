@@ -1,14 +1,18 @@
+import { PART_HOUR } from "@bethere/shared";
 import { db } from "./client.js";
 import {
   candidateReactions,
   eventCandidates,
+  eventOptOuts,
   events,
+  floatSuggestions,
+  floatVotes,
   groupMembers,
   groups,
   responses,
   users,
 } from "./schema.js";
-import { candId, DEMO_USERS, GROUPS, PLANS } from "./seed-data.js";
+import { candId, DEMO_USERS, dayAt, GROUPS, PLANS } from "./seed-data.js";
 
 async function insertDemoData(): Promise<void> {
   for (const u of DEMO_USERS) {
@@ -28,8 +32,11 @@ async function insertDemoData(): Promise<void> {
     const chosen = p.chosenSuffix
       ? p.candidates.find((c) => c.suffix === p.chosenSuffix)
       : undefined;
-    const startsAt = chosen?.startsAt ?? sorted[0].startsAt;
-    const respondByAt = p.momentEndsAt ?? sorted[sorted.length - 1].startsAt;
+    // Floats carry no candidates; their startsAt is a window-default placeholder and respondByAt
+    // falls back to the tip deadline.
+    const startsAt = chosen?.startsAt ?? sorted[0]?.startsAt ?? p.lockAt ?? dayAt(2, 19);
+    const respondByAt =
+      p.momentEndsAt ?? sorted[sorted.length - 1]?.startsAt ?? p.lockAt ?? startsAt;
 
     await db.insert(events).values({
       id: p.id,
@@ -44,6 +51,8 @@ async function insertDemoData(): Promise<void> {
       whenMode: p.whenMode,
       contingent: p.contingent,
       quorum: p.quorum,
+      isAnonymous: p.isAnonymous ?? false,
+      minHeat: p.minHeat ?? 2,
       phase: p.phase,
       lockAt: p.lockAt ?? null,
       chosenCandidateId: chosen ? candId(p.id, chosen.suffix) : null,
@@ -66,6 +75,27 @@ async function insertDemoData(): Promise<void> {
       }
     }
 
+    for (const s of p.floatSuggestions ?? []) {
+      const startsAt =
+        s.axis === "time" && s.day != null
+          ? dayAt(s.day, PART_HOUR[s.partOfDay ?? "evening"])
+          : null;
+      await db.insert(floatSuggestions).values({
+        id: candId(p.id, s.suffix),
+        eventId: p.id,
+        axis: s.axis,
+        text: s.text ?? null,
+        partOfDay: s.axis === "time" ? (s.partOfDay ?? null) : null,
+        startsAt,
+        createdByUserId: p.createdBy,
+      });
+      for (const userId of s.votedBy ?? []) {
+        await db
+          .insert(floatVotes)
+          .values({ eventId: p.id, suggestionId: candId(p.id, s.suffix), userId });
+      }
+    }
+
     for (const r of p.responses ?? []) {
       await db.insert(responses).values({
         id: `r_${p.id}_${r.userId}`,
@@ -80,8 +110,11 @@ async function insertDemoData(): Promise<void> {
 
 // Wipe + re-insert the clean demo (local dev: SEED_ON_BOOT defaults to "reset").
 export async function reseedDemo(): Promise<void> {
+  await db.delete(floatVotes);
+  await db.delete(floatSuggestions);
   await db.delete(responses);
   await db.delete(candidateReactions);
+  await db.delete(eventOptOuts);
   await db.delete(eventCandidates);
   await db.delete(events);
   await db.delete(groupMembers);

@@ -49,6 +49,16 @@ export interface Cand {
   label?: string;
   reactedBy?: string[];
 }
+// A chip on a float: a free-text IDEA, or a loose TIME band (a `day` relative to now at `partOfDay`).
+// `votedBy` are the (private) +1 backers. Mirrors Cand, but for the floating phase.
+export interface FloatSugg {
+  suffix: string;
+  axis: "idea" | "time";
+  text?: string;
+  partOfDay?: PartOfDay;
+  day?: number;
+  votedBy?: string[];
+}
 export interface Resp {
   userId: string;
   kind: Kind;
@@ -65,6 +75,11 @@ export interface Plan {
   quorum: number;
   phase: PlanPhase;
   candidates: Cand[];
+  // Floats only: unsigned + ownerless, the tip min-heat, and the two-axis chips with their +1s.
+  // A floating plan carries no candidates; its `lockAt` is the tip deadline.
+  isAnonymous?: boolean;
+  minHeat?: number;
+  floatSuggestions?: FloatSugg[];
   // When a collecting plan auto-locks the winning slot and opens the moment. Must sit before the
   // earliest candidate. Null/absent for exact plans (no collecting phase).
   lockAt?: Date;
@@ -74,8 +89,9 @@ export interface Plan {
   responses?: Resp[];
 }
 
-// Demo plans cover the (whenMode x phase) states the dashboard renders. Iteration-matched: only
-// exact + options while fuzzy is hidden in the create UI (fuzzy plans return in iteration 3).
+// Demo plans cover the (whenMode x phase) states the dashboard renders, including a "floating"
+// plan (an unsigned, ownerless idea brewing in a group) so the Brewing zone and the tip are
+// demoable on every reset boot.
 export const PLANS: Plan[] = [
   {
     id: "e_movie",
@@ -175,6 +191,29 @@ export const PLANS: Plan[] = [
       { userId: "u_joe", kind: "yes" },
     ],
   },
+  {
+    // A float brewing in the climbing group. Unsigned + ownerless: "bowling" leads (2 backers, clears
+    // minHeat), and among its backers "Wed evening" is the agreed time (2 backers), so advancing
+    // lockAt tips it straight into a blind moment. No title/location until it crystallizes.
+    id: "e_float_climb",
+    groupId: "g_climb",
+    createdBy: "u_adi",
+    title: "",
+    whenMode: "fuzzy",
+    contingent: true,
+    quorum: 2,
+    isAnonymous: true,
+    minHeat: 2,
+    phase: "floating",
+    lockAt: dayAt(1, 12),
+    candidates: [],
+    floatSuggestions: [
+      { suffix: "i1", axis: "idea", text: "bowling", votedBy: ["u_adi", "u_joe"] },
+      { suffix: "i2", axis: "idea", text: "the pub", votedBy: ["u_dev"] },
+      { suffix: "t1", axis: "time", partOfDay: "evening", day: 2, votedBy: ["u_adi", "u_joe"] },
+      { suffix: "t2", axis: "time", partOfDay: "afternoon", day: 3, votedBy: ["u_dev"] },
+    ],
+  },
 ];
 
 export function candId(planId: string, suffix: string): string {
@@ -210,11 +249,30 @@ export function seedIntegrityErrors(
     if (!members.has(p.createdBy))
       errors.push(`plan ${p.id}: creator ${p.createdBy} is not in group ${p.groupId}`);
 
-    if (p.candidates.length === 0) errors.push(`plan ${p.id}: has no candidates`);
-    if (p.whenMode === "exact" && p.candidates.length !== 1) {
-      errors.push(
-        `plan ${p.id}: exact plan must have exactly 1 candidate, has ${p.candidates.length}`,
-      );
+    if (p.phase === "floating") {
+      if (!p.isAnonymous) errors.push(`plan ${p.id}: floating plan must be anonymous`);
+      if (p.candidates.length > 0)
+        errors.push(`plan ${p.id}: floating plan must have no candidates`);
+      const sugg = p.floatSuggestions ?? [];
+      if (!sugg.some((s) => s.axis === "idea"))
+        errors.push(`plan ${p.id}: floating plan needs at least one idea suggestion`);
+      const sufx = new Set<string>();
+      for (const s of sugg) {
+        if (sufx.has(s.suffix))
+          errors.push(`plan ${p.id}: duplicate float suggestion suffix ${s.suffix}`);
+        sufx.add(s.suffix);
+        for (const u of s.votedBy ?? []) {
+          if (!members.has(u))
+            errors.push(`plan ${p.id}: float vote by ${u} who is not in group ${p.groupId}`);
+        }
+      }
+    } else {
+      if (p.candidates.length === 0) errors.push(`plan ${p.id}: has no candidates`);
+      if (p.whenMode === "exact" && p.candidates.length !== 1) {
+        errors.push(
+          `plan ${p.id}: exact plan must have exactly 1 candidate, has ${p.candidates.length}`,
+        );
+      }
     }
 
     const suffixes = new Set<string>();

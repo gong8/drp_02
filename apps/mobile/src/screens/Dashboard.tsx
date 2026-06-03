@@ -41,6 +41,7 @@ function BigButton({ label, onPress }: { label: string; onPress: () => void }) {
 }
 
 type Ev = Awaited<ReturnType<typeof trpc.events.mine.query>>[number];
+type Float = Awaited<ReturnType<typeof trpc.floats.mine.query>>[number];
 type Props = NativeStackScreenProps<MeetupsStackParams, "Dashboard">;
 
 const FILTERS = ["All", "Going", "Awaiting", "Declined"] as const;
@@ -320,8 +321,130 @@ function ActionCard({
   );
 }
 
+// A calmer cousin of ActionPanel: a full-bleed lavender band that holds the brewing floats, clearly
+// distinct from the loud pink "Action required" (these want a pile-on, not an urgent answer).
+function BrewingZone({ count, children }: { count: number; children: ReactNode }) {
+  return (
+    <View
+      style={{
+        marginHorizontal: -16,
+        marginBottom: 28,
+        backgroundColor: ui.gradient[1],
+        borderColor: ui.ink,
+        borderTopWidth: ui.border,
+        borderBottomWidth: ui.border,
+        paddingHorizontal: 16,
+        paddingTop: 14,
+        paddingBottom: 16,
+      }}
+    >
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 14,
+        }}
+      >
+        <Text
+          style={{
+            fontFamily: font.black,
+            fontSize: 14,
+            letterSpacing: 1,
+            textTransform: "uppercase",
+            color: ui.ink,
+          }}
+        >
+          Brewing
+        </Text>
+        <Text style={{ fontFamily: font.bold, fontSize: 14, color: ui.ink }}>{count}</Text>
+      </View>
+      {children}
+    </View>
+  );
+}
+
+// An anonymous float as a card: no title, no names - just the group, a pile-on nudge, a draining
+// auto-tip bar, and how much has accreted so far.
+function FloatCard({
+  f,
+  now,
+  onPress,
+  last,
+}: {
+  f: Float;
+  now: number;
+  onPress: () => void;
+  last?: boolean;
+}) {
+  const tipMs = f.tipAt ? Math.max(0, new Date(f.tipAt).getTime() - now) : 0;
+  const start = new Date(f.createdAt).getTime();
+  const end = f.tipAt ? new Date(f.tipAt).getTime() : start;
+  const frac = end <= start ? 1 : Math.max(0, Math.min(1, (end - now) / (end - start)));
+  const hot = frac < 0.25;
+  return (
+    <Pressable onPress={onPress}>
+      <Card padding={12} style={{ marginBottom: last ? 0 : 10 }}>
+        <Text style={{ fontFamily: font.display, fontSize: 16, color: ui.ink }}>
+          An idea is brewing
+        </Text>
+        <Text style={{ fontFamily: font.medium, fontSize: 10, color: ui.muted, marginTop: 1 }}>
+          {f.groupName}
+        </Text>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "baseline",
+            gap: 8,
+            marginTop: 11,
+            marginBottom: 7,
+          }}
+        >
+          <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.brand, flexShrink: 1 }}>
+            Pile on ›
+          </Text>
+          <Text style={{ fontFamily: font.mono, fontSize: 11, color: hot ? ui.brand : ui.ink }}>
+            {`auto-tips ${formatCountdown(tipMs)}`}
+          </Text>
+        </View>
+        <View
+          style={{
+            height: 12,
+            borderWidth: ui.border,
+            borderColor: ui.ink,
+            borderRadius: 999,
+            backgroundColor: ui.surface,
+            overflow: "hidden",
+          }}
+        >
+          <View
+            style={{
+              height: "100%",
+              width: `${Math.round(frac * 100)}%`,
+              backgroundColor: hot ? ui.brand : ui.going,
+            }}
+          />
+        </View>
+        <Text
+          style={{
+            fontFamily: font.mono,
+            fontSize: 10,
+            letterSpacing: 0.5,
+            color: ui.muted,
+            marginTop: 8,
+          }}
+        >
+          {`${f.ideaCount} IDEAS · ${f.timeCount} TIMES`}
+        </Text>
+      </Card>
+    </Pressable>
+  );
+}
+
 export function Dashboard({ navigation }: Props) {
   const [events, setEvents] = useState<Ev[]>([]);
+  const [floats, setFloats] = useState<Float[]>([]);
   const [hasGroups, setHasGroups] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -336,15 +459,16 @@ export function Dashboard({ navigation }: Props) {
         if (active) setNow(Date.now());
       }, 1000);
       const fetchAll = () =>
-        Promise.all([trpc.events.mine.query(), trpc.groups.mine.query()])
-          .then(([e, g]) => {
+        Promise.all([trpc.events.mine.query(), trpc.groups.mine.query(), trpc.floats.mine.query()])
+          .then(([e, g, f]) => {
             if (active) {
               setEvents(e);
+              setFloats(f);
               setHasGroups(g.length > 0);
               setError(false);
-              // Schedule local deadline/moment reminders from the freshest payload (no-op unless
-              // something reminder-relevant changed). Device-local; fine for supervised demos.
-              syncReminders(e);
+              // Schedule local deadline/moment/brewing reminders from the freshest payload (no-op
+              // unless something reminder-relevant changed). Device-local; fine for supervised demos.
+              syncReminders(e, f);
             }
           })
           .catch(() => active && setError(true))
@@ -459,6 +583,20 @@ export function Dashboard({ navigation }: Props) {
                   </ActionPanel>
                 )}
 
+                {floats.length > 0 && (
+                  <BrewingZone count={floats.length}>
+                    {floats.map((f, i) => (
+                      <FloatCard
+                        key={f.id}
+                        f={f}
+                        now={now}
+                        last={i === floats.length - 1}
+                        onPress={() => navigation.navigate("FloatBoard", { floatId: f.id })}
+                      />
+                    ))}
+                  </BrewingZone>
+                )}
+
                 <Tabs options={FILTERS} value={filter} onChange={setFilter} />
 
                 {list.map((e) => (
@@ -503,10 +641,7 @@ export function Dashboard({ navigation }: Props) {
           }}
         >
           {hasGroups && !error ? (
-            <BigButton
-              label="Suggest a meetup"
-              onPress={() => navigation.navigate("CreateEvent")}
-            />
+            <BigButton label="New meetup" onPress={() => navigation.navigate("NewDial")} />
           ) : (
             <BigButton
               label="Create a group"
