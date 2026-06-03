@@ -2,8 +2,10 @@ import { randomUUID } from "node:crypto";
 import {
   AddCandidateInput,
   CreateEventInput,
+  addCandidateHorizon,
   clears,
-  defaultLockAt,
+  defaultLockAtForOptions,
+  defaultLockAtForWindow,
   expandWindow,
   LockInput,
   type PartOfDay,
@@ -241,7 +243,7 @@ export async function settleFloating(e: EventRow): Promise<void> {
     return;
   }
   const lockAt = new Date(
-    defaultLockAt(slots[0], now.getTime(), DEFAULT_MOMENT_MINUTES * 60 * 1000),
+    defaultLockAtForWindow(slots[slots.length - 1], now.getTime(), DEFAULT_MOMENT_MINUTES * 60 * 1000),
   );
   await db
     .update(events)
@@ -362,24 +364,35 @@ export const eventsRouter = router({
     }
     const respondByAt = momentEndsAt ?? cands[cands.length - 1].startsAt;
 
-    // Non-exact plans collect until a deadline, then auto-lock the winning slot. Default to "the day
-    // before" the earliest slot; honour an explicit creator override if it sits after now and no
-    // later than that earliest slot (so we never lock in a time that has already passed).
+    // Non-exact plans collect until a fixed deadline, then auto-lock the winning slot. Options anchor
+    // the default to the earliest proposed time; a fuzzy window anchors to its last slot. An explicit
+    // creator override is honoured if it sits after now and leaves the blind moment room before the
+    // anchor. The deadline never moves once stored.
     let lockAt: Date | null = null;
     if (!exact) {
+      const momentMs = DEFAULT_MOMENT_MINUTES * 60 * 1000;
       const earliestMs = cands[0].startsAt.getTime();
+      const lastMs = cands[cands.length - 1].startsAt.getTime();
+      const fuzzy = when.mode === "fuzzy";
+      const anchorMs = fuzzy ? lastMs : earliestMs;
       if (input.lockAt) {
         const t = new Date(input.lockAt);
-        if (Number.isNaN(t.getTime()) || t.getTime() <= Date.now() || t.getTime() > earliestMs) {
+        if (
+          Number.isNaN(t.getTime()) ||
+          t.getTime() <= Date.now() ||
+          t.getTime() > anchorMs - momentMs
+        ) {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message: "lock-in time must be after now and on or before the earliest proposed time",
+            message: "lock-in time must be after now and leave room before the plan's window",
           });
         }
         lockAt = t;
       } else {
         lockAt = new Date(
-          defaultLockAt(earliestMs, Date.now(), DEFAULT_MOMENT_MINUTES * 60 * 1000),
+          fuzzy
+            ? defaultLockAtForWindow(lastMs, Date.now(), momentMs)
+            : defaultLockAtForOptions(earliestMs, Date.now(), momentMs),
         );
       }
     }
@@ -495,8 +508,9 @@ export const eventsRouter = router({
     if (Number.isNaN(startsAt.getTime())) {
       throw new TRPCError({ code: "BAD_REQUEST", message: "invalid time" });
     }
-    // A new slot must sit after the lock-in deadline, so it is still a live choice when we lock and
-    // the invariant lockAt <= earliest candidate holds.
+    // A new slot must sit after the lock-in deadline (still a live choice when we lock) and within
+    // the plan's window/horizon (fuzzy: the window's last day; options: a small slack past the
+    // existing spread). Keeps the deadline meaningful without recomputing it.
     if (e.lockAt && startsAt.getTime() <= e.lockAt.getTime()) {
       throw new TRPCError({
         code: "BAD_REQUEST",
@@ -504,6 +518,21 @@ export const eventsRouter = router({
       });
     }
     const existing = await candidatesFor(input.eventId);
+    if (existing.length === 0) {
+      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "plan has no candidates" });
+    }
+    const times = existing.map((c) => c.startsAt.getTime());
+    const horizon = addCandidateHorizon(
+      Math.min(...times),
+      Math.max(...times),
+      e.whenMode === "fuzzy",
+    );
+    if (startsAt.getTime() > horizon) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "that time is past this plan's window",
+      });
+    }
     const dup = existing.find((c) => c.startsAt.getTime() === startsAt.getTime());
     if (dup) return { id: dup.id };
     const id = `${input.eventId}_c_${randomUUID()}`;
