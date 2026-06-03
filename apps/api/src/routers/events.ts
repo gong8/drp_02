@@ -13,13 +13,13 @@ import {
   expandWindow,
   LockInput,
   MOMENT_MS,
+  type MomentResponse,
   type PartOfDay,
   pickWinnerOrBestId,
   pickWinningCandidate,
   ReactInput,
   ResolveInput,
   RespondInput,
-  type ResponseInput,
   reconcileFloat,
   resolveIn,
   revealGoing,
@@ -44,12 +44,12 @@ import { FALLBACK_AVATAR_COLOR, FALLBACK_USER_NAME, getUserCard } from "../db/us
 import { msLeft } from "../format.js";
 import { protectedProcedure, router } from "../trpc.js";
 
-type EventRow = typeof events.$inferSelect;
+export type EventRow = typeof events.$inferSelect;
 type MyStatus = "reacting" | "awaiting" | "going" | "declined";
 
 const DEFAULT_QUORUM = 2;
 
-async function responsesFor(eventId: string): Promise<ResponseInput[]> {
+async function responsesFor(eventId: string): Promise<MomentResponse[]> {
   const rows = await db.select().from(responses).where(eq(responses.eventId, eventId));
   return rows.map((r) => ({ userId: r.userId, kind: r.kind, cond: r.cond ?? undefined }));
 }
@@ -69,10 +69,10 @@ async function candidatesFor(eventId: string): Promise<(typeof eventCandidates.$
 
 // The crowd is hidden until the moment ends (or the plan is cleared/fizzled), so a live moment
 // shows its countdown instead of biasing people with who is already in. null while still blind.
-function revealedGoing(e: EventRow, resp: ResponseInput[]): string[] | null {
+function goingFromRow(e: EventRow, resp: MomentResponse[]): string[] | null {
   return revealGoing(resp, {
-    respondByAtMs: e.momentEndsAt ? e.momentEndsAt.getTime() : Number.POSITIVE_INFINITY,
-    status: e.phase === "cleared" || e.phase === "fizzled" ? "resolved" : e.phase,
+    momentEndsAtMs: e.momentEndsAt ? e.momentEndsAt.getTime() : Number.POSITIVE_INFINITY,
+    resolved: e.phase === "cleared" || e.phase === "fizzled",
     nowMs: Date.now(),
   });
 }
@@ -80,7 +80,7 @@ function revealedGoing(e: EventRow, resp: ResponseInput[]): string[] | null {
 // The blind moment always ends by the event itself. Use the configured window, but never run past
 // the chosen start; if the start is already here, fall back to a full window so there is always a
 // real moment to answer (and we never reveal before anyone could respond).
-function momentEnd(now: Date, minutes: number, chosenStartsAt: Date): Date {
+function computeMomentEnd(now: Date, minutes: number, chosenStartsAt: Date): Date {
   const windowEnd = new Date(now.getTime() + minutes * 60 * 1000);
   if (chosenStartsAt.getTime() <= now.getTime()) return windowEnd;
   return new Date(Math.min(windowEnd.getTime(), chosenStartsAt.getTime()));
@@ -147,7 +147,7 @@ async function settleCollecting(e: EventRow): Promise<void> {
   const chosenId = pickWinnerOrBestId(candIds, reactions, e.quorum);
   const chosen = cands.find((c) => c.id === chosenId) as (typeof cands)[number];
   const now = new Date();
-  const endsAt = momentEnd(now, DEFAULT_MOMENT_MINUTES, chosen.startsAt);
+  const endsAt = computeMomentEnd(now, DEFAULT_MOMENT_MINUTES, chosen.startsAt);
   await db
     .update(events)
     .set({
@@ -219,7 +219,7 @@ export async function settleFloating(e: EventRow): Promise<void> {
   const now = new Date();
   if (result.kind === "moment") {
     const chosenStartsAt = new Date(result.startsAtMs);
-    const endsAt = momentEnd(now, DEFAULT_MOMENT_MINUTES, chosenStartsAt);
+    const endsAt = computeMomentEnd(now, DEFAULT_MOMENT_MINUTES, chosenStartsAt);
     await db
       .update(events)
       .set({
@@ -273,7 +273,11 @@ export async function settleFloating(e: EventRow): Promise<void> {
 
 // This user's status. During a blind moment we only ever reflect their OWN answer (we cannot leak
 // others); once revealed we use the full resolved IN set.
-function statusFor(userId: string, resp: ResponseInput[], revealed: string[] | null): MyStatus {
+function computeBaseStatus(
+  userId: string,
+  resp: MomentResponse[],
+  revealed: string[] | null,
+): MyStatus {
   const mine = resp.find((r) => r.userId === userId);
   if (revealed) {
     if (mine?.kind === "no") return "declined";
@@ -348,14 +352,14 @@ async function settleLifecycle(e: EventRow): Promise<void> {
 function computeMyStatus(
   phase: EventRow["phase"],
   userId: string,
-  resp: ResponseInput[],
+  resp: MomentResponse[],
   revealed: string[] | null,
   iOptedOut: boolean,
 ): MyStatus {
   if (phase === "collecting") return iOptedOut ? "declined" : "reacting";
   return iOptedOut && !resp.find((r) => r.userId === userId)
     ? "declined"
-    : statusFor(userId, resp, revealed);
+    : computeBaseStatus(userId, resp, revealed);
 }
 
 export const eventsRouter = router({
@@ -596,7 +600,7 @@ export const eventsRouter = router({
 
     const minutes = input.momentMinutes ?? DEFAULT_MOMENT_MINUTES;
     const now = new Date();
-    const momentEndsAt = momentEnd(now, minutes, chosen.startsAt);
+    const momentEndsAt = computeMomentEnd(now, minutes, chosen.startsAt);
     await db
       .update(events)
       .set({
@@ -627,7 +631,7 @@ export const eventsRouter = router({
         if (e.phase === "floating") return null; // still brewing: shown in the Brewing zone (floats.mine)
         if (e.phase === "fizzled") return null; // silent: a fizzle leaves no trace
         const resp = await responsesFor(e.id);
-        const revealed = revealedGoing(e, resp);
+        const revealed = goingFromRow(e, resp);
         const { goingCount, preview } = await goingPreview(revealed);
         // A float stays unsigned forever: the originator is never flagged as creator, even post-tip.
         const isCreator = !e.isAnonymous && e.createdByUserId === ctx.userId;
@@ -699,7 +703,7 @@ export const eventsRouter = router({
     if (e.phase === "floating") return null; // a still-brewing float is read via floats.get
 
     const resp = await responsesFor(e.id);
-    const revealed = revealedGoing(e, resp);
+    const revealed = goingFromRow(e, resp);
     // A float stays unsigned forever: the originator is never flagged as creator, even post-tip.
     const isCreator = !e.isAnonymous && e.createdByUserId === ctx.userId;
     const iOptedOut = (await optedOut(e.id)).has(ctx.userId);

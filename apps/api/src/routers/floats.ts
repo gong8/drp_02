@@ -18,9 +18,8 @@ import { FALLBACK_GROUP_NAME, getGroupName } from "../db/groups.js";
 import { events, floatSuggestions, floatVotes, groupMembers, groups } from "../db/schema.js";
 import { msLeft } from "../format.js";
 import { protectedProcedure, router } from "../trpc.js";
-import { requireMember, settleFloating } from "./events.js";
+import { type EventRow, requireMember, settleFloating } from "./events.js";
 
-type EventRow = typeof events.$inferSelect;
 type SuggestionRow = typeof floatSuggestions.$inferSelect;
 
 const DEFAULT_MIN_HEAT = 2;

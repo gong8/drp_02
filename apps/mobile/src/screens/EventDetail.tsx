@@ -34,8 +34,8 @@ import {
 
 type Detail = NonNullable<Awaited<ReturnType<typeof trpc.events.get.query>>>;
 type Member = Detail["members"][number];
-type Cand = Detail["candidates"][number];
-type Mode = "At least one" | "All of them";
+type Candidate = Detail["candidates"][number];
+type CondModeLabel = "At least one" | "All of them";
 type SaveState = "idle" | "saving" | "saved" | "error";
 type Props = NativeStackScreenProps<MeetupsStackParams, "EventDetail">;
 
@@ -49,7 +49,7 @@ export function EventDetail({ route, navigation }: Props) {
   // moment conditional sheet
   const [editing, setEditing] = useState(false);
   const [sheet, setSheet] = useState(false);
-  const [mode, setMode] = useState<Mode>("At least one");
+  const [condModeLabel, setCondModeLabel] = useState<CondModeLabel>("At least one");
   const [condPicked, setCondPicked] = useState<string[]>([]);
   // collecting reactions (seeded once from the server, then edited locally)
   const [reactPicked, setReactPicked] = useState<string[]>([]);
@@ -398,7 +398,11 @@ export function EventDetail({ route, navigation }: Props) {
         >
           ...these people are going
         </Text>
-        <Toggle options={["At least one", "All of them"]} value={mode} onChange={setMode} />
+        <Toggle
+          options={["At least one", "All of them"]}
+          value={condModeLabel}
+          onChange={setCondModeLabel}
+        />
         <View style={{ marginTop: 12, marginBottom: 4 }}>
           {data.members.map((m: Member) => {
             const on = condPicked.includes(m.id);
@@ -431,7 +435,7 @@ export function EventDetail({ route, navigation }: Props) {
           onPress={() => {
             setSheet(false);
             answer("conditional", {
-              mode: mode === "All of them" ? "all" : "any",
+              mode: condModeLabel === "All of them" ? "all" : "any",
               targetIds: condPicked,
             });
           }}
@@ -531,7 +535,7 @@ function CollectingView({
   const [newTime, setNewTime] = useState("");
   const newIso = isoFrom(newDate, newTime);
 
-  const candTimes = data.candidates.map((c: Cand) => new Date(c.startsAt).getTime());
+  const candTimes = data.candidates.map((c: Candidate) => new Date(c.startsAt).getTime());
   const lockMs = data.lockAt ? new Date(data.lockAt).getTime() : Date.now();
   const addMin = new Date(Math.max(Date.now(), lockMs));
   const addMax = new Date(
@@ -557,7 +561,7 @@ function CollectingView({
         Tap the times you can make - private to you.
       </Text>
       <Card padding={0}>
-        {data.candidates.map((c: Cand, i: number) => {
+        {data.candidates.map((c: Candidate, i: number) => {
           const on = !optedOut && picked.includes(c.id);
           return (
             <Pressable

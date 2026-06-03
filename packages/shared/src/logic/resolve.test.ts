@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { clears, type ResponseInput, resolveIn } from "./resolve.js";
+import { clears, type MomentResponse, resolveIn } from "./resolve.js";
 
-const yes = (userId: string): ResponseInput => ({ userId, kind: "yes" });
-const no = (userId: string): ResponseInput => ({ userId, kind: "no" });
-const ifAll = (userId: string, ...targetIds: string[]): ResponseInput => ({
+const yes = (userId: string): MomentResponse => ({ userId, kind: "yes" });
+const no = (userId: string): MomentResponse => ({ userId, kind: "no" });
+const ifAll = (userId: string, ...targetIds: string[]): MomentResponse => ({
   userId,
   kind: "conditional",
   cond: { mode: "all", targetIds },
 });
-const ifAny = (userId: string, ...targetIds: string[]): ResponseInput => ({
+const ifAny = (userId: string, ...targetIds: string[]): MomentResponse => ({
   userId,
   kind: "conditional",
   cond: { mode: "any", targetIds },
