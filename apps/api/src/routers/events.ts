@@ -590,11 +590,9 @@ export const eventsRouter = router({
     const candIds = cands.map((c) => c.id);
     const reactions = await reactionsFor(input.eventId);
 
-    let chosenId =
+    const requestedId =
       input.candidateId && candIds.includes(input.candidateId) ? input.candidateId : null;
-    if (!chosenId) {
-      chosenId = pickWinnerOrBestId(candIds, reactions, e.quorum);
-    }
+    const chosenId = requestedId ?? pickWinnerOrBestId(candIds, reactions, e.quorum);
     const chosen = cands.find((c) => c.id === chosenId);
     if (!chosen) throw new TRPCError({ code: "BAD_REQUEST", message: "unknown candidate" });
 

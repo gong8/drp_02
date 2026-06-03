@@ -74,13 +74,15 @@ export function FloatBoard({ route, navigation }: Props) {
 
   // One-tap +1 / un-+1, optimistic. A failed toggle reverts; the poll reconciles once it settles.
   function toggle(id: string, axis: "idea" | "time") {
+    const flipMine = <T extends { id: string; mine: boolean; count: number }>(chips: T[]): T[] =>
+      chips.map((c) =>
+        c.id === id ? { ...c, mine: !c.mine, count: c.count + (c.mine ? -1 : 1) } : c,
+      );
     const flip = (b: Brew | null): Brew | null => {
       if (!b) return b;
-      const upd = <T extends { id: string; mine: boolean; count: number }>(arr: T[]): T[] =>
-        arr.map((c) =>
-          c.id === id ? { ...c, mine: !c.mine, count: c.count + (c.mine ? -1 : 1) } : c,
-        );
-      return axis === "idea" ? { ...b, ideas: upd(b.ideas) } : { ...b, times: upd(b.times) };
+      return axis === "idea"
+        ? { ...b, ideas: flipMine(b.ideas) }
+        : { ...b, times: flipMine(b.times) };
     };
     setBoard(flip);
     pending.current.add(id);
@@ -108,9 +110,9 @@ export function FloatBoard({ route, navigation }: Props) {
     );
   }
 
-  const tipMs = board.tipAt ? new Date(board.tipAt).getTime() - now : 0;
   const start = new Date(board.createdAt).getTime();
   const end = board.tipAt ? new Date(board.tipAt).getTime() : start;
+  const tipMs = board.tipAt ? end - now : 0;
   const frac = end <= start ? 1 : Math.max(0, Math.min(1, (end - now) / (end - start)));
   const hot = frac < 0.25;
 

@@ -230,18 +230,22 @@ export function EventDetail({ route, navigation }: Props) {
   const heroClock = heroIso ? clock12(heroIso) : null;
 
   function headerSticker() {
-    if (!data) return null;
-    // Collecting + moment use the full-bleed countdown banner instead of a sticker.
-    if (data.phase === "cleared") return <StickerTag label="It's on" />;
+    // Only the cleared phase gets a sticker; collecting + moment use the full-bleed countdown banner.
+    if (data?.phase === "cleared") return <StickerTag label="It's on" />;
     return null;
   }
 
-  const statusLine =
-    data.myStatus === "going"
-      ? "You're in"
-      : data.myStatus === "declined"
-        ? "You can't make it"
-        : "Awaiting your answer";
+  let statusLine: string;
+  switch (data.myStatus) {
+    case "going":
+      statusLine = "You're in";
+      break;
+    case "declined":
+      statusLine = "You can't make it";
+      break;
+    default:
+      statusLine = "Awaiting your answer";
+  }
 
   return (
     <ScreenBackground
@@ -535,11 +539,15 @@ function CollectingView({
   const [newTime, setNewTime] = useState("");
   const newIso = isoFrom(newDate, newTime);
 
-  const candTimes = data.candidates.map((c: Candidate) => new Date(c.startsAt).getTime());
+  const candidateTimes = data.candidates.map((c: Candidate) => new Date(c.startsAt).getTime());
   const lockMs = data.lockAt ? new Date(data.lockAt).getTime() : Date.now();
-  const addMin = new Date(Math.max(Date.now(), lockMs));
-  const addMax = new Date(
-    addCandidateHorizon(Math.min(...candTimes), Math.max(...candTimes), data.whenMode === "fuzzy"),
+  const addMinDate = new Date(Math.max(Date.now(), lockMs));
+  const addMaxDate = new Date(
+    addCandidateHorizon(
+      Math.min(...candidateTimes),
+      Math.max(...candidateTimes),
+      data.whenMode === "fuzzy",
+    ),
   );
 
   // Shared table-row style; the first row overrides to no top divider.
@@ -627,8 +635,8 @@ function CollectingView({
             timeValue={newTime}
             onDate={setNewDate}
             onTime={setNewTime}
-            minimumDate={addMin}
-            maximumDate={addMax}
+            minimumDate={addMinDate}
+            maximumDate={addMaxDate}
           />
           <View
             style={{

@@ -33,13 +33,18 @@ const TITLES: Record<Branch, string> = {
   rough: "Rough plan",
   set: "It's set",
 };
+const SUBMIT_LABELS: Record<Branch, string> = {
+  float: "Float it",
+  rough: "Suggest it",
+  set: "Start the moment",
+};
 
 export function CreateWizard({ route, navigation }: Props) {
   const { branch } = route.params;
   const steps = STEPS[branch];
   const [step, setStep] = useState(0);
-  const key = steps[step];
-  const last = step === steps.length - 1;
+  const stepKey = steps[step];
+  const isLastStep = step === steps.length - 1;
 
   const [groups, setGroups] = useState<Group[]>([]);
   const [groupId, setGroupId] = useState<string | null>(null);
@@ -91,8 +96,8 @@ export function CreateWizard({ route, navigation }: Props) {
   const lockToSend = lockEdit && lockOverrideIso && !lockInvalid ? lockOverrideIso : undefined;
   const sparkReady = ideaChips.length > 0 || ideaDraft.trim().length > 0;
 
-  function valid(k: string): boolean {
-    switch (k) {
+  function valid(key: string): boolean {
+    switch (key) {
       case "group":
         return !!groupId;
       case "what":
@@ -169,9 +174,9 @@ export function CreateWizard({ route, navigation }: Props) {
   }
 
   function goNext() {
-    if (!valid(key) || busy) return;
-    if (key === "spark") commitDraftIdea();
-    if (last) submit();
+    if (!valid(stepKey) || busy) return;
+    if (stepKey === "spark") commitDraftIdea();
+    if (isLastStep) submit();
     else setStep(step + 1);
   }
   function goBack() {
@@ -181,13 +186,7 @@ export function CreateWizard({ route, navigation }: Props) {
 
   if (loading) return <ScreenLoading />;
 
-  const nextLabel = !last
-    ? "Next"
-    : branch === "float"
-      ? "Float it"
-      : branch === "set"
-        ? "Start the moment"
-        : "Suggest it";
+  const nextLabel = isLastStep ? SUBMIT_LABELS[branch] : "Next";
 
   return (
     <ScreenBackground header={<BackBar title={TITLES[branch]} onBack={goBack} />}>
@@ -209,7 +208,7 @@ export function CreateWizard({ route, navigation }: Props) {
             </Text>
           )}
 
-          {key === "group" && (
+          {stepKey === "group" && (
             <Step title="Who's it for?">
               <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
                 {groups.map((g) => (
@@ -229,13 +228,13 @@ export function CreateWizard({ route, navigation }: Props) {
             </Step>
           )}
 
-          {key === "what" && (
+          {stepKey === "what" && (
             <Step title="What is it?">
               <Field label="Title" value={title} onChangeText={setTitle} placeholder="Bowling" />
             </Step>
           )}
 
-          {key === "spark" && (
+          {stepKey === "spark" && (
             <Step
               title="What's the spark?"
               sub="Drop a loose idea or two - the group adds more and piles on. You stay anonymous."
@@ -261,7 +260,7 @@ export function CreateWizard({ route, navigation }: Props) {
             </Step>
           )}
 
-          {key === "window" && (
+          {stepKey === "window" && (
             <Step
               title="Roughly when?"
               sub="Just a window - the exact time gets sorted as people pile on."
@@ -274,7 +273,7 @@ export function CreateWizard({ route, navigation }: Props) {
             </Step>
           )}
 
-          {key === "when" && branch === "set" && (
+          {stepKey === "when" && branch === "set" && (
             <Step title="When is it?">
               <DateTimePill
                 dateValue={rows[0].date}
@@ -286,7 +285,7 @@ export function CreateWizard({ route, navigation }: Props) {
             </Step>
           )}
 
-          {key === "when" && branch === "rough" && (
+          {stepKey === "when" && branch === "rough" && (
             <Step
               title="When could it be?"
               sub="Offer a time or two - people react and the best-supported wins."
@@ -316,7 +315,7 @@ export function CreateWizard({ route, navigation }: Props) {
             </Step>
           )}
 
-          {key === "details" && (
+          {stepKey === "details" && (
             <Step title="Anything else?" sub="Both optional - skip if you like.">
               <Field
                 label="Location"
@@ -337,7 +336,7 @@ export function CreateWizard({ route, navigation }: Props) {
             </Step>
           )}
 
-          {key === "lock" && (
+          {stepKey === "lock" && (
             <Step title="When does it lock?">
               {lockEdit ? (
                 <Card>
@@ -394,7 +393,7 @@ export function CreateWizard({ route, navigation }: Props) {
           <Button
             label={nextLabel}
             variant="primary"
-            disabled={!valid(key) || busy}
+            disabled={!valid(stepKey) || busy}
             onPress={goNext}
             style={{ marginTop: 24 }}
           />
