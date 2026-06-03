@@ -27,39 +27,37 @@ export function DateTimePill({
   style?: ViewStyle;
 }) {
   return (
-    <View style={style}>
-      <HardShadow radius={ui.rInput} offset={3}>
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "stretch",
-            backgroundColor: ui.surface,
-            borderWidth: ui.border,
-            borderColor: ui.ink,
-            borderRadius: ui.rInput,
-            overflow: "hidden",
-          }}
-        >
-          <DateTimeField
-            bare
-            mode="date"
-            value={dateValue}
-            onChange={onDate}
-            minimumDate={minimumDate}
-            maximumDate={maximumDate}
-            style={{ flex: 1 }}
-          />
-          <View style={{ width: ui.border, backgroundColor: ui.ink }} />
-          <DateTimeField
-            bare
-            mode="time"
-            value={timeValue}
-            onChange={onTime}
-            minuteInterval={minuteInterval}
-            style={{ flex: 1 }}
-          />
-        </View>
-      </HardShadow>
-    </View>
+    <HardShadow radius={ui.rInput} offset={ui.shadowInput} style={style}>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "stretch",
+          backgroundColor: ui.surface,
+          borderWidth: ui.border,
+          borderColor: ui.ink,
+          borderRadius: ui.rInput,
+          overflow: "hidden",
+        }}
+      >
+        <DateTimeField
+          bare
+          mode="date"
+          value={dateValue}
+          onChange={onDate}
+          minimumDate={minimumDate}
+          maximumDate={maximumDate}
+          style={{ flex: 1 }}
+        />
+        <View style={{ width: ui.border, backgroundColor: ui.ink }} />
+        <DateTimeField
+          bare
+          mode="time"
+          value={timeValue}
+          onChange={onTime}
+          minuteInterval={minuteInterval}
+          style={{ flex: 1 }}
+        />
+      </View>
+    </HardShadow>
   );
 }

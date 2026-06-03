@@ -1,5 +1,6 @@
 import type { ChangeEvent } from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
+import { dateStringFrom } from "../lib/format";
 import { font, ui } from "../theme";
 import type { DateTimeFieldProps } from "./DateTimeField.types";
 
@@ -10,12 +11,7 @@ import type { DateTimeFieldProps } from "./DateTimeField.types";
 // Android) uses DateTimeField.tsx; this file is only ever bundled for web, so the raw DOM
 // <input> and the native-only picker never reach the same bundle.
 
-function pad(n: number): string {
-  return n < 10 ? `0${n}` : `${n}`;
-}
-
 export function DateTimeField({
-  label,
   mode,
   value,
   onChange,
@@ -26,31 +22,11 @@ export function DateTimeField({
   style,
 }: DateTimeFieldProps) {
   const isDate = mode === "date";
-  const min =
-    isDate && minimumDate
-      ? `${minimumDate.getFullYear()}-${pad(minimumDate.getMonth() + 1)}-${pad(minimumDate.getDate())}`
-      : undefined;
-  const max =
-    isDate && maximumDate
-      ? `${maximumDate.getFullYear()}-${pad(maximumDate.getMonth() + 1)}-${pad(maximumDate.getDate())}`
-      : undefined;
+  const min = isDate && minimumDate ? dateStringFrom(minimumDate) : undefined;
+  const max = isDate && maximumDate ? dateStringFrom(maximumDate) : undefined;
 
   return (
     <View style={style}>
-      {label && !bare ? (
-        <Text
-          style={{
-            fontFamily: font.bold,
-            fontSize: 9,
-            letterSpacing: 1,
-            textTransform: "uppercase",
-            color: ui.ink,
-            marginBottom: 5,
-          }}
-        >
-          {label}
-        </Text>
-      ) : null}
       <input
         type={isDate ? "date" : "time"}
         value={value}

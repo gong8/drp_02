@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Text, TextInput, View, type ViewStyle } from "react-native";
 import { font, ui } from "../theme";
+import { FieldLabel } from "./FieldLabel";
 import { HardShadow } from "./HardShadow";
 
 export function Field({
@@ -27,24 +28,14 @@ export function Field({
   return (
     <View style={style}>
       <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 5 }}>
-        <Text
-          style={{
-            fontFamily: font.bold,
-            fontSize: 9,
-            letterSpacing: 1,
-            textTransform: "uppercase",
-            color: ui.ink,
-          }}
-        >
-          {label}
-        </Text>
+        <FieldLabel>{label}</FieldLabel>
         {optional && (
           <Text style={{ fontFamily: font.medium, fontSize: 9, color: ui.muted, marginLeft: 6 }}>
             optional
           </Text>
         )}
       </View>
-      <HardShadow radius={ui.rInput} offset={3}>
+      <HardShadow radius={ui.rInput} offset={ui.shadowInput}>
         <View
           style={{
             flexDirection: "row",

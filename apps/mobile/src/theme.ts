@@ -12,16 +12,15 @@ export const ui = {
   rButton: 14,
   rInput: 12,
   rTab: 8,
-  rChip: 999,
   rSmall: 6,
   border: 2,
-  shadow: 4, // hard offset in px
+  shadow: 4, // hard offset in px (cards, buttons)
+  shadowInput: 3, // tighter hard offset for inputs, chips, and small pressables
 } as const;
 
 export const font = {
   display: "Archivo_800ExtraBold",
   black: "Archivo_900Black",
-  body: "Inter_400Regular",
   medium: "Inter_500Medium",
   bold: "Inter_700Bold",
   mono: "SpaceMono_700Bold",

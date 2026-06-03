@@ -61,27 +61,27 @@ async function insertDemoData(): Promise<void> {
     });
 
     for (const c of p.candidates) {
+      const candidateId = candId(p.id, c.suffix);
       await db.insert(eventCandidates).values({
-        id: candId(p.id, c.suffix),
+        id: candidateId,
         eventId: p.id,
         startsAt: c.startsAt,
         partOfDay: c.partOfDay ?? null,
         label: c.label ?? null,
       });
       for (const userId of c.reactedBy ?? []) {
-        await db
-          .insert(candidateReactions)
-          .values({ eventId: p.id, candidateId: candId(p.id, c.suffix), userId });
+        await db.insert(candidateReactions).values({ eventId: p.id, candidateId, userId });
       }
     }
 
     for (const s of p.floatSuggestions ?? []) {
+      const suggestionId = candId(p.id, s.suffix);
       const startsAt =
         s.axis === "time" && s.day != null
           ? dayAt(s.day, PART_HOUR[s.partOfDay ?? "evening"])
           : null;
       await db.insert(floatSuggestions).values({
-        id: candId(p.id, s.suffix),
+        id: suggestionId,
         eventId: p.id,
         axis: s.axis,
         text: s.text ?? null,
@@ -90,9 +90,7 @@ async function insertDemoData(): Promise<void> {
         createdByUserId: p.createdBy,
       });
       for (const userId of s.votedBy ?? []) {
-        await db
-          .insert(floatVotes)
-          .values({ eventId: p.id, suggestionId: candId(p.id, s.suffix), userId });
+        await db.insert(floatVotes).values({ eventId: p.id, suggestionId, userId });
       }
     }
 
