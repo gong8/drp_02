@@ -113,7 +113,7 @@ the `bethere-vpc-conn` connector, and the `bethere-rds-sg` security group). Prov
 | API URL | `https://96mgvmgcbj.us-east-1.awsapprunner.com` | `https://wumksaeb3j.us-east-1.awsapprunner.com` |
 | RDS instance | `bethere-db` | `bethere-db-dev` |
 | CD workflow | `.github/workflows/deploy-api.yml` | `.github/workflows/deploy-api-dev.yml` |
-| Vercel web | Production (branch `main`) | Preview (branch `dev`) |
+| Vercel web | Production (branch `main`) | Preview (branch `dev`), https://bethere-dev.vercel.app |
 
 - dev service ARN:
   `arn:aws:apprunner:us-east-1:208569836255:service/bethere-api-dev/f6c777627a7e473989fe9514709d16c6`
@@ -129,8 +129,10 @@ the `bethere-vpc-conn` connector, and the `bethere-rds-sg` security group). Prov
 ## The dev web (Vercel)
 
 `vercel.json`'s `ignoreCommand` builds for `main` (production) and `dev` (preview); other
-branches are skipped. The `dev` branch gets a stable preview URL
-(`bethere-git-dev-<team>.vercel.app`). The web build bakes its API URL at build time, so the
-**Preview**-scoped Vercel env vars point dev at the dev API:
+branches are skipped. The `dev` branch is served at **https://bethere-dev.vercel.app** - a
+project domain bound to the `dev` git branch (added via the Vercel API with `gitBranch: dev`),
+so every dev deploy auto-updates it. Vercel's auto branch alias
+`bethere-git-dev-<team>.vercel.app` also still works. The web build bakes its API URL at build
+time, so the **Preview**-scoped Vercel env vars point dev at the dev API:
 `EXPO_PUBLIC_API_URL=https://wumksaeb3j.us-east-1.awsapprunner.com`,
 `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` (same Clerk app as prod), `EXPO_PUBLIC_DEV_AUTH=1`.
