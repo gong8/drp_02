@@ -3,7 +3,7 @@ import {
   AddIdeaInput,
   AddTimeInput,
   CreateFloatInput,
-  defaultLockAt,
+  defaultLockAtForWindow,
   expandWindow,
   PART_HOUR,
   ToggleVoteInput,
@@ -66,6 +66,7 @@ export const floatsRouter = router({
     const band = input.window.band ?? "evening";
     const slots = expandWindow(input.window.timescale, band, Date.now());
     const earliestMs = new Date(slots[0].startsAt).getTime();
+    const lastMs = new Date(slots[slots.length - 1].startsAt).getTime();
 
     let tipAt: Date;
     if (input.tipAt) {
@@ -78,7 +79,7 @@ export const floatsRouter = router({
       }
       tipAt = t;
     } else {
-      tipAt = new Date(defaultLockAt(earliestMs, Date.now(), DEFAULT_MOMENT_MINUTES * 60 * 1000));
+      tipAt = new Date(defaultLockAtForWindow(lastMs, Date.now(), DEFAULT_MOMENT_MINUTES * 60 * 1000));
     }
 
     const minHeat = input.minHeat ?? DEFAULT_MIN_HEAT;
