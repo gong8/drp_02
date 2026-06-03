@@ -213,7 +213,7 @@ export function CreateWizard({ route, navigation }: Props) {
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
-          <ProgressDots count={steps.length} index={step} />
+          <ProgressDots steps={steps} index={step} />
           {error && (
             <Text style={{ fontFamily: font.medium, color: ui.brand, marginBottom: 10 }}>
               Something went wrong. Try again.
@@ -446,13 +446,12 @@ export function CreateWizard({ route, navigation }: Props) {
   );
 }
 
-function ProgressDots({ count, index }: { count: number; index: number }) {
+function ProgressDots({ steps, index }: { steps: string[]; index: number }) {
   return (
     <View style={{ flexDirection: "row", gap: 6, marginBottom: 16 }}>
-      {Array.from({ length: count }, (_, i) => (
+      {steps.map((stepKey, i) => (
         <View
-          // biome-ignore lint/suspicious/noArrayIndexKey: progress dots are positional and fixed
-          key={`dot-${count}-${i}`}
+          key={stepKey}
           style={{
             width: i === index ? 22 : 8,
             height: 8,
