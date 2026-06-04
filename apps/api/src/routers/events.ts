@@ -127,6 +127,14 @@ async function insertCandidates(
   }
 }
 
+// The author's own public +1 on a candidate (adding a candidate implies +1'ing it). Idempotent.
+async function reactFor(eventId: string, candidateId: string, userId: string): Promise<void> {
+  await db
+    .insert(candidateReactions)
+    .values({ eventId, candidateId, userId })
+    .onConflictDoNothing();
+}
+
 // Lazily settle a moment whose countdown has ended (no scheduler): clears if quorum is met, else
 // fizzles - but a non-contingent (exact) plan always happens, so it clears regardless. Mutates the
 // in-memory row and persists, so reads converge the lifecycle on their own.
@@ -436,54 +444,83 @@ export const eventsRouter = router({
     return { ok: true as const };
   }),
 
-  // Any group member (not just the creator) can propose a new concrete time while the plan is still
-  // collecting - the crowd simply gains another slot to react to. New candidates carry no
-  // part-of-day and no author. Identical minutes are de-duped so two proposers can't clutter the list.
+  // Any member adds a candidate while collecting - a new time, or a new place/thing - and the crowd
+  // gains another row to +1. Kind-gated by the creator's locks: a locked axis rejects new candidates.
+  // Time candidates dedupe by minute; activity candidates dedupe case-insensitively. Adding +1s it.
   addCandidate: protectedProcedure.input(AddCandidateInput).mutation(async ({ ctx, input }) => {
     const e = await loadEvent(input.eventId, ctx.userId);
     if (e.phase !== "collecting") {
       throw new TRPCError({ code: "BAD_REQUEST", message: "plan is not collecting" });
     }
-    const startsAt = new Date(input.startsAt);
-    if (Number.isNaN(startsAt.getTime())) {
-      throw new TRPCError({ code: "BAD_REQUEST", message: "invalid time" });
+    if (input.kind === "time" && e.lockTimes) {
+      throw new TRPCError({ code: "FORBIDDEN", message: "times are locked on this plan" });
     }
-    // A new slot must sit after the lock-in deadline (still a live choice when we lock) and within
-    // the plan's window/horizon (fuzzy: the window's last day; options: a small slack past the
-    // existing spread). Keeps the deadline meaningful without recomputing it.
-    if (e.lockAt && startsAt.getTime() <= e.lockAt.getTime()) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "that time is before the lock-in deadline",
-      });
+    if (input.kind === "activity" && e.lockThings) {
+      throw new TRPCError({ code: "FORBIDDEN", message: "places are locked on this plan" });
     }
     const existing = await candidatesFor(input.eventId);
-    if (existing.length === 0) {
-      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "plan has no candidates" });
-    }
-    const times = existing.map((c) => c.startsAt.getTime());
-    const horizon = addCandidateHorizon(
-      Math.min(...times),
-      Math.max(...times),
-      e.whenMode === "fuzzy",
-    );
-    if (startsAt.getTime() > horizon) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "that time is past this plan's window",
+
+    let newId: string;
+    if (input.kind === "time") {
+      if (!input.startsAt) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "a time candidate needs a start time" });
+      }
+      const startsAt = new Date(input.startsAt);
+      if (Number.isNaN(startsAt.getTime())) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "invalid time" });
+      }
+      // A new slot must sit after the decides-by deadline (still a live choice when we lock) and
+      // within the plan's horizon (a small slack past the existing time spread).
+      if (e.decidesBy && startsAt.getTime() <= e.decidesBy.getTime()) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "that time is before the decides-by deadline" });
+      }
+      const times = existing
+        .filter((c) => c.kind === "time" && c.startsAt)
+        .map((c) => (c.startsAt as Date).getTime());
+      if (times.length > 0) {
+        const horizon = addCandidateHorizon(Math.min(...times), Math.max(...times));
+        if (startsAt.getTime() > horizon) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "that time is past this plan's window" });
+        }
+      }
+      const dup = existing.find((c) => c.kind === "time" && c.startsAt?.getTime() === startsAt.getTime());
+      if (dup) {
+        await reactFor(input.eventId, dup.id, ctx.userId);
+        return { id: dup.id };
+      }
+      newId = `${input.eventId}_t_${randomUUID()}`;
+      await db.insert(eventCandidates).values({
+        id: newId,
+        eventId: input.eventId,
+        kind: "time",
+        startsAt,
+        partOfDay: input.partOfDay ?? null,
+        label: null,
+      });
+    } else {
+      if (!input.text) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "a place/thing needs a name" });
+      }
+      const text = input.text.trim();
+      if (!text) throw new TRPCError({ code: "BAD_REQUEST", message: "a place/thing needs a name" });
+      const key = text.toLowerCase();
+      const dup = existing.find((c) => c.kind === "activity" && (c.label ?? "").trim().toLowerCase() === key);
+      if (dup) {
+        await reactFor(input.eventId, dup.id, ctx.userId);
+        return { id: dup.id };
+      }
+      newId = `${input.eventId}_a_${randomUUID()}`;
+      await db.insert(eventCandidates).values({
+        id: newId,
+        eventId: input.eventId,
+        kind: "activity",
+        startsAt: null,
+        partOfDay: null,
+        label: text,
       });
     }
-    const dup = existing.find((c) => c.startsAt.getTime() === startsAt.getTime());
-    if (dup) return { id: dup.id };
-    const id = `${input.eventId}_c_${randomUUID()}`;
-    await db.insert(eventCandidates).values({
-      id,
-      eventId: input.eventId,
-      startsAt,
-      partOfDay: null,
-      label: null,
-    });
-    return { id };
+    await reactFor(input.eventId, newId, ctx.userId);
+    return { id: newId };
   }),
 
   // The creator locks the winning slot, opening the blind timed moment. With no candidateId we pick
