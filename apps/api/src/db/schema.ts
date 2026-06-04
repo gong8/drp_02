@@ -26,8 +26,8 @@ export const planPhaseEnum = pgEnum("plan_phase", [
 ]);
 // Rough time-of-day band a fuzzy candidate sits in.
 export const partOfDayEnum = pgEnum("part_of_day", ["morning", "afternoon", "evening", "late"]);
-// Which collaborative axis a float suggestion sits on: a fused what+where idea, or a loose time band.
-export const floatAxisEnum = pgEnum("float_axis", ["idea", "time"]);
+// Which list a candidate sits on: a concrete TIME, or a free-text ACTIVITY (what/where, fused).
+export const candidateKindEnum = pgEnum("candidate_kind", ["time", "activity"]);
 
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
@@ -80,14 +80,16 @@ export const events = pgTable("events", {
   // A float is unsigned (createdByUserId is stored for accountability but never surfaced) and
   // ownerless. It lives in phase "floating"; this flag persists after it tips so the originator
   // stays hidden forever (isCreator is forced false whenever it is set).
-  isAnonymous: boolean("is_anonymous").notNull().default(false),
+  isAnonymous: boolean("is_anonymous").notNull().default(true),
   // Floats only: the min distinct +1 backers the winning idea needs for the float to tip; below
   // this it fizzles silently. >= 2 so a one-person float can never tip and self-reveal.
   minHeat: integer("min_heat").notNull().default(2),
   phase: planPhaseEnum("phase").notNull().default("collecting"),
-  // When collecting auto-locks the winning slot and opens the moment. Null for exact plans (which
-  // open the moment at creation). Drives the deadline + auto-lock; settled lazily on read.
-  lockAt: timestamp("lock_at"),
+  lockTimes: boolean("lock_times").notNull().default(false),
+  lockThings: boolean("lock_things").notNull().default(false),
+  // Editable "Decides by" deadline. When collecting auto-locks the winning candidates and opens the
+  // moment. Null until set. Drives the deadline + auto-lock; settled lazily on read. (was lock_at)
+  decidesBy: timestamp("decides_by"),
   chosenCandidateId: text("chosen_candidate_id"),
   momentStartsAt: timestamp("moment_starts_at"),
   momentEndsAt: timestamp("moment_ends_at"),
@@ -101,7 +103,9 @@ export const eventCandidates = pgTable("event_candidates", {
   eventId: text("event_id")
     .notNull()
     .references(() => events.id),
-  startsAt: timestamp("starts_at").notNull(),
+  // TIME candidates set startsAt; ACTIVITY candidates leave it null and use `label` for the text.
+  kind: candidateKindEnum("kind").notNull().default("time"),
+  startsAt: timestamp("starts_at"),
   partOfDay: partOfDayEnum("part_of_day"),
   label: text("label"),
 });
@@ -148,7 +152,7 @@ export const floatSuggestions = pgTable("float_suggestions", {
   eventId: text("event_id")
     .notNull()
     .references(() => events.id),
-  axis: floatAxisEnum("axis").notNull(),
+  axis: candidateKindEnum("axis").notNull(),
   // IDEA: the free-text label. TIME: optional human label (the band + startsAt carry the meaning).
   text: text("text"),
   // TIME only: the rough band, resolved to a concrete hour at crystallize via PART_HOUR (window.ts).
