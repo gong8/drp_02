@@ -100,8 +100,18 @@ export const PLANS: Plan[] = [
     phase: "collecting",
     decidesBy: dayAt(1, 18),
     candidates: [
-      { suffix: "c1", kind: "time", startsAt: dayAt(2, 18), reactedBy: ["u_dev", "u_adi", "u_lily", "u_joe"] },
-      { suffix: "c2", kind: "time", startsAt: dayAt(2, 20), reactedBy: ["u_dev", "u_nathan", "u_bethan"] },
+      {
+        suffix: "c1",
+        kind: "time",
+        startsAt: dayAt(2, 18),
+        reactedBy: ["u_dev", "u_adi", "u_lily", "u_joe"],
+      },
+      {
+        suffix: "c2",
+        kind: "time",
+        startsAt: dayAt(2, 20),
+        reactedBy: ["u_dev", "u_nathan", "u_bethan"],
+      },
       { suffix: "c3", kind: "time", startsAt: dayAt(3, 14), reactedBy: ["u_lily"] },
     ],
   },
@@ -198,8 +208,20 @@ export const PLANS: Plan[] = [
     candidates: [
       { suffix: "a1", kind: "activity", label: "bowling", reactedBy: ["u_adi", "u_joe"] },
       { suffix: "a2", kind: "activity", label: "the pub", reactedBy: ["u_dev"] },
-      { suffix: "t1", kind: "time", startsAt: dayAt(2, 19), partOfDay: "evening", reactedBy: ["u_adi", "u_joe"] },
-      { suffix: "t2", kind: "time", startsAt: dayAt(3, 14), partOfDay: "afternoon", reactedBy: ["u_dev"] },
+      {
+        suffix: "t1",
+        kind: "time",
+        startsAt: dayAt(2, 19),
+        partOfDay: "evening",
+        reactedBy: ["u_adi", "u_joe"],
+      },
+      {
+        suffix: "t2",
+        kind: "time",
+        startsAt: dayAt(3, 14),
+        partOfDay: "afternoon",
+        reactedBy: ["u_dev"],
+      },
     ],
   },
 ];
