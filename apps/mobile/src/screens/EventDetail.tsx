@@ -103,20 +103,26 @@ export function EventDetail({ route, navigation }: Props) {
       rows.map((c) =>
         c.id === candidateId ? { ...c, mine: !c.mine, count: c.count + (c.mine ? -1 : 1) } : c,
       );
-    const flip = (d: Detail | null): Detail | null =>
-      d
-        ? {
-            ...d,
-            timeCandidates: flipMine(d.timeCandidates),
-            activityCandidates: flipMine(d.activityCandidates),
-            iOptedOut: false,
-          }
-        : d;
-    setData(flip);
+    // Apply forces iOptedOut:false (a +1 rejoins, mirroring the server). The revert flips mine/count
+    // back AND restores the prior opt-out, so a failed toggle on an opted-out plan does not leave the
+    // "I can't make it" checkbox wrongly cleared until the next poll.
+    const flip =
+      (optedOut: boolean) =>
+      (d: Detail | null): Detail | null =>
+        d
+          ? {
+              ...d,
+              timeCandidates: flipMine(d.timeCandidates),
+              activityCandidates: flipMine(d.activityCandidates),
+              iOptedOut: optedOut,
+            }
+          : d;
+    const prevOptedOut = data?.iOptedOut ?? false;
+    setData(flip(false));
     pendingReact.current.add(candidateId);
     trpc.events.toggleReaction
       .mutate({ eventId, candidateId })
-      .catch(() => setData(flip))
+      .catch(() => setData(flip(prevOptedOut)))
       .finally(() => pendingReact.current.delete(candidateId));
   }
 
