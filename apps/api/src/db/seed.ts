@@ -54,7 +54,7 @@ async function insertDemoData(): Promise<void> {
       isAnonymous: p.isAnonymous ?? false,
       minHeat: p.minHeat ?? 2,
       phase: p.phase,
-      lockAt: p.lockAt ?? null,
+      decidesBy: p.lockAt ?? null,
       chosenCandidateId: chosen ? candId(p.id, chosen.suffix) : null,
       momentStartsAt: p.momentStartsAt ?? null,
       momentEndsAt: p.momentEndsAt ?? null,

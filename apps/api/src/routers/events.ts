@@ -3,7 +3,7 @@ import {
   AddCandidateInput,
   addCandidateHorizon,
   ByIdInput,
-  CandidateKind,
+  type CandidateKind,
   CreateEventInput,
   clears,
   DEFAULT_MOMENT_MINUTES,
@@ -315,7 +315,8 @@ export const eventsRouter = router({
     // Time anchors. With no time candidates a plan still collects (on activities), so anchor the
     // placeholder start + the default decides-by to a sensible horizon instead of a candidate.
     const now = Date.now();
-    const earliestMs = timeCands.length > 0 ? timeCands[0].startsAt.getTime() : now + DEFAULT_HORIZON_MS;
+    const earliestMs =
+      timeCands.length > 0 ? timeCands[0].startsAt.getTime() : now + DEFAULT_HORIZON_MS;
     const lastMs =
       timeCands.length > 0 ? timeCands[timeCands.length - 1].startsAt.getTime() : earliestMs;
     const startsAt = new Date(earliestMs); // the chosen time when opensMoment; a placeholder otherwise
@@ -469,7 +470,10 @@ export const eventsRouter = router({
     let newId: string;
     if (input.kind === "time") {
       if (!input.startsAt) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "a time candidate needs a start time" });
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "a time candidate needs a start time",
+        });
       }
       const startsAt = new Date(input.startsAt);
       if (Number.isNaN(startsAt.getTime())) {
@@ -478,7 +482,10 @@ export const eventsRouter = router({
       // A new slot must sit after the decides-by deadline (still a live choice when we lock) and
       // within the plan's horizon (a small slack past the existing time spread).
       if (e.decidesBy && startsAt.getTime() <= e.decidesBy.getTime()) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "that time is before the decides-by deadline" });
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "that time is before the decides-by deadline",
+        });
       }
       const times = existing
         .filter((c) => c.kind === "time" && c.startsAt)
@@ -486,10 +493,15 @@ export const eventsRouter = router({
       if (times.length > 0) {
         const horizon = addCandidateHorizon(Math.min(...times), Math.max(...times));
         if (startsAt.getTime() > horizon) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "that time is past this plan's window" });
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "that time is past this plan's window",
+          });
         }
       }
-      const dup = existing.find((c) => c.kind === "time" && c.startsAt?.getTime() === startsAt.getTime());
+      const dup = existing.find(
+        (c) => c.kind === "time" && c.startsAt?.getTime() === startsAt.getTime(),
+      );
       if (dup) {
         await reactFor(input.eventId, dup.id, ctx.userId);
         return { id: dup.id };
@@ -508,9 +520,12 @@ export const eventsRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "a place/thing needs a name" });
       }
       const text = input.text.trim();
-      if (!text) throw new TRPCError({ code: "BAD_REQUEST", message: "a place/thing needs a name" });
+      if (!text)
+        throw new TRPCError({ code: "BAD_REQUEST", message: "a place/thing needs a name" });
       const key = text.toLowerCase();
-      const dup = existing.find((c) => c.kind === "activity" && (c.label ?? "").trim().toLowerCase() === key);
+      const dup = existing.find(
+        (c) => c.kind === "activity" && (c.label ?? "").trim().toLowerCase() === key,
+      );
       if (dup) {
         await reactFor(input.eventId, dup.id, ctx.userId);
         return { id: dup.id };
@@ -553,13 +568,12 @@ export const eventsRouter = router({
       input.candidateId && timeIds.includes(input.candidateId) ? input.candidateId : null;
     const chosenId = requestedId ?? pickWinnerOrBestId(timeIds, reactions, e.quorum);
     const chosen = timeCands.find((c) => c.id === chosenId);
-    if (!chosen || !chosen.startsAt) throw new TRPCError({ code: "BAD_REQUEST", message: "unknown candidate" });
+    if (!chosen || !chosen.startsAt)
+      throw new TRPCError({ code: "BAD_REQUEST", message: "unknown candidate" });
 
     const title = resolveTitle(
       e.title,
-      cands
-        .filter((c) => c.kind === "activity")
-        .map((c) => ({ id: c.id, label: c.label })),
+      cands.filter((c) => c.kind === "activity").map((c) => ({ id: c.id, label: c.label })),
       reactions,
     );
 
