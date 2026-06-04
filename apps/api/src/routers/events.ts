@@ -787,33 +787,27 @@ export const eventsRouter = router({
     return out.filter((x): x is NonNullable<typeof x> => x !== null);
   }),
 
-  // The redo picker: a group's past (cleared) meetups, each reduced to a clonable shell - activities,
-  // lock flags, location, notes - so the wizard can pre-fill a fresh plan from one. Carries no time
-  // (always stale) and no RSVP data; the creator stays anonymous (no creator identity is returned).
+  // The redo picker: a group's past (cleared) meetups, each reduced to a clonable shell - the won
+  // activity (the plan's name), lock-times flag, location, notes - so the wizard can pre-fill a fresh
+  // plan from one (the activity preloaded + locked; the creator just picks a new time). The name is the
+  // `events.activity` scalar, so it is carried directly (not re-derived from candidate rows). Carries
+  // no time (always stale) and no RSVP data; the creator stays anonymous (no creator identity).
   pastForGroup: protectedProcedure.input(ByGroupInput).query(async ({ ctx, input }) => {
     await requireMember(input.groupId, ctx.userId);
     const rows = await db
       .select()
       .from(events)
       .where(and(eq(events.groupId, input.groupId), eq(events.phase, "cleared")));
-    const shaped: PastMeetupInput[] = [];
-    for (const e of rows) {
-      const cands = await candidatesFor(e.id);
-      const activityLabels = cands
-        .filter((c) => c.kind === "activity" && c.label)
-        .map((c) => c.label as string);
-      shaped.push({
+    return shapePastMeetups(
+      rows.map((e) => ({
         id: e.id,
         activity: e.activity,
         location: e.location,
         description: e.description,
         startsAt: e.startsAt,
         lockTimes: e.lockTimes,
-        lockActivity: e.lockActivity,
-        activityLabels,
-      });
-    }
-    return shapePastMeetups(shaped);
+      })),
+    );
   }),
 
   // One plan in full, phase-aware: time + activity candidates with public +1 counts (collecting),

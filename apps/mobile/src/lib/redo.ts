@@ -22,19 +22,22 @@ export const EMPTY_PREFILL: Prefill = {
 // module stays free of the trpc client (keeps it pure and unit-testable). The screen passes the trpc
 // result, which is structurally compatible.
 export type PastMeetupShell = {
-  activityCandidates: string[];
+  activity: string;
   lockTimes: boolean;
-  lockActivity: boolean;
   location: string;
   description: string | null;
 };
 
-// Map a chosen past meetup into the wizard's pre-fill state.
+// Map a chosen past meetup into the wizard's pre-fill state. The plan's name (its won activity) is
+// preloaded as a single activity and the activity lock is pre-ticked, so a redo keeps the same thing
+// by default - the creator just picks a new time (and can untick the lock to reopen it to a vote). A
+// time-only past plan (no named activity) preloads nothing and leaves the lock off.
 export function prefillFromMeetup(m: PastMeetupShell): Prefill {
+  const hasActivity = m.activity.trim() !== "";
   return {
-    activityChips: m.activityCandidates,
+    activityChips: hasActivity ? [m.activity.trim()] : [],
     lockTimes: m.lockTimes,
-    lockActivity: m.lockActivity,
+    lockActivity: hasActivity,
     location: m.location,
     description: m.description ?? "",
   };

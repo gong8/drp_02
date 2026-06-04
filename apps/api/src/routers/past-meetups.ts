@@ -2,10 +2,6 @@
 // same activity is a possible future refinement, not done here (see the spec's "Risks / notes").
 export const PAST_MEETUPS_LIMIT = 20;
 
-// A clone is sent through events.create, whose CreateEventInput caps activityCandidates at 10. An open
-// plan can collect more than that, so cap the cloned list to stay within the create bound.
-export const MAX_CLONE_ACTIVITIES = 10;
-
 // A cleared plan's row, reduced to the fields a redo needs. The router maps Drizzle rows into this so
 // the shaping below stays pure and testable without a database.
 export type PastMeetupInput = {
@@ -15,22 +11,18 @@ export type PastMeetupInput = {
   description: string | null;
   startsAt: Date;
   lockTimes: boolean;
-  lockActivity: boolean;
-  activityLabels: string[];
 };
 
 // The clonable shell the client pre-fills the wizard from. Carries no time (always stale) and no RSVP
-// data. The plan's name rides in `activityCandidates` (the wizard pre-fills from that list, not a
-// separate name field). `activity` is the plan's raw resolved name (may be ""); the redo card shows
-// it with a fallback when blank.
+// data. The plan's NAME is its (won) `activity`; the wizard pre-fills that as a single locked activity,
+// so a redo keeps the same thing - the creator just picks a new time. `activity` may be "" for a
+// time-only plan that never named one; the redo card shows a fallback then.
 export type PastMeetup = {
   id: string;
   activity: string;
   location: string;
   description: string | null;
-  activityCandidates: string[];
   lockTimes: boolean;
-  lockActivity: boolean;
   lastStartsAt: string;
 };
 
@@ -45,9 +37,7 @@ export function shapePastMeetups(rows: PastMeetupInput[]): PastMeetup[] {
       activity: r.activity.trim(),
       location: r.location,
       description: r.description,
-      activityCandidates: r.activityLabels.slice(0, MAX_CLONE_ACTIVITIES),
       lockTimes: r.lockTimes,
-      lockActivity: r.lockActivity,
       lastStartsAt: r.startsAt.toISOString(),
     }));
 }

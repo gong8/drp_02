@@ -1,9 +1,8 @@
 import { EMPTY_PREFILL, type PastMeetupShell, prefillFromMeetup, wizardSteps } from "./redo";
 
 const shell: PastMeetupShell = {
-  activityCandidates: ["bowling", "the pub"],
+  activity: "Bowling",
   lockTimes: true,
-  lockActivity: false,
   location: "TenPin",
   description: "come at 6",
 };
@@ -20,9 +19,19 @@ test("wizardSteps inserts the source step only when there is past history", () =
   ]);
 });
 
-test("prefillFromMeetup carries activities, locks, location, and notes", () => {
+test("prefillFromMeetup preloads the won activity as a single locked chip, plus location and notes", () => {
   expect(prefillFromMeetup(shell)).toEqual({
-    activityChips: ["bowling", "the pub"],
+    activityChips: ["Bowling"],
+    lockTimes: true,
+    lockActivity: true,
+    location: "TenPin",
+    description: "come at 6",
+  });
+});
+
+test("prefillFromMeetup preloads nothing and leaves the lock off for a time-only past plan", () => {
+  expect(prefillFromMeetup({ ...shell, activity: "  " })).toEqual({
+    activityChips: [],
     lockTimes: true,
     lockActivity: false,
     location: "TenPin",
