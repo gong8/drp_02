@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { FALLBACK_TITLE } from "./create-plan.js";
 import {
   MAX_CLONE_ACTIVITIES,
   PAST_MEETUPS_LIMIT,
@@ -60,9 +59,9 @@ test("caps the list at PAST_MEETUPS_LIMIT, keeping the most recent", () => {
   assert.equal(out[0].id, `e${PAST_MEETUPS_LIMIT + 4}`);
 });
 
-test("falls back to the placeholder title when the stored title is empty", () => {
-  const out = shapePastMeetups([row({ title: "   " })]);
-  assert.equal(out[0].title, FALLBACK_TITLE);
+test("returns the raw (trimmed) stored title, blank when empty - the client adds any fallback", () => {
+  assert.equal(shapePastMeetups([row({ title: "  Bowling  " })])[0].title, "Bowling");
+  assert.equal(shapePastMeetups([row({ title: "   " })])[0].title, "");
 });
 
 test("caps a meetup's cloned activities at MAX_CLONE_ACTIVITIES", () => {

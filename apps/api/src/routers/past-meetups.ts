@@ -1,5 +1,3 @@
-import { FALLBACK_TITLE } from "./create-plan.js";
-
 // Cap the redo picker so a long-lived group's history stays usable. De-dup of repeated redos of the
 // same activity is a possible future refinement, not done here (see the spec's "Risks / notes").
 export const PAST_MEETUPS_LIMIT = 20;
@@ -22,7 +20,8 @@ export type PastMeetupInput = {
 };
 
 // The clonable shell the client pre-fills the wizard from. Carries no time (always stale) and no RSVP
-// data; title is the plan's resolved title, with a placeholder fallback so a row never renders blank.
+// data. `title` is the plan's raw resolved title (may be ""); the client both prefills it and shows a
+// fallback when blank - keeping the placeholder out of the cloned title field.
 export type PastMeetup = {
   id: string;
   title: string;
@@ -42,7 +41,7 @@ export function shapePastMeetups(rows: PastMeetupInput[]): PastMeetup[] {
     .slice(0, PAST_MEETUPS_LIMIT)
     .map((r) => ({
       id: r.id,
-      title: r.title.trim() || FALLBACK_TITLE,
+      title: r.title.trim(),
       location: r.location,
       description: r.description,
       activityCandidates: r.activityLabels.slice(0, MAX_CLONE_ACTIVITIES),

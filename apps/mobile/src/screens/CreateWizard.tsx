@@ -17,6 +17,7 @@ import {
   Row,
   ScreenBackground,
   ScreenLoading,
+  SelectCheck,
 } from "../ui";
 
 type Group = Awaited<ReturnType<typeof trpc.groups.mine.query>>[number];
@@ -162,6 +163,7 @@ export function CreateWizard({ navigation }: Props) {
   }
 
   function applyPrefill(p: Prefill) {
+    setTitle(p.title);
     setActivityChips(p.activityChips);
     setActivityDraft("");
     setLockTimes(p.lockTimes);
@@ -289,53 +291,26 @@ export function CreateWizard({ navigation }: Props) {
               title="Fresh, or do one again?"
               sub="This group has done things before. Reuse one to skip the setup - you'll just pick a new time."
             >
-              <Pressable
+              <SourceCard
+                title="Start fresh"
+                sub="A blank meetup"
+                selected={source === "fresh"}
                 onPress={() => {
                   setSource("fresh");
                   applyPrefill(EMPTY_PREFILL);
                 }}
-              >
-                <Card
-                  padding={14}
-                  style={{ marginBottom: 11, borderColor: source === "fresh" ? ui.brand : ui.ink }}
-                >
-                  <Text style={{ fontFamily: font.display, fontSize: 16, color: ui.ink }}>
-                    Start fresh
-                  </Text>
-                  <Text
-                    style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted, marginTop: 2 }}
-                  >
-                    A blank meetup
-                  </Text>
-                </Card>
-              </Pressable>
+              />
               {pastMeetups.map((m) => (
-                <Pressable
+                <SourceCard
                   key={m.id}
+                  title={m.title || "Untitled meetup"}
+                  sub={`${m.location ? `${m.location} · ` : ""}last on ${formatSlot(m.lastStartsAt)}`}
+                  selected={source === m.id}
                   onPress={() => {
                     setSource(m.id);
                     applyPrefill(prefillFromMeetup(m));
                   }}
-                >
-                  <Card
-                    padding={14}
-                    style={{ marginBottom: 11, borderColor: source === m.id ? ui.brand : ui.ink }}
-                  >
-                    <Text style={{ fontFamily: font.display, fontSize: 16, color: ui.ink }}>
-                      {m.title}
-                    </Text>
-                    <Text
-                      style={{
-                        fontFamily: font.medium,
-                        fontSize: 11,
-                        color: ui.muted,
-                        marginTop: 2,
-                      }}
-                    >
-                      {m.location ? `${m.location} · ` : ""}last on {formatSlot(m.lastStartsAt)}
-                    </Text>
-                  </Card>
-                </Pressable>
+                />
               ))}
             </Step>
           )}
@@ -680,6 +655,37 @@ function Step({ title, sub, children }: { title: string; sub?: string; children:
       )}
       {children}
     </View>
+  );
+}
+
+// A pickable card on the source step (start fresh, or a past meetup). Selection shows via SelectCheck
+// (a child element) because Card forwards `style` to its shadow wrapper, not to its bordered inner View
+// - so a `borderColor` override on Card would never render.
+function SourceCard({
+  title,
+  sub,
+  selected,
+  onPress,
+}: {
+  title: string;
+  sub: string;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable onPress={onPress}>
+      <Card padding={14} style={{ marginBottom: 11 }}>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <View style={{ flex: 1, marginRight: 12 }}>
+            <Text style={{ fontFamily: font.display, fontSize: 16, color: ui.ink }}>{title}</Text>
+            <Text style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted, marginTop: 2 }}>
+              {sub}
+            </Text>
+          </View>
+          <SelectCheck selected={selected} />
+        </View>
+      </Card>
+    </Pressable>
   );
 }
 

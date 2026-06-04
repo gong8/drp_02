@@ -1,6 +1,8 @@
 // The wizard's pre-fillable state when starting a meetup FROM a past one (or fresh). The time is never
-// carried (always stale); title is never set in the wizard (the server resolves the winning activity).
+// carried (always stale). The title IS carried so a redo keeps the plan's name (editable); it may be
+// blank, in which case the server re-derives it from the winning activity at lock, as for a fresh plan.
 export type Prefill = {
+  title: string;
   activityChips: string[];
   lockTimes: boolean;
   lockThings: boolean;
@@ -10,6 +12,7 @@ export type Prefill = {
 
 // The "Start fresh" baseline: an empty wizard.
 export const EMPTY_PREFILL: Prefill = {
+  title: "",
   activityChips: [],
   lockTimes: false,
   lockThings: false,
@@ -21,6 +24,7 @@ export const EMPTY_PREFILL: Prefill = {
 // module stays free of the trpc client (keeps it pure and unit-testable). The screen passes the trpc
 // result, which is structurally compatible.
 export type PastMeetupShell = {
+  title: string;
   activityCandidates: string[];
   lockTimes: boolean;
   lockThings: boolean;
@@ -31,6 +35,7 @@ export type PastMeetupShell = {
 // Map a chosen past meetup into the wizard's pre-fill state.
 export function prefillFromMeetup(m: PastMeetupShell): Prefill {
   return {
+    title: m.title,
     activityChips: m.activityCandidates,
     lockTimes: m.lockTimes,
     lockThings: m.lockThings,
