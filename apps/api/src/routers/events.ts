@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import {
   AddCandidateInput,
   addCandidateHorizon,
+  ByGroupInput,
   ByIdInput,
   type CandidateKind,
   CreateEventInput,
@@ -39,6 +40,7 @@ import { FALLBACK_AVATAR_COLOR, FALLBACK_USER_NAME, getUserCard } from "../db/us
 import { msLeft } from "../format.js";
 import { protectedProcedure, router } from "../trpc.js";
 import { displayTitle, planOpensMoment, resolveTitle } from "./create-plan.js";
+import { type PastMeetupInput, shapePastMeetups } from "./past-meetups.js";
 
 export type EventRow = typeof events.$inferSelect;
 type MyStatus = "reacting" | "awaiting" | "going" | "declined";
@@ -774,6 +776,35 @@ export const eventsRouter = router({
       }),
     );
     return out.filter((x): x is NonNullable<typeof x> => x !== null);
+  }),
+
+  // The redo picker: a group's past (cleared) meetups, each reduced to a clonable shell - activities,
+  // lock flags, location, notes - so the wizard can pre-fill a fresh plan from one. Carries no time
+  // (always stale) and no RSVP data; the creator stays anonymous (no creator identity is returned).
+  pastForGroup: protectedProcedure.input(ByGroupInput).query(async ({ ctx, input }) => {
+    await requireMember(input.groupId, ctx.userId);
+    const rows = await db
+      .select()
+      .from(events)
+      .where(and(eq(events.groupId, input.groupId), eq(events.phase, "cleared")));
+    const shaped: PastMeetupInput[] = [];
+    for (const e of rows) {
+      const cands = await candidatesFor(e.id);
+      const activityLabels = cands
+        .filter((c) => c.kind === "activity" && c.label)
+        .map((c) => c.label as string);
+      shaped.push({
+        id: e.id,
+        title: e.title,
+        location: e.location,
+        description: e.description,
+        startsAt: e.startsAt,
+        lockTimes: e.lockTimes,
+        lockThings: e.lockThings,
+        activityLabels,
+      });
+    }
+    return shapePastMeetups(shaped);
   }),
 
   // One plan in full, phase-aware: time + activity candidates with public +1 counts (collecting),
