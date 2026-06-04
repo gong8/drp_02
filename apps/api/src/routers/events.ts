@@ -312,8 +312,23 @@ export const eventsRouter = router({
       label: text,
     }));
 
-    const opensMoment = planOpensMoment(timeCands.length, input.lockTimes);
+    const opensMoment = planOpensMoment(
+      timeCands.length,
+      input.lockTimes,
+      activityCands.length,
+      input.lockThings,
+    );
     const quorum = input.quorum ?? (opensMoment ? 1 : DEFAULT_QUORUM);
+
+    // Concrete plans skip lock()/settleCollecting (where the collecting path resolves the title), so
+    // resolve the single activity into the stored title now; collecting plans resolve it at lock.
+    const resolvedTitle = opensMoment
+      ? resolveTitle(
+          input.title ?? "",
+          activityCands.map((c) => ({ id: c.id, label: c.label })),
+          [],
+        )
+      : (input.title ?? "");
 
     // Time anchors. With no time candidates a plan still collects (on activities), so anchor the
     // placeholder start + the default decides-by to a sensible horizon instead of a candidate.
@@ -374,7 +389,7 @@ export const eventsRouter = router({
       id,
       groupId: input.groupId,
       createdByUserId: ctx.userId,
-      title: input.title ?? "",
+      title: resolvedTitle,
       description: input.description ?? null,
       location: input.location ?? "",
       startsAt,
@@ -483,7 +498,7 @@ export const eventsRouter = router({
       throw new TRPCError({ code: "FORBIDDEN", message: "times are locked on this plan" });
     }
     if (input.kind === "activity" && e.lockThings) {
-      throw new TRPCError({ code: "FORBIDDEN", message: "places are locked on this plan" });
+      throw new TRPCError({ code: "FORBIDDEN", message: "activities are locked on this plan" });
     }
     const existing = await candidatesFor(input.eventId);
 
@@ -537,11 +552,11 @@ export const eventsRouter = router({
       });
     } else {
       if (!input.text) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "a place/thing needs a name" });
+        throw new TRPCError({ code: "BAD_REQUEST", message: "an activity needs a name" });
       }
       const text = input.text.trim();
       if (!text)
-        throw new TRPCError({ code: "BAD_REQUEST", message: "a place/thing needs a name" });
+        throw new TRPCError({ code: "BAD_REQUEST", message: "an activity needs a name" });
       const key = text.toLowerCase();
       const dup = existing.find(
         (c) => c.kind === "activity" && (c.label ?? "").trim().toLowerCase() === key,
