@@ -75,8 +75,6 @@ export interface Plan {
   // Creator flags, default false=open. When true, members cannot add that kind of candidate.
   lockTimes?: boolean;
   lockThings?: boolean;
-  // Creator anonymity is ALWAYS on; left here only so a fixture can assert it.
-  isAnonymous?: boolean;
   // When a collecting plan auto-decides the winning slot and opens the moment. Must sit before the
   // earliest TIME candidate. Null/absent for the concrete shortcut (straight to moment).
   decidesBy?: Date;
@@ -202,7 +200,6 @@ export const PLANS: Plan[] = [
     title: "",
     contingent: true,
     quorum: 2,
-    isAnonymous: true,
     phase: "collecting",
     decidesBy: dayAt(1, 12),
     candidates: [
