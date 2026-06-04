@@ -31,6 +31,23 @@ jobs:
   ci:
     needs: guard
     runs-on: ubuntu-latest
+    # The API integration tests run the real tRPC router against a real Postgres (the harness
+    # creates a throwaway per-process DB on it). Map the service to host 5433 so the harness
+    # defaults (localhost:5433, drp/drp/drp) work with no extra env.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: drp
+          POSTGRES_PASSWORD: drp
+          POSTGRES_DB: drp
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
       - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1  # v4.3.0
