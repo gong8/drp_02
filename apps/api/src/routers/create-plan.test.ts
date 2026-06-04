@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { planOpensMoment } from "./create-plan.js";
+import { planOpensMoment, resolveTitle } from "./create-plan.js";
 
 test("one time candidate with lockTimes opens the moment (concrete shortcut)", () => {
   assert.equal(planOpensMoment(1, true), true);
@@ -16,4 +16,28 @@ test("multiple time candidates never short-cut, even when locked", () => {
 
 test("zero time candidates never short-cut", () => {
   assert.equal(planOpensMoment(0, true), false);
+});
+
+test("resolveTitle keeps a non-empty title and ignores activities", () => {
+  assert.equal(
+    resolveTitle("Dinner", [{ id: "a1", label: "Pizza" }], [{ candidateId: "a1", userId: "u1" }]),
+    "Dinner",
+  );
+});
+
+test("resolveTitle picks the most-voted activity when title is empty", () => {
+  const acts = [
+    { id: "a1", label: "Pizza" },
+    { id: "a2", label: "Sushi" },
+  ];
+  const reactions = [
+    { candidateId: "a1", userId: "u1" },
+    { candidateId: "a2", userId: "u1" },
+    { candidateId: "a2", userId: "u2" },
+  ];
+  assert.equal(resolveTitle("", acts, reactions), "Sushi");
+});
+
+test("resolveTitle falls back to empty when there are no activities", () => {
+  assert.equal(resolveTitle("", [], []), "");
 });
