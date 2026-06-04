@@ -36,6 +36,10 @@ export function CreateWizard({ navigation }: Props) {
   const [groups, setGroups] = useState<Group[]>([]);
   const [groupId, setGroupId] = useState<string | null>(null);
   const [pastMeetups, setPastMeetups] = useState<PastMeetup[]>([]);
+  // Whether the past-meetups query for the current group has settled. The "source" step is inserted
+  // only once it has, so the group step gates Next on this - otherwise a late insert would shift the
+  // step list under the user (stepKey is an index) and silently change the visible step.
+  const [pastLoaded, setPastLoaded] = useState(false);
   // The source-step choice: null = not chosen yet, "fresh" = start blank, otherwise a past-meetup id.
   const [source, setSource] = useState<"fresh" | string | null>(null);
 
@@ -87,11 +91,13 @@ export function CreateWizard({ navigation }: Props) {
     if (!groupId) return;
     let active = true;
     setSource(null);
+    setPastLoaded(false);
     applyPrefill(EMPTY_PREFILL);
     trpc.events.pastForGroup
       .query({ groupId })
       .then((m) => active && setPastMeetups(m))
-      .catch(() => active && setPastMeetups([]));
+      .catch(() => active && setPastMeetups([]))
+      .finally(() => active && setPastLoaded(true));
     return () => {
       active = false;
     };
@@ -155,7 +161,8 @@ export function CreateWizard({ navigation }: Props) {
   function valid(key: string): boolean {
     switch (key) {
       case "group":
-        return !!groupId;
+        // Wait for the past-meetups query so the step list is final before leaving this step.
+        return !!groupId && pastLoaded;
       case "source":
         return source !== null;
       case "deadlines":

@@ -26,10 +26,13 @@ function plan(p: Partial<Plan>): Plan {
   };
 }
 
-test("isPast trusts startsAt only once a slot is locked", () => {
+test("isPast: cleared keys off startsAt; moment keys off the RSVP window, not the event time", () => {
   expect(isPast(plan({ phase: "cleared", startsAt: PAST }), NOW)).toBe(true);
-  expect(isPast(plan({ phase: "moment", startsAt: PAST }), NOW)).toBe(true);
   expect(isPast(plan({ phase: "cleared", startsAt: LATER }), NOW)).toBe(false);
+  // A live moment whose event time has passed but whose RSVP window is still open is NOT past.
+  expect(isPast(plan({ phase: "moment", startsAt: PAST, momentEndsAt: SOON }), NOW)).toBe(false);
+  // A moment whose RSVP window has closed is past.
+  expect(isPast(plan({ phase: "moment", startsAt: PAST, momentEndsAt: PAST }), NOW)).toBe(true);
   // A collecting placeholder startsAt in the past is NOT past (the time is not decided yet).
   expect(isPast(plan({ phase: "collecting", startsAt: PAST }), NOW)).toBe(false);
 });

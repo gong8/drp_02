@@ -27,10 +27,16 @@ export function isLive(e: Phased): boolean {
   return !isTerminal(e);
 }
 
-// `startsAt` is only a real time once a slot is locked (moment/cleared). While collecting it is a
-// placeholder (earliest candidate, or now+7d with no times), so it is never trusted for past-ness.
+// `startsAt` is only a real time once a slot is locked. A cleared plan is past once its time passes.
+// A moment is past only once its RSVP window (momentEndsAt) has closed - the window can legitimately
+// run up to/just past the event time, and the server settles a moment to cleared/fizzled at
+// momentEndsAt, so a still-live moment must never count as past (else a committed member would drop
+// out of Going mid-event). While collecting, startsAt is a placeholder, so it is never past.
 export function isPast(e: Timed, now: number = Date.now()): boolean {
-  return (e.phase === "moment" || e.phase === "cleared") && new Date(e.startsAt).getTime() < now;
+  if (e.phase === "cleared") return new Date(e.startsAt).getTime() < now;
+  if (e.phase === "moment")
+    return e.momentEndsAt != null && new Date(e.momentEndsAt).getTime() < now;
+  return false;
 }
 
 // GOING / OPEN / DONE - mutually exclusive and total. Returns the first match in order.
