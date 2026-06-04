@@ -16,6 +16,12 @@ export type Conditional = z.infer<typeof Conditional>;
 export const PartOfDay = z.enum(["morning", "afternoon", "evening", "late"]);
 export type PartOfDay = z.infer<typeof PartOfDay>;
 
+// The two candidate lists a unified plan owns: a "time" (a concrete instant) or an "activity" (a
+// fused what+where). Single source of truth for the DB candidate_kind enum and the mobile mirror.
+// Replaces the old FloatAxis (idea -> activity).
+export const CandidateKind = z.enum(["time", "activity"]);
+export type CandidateKind = z.infer<typeof CandidateKind>;
+
 // The two axes of a float's suggestion chips: an `idea` (a fused what+where) or a `time` (a loose
 // band). Single source of truth for the union the DB `floatAxisEnum` and the seed/mobile use.
 export const FloatAxis = z.enum(["idea", "time"]);
@@ -30,11 +36,10 @@ export type Timescale = z.infer<typeof Timescale>;
 export const WhenMode = z.enum(["exact", "options", "fuzzy"]);
 export type WhenMode = z.infer<typeof WhenMode>;
 
-// A plan's lifecycle. A `float` brews unsigned in `floating` until it tips; `exact` plans open
-// straight into `moment`; `options`/`fuzzy` plans start `collecting` reactions, then a lock (or a
-// float tipping) opens the `moment`, which ends `cleared` (enough committed) or `fizzled` (not -
-// silent for contingent plans, and the resting state of a float that never caught on).
-export const PlanPhase = z.enum(["collecting", "moment", "cleared", "fizzled", "floating"]);
+// A plan's lifecycle. An exact, locked-time plan opens straight into `moment`; every other plan
+// starts `collecting` public +1s, then a lock (creator or the auto "decides by") opens the
+// `moment`, which ends `cleared` (quorum committed) or `fizzled` (not - silent for contingent).
+export const PlanPhase = z.enum(["collecting", "moment", "cleared", "fizzled"]);
 export type PlanPhase = z.infer<typeof PlanPhase>;
 
 // The `when` the creator expresses at creation. The variant they pick is the ONLY thing that
