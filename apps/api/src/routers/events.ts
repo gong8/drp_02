@@ -149,7 +149,8 @@ async function settlePhase(e: EventRow): Promise<void> {
 // Lazily auto-lock a collecting plan whose "Decides by" deadline has passed (no scheduler): pick the
 // best-supported TIME candidate (quorum, else most-reacted), resolve the winning activity into the
 // title if empty, and open the blind moment. Opted-out members have no reactions so they drop for
-// free; with no time candidates or zero reactions the plan fizzles silently. Mutates + persists.
+// free; with no time candidates, or no reactions of any kind, the plan fizzles silently (any +1 -
+// even on an activity - keeps it alive, and it locks the best-supported or first time). Mutates + persists.
 async function settleCollecting(e: EventRow): Promise<void> {
   if (e.phase !== "collecting" || !e.decidesBy || Date.now() < e.decidesBy.getTime()) return;
   const cands = await candidatesFor(e.id);
@@ -568,7 +569,7 @@ export const eventsRouter = router({
       input.candidateId && timeIds.includes(input.candidateId) ? input.candidateId : null;
     const chosenId = requestedId ?? pickWinnerOrBestId(timeIds, reactions, e.quorum);
     const chosen = timeCands.find((c) => c.id === chosenId);
-    if (!chosen || !chosen.startsAt)
+    if (!chosen?.startsAt)
       throw new TRPCError({ code: "BAD_REQUEST", message: "unknown candidate" });
 
     const title = resolveTitle(
@@ -632,7 +633,7 @@ export const eventsRouter = router({
           iReacted = myReacts.length > 0;
           if (isCreator) {
             const reactions = await reactionsFor(e.id);
-            const timeIds = cands.filter((c) => c.kind === "time").map((c) => c.id);
+            const timeIds = cands.filter((c) => c.kind === "time" && c.startsAt).map((c) => c.id);
             readyToLock = pickWinningCandidate(timeIds, reactions, e.quorum) !== null;
           }
         }
