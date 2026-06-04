@@ -13,7 +13,7 @@ Concrete shortcut: exactly ONE time candidate AND `lockTimes === true` skips `co
 
 Everything after collecting is shared: a plan moves `collecting -> moment -> cleared` (or a silent `fizzled`); candidate +1 counts are **public during collecting** (momentum) but no voter names are ever shown - creator anonymity is ALWAYS on; at lock the most-voted TIME candidate wins (and, if the title is empty, the most-voted ACTIVITY candidate becomes the title); the plan then runs a **blind moment** where members RSVP **yes / no / "I'll go if [people]"** (conditionals resolved server-side); a per-user dashboard groups plans by **Reacting / Awaiting / Going / Declined**; groups support membership CRUD. Full design: `ARCHITECTURE.md`.
 
-> The original standalone **loose-availability** prototype still lives in `archive/loose-availability/` (excluded from the build, do not edit it); its ideas were folded back into the convergence model. M2 concrete-event mockups: `docs/mockups/m2/ALL_MOCKUPS.pdf`.
+> The original standalone **loose-availability** prototype still lives in `archive/loose-availability/` (excluded from the build, do not edit it); its ideas were folded back into the current unified suggest flow. M2 concrete-event mockups: `docs/mockups/m2/ALL_MOCKUPS.pdf`.
 
 ## Stack & layout
 
