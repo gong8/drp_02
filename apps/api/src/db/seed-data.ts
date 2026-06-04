@@ -1,6 +1,11 @@
-import type { PartOfDay, PlanPhase, WhenMode } from "@bethere/shared";
-
-export type Kind = "yes" | "no" | "conditional";
+import type {
+  Conditional,
+  FloatAxis,
+  PartOfDay,
+  PlanPhase,
+  ResponseKind,
+  WhenMode,
+} from "@bethere/shared";
 
 export const DEMO_USERS = [
   { id: "u_dev", name: "You", avatarColor: "#5F9472" },
@@ -53,7 +58,7 @@ export interface Cand {
 // `votedBy` are the (private) +1 backers. Mirrors Cand, but for the floating phase.
 export interface FloatSugg {
   suffix: string;
-  axis: "idea" | "time";
+  axis: FloatAxis;
   text?: string;
   partOfDay?: PartOfDay;
   day?: number;
@@ -61,8 +66,8 @@ export interface FloatSugg {
 }
 export interface Resp {
   userId: string;
-  kind: Kind;
-  cond?: { mode: "all" | "any"; targetIds: string[] };
+  kind: ResponseKind;
+  cond?: Conditional;
 }
 export interface Plan {
   id: string;

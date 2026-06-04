@@ -1,8 +1,16 @@
 import { Text, View } from "react-native";
 import { ui } from "../theme";
 
-// Pink selection check used in the "I'll go if..." member picker.
-export function SelectCheck({ selected }: { selected: boolean }) {
+// Selection check used in the "I'll go if..." member picker and the opt-out row. `accent` is the
+// border + fill colour when selected (pink by default; ink for the opt-out checkbox); unselected
+// always reads as an ink outline.
+export function SelectCheck({
+  selected,
+  accent = ui.brand,
+}: {
+  selected: boolean;
+  accent?: string;
+}) {
   return (
     <View
       style={{
@@ -10,8 +18,8 @@ export function SelectCheck({ selected }: { selected: boolean }) {
         height: 18,
         borderRadius: 5,
         borderWidth: 1.5,
-        borderColor: selected ? ui.brand : ui.ink,
-        backgroundColor: selected ? ui.brand : "transparent",
+        borderColor: selected ? accent : ui.ink,
+        backgroundColor: selected ? accent : "transparent",
         alignItems: "center",
         justifyContent: "center",
       }}

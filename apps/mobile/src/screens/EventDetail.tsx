@@ -11,7 +11,10 @@ import {
   isoFrom,
   partOfDayLabel,
 } from "../lib/format";
+import { addCandidateHorizon } from "../lib/lock";
 import { trpc } from "../lib/trpc";
+import { useBusyAction } from "../lib/useBusyAction";
+import { TICK_MS, useLiveClock } from "../lib/useLiveClock";
 import { font, ui } from "../theme";
 import {
   Avatar,
@@ -20,7 +23,10 @@ import {
   Button,
   Card,
   DateTimePill,
+  DetailError,
+  PersonRow,
   ScreenBackground,
+  ScreenLoading,
   SelectCheck,
   StickerTag,
   Toggle,
@@ -28,8 +34,8 @@ import {
 
 type Detail = NonNullable<Awaited<ReturnType<typeof trpc.events.get.query>>>;
 type Member = Detail["members"][number];
-type Cand = Detail["candidates"][number];
-type Mode = "At least one" | "All of them";
+type Candidate = Detail["candidates"][number];
+type CondModeLabel = "At least one" | "All of them";
 type SaveState = "idle" | "saving" | "saved" | "error";
 type Props = NativeStackScreenProps<MeetupsStackParams, "EventDetail">;
 
@@ -39,12 +45,11 @@ export function EventDetail({ route, navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [now, setNow] = useState(Date.now());
 
   // moment conditional sheet
   const [editing, setEditing] = useState(false);
   const [sheet, setSheet] = useState(false);
-  const [mode, setMode] = useState<Mode>("At least one");
+  const [condModeLabel, setCondModeLabel] = useState<CondModeLabel>("At least one");
   const [condPicked, setCondPicked] = useState<string[]>([]);
   // collecting reactions (seeded once from the server, then edited locally)
   const [reactPicked, setReactPicked] = useState<string[]>([]);
@@ -68,6 +73,9 @@ export function EventDetail({ route, navigation }: Props) {
       .finally(() => setLoading(false));
   }, [eventId]);
 
+  // Busy-guarded mutate-then-reload runner shared by lock/addCandidate/answer/changeAnswer.
+  const runAction = useBusyAction({ busy, setBusy, setError, load });
+
   // Persist the current reaction set, debounced (see toggleReact). Deliberately NOT followed by a
   // refetch: that would clobber the optimistic picks and flicker; the 5s poll refreshes the tally
   // and lock-readiness on its own. Failures are swallowed (the next poll reconciles).
@@ -87,22 +95,22 @@ export function EventDetail({ route, navigation }: Props) {
     }
   }, [eventId]);
 
+  // The 1s ticker only drives the live moment countdown, so only run it during the moment.
+  const now = useLiveClock(
+    TICK_MS,
+    useCallback(() => phaseRef.current === "moment" || phaseRef.current === "collecting", []),
+  );
+
   useFocusEffect(
     useCallback(() => {
       let active = true;
       load();
-      // The 1s ticker only drives the live moment countdown, so only run it during the moment.
-      const tick = setInterval(() => {
-        if (active && (phaseRef.current === "moment" || phaseRef.current === "collecting"))
-          setNow(Date.now());
-      }, 1000);
       // Poll while the plan is live so the tally, countdown and reveal converge without a refresh.
       const poll = setInterval(() => {
         if (active && phaseRef.current !== "cleared" && phaseRef.current !== "fizzled") load();
       }, 5000);
       return () => {
         active = false;
-        clearInterval(tick);
         clearInterval(poll);
         flushReact(); // persist any reaction tap not yet saved before leaving the screen
       };
@@ -171,89 +179,48 @@ export function EventDetail({ route, navigation }: Props) {
     }
   }
 
-  async function lock(candidateId?: string) {
-    if (busy) return;
-    setBusy(true);
-    try {
-      await trpc.events.lock.mutate(
+  function lock(candidateId?: string) {
+    return runAction(() =>
+      trpc.events.lock.mutate(
         candidateId ? { eventId, candidateId, momentMinutes: 60 } : { eventId, momentMinutes: 60 },
-      );
-      await load();
-    } catch {
-      setError(true);
-    } finally {
-      setBusy(false);
-    }
+      ),
+    );
   }
 
   // Anyone in the group can float a new time into the menu while collecting; refetch so it shows.
-  async function addCandidate(startsAt: string) {
-    if (busy || !data) return;
-    setBusy(true);
-    try {
-      await trpc.events.addCandidate.mutate({ eventId, startsAt });
-      await load();
-    } catch {
-      setError(true);
-    } finally {
-      setBusy(false);
-    }
+  function addCandidate(startsAt: string) {
+    if (!data) return;
+    return runAction(() => trpc.events.addCandidate.mutate({ eventId, startsAt }));
   }
 
-  async function answer(
+  function answer(
     kind: "yes" | "no" | "conditional",
     cond?: { mode: "all" | "any"; targetIds: string[] },
   ) {
-    if (busy) return;
-    setBusy(true);
-    try {
+    return runAction(async () => {
       await trpc.events.respond.mutate(cond ? { eventId, kind, cond } : { eventId, kind });
       setEditing(false);
-      await load();
-    } catch {
-      setError(true);
-    } finally {
-      setBusy(false);
-    }
+    });
   }
 
   // "Change my answer" un-commits: it clears the response so the plan returns to Action Required
   // until a new answer is given, then reopens the choices.
-  async function changeAnswer() {
-    if (busy) return;
-    setBusy(true);
-    try {
+  function changeAnswer() {
+    return runAction(async () => {
       await trpc.events.unrespond.mutate({ eventId });
       setEditing(true);
-      await load();
-    } catch {
-      setError(true);
-    } finally {
-      setBusy(false);
-    }
+    });
   }
 
-  if (loading) {
+  if (loading) return <ScreenLoading />;
+  if (error || !data)
     return (
-      <ScreenBackground>
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator color={ui.ink} />
-        </View>
-      </ScreenBackground>
+      <DetailError
+        error={error}
+        onBack={() => navigation.goBack()}
+        notFoundLabel="Plan not found."
+      />
     );
-  }
-  if (error || !data) {
-    return (
-      <ScreenBackground>
-        <View style={{ padding: 16 }}>
-          <BackBar title="Back" onBack={() => navigation.goBack()} />
-          <Text style={{ fontFamily: font.medium, color: ui.muted }}>
-            {error ? "Couldn't reach the server." : "Plan not found."}
-          </Text>
-        </View>
-      </ScreenBackground>
-    );
-  }
 
   const liveMsLeft = data.momentEndsAt ? new Date(data.momentEndsAt).getTime() - now : 0;
   const liveMsToLock = data.lockAt ? new Date(data.lockAt).getTime() - now : 0;
@@ -263,18 +230,22 @@ export function EventDetail({ route, navigation }: Props) {
   const heroClock = heroIso ? clock12(heroIso) : null;
 
   function headerSticker() {
-    if (!data) return null;
-    // Collecting + moment use the full-bleed countdown banner instead of a sticker.
-    if (data.phase === "cleared") return <StickerTag label="It's on" />;
+    // Only the cleared phase gets a sticker; collecting + moment use the full-bleed countdown banner.
+    if (data?.phase === "cleared") return <StickerTag label="It's on" />;
     return null;
   }
 
-  const statusLine =
-    data.myStatus === "going"
-      ? "You're in"
-      : data.myStatus === "declined"
-        ? "You can't make it"
-        : "Awaiting your answer";
+  let statusLine: string;
+  switch (data.myStatus) {
+    case "going":
+      statusLine = "You're in";
+      break;
+    case "declined":
+      statusLine = "You can't make it";
+      break;
+    default:
+      statusLine = "Awaiting your answer";
+  }
 
   return (
     <ScreenBackground
@@ -431,7 +402,11 @@ export function EventDetail({ route, navigation }: Props) {
         >
           ...these people are going
         </Text>
-        <Toggle options={["At least one", "All of them"]} value={mode} onChange={setMode} />
+        <Toggle
+          options={["At least one", "All of them"]}
+          value={condModeLabel}
+          onChange={setCondModeLabel}
+        />
         <View style={{ marginTop: 12, marginBottom: 4 }}>
           {data.members.map((m: Member) => {
             const on = condPicked.includes(m.id);
@@ -464,7 +439,7 @@ export function EventDetail({ route, navigation }: Props) {
           onPress={() => {
             setSheet(false);
             answer("conditional", {
-              mode: mode === "All of them" ? "all" : "any",
+              mode: condModeLabel === "All of them" ? "all" : "any",
               targetIds: condPicked,
             });
           }}
@@ -564,6 +539,17 @@ function CollectingView({
   const [newTime, setNewTime] = useState("");
   const newIso = isoFrom(newDate, newTime);
 
+  const candidateTimes = data.candidates.map((c: Candidate) => new Date(c.startsAt).getTime());
+  const lockMs = data.lockAt ? new Date(data.lockAt).getTime() : Date.now();
+  const addMinDate = new Date(Math.max(Date.now(), lockMs));
+  const addMaxDate = new Date(
+    addCandidateHorizon(
+      Math.min(...candidateTimes),
+      Math.max(...candidateTimes),
+      data.whenMode === "fuzzy",
+    ),
+  );
+
   // Shared table-row style; the first row overrides to no top divider.
   const row = {
     flexDirection: "row" as const,
@@ -583,7 +569,7 @@ function CollectingView({
         Tap the times you can make - private to you.
       </Text>
       <Card padding={0}>
-        {data.candidates.map((c: Cand, i: number) => {
+        {data.candidates.map((c: Candidate, i: number) => {
           const on = !optedOut && picked.includes(c.id);
           return (
             <Pressable
@@ -616,20 +602,7 @@ function CollectingView({
 
         {/* Opt-out: a distinct, tinted last row of the same table (mutually exclusive). */}
         <Pressable onPress={onToggleOptOut} style={{ ...row, backgroundColor: "#F1EEF6" }}>
-          <View
-            style={{
-              width: 18,
-              height: 18,
-              borderRadius: 5,
-              borderWidth: 1.5,
-              borderColor: ui.ink,
-              backgroundColor: optedOut ? ui.ink : "transparent",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {optedOut && <Text style={{ fontSize: 11, color: "#fff" }}>{"✓"}</Text>}
-          </View>
+          <SelectCheck selected={optedOut} accent={ui.ink} />
           <View style={{ flex: 1 }}>
             <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>
               I can't make it
@@ -662,7 +635,8 @@ function CollectingView({
             timeValue={newTime}
             onDate={setNewDate}
             onTime={setNewTime}
-            minimumDate={new Date()}
+            minimumDate={addMinDate}
+            maximumDate={addMaxDate}
           />
           <View
             style={{
@@ -841,21 +815,13 @@ function RevealView({ data, statusLine }: { data: Detail; statusLine: string }) 
       </Text>
       <Card padding={0}>
         {data.going.map((p, i) => (
-          <View
+          <PersonRow
             key={p.id}
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 10,
-              padding: 11,
-              borderTopWidth: i === 0 ? 0 : 1,
-              borderTopColor: ui.hairline,
-            }}
-          >
-            <Avatar initial={p.name.charAt(0).toUpperCase()} color={p.color} size={26} />
-            <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>{p.name}</Text>
-            <Text style={{ marginLeft: "auto", color: ui.going }}>{"✓"}</Text>
-          </View>
+            name={p.name}
+            color={p.color}
+            index={i}
+            right={<Text style={{ marginLeft: "auto", color: ui.going }}>{"✓"}</Text>}
+          />
         ))}
         {data.going.length === 0 && (
           <Text style={{ fontFamily: font.medium, fontSize: 12, color: ui.muted, padding: 14 }}>

@@ -5,7 +5,7 @@ import { HardShadow } from "./HardShadow";
 export function BackBar({ title, onBack }: { title: string; onBack: () => void }) {
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 }}>
-      <HardShadow radius={9} offset={3}>
+      <HardShadow radius={9} offset={ui.shadowInput}>
         <Pressable
           onPress={onBack}
           style={{

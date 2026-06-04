@@ -2,25 +2,33 @@ import { randomUUID } from "node:crypto";
 import {
   AddIdeaInput,
   AddTimeInput,
+  ByIdInput,
   CreateFloatInput,
-  defaultLockAt,
+  defaultLockAtForWindow,
   expandWindow,
+  type FloatAxis,
   PART_HOUR,
+  type PartOfDay,
   ToggleVoteInput,
 } from "@bethere/shared";
 import { TRPCError } from "@trpc/server";
 import { and, eq, inArray } from "drizzle-orm";
-import { z } from "zod";
 import { db } from "../db/client.js";
+import { FALLBACK_GROUP_NAME, getGroupName } from "../db/groups.js";
 import { events, floatSuggestions, floatVotes, groupMembers, groups } from "../db/schema.js";
+import { msLeft } from "../format.js";
 import { protectedProcedure, router } from "../trpc.js";
-import { requireMember, settleFloating } from "./events.js";
+import { type EventRow, requireMember, settleFloating } from "./events.js";
 
-type EventRow = typeof events.$inferSelect;
 type SuggestionRow = typeof floatSuggestions.$inferSelect;
 
-const DEFAULT_MOMENT_MINUTES = 60;
 const DEFAULT_MIN_HEAT = 2;
+
+// Idea identity for case-insensitive de-dup: trimmed and lower-cased. Single source so the seed
+// de-dup and the addIdea dup-check agree on what counts as "the same idea".
+function ideaKey(text: string): string {
+  return text.trim().toLowerCase();
+}
 
 // Trim + case-insensitive de-dup of seed idea text, preserving first-seen casing and order.
 function dedupeIdeas(ideas: string[]): string[] {
@@ -29,7 +37,7 @@ function dedupeIdeas(ideas: string[]): string[] {
   for (const raw of ideas) {
     const text = raw.trim();
     if (!text) continue;
-    const key = text.toLowerCase();
+    const key = ideaKey(text);
     if (seen.has(key)) continue;
     seen.add(key);
     out.push(text);
@@ -37,10 +45,25 @@ function dedupeIdeas(ideas: string[]): string[] {
   return out;
 }
 
+// The brewing-only fields shared by floats.mine and floats.get: when it was floated, its tip
+// deadline, and the live countdown to that tip. Single source so the two reads never drift.
+function tipFields(e: EventRow): {
+  createdAt: string;
+  tipAt: string | null;
+  msLeftToTip: number | null;
+} {
+  return {
+    createdAt: e.createdAt.toISOString(),
+    tipAt: e.lockAt?.toISOString() ?? null,
+    msLeftToTip: msLeft(e.lockAt),
+  };
+}
+
 // Load a float for a mutation: caller must be a member, and it must still be brewing. Settling first
 // means a float past its deadline tips here (and then rejects the late chip) rather than mutating a
-// stale brew.
-async function loadFloating(eventId: string, userId: string): Promise<EventRow> {
+// stale brew. The loaded row drives only side effects (member-check, settle, phase guard), so this
+// returns nothing.
+async function loadFloating(eventId: string, userId: string): Promise<void> {
   const [e] = await db.select().from(events).where(eq(events.id, eventId));
   if (!e) throw new TRPCError({ code: "NOT_FOUND" });
   await requireMember(e.groupId, userId);
@@ -48,12 +71,34 @@ async function loadFloating(eventId: string, userId: string): Promise<EventRow> 
   if (e.phase !== "floating") {
     throw new TRPCError({ code: "BAD_REQUEST", message: "this float has already tipped" });
   }
-  return e;
 }
 
 // A member's own +1 on a chip (adding a chip implies +1'ing it). Idempotent.
 async function castVote(eventId: string, suggestionId: string, userId: string): Promise<void> {
   await db.insert(floatVotes).values({ eventId, suggestionId, userId }).onConflictDoNothing();
+}
+
+// Insert a fresh chip on the given axis (null-filling the columns the axis does not use), then +1 it
+// for the author (adding a chip implies +1'ing it). Returns the new chip id. The single source for
+// the chip row shape and the axis-prefixed id format across create/addIdea/addTime.
+async function addSuggestion(
+  eventId: string,
+  userId: string,
+  axis: FloatAxis,
+  payload: { text?: string | null; partOfDay?: PartOfDay | null; startsAt?: Date | null },
+): Promise<string> {
+  const id = `${eventId}_${axis === "idea" ? "i" : "t"}_${randomUUID()}`;
+  await db.insert(floatSuggestions).values({
+    id,
+    eventId,
+    axis,
+    text: payload.text ?? null,
+    partOfDay: payload.partOfDay ?? null,
+    startsAt: payload.startsAt ?? null,
+    createdByUserId: userId,
+  });
+  await castVote(eventId, id, userId);
+  return id;
 }
 
 export const floatsRouter = router({
@@ -66,6 +111,7 @@ export const floatsRouter = router({
     const band = input.window.band ?? "evening";
     const slots = expandWindow(input.window.timescale, band, Date.now());
     const earliestMs = new Date(slots[0].startsAt).getTime();
+    const lastMs = new Date(slots[slots.length - 1].startsAt).getTime();
 
     let tipAt: Date;
     if (input.tipAt) {
@@ -78,7 +124,7 @@ export const floatsRouter = router({
       }
       tipAt = t;
     } else {
-      tipAt = new Date(defaultLockAt(earliestMs, Date.now(), DEFAULT_MOMENT_MINUTES * 60 * 1000));
+      tipAt = new Date(defaultLockAtForWindow(lastMs, Date.now()));
     }
 
     const minHeat = input.minHeat ?? DEFAULT_MIN_HEAT;
@@ -107,17 +153,7 @@ export const floatsRouter = router({
     });
 
     for (const text of dedupeIdeas(input.ideas)) {
-      const sid = `${id}_i_${randomUUID()}`;
-      await db.insert(floatSuggestions).values({
-        id: sid,
-        eventId: id,
-        axis: "idea",
-        text,
-        partOfDay: null,
-        startsAt: null,
-        createdByUserId: ctx.userId,
-      });
-      await castVote(id, sid, ctx.userId);
+      await addSuggestion(id, ctx.userId, "idea", { text });
     }
     // TODO push (notifications seam): "someone floated an idea in <group>".
     return { id };
@@ -133,23 +169,12 @@ export const floatsRouter = router({
       .select()
       .from(floatSuggestions)
       .where(and(eq(floatSuggestions.eventId, input.eventId), eq(floatSuggestions.axis, "idea")));
-    const dup = existing.find((s) => (s.text ?? "").trim().toLowerCase() === text.toLowerCase());
+    const dup = existing.find((s) => ideaKey(s.text ?? "") === ideaKey(text));
     if (dup) {
       await castVote(input.eventId, dup.id, ctx.userId);
       return { id: dup.id };
     }
-    const id = `${input.eventId}_i_${randomUUID()}`;
-    await db.insert(floatSuggestions).values({
-      id,
-      eventId: input.eventId,
-      axis: "idea",
-      text,
-      partOfDay: null,
-      startsAt: null,
-      createdByUserId: ctx.userId,
-    });
-    await castVote(input.eventId, id, ctx.userId);
-    return { id };
+    return { id: await addSuggestion(input.eventId, ctx.userId, "idea", { text }) };
   }),
 
   // Any member drops a loose TIME band (a day at a part-of-day). De-duped on the resolved slot.
@@ -169,18 +194,12 @@ export const floatsRouter = router({
       await castVote(input.eventId, dup.id, ctx.userId);
       return { id: dup.id };
     }
-    const id = `${input.eventId}_t_${randomUUID()}`;
-    await db.insert(floatSuggestions).values({
-      id,
-      eventId: input.eventId,
-      axis: "time",
-      text: null,
-      partOfDay: input.band,
-      startsAt: day,
-      createdByUserId: ctx.userId,
-    });
-    await castVote(input.eventId, id, ctx.userId);
-    return { id };
+    return {
+      id: await addSuggestion(input.eventId, ctx.userId, "time", {
+        partOfDay: input.band,
+        startsAt: day,
+      }),
+    };
   }),
 
   // One-tap +1 / un-+1 on any chip. Interest, not commitment - it never touches the moment RSVP.
@@ -222,39 +241,45 @@ export const floatsRouter = router({
       .select()
       .from(events)
       .where(and(inArray(events.groupId, groupIds), eq(events.phase, "floating")));
-    const out: {
-      id: string;
-      groupName: string;
-      createdAt: string;
-      tipAt: string | null;
-      msLeftToTip: number | null;
-      ideaCount: number;
-      timeCount: number;
-    }[] = [];
-    for (const e of rows) {
-      await settleFloating(e);
-      if (e.phase !== "floating") continue; // just tipped - it surfaces via events.mine now
-      const [g] = await db.select().from(groups).where(eq(groups.id, e.groupId));
-      const sugg = await db
-        .select()
-        .from(floatSuggestions)
-        .where(eq(floatSuggestions.eventId, e.id));
-      out.push({
-        id: e.id,
-        groupName: g?.name ?? "Group",
-        createdAt: e.createdAt.toISOString(),
-        tipAt: e.lockAt?.toISOString() ?? null,
-        msLeftToTip: e.lockAt ? Math.max(0, e.lockAt.getTime() - Date.now()) : null,
-        ideaCount: sugg.filter((s) => s.axis === "idea").length,
-        timeCount: sugg.filter((s) => s.axis === "time").length,
-      });
+    // settleFloating mutates in place and may flip a row out of floating, so run it per-row first,
+    // then batch the group-name and suggestion lookups for the survivors (avoids the N+1).
+    for (const e of rows) await settleFloating(e);
+    const live = rows.filter((e) => e.phase === "floating"); // dropped rows just tipped: events.mine
+    if (live.length === 0) return [];
+
+    const groupRows = await db
+      .select()
+      .from(groups)
+      .where(inArray(groups.id, [...new Set(live.map((e) => e.groupId))]));
+    const groupNames = new Map(groupRows.map((g) => [g.id, g.name] as const));
+    const suggRows = await db
+      .select()
+      .from(floatSuggestions)
+      .where(
+        inArray(
+          floatSuggestions.eventId,
+          live.map((e) => e.id),
+        ),
+      );
+    const ideaCounts = new Map<string, number>();
+    const timeCounts = new Map<string, number>();
+    for (const s of suggRows) {
+      const counts = s.axis === "idea" ? ideaCounts : timeCounts;
+      counts.set(s.eventId, (counts.get(s.eventId) ?? 0) + 1);
     }
-    return out;
+
+    return live.map((e) => ({
+      id: e.id,
+      groupName: groupNames.get(e.groupId) ?? FALLBACK_GROUP_NAME,
+      ...tipFields(e),
+      ideaCount: ideaCounts.get(e.id) ?? 0,
+      timeCount: timeCounts.get(e.id) ?? 0,
+    }));
   }),
 
   // One float's board: the two chip axes with public counts + the caller's own votes. If it tipped
   // while brewing, signal the client to hand off to the normal plan view. NEVER exposes who voted.
-  get: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
+  get: protectedProcedure.input(ByIdInput).query(async ({ ctx, input }) => {
     const [e] = await db.select().from(events).where(eq(events.id, input.id));
     if (!e) return null;
     await requireMember(e.groupId, ctx.userId);
@@ -263,7 +288,6 @@ export const floatsRouter = router({
       return { phase: "tipped" as const, eventId: e.id };
     }
 
-    const [g] = await db.select().from(groups).where(eq(groups.id, e.groupId));
     const sugg = await db.select().from(floatSuggestions).where(eq(floatSuggestions.eventId, e.id));
     const votes = await db.select().from(floatVotes).where(eq(floatVotes.eventId, e.id));
 
@@ -284,16 +308,18 @@ export const floatsRouter = router({
       .sort((a, b) => b.count - a.count);
     const times = sugg
       .filter((s) => s.axis === "time")
-      .map((s) => ({ ...base(s), band: s.partOfDay, startsAt: s.startsAt?.toISOString() ?? null }))
+      .map((s) => ({
+        ...base(s),
+        partOfDay: s.partOfDay,
+        startsAt: s.startsAt?.toISOString() ?? null,
+      }))
       .sort((a, b) => (a.startsAt ?? "").localeCompare(b.startsAt ?? ""));
 
     return {
       phase: "floating" as const,
       id: e.id,
-      groupName: g?.name ?? "Group",
-      createdAt: e.createdAt.toISOString(),
-      tipAt: e.lockAt?.toISOString() ?? null,
-      msLeftToTip: e.lockAt ? Math.max(0, e.lockAt.getTime() - Date.now()) : null,
+      groupName: await getGroupName(e.groupId),
+      ...tipFields(e),
       minHeat: e.minHeat,
       ideas,
       times,

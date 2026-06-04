@@ -1,20 +1,22 @@
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { type ReactNode, useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from "react-native";
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
-import { formatSlot, isoFrom } from "../lib/format";
-import { defaultLockAt } from "../lib/lock";
+import { formatSlot, isoFrom, splitIso } from "../lib/format";
+import { defaultLockAtForOptions } from "../lib/lock";
 import { trpc } from "../lib/trpc";
 import { font, ui } from "../theme";
-import { BackBar, Button, Card, Chip, DateTimePill, Field, ScreenBackground, Toggle } from "../ui";
+import {
+  BackBar,
+  Button,
+  Card,
+  Chip,
+  DateTimePill,
+  Field,
+  ScreenBackground,
+  ScreenLoading,
+  Toggle,
+} from "../ui";
 
 type Group = Awaited<ReturnType<typeof trpc.groups.mine.query>>[number];
 type Branch = "float" | "rough" | "set";
@@ -31,23 +33,18 @@ const TITLES: Record<Branch, string> = {
   rough: "Rough plan",
   set: "It's set",
 };
-
-// Split an ISO instant back into the picker's local "YYYY-MM-DD" / "HH:mm" strings.
-function splitIso(iso: string): { date: string; time: string } {
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return {
-    date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
-    time: `${pad(d.getHours())}:${pad(d.getMinutes())}`,
-  };
-}
+const SUBMIT_LABELS: Record<Branch, string> = {
+  float: "Float it",
+  rough: "Suggest it",
+  set: "Start the moment",
+};
 
 export function CreateWizard({ route, navigation }: Props) {
   const { branch } = route.params;
   const steps = STEPS[branch];
   const [step, setStep] = useState(0);
-  const key = steps[step];
-  const last = step === steps.length - 1;
+  const stepKey = steps[step];
+  const isLastStep = step === steps.length - 1;
 
   const [groups, setGroups] = useState<Group[]>([]);
   const [groupId, setGroupId] = useState<string | null>(null);
@@ -68,6 +65,9 @@ export function CreateWizard({ route, navigation }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
 
+  const updateRow = (id: string, patch: Partial<Row>) =>
+    setRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+
   useEffect(() => {
     trpc.groups.mine
       .query()
@@ -87,15 +87,17 @@ export function CreateWizard({ route, navigation }: Props) {
     ? Math.min(...optionIsos.map((iso) => new Date(iso).getTime()))
     : null;
   const autoLockIso =
-    earliestMs != null ? new Date(defaultLockAt(earliestMs, Date.now())).toISOString() : null;
+    earliestMs != null
+      ? new Date(defaultLockAtForOptions(earliestMs, Date.now())).toISOString()
+      : null;
   const lockOverrideIso = lockEdit ? isoFrom(lockDate, lockTime) : null;
   const lockInvalid =
     !!lockOverrideIso && earliestMs != null && new Date(lockOverrideIso).getTime() >= earliestMs;
   const lockToSend = lockEdit && lockOverrideIso && !lockInvalid ? lockOverrideIso : undefined;
   const sparkReady = ideaChips.length > 0 || ideaDraft.trim().length > 0;
 
-  function valid(k: string): boolean {
-    switch (k) {
+  function valid(key: string): boolean {
+    switch (key) {
       case "group":
         return !!groupId;
       case "what":
@@ -145,7 +147,7 @@ export function CreateWizard({ route, navigation }: Props) {
         });
         navigation.reset({
           index: 1,
-          routes: [{ name: "Dashboard" }, { name: "FloatBoard", params: { floatId: id } }],
+          routes: [{ name: "Dashboard" }, { name: "FloatBoard", params: { eventId: id } }],
         });
         return;
       }
@@ -172,9 +174,9 @@ export function CreateWizard({ route, navigation }: Props) {
   }
 
   function goNext() {
-    if (!valid(key) || busy) return;
-    if (key === "spark") commitDraftIdea();
-    if (last) submit();
+    if (!valid(stepKey) || busy) return;
+    if (stepKey === "spark") commitDraftIdea();
+    if (isLastStep) submit();
     else setStep(step + 1);
   }
   function goBack() {
@@ -182,23 +184,9 @@ export function CreateWizard({ route, navigation }: Props) {
     else navigation.goBack();
   }
 
-  if (loading) {
-    return (
-      <ScreenBackground>
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator color={ui.ink} />
-        </View>
-      </ScreenBackground>
-    );
-  }
+  if (loading) return <ScreenLoading />;
 
-  const nextLabel = !last
-    ? "Next"
-    : branch === "float"
-      ? "Float it"
-      : branch === "set"
-        ? "Start the moment"
-        : "Suggest it";
+  const nextLabel = isLastStep ? SUBMIT_LABELS[branch] : "Next";
 
   return (
     <ScreenBackground header={<BackBar title={TITLES[branch]} onBack={goBack} />}>
@@ -220,7 +208,7 @@ export function CreateWizard({ route, navigation }: Props) {
             </Text>
           )}
 
-          {key === "group" && (
+          {stepKey === "group" && (
             <Step title="Who's it for?">
               <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
                 {groups.map((g) => (
@@ -240,13 +228,13 @@ export function CreateWizard({ route, navigation }: Props) {
             </Step>
           )}
 
-          {key === "what" && (
+          {stepKey === "what" && (
             <Step title="What is it?">
               <Field label="Title" value={title} onChangeText={setTitle} placeholder="Bowling" />
             </Step>
           )}
 
-          {key === "spark" && (
+          {stepKey === "spark" && (
             <Step
               title="What's the spark?"
               sub="Drop a loose idea or two - the group adds more and piles on. You stay anonymous."
@@ -272,7 +260,7 @@ export function CreateWizard({ route, navigation }: Props) {
             </Step>
           )}
 
-          {key === "window" && (
+          {stepKey === "window" && (
             <Step
               title="Roughly when?"
               sub="Just a window - the exact time gets sorted as people pile on."
@@ -285,19 +273,19 @@ export function CreateWizard({ route, navigation }: Props) {
             </Step>
           )}
 
-          {key === "when" && branch === "set" && (
+          {stepKey === "when" && branch === "set" && (
             <Step title="When is it?">
               <DateTimePill
                 dateValue={rows[0].date}
                 timeValue={rows[0].time}
-                onDate={(t) => setRows((rs) => rs.map((r, i) => (i === 0 ? { ...r, date: t } : r)))}
-                onTime={(t) => setRows((rs) => rs.map((r, i) => (i === 0 ? { ...r, time: t } : r)))}
+                onDate={(t) => updateRow(rows[0].id, { date: t })}
+                onTime={(t) => updateRow(rows[0].id, { time: t })}
                 minimumDate={new Date()}
               />
             </Step>
           )}
 
-          {key === "when" && branch === "rough" && (
+          {stepKey === "when" && branch === "rough" && (
             <Step
               title="When could it be?"
               sub="Offer a time or two - people react and the best-supported wins."
@@ -307,43 +295,12 @@ export function CreateWizard({ route, navigation }: Props) {
                   <DateTimePill
                     dateValue={r.date}
                     timeValue={r.time}
-                    onDate={(t) =>
-                      setRows((rs) => rs.map((x) => (x.id === r.id ? { ...x, date: t } : x)))
-                    }
-                    onTime={(t) =>
-                      setRows((rs) => rs.map((x) => (x.id === r.id ? { ...x, time: t } : x)))
-                    }
+                    onDate={(t) => updateRow(r.id, { date: t })}
+                    onTime={(t) => updateRow(r.id, { time: t })}
                     minimumDate={new Date()}
                   />
                   {rows.length > 1 && (
-                    <Pressable
-                      onPress={() => setRows((rs) => rs.filter((x) => x.id !== r.id))}
-                      hitSlop={12}
-                      style={{
-                        position: "absolute",
-                        top: -8,
-                        right: -8,
-                        width: 22,
-                        height: 22,
-                        borderRadius: 11,
-                        backgroundColor: ui.surface,
-                        borderWidth: ui.border,
-                        borderColor: ui.ink,
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontFamily: font.bold,
-                          fontSize: 13,
-                          lineHeight: 13,
-                          color: ui.ink,
-                        }}
-                      >
-                        ×
-                      </Text>
-                    </Pressable>
+                    <RemoveDot onPress={() => setRows((rs) => rs.filter((x) => x.id !== r.id))} />
                   )}
                 </View>
               ))}
@@ -358,7 +315,7 @@ export function CreateWizard({ route, navigation }: Props) {
             </Step>
           )}
 
-          {key === "details" && (
+          {stepKey === "details" && (
             <Step title="Anything else?" sub="Both optional - skip if you like.">
               <Field
                 label="Location"
@@ -379,7 +336,7 @@ export function CreateWizard({ route, navigation }: Props) {
             </Step>
           )}
 
-          {key === "lock" && (
+          {stepKey === "lock" && (
             <Step title="When does it lock?">
               {lockEdit ? (
                 <Card>
@@ -436,7 +393,7 @@ export function CreateWizard({ route, navigation }: Props) {
           <Button
             label={nextLabel}
             variant="primary"
-            disabled={!valid(key) || busy}
+            disabled={!valid(stepKey) || busy}
             onPress={goNext}
             style={{ marginTop: 24 }}
           />
@@ -511,6 +468,30 @@ function RemovableChip({ label, onRemove }: { label: string; onRemove: () => voi
     >
       <Text style={{ fontFamily: font.bold, fontSize: 12, color: "#fff" }}>{label}</Text>
       <Text style={{ fontFamily: font.bold, fontSize: 13, lineHeight: 13, color: "#fff" }}>×</Text>
+    </Pressable>
+  );
+}
+
+function RemoveDot({ onPress }: { onPress: () => void }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      hitSlop={12}
+      style={{
+        position: "absolute",
+        top: -8,
+        right: -8,
+        width: 22,
+        height: 22,
+        borderRadius: 11,
+        backgroundColor: ui.surface,
+        borderWidth: ui.border,
+        borderColor: ui.ink,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Text style={{ fontFamily: font.bold, fontSize: 13, lineHeight: 13, color: ui.ink }}>×</Text>
     </Pressable>
   );
 }

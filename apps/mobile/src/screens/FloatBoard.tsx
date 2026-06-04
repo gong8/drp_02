@@ -1,38 +1,48 @@
+import type { PartOfDay } from "@bethere/shared";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { type ReactNode, useCallback, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
-import { formatCountdown, partOfDayLabel } from "../lib/format";
+import { formatCountdown, partOfDayLabel, shortDayLabel } from "../lib/format";
 import { trpc } from "../lib/trpc";
+import { useBusyAction } from "../lib/useBusyAction";
+import { useLiveClock } from "../lib/useLiveClock";
 import { font, ui } from "../theme";
-import { BackBar, Button, Card, Field, FloatChip, HardShadow, ScreenBackground } from "../ui";
+import {
+  BackBar,
+  Button,
+  Card,
+  DetailError,
+  DrainBar,
+  Field,
+  FloatChip,
+  HardShadow,
+  ScreenBackground,
+  ScreenLoading,
+} from "../ui";
 
 type FloatGet = Awaited<ReturnType<typeof trpc.floats.get.query>>;
 type Brew = Extract<NonNullable<FloatGet>, { phase: "floating" }>;
 type Props = NativeStackScreenProps<MeetupsStackParams, "FloatBoard">;
 
+// Mirrors the shared PartOfDay enum (packages/shared schemas.ts); Metro cannot value-import it.
 const BANDS = ["morning", "afternoon", "evening", "late"] as const;
 
-// "Wed 4 Jun" for a day-chip / time label.
-function dayLabel(d: Date): string {
-  return d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
-}
-
 export function FloatBoard({ route, navigation }: Props) {
-  const { floatId } = route.params;
+  const { eventId } = route.params;
   const [board, setBoard] = useState<Brew | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [now, setNow] = useState(Date.now());
+  const now = useLiveClock();
   // Suggestion ids with an in-flight +1 toggle: while any are pending we skip applying poll data so
   // the optimistic chip never flickers (the next clean poll reconciles the true count).
   const pending = useRef<Set<string>>(new Set());
 
   const load = useCallback(() => {
     return trpc.floats.get
-      .query({ id: floatId })
+      .query({ id: eventId })
       .then((d) => {
         if (!d) {
           setError(true);
@@ -48,17 +58,15 @@ export function FloatBoard({ route, navigation }: Props) {
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [floatId, navigation]);
+  }, [eventId, navigation]);
 
   useFocusEffect(
     useCallback(() => {
       let active = true;
       load();
-      const tick = setInterval(() => active && setNow(Date.now()), 1000);
       const poll = setInterval(() => active && load(), 5000);
       return () => {
         active = false;
-        clearInterval(tick);
         clearInterval(poll);
       };
     }, [load]),
@@ -66,73 +74,45 @@ export function FloatBoard({ route, navigation }: Props) {
 
   // One-tap +1 / un-+1, optimistic. A failed toggle reverts; the poll reconciles once it settles.
   function toggle(id: string, axis: "idea" | "time") {
+    const flipMine = <T extends { id: string; mine: boolean; count: number }>(chips: T[]): T[] =>
+      chips.map((c) =>
+        c.id === id ? { ...c, mine: !c.mine, count: c.count + (c.mine ? -1 : 1) } : c,
+      );
     const flip = (b: Brew | null): Brew | null => {
       if (!b) return b;
-      const upd = <T extends { id: string; mine: boolean; count: number }>(arr: T[]): T[] =>
-        arr.map((c) =>
-          c.id === id ? { ...c, mine: !c.mine, count: c.count + (c.mine ? -1 : 1) } : c,
-        );
-      return axis === "idea" ? { ...b, ideas: upd(b.ideas) } : { ...b, times: upd(b.times) };
+      return axis === "idea"
+        ? { ...b, ideas: flipMine(b.ideas) }
+        : { ...b, times: flipMine(b.times) };
     };
     setBoard(flip);
     pending.current.add(id);
     trpc.floats.toggleVote
-      .mutate({ eventId: floatId, suggestionId: id })
+      .mutate({ eventId, suggestionId: id })
       .catch(() => setBoard(flip))
       .finally(() => pending.current.delete(id));
   }
 
-  async function addIdea(text: string) {
-    if (busy) return;
-    setBusy(true);
-    try {
-      await trpc.floats.addIdea.mutate({ eventId: floatId, text });
-      await load();
-    } catch {
-      setError(true);
-    } finally {
-      setBusy(false);
-    }
-  }
+  const runAction = useBusyAction({ busy, setBusy, setError, load });
 
-  async function addTime(dayIso: string, band: (typeof BANDS)[number]) {
-    if (busy) return;
-    setBusy(true);
-    try {
-      await trpc.floats.addTime.mutate({ eventId: floatId, day: dayIso, band });
-      await load();
-    } catch {
-      setError(true);
-    } finally {
-      setBusy(false);
-    }
-  }
+  const addIdea = (text: string) => runAction(() => trpc.floats.addIdea.mutate({ eventId, text }));
 
-  if (loading) {
-    return (
-      <ScreenBackground>
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator color={ui.ink} />
-        </View>
-      </ScreenBackground>
-    );
-  }
+  const addTime = (dayIso: string, band: PartOfDay) =>
+    runAction(() => trpc.floats.addTime.mutate({ eventId, day: dayIso, band }));
+
+  if (loading) return <ScreenLoading />;
   if (error || !board) {
     return (
-      <ScreenBackground>
-        <View style={{ padding: 16 }}>
-          <BackBar title="Back" onBack={() => navigation.goBack()} />
-          <Text style={{ fontFamily: font.medium, color: ui.muted }}>
-            {error ? "Couldn't reach the server." : "This float is gone."}
-          </Text>
-        </View>
-      </ScreenBackground>
+      <DetailError
+        error={error}
+        onBack={() => navigation.goBack()}
+        notFoundLabel="This float is gone."
+      />
     );
   }
 
-  const tipMs = board.tipAt ? new Date(board.tipAt).getTime() - now : 0;
   const start = new Date(board.createdAt).getTime();
   const end = board.tipAt ? new Date(board.tipAt).getTime() : start;
+  const tipMs = board.tipAt ? end - now : 0;
   const frac = end <= start ? 1 : Math.max(0, Math.min(1, (end - now) / (end - start)));
   const hot = frac < 0.25;
 
@@ -160,24 +140,7 @@ export function FloatBoard({ route, navigation }: Props) {
               {`auto-tips ${formatCountdown(tipMs)}`}
             </Text>
           </View>
-          <View
-            style={{
-              height: 12,
-              borderWidth: ui.border,
-              borderColor: ui.ink,
-              borderRadius: 999,
-              backgroundColor: ui.surface,
-              overflow: "hidden",
-            }}
-          >
-            <View
-              style={{
-                height: "100%",
-                width: `${Math.round(frac * 100)}%`,
-                backgroundColor: hot ? ui.brand : ui.going,
-              }}
-            />
-          </View>
+          <DrainBar frac={frac} hot={hot} />
         </View>
 
         <Card style={{ marginBottom: 18 }}>
@@ -225,7 +188,7 @@ export function FloatBoard({ route, navigation }: Props) {
             {board.times.map((c) => (
               <FloatChip
                 key={c.id}
-                label={`${dayLabel(new Date(c.startsAt ?? board.createdAt))} · ${partOfDayLabel(c.band)}`}
+                label={`${shortDayLabel(new Date(c.startsAt ?? board.createdAt))} · ${partOfDayLabel(c.partOfDay)}`}
                 count={c.count}
                 mine={c.mine}
                 onPress={() => toggle(c.id, "time")}
@@ -305,11 +268,11 @@ function AddTime({
   onAdd,
 }: {
   busy: boolean;
-  onAdd: (dayIso: string, band: (typeof BANDS)[number]) => void;
+  onAdd: (dayIso: string, band: PartOfDay) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [dayIdx, setDayIdx] = useState<number | null>(null);
-  const [band, setBand] = useState<(typeof BANDS)[number] | null>(null);
+  const [band, setBand] = useState<PartOfDay | null>(null);
 
   const days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
@@ -343,7 +306,7 @@ function AddTime({
         {days.map((d, i) => (
           <MiniChip
             key={d.toISOString()}
-            label={dayLabel(d)}
+            label={shortDayLabel(d)}
             selected={dayIdx === i}
             onPress={() => setDayIdx(i)}
           />

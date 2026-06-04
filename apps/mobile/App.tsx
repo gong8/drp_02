@@ -29,7 +29,7 @@ export type MeetupsStackParams = {
   EventDetail: { eventId: string };
   NewDial: undefined;
   CreateWizard: { branch: "float" | "rough" | "set" };
-  FloatBoard: { floatId: string };
+  FloatBoard: { eventId: string };
 };
 export type GroupsStackParams = {
   GroupsList: undefined;

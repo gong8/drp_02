@@ -1,27 +1,34 @@
 import { randomUUID } from "node:crypto";
 import {
   AddCandidateInput,
+  addCandidateHorizon,
+  addDays,
+  ByIdInput,
   CreateEventInput,
   clears,
-  defaultLockAt,
+  DAY_MS,
+  DEFAULT_MOMENT_MINUTES,
+  defaultLockAtForOptions,
+  defaultLockAtForWindow,
   expandWindow,
   LockInput,
+  MOMENT_MS,
+  type MomentResponse,
   type PartOfDay,
+  pickWinnerOrBestId,
   pickWinningCandidate,
   ReactInput,
   ResolveInput,
   RespondInput,
-  type ResponseInput,
   reconcileFloat,
   resolveIn,
   revealGoing,
   SetOptOutInput,
-  tallyCandidates,
 } from "@bethere/shared";
 import { TRPCError } from "@trpc/server";
 import { and, eq, inArray } from "drizzle-orm";
-import { z } from "zod";
 import { db } from "../db/client.js";
+import { getGroupName } from "../db/groups.js";
 import {
   candidateReactions,
   eventCandidates,
@@ -30,19 +37,19 @@ import {
   floatSuggestions,
   floatVotes,
   groupMembers,
-  groups,
   responses,
   users,
 } from "../db/schema.js";
+import { FALLBACK_AVATAR_COLOR, FALLBACK_USER_NAME, getUserCard } from "../db/users.js";
+import { msLeft } from "../format.js";
 import { protectedProcedure, router } from "../trpc.js";
 
-type EventRow = typeof events.$inferSelect;
+export type EventRow = typeof events.$inferSelect;
 type MyStatus = "reacting" | "awaiting" | "going" | "declined";
 
 const DEFAULT_QUORUM = 2;
-const DEFAULT_MOMENT_MINUTES = 60;
 
-async function responsesFor(eventId: string): Promise<ResponseInput[]> {
+async function responsesFor(eventId: string): Promise<MomentResponse[]> {
   const rows = await db.select().from(responses).where(eq(responses.eventId, eventId));
   return rows.map((r) => ({ userId: r.userId, kind: r.kind, cond: r.cond ?? undefined }));
 }
@@ -62,10 +69,10 @@ async function candidatesFor(eventId: string): Promise<(typeof eventCandidates.$
 
 // The crowd is hidden until the moment ends (or the plan is cleared/fizzled), so a live moment
 // shows its countdown instead of biasing people with who is already in. null while still blind.
-function revealedGoing(e: EventRow, resp: ResponseInput[]): string[] | null {
+function goingFromRow(e: EventRow, resp: MomentResponse[]): string[] | null {
   return revealGoing(resp, {
-    respondByAtMs: e.momentEndsAt ? e.momentEndsAt.getTime() : Number.POSITIVE_INFINITY,
-    status: e.phase === "cleared" || e.phase === "fizzled" ? "resolved" : e.phase,
+    momentEndsAtMs: e.momentEndsAt ? e.momentEndsAt.getTime() : Number.POSITIVE_INFINITY,
+    resolved: e.phase === "cleared" || e.phase === "fizzled",
     nowMs: Date.now(),
   });
 }
@@ -73,7 +80,7 @@ function revealedGoing(e: EventRow, resp: ResponseInput[]): string[] | null {
 // The blind moment always ends by the event itself. Use the configured window, but never run past
 // the chosen start; if the start is already here, fall back to a full window so there is always a
 // real moment to answer (and we never reveal before anyone could respond).
-function momentEnd(now: Date, minutes: number, chosenStartsAt: Date): Date {
+function computeMomentEnd(now: Date, minutes: number, chosenStartsAt: Date): Date {
   const windowEnd = new Date(now.getTime() + minutes * 60 * 1000);
   if (chosenStartsAt.getTime() <= now.getTime()) return windowEnd;
   return new Date(Math.min(windowEnd.getTime(), chosenStartsAt.getTime()));
@@ -84,6 +91,30 @@ function momentEnd(now: Date, minutes: number, chosenStartsAt: Date): Date {
 async function optedOut(eventId: string): Promise<Set<string>> {
   const rows = await db.select().from(eventOptOuts).where(eq(eventOptOuts.eventId, eventId));
   return new Set(rows.map((r) => r.userId));
+}
+
+// Fizzle a plan: persist the silent dead-end (and resolve it) then mirror onto the in-memory row so
+// the same read returns the new phase. The single source for every "this plan fizzles" transition.
+async function fizzle(e: EventRow): Promise<void> {
+  await db.update(events).set({ phase: "fizzled", status: "resolved" }).where(eq(events.id, e.id));
+  e.phase = "fizzled";
+}
+
+// Persist a plan's candidate slate (one row per slot, no label) so create and the settleFloating
+// collecting fallback agree on exactly how a candidate row is shaped.
+async function insertCandidates(
+  eventId: string,
+  rows: { id: string; startsAt: Date; partOfDay: PartOfDay | null }[],
+): Promise<void> {
+  for (const r of rows) {
+    await db.insert(eventCandidates).values({
+      id: r.id,
+      eventId,
+      startsAt: r.startsAt,
+      partOfDay: r.partOfDay,
+      label: null,
+    });
+  }
 }
 
 // Lazily settle a moment whose countdown has ended (no scheduler): clears if quorum is met, else
@@ -107,24 +138,16 @@ async function settleCollecting(e: EventRow): Promise<void> {
   const cands = await candidatesFor(e.id);
   const reactions = await reactionsFor(e.id);
   if (cands.length === 0 || reactions.length === 0) {
-    await db
-      .update(events)
-      .set({ phase: "fizzled", status: "resolved" })
-      .where(eq(events.id, e.id));
-    e.phase = "fizzled";
+    await fizzle(e);
     return;
   }
   const candIds = cands.map((c) => c.id);
-  const winner = pickWinningCandidate(candIds, reactions, e.quorum);
-  const chosenId = winner
-    ? winner.candidateId
-    : [...tallyCandidates(candIds, reactions)].sort(
-        (a, b) => b.userIds.length - a.userIds.length,
-      )[0].candidateId;
-  const chosen = cands.find((c) => c.id === chosenId);
-  if (!chosen) return;
+  // The slate is non-empty (guarded above), so the winner-or-best id always resolves to a real
+  // candidate here - the lookup is guaranteed to hit.
+  const chosenId = pickWinnerOrBestId(candIds, reactions, e.quorum);
+  const chosen = cands.find((c) => c.id === chosenId) as (typeof cands)[number];
   const now = new Date();
-  const endsAt = momentEnd(now, DEFAULT_MOMENT_MINUTES, chosen.startsAt);
+  const endsAt = computeMomentEnd(now, DEFAULT_MOMENT_MINUTES, chosen.startsAt);
   await db
     .update(events)
     .set({
@@ -145,7 +168,7 @@ async function settleCollecting(e: EventRow): Promise<void> {
 
 // A float left this far past its tip deadline (a dormant group nobody opened) fizzles rather than
 // resurrecting a stale idea into a live plan.
-const FLOAT_STALE_MS = 7 * 24 * 60 * 60 * 1000;
+const FLOAT_STALE_MS = 7 * DAY_MS;
 
 // Lazily tip a float whose deadline (`lockAt`) has passed (no scheduler), mirroring settleCollecting.
 // reconcileFloat crystallizes the chips into a concrete outcome: a clear idea + an agreed time opens
@@ -155,11 +178,7 @@ const FLOAT_STALE_MS = 7 * 24 * 60 * 60 * 1000;
 export async function settleFloating(e: EventRow): Promise<void> {
   if (e.phase !== "floating" || !e.lockAt || Date.now() < e.lockAt.getTime()) return;
   if (Date.now() - e.lockAt.getTime() > FLOAT_STALE_MS) {
-    await db
-      .update(events)
-      .set({ phase: "fizzled", status: "resolved" })
-      .where(eq(events.id, e.id));
-    e.phase = "fizzled";
+    await fizzle(e);
     return;
   }
 
@@ -180,11 +199,9 @@ export async function settleFloating(e: EventRow): Promise<void> {
   const windowSlotsMs =
     times.length > 0
       ? []
-      : Array.from({ length: 5 }, (_, i) => {
-          const d = new Date(e.startsAt);
-          d.setDate(d.getDate() + i);
-          return d.getTime();
-        }).filter((ms) => ms >= Date.now());
+      : Array.from({ length: 5 }, (_, i) => addDays(new Date(e.startsAt), i).getTime()).filter(
+          (ms) => ms >= Date.now(),
+        );
 
   const result = reconcileFloat(
     ideas,
@@ -195,18 +212,14 @@ export async function settleFloating(e: EventRow): Promise<void> {
   );
 
   if (result.kind === "fizzle") {
-    await db
-      .update(events)
-      .set({ phase: "fizzled", status: "resolved" })
-      .where(eq(events.id, e.id));
-    e.phase = "fizzled";
+    await fizzle(e);
     return;
   }
 
   const now = new Date();
   if (result.kind === "moment") {
     const chosenStartsAt = new Date(result.startsAtMs);
-    const endsAt = momentEnd(now, DEFAULT_MOMENT_MINUTES, chosenStartsAt);
+    const endsAt = computeMomentEnd(now, DEFAULT_MOMENT_MINUTES, chosenStartsAt);
     await db
       .update(events)
       .set({
@@ -233,16 +246,10 @@ export async function settleFloating(e: EventRow): Promise<void> {
     .filter((ms) => ms > Date.now())
     .sort((a, b) => a - b);
   if (slots.length === 0) {
-    await db
-      .update(events)
-      .set({ phase: "fizzled", status: "resolved" })
-      .where(eq(events.id, e.id));
-    e.phase = "fizzled";
+    await fizzle(e);
     return;
   }
-  const lockAt = new Date(
-    defaultLockAt(slots[0], now.getTime(), DEFAULT_MOMENT_MINUTES * 60 * 1000),
-  );
+  const lockAt = new Date(defaultLockAtForWindow(slots[slots.length - 1], now.getTime()));
   await db
     .update(events)
     .set({
@@ -253,15 +260,10 @@ export async function settleFloating(e: EventRow): Promise<void> {
       lockAt,
     })
     .where(eq(events.id, e.id));
-  for (let i = 0; i < slots.length; i++) {
-    await db.insert(eventCandidates).values({
-      id: `${e.id}_d${i + 1}`,
-      eventId: e.id,
-      startsAt: new Date(slots[i]),
-      partOfDay: null,
-      label: null,
-    });
-  }
+  await insertCandidates(
+    e.id,
+    slots.map((ms, i) => ({ id: `${e.id}_d${i + 1}`, startsAt: new Date(ms), partOfDay: null })),
+  );
   e.phase = "collecting";
   e.title = result.ideaText;
   e.startsAt = new Date(slots[0]);
@@ -271,7 +273,11 @@ export async function settleFloating(e: EventRow): Promise<void> {
 
 // This user's status. During a blind moment we only ever reflect their OWN answer (we cannot leak
 // others); once revealed we use the full resolved IN set.
-function statusFor(userId: string, resp: ResponseInput[], revealed: string[] | null): MyStatus {
+function computeBaseStatus(
+  userId: string,
+  resp: MomentResponse[],
+  revealed: string[] | null,
+): MyStatus {
   const mine = resp.find((r) => r.userId === userId);
   if (revealed) {
     if (mine?.kind === "no") return "declined";
@@ -288,8 +294,7 @@ async function buildGoing(
 ): Promise<{ id: string; name: string; color: string }[]> {
   const out: { id: string; name: string; color: string }[] = [];
   for (const id of revealed) {
-    const [u] = await db.select().from(users).where(eq(users.id, id));
-    out.push({ id, name: u?.name ?? "Someone", color: u?.avatarColor ?? "#8B948B" });
+    out.push(await getUserCard(id));
   }
   return out;
 }
@@ -304,7 +309,7 @@ async function goingPreview(revealed: string[] | null): Promise<{
     const [u] = await db.select().from(users).where(eq(users.id, uid));
     preview.push({
       uid,
-      color: u?.avatarColor ?? "#8B948B",
+      color: u?.avatarColor ?? FALLBACK_AVATAR_COLOR,
       initial: (u?.name ?? "?").charAt(0).toUpperCase(),
     });
   }
@@ -320,6 +325,41 @@ export async function requireMember(groupId: string, userId: string): Promise<vo
     .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, userId)))
     .limit(1);
   if (m.length === 0) throw new TRPCError({ code: "FORBIDDEN" });
+}
+
+// Load an event for a member-scoped mutation: fetch by id, 404 if missing, then assert membership.
+// The shared head of the NOT_FOUND mutations (react/setOptOut/addCandidate/lock/respond/unrespond/
+// resolve); the null-returning reads (events.get, floats.get) keep their own preamble.
+export async function loadEvent(eventId: string, userId: string): Promise<EventRow> {
+  const [e] = await db.select().from(events).where(eq(events.id, eventId));
+  if (!e) throw new TRPCError({ code: "NOT_FOUND" });
+  await requireMember(e.groupId, userId);
+  return e;
+}
+
+// Run the canonical convergence pass in its load-bearing order: a float tips, then a collecting
+// round locks, then a moment clears/fizzles. Each step no-ops unless the row is in its phase, so the
+// whole sequence is safe to run on any row.
+async function settleLifecycle(e: EventRow): Promise<void> {
+  await settleFloating(e);
+  await settleCollecting(e);
+  await settlePhase(e);
+}
+
+// The opt-out-aware status of the caller, shared by mine (dashboard) and get (detail). In collecting
+// an opt-out reads as declined else reacting; after collecting an opt-out with no moment answer reads
+// as declined, else the blind/revealed rule. Takes iOptedOut precomputed - it never queries.
+function computeMyStatus(
+  phase: EventRow["phase"],
+  userId: string,
+  resp: MomentResponse[],
+  revealed: string[] | null,
+  iOptedOut: boolean,
+): MyStatus {
+  if (phase === "collecting") return iOptedOut ? "declined" : "reacting";
+  return iOptedOut && !resp.find((r) => r.userId === userId)
+    ? "declined"
+    : computeBaseStatus(userId, resp, revealed);
 }
 
 export const eventsRouter = router({
@@ -358,28 +398,38 @@ export const eventsRouter = router({
     const momentStartsAt = exact ? new Date() : null;
     let momentEndsAt: Date | null = exact ? startsAt : null;
     if (exact && momentEndsAt && momentEndsAt.getTime() <= Date.now()) {
-      momentEndsAt = new Date(Date.now() + DEFAULT_MOMENT_MINUTES * 60 * 1000);
+      momentEndsAt = new Date(Date.now() + MOMENT_MS);
     }
     const respondByAt = momentEndsAt ?? cands[cands.length - 1].startsAt;
 
-    // Non-exact plans collect until a deadline, then auto-lock the winning slot. Default to "the day
-    // before" the earliest slot; honour an explicit creator override if it sits after now and no
-    // later than that earliest slot (so we never lock in a time that has already passed).
+    // Non-exact plans collect until a fixed deadline, then auto-lock the winning slot. Options anchor
+    // the default to the earliest proposed time; a fuzzy window anchors to its last slot. An explicit
+    // creator override is honoured if it sits after now and leaves the blind moment room before the
+    // anchor. The deadline never moves once stored.
     let lockAt: Date | null = null;
     if (!exact) {
       const earliestMs = cands[0].startsAt.getTime();
+      const lastMs = cands[cands.length - 1].startsAt.getTime();
+      const fuzzy = when.mode === "fuzzy";
+      const anchorMs = fuzzy ? lastMs : earliestMs;
       if (input.lockAt) {
         const t = new Date(input.lockAt);
-        if (Number.isNaN(t.getTime()) || t.getTime() <= Date.now() || t.getTime() > earliestMs) {
+        if (
+          Number.isNaN(t.getTime()) ||
+          t.getTime() <= Date.now() ||
+          t.getTime() > anchorMs - MOMENT_MS
+        ) {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message: "lock-in time must be after now and on or before the earliest proposed time",
+            message: "lock-in time must be after now and leave room before the plan's window",
           });
         }
         lockAt = t;
       } else {
         lockAt = new Date(
-          defaultLockAt(earliestMs, Date.now(), DEFAULT_MOMENT_MINUTES * 60 * 1000),
+          fuzzy
+            ? defaultLockAtForWindow(lastMs, Date.now())
+            : defaultLockAtForOptions(earliestMs, Date.now()),
         );
       }
     }
@@ -403,15 +453,7 @@ export const eventsRouter = router({
       momentStartsAt,
       momentEndsAt,
     });
-    for (const c of cands) {
-      await db.insert(eventCandidates).values({
-        id: c.id,
-        eventId: id,
-        startsAt: c.startsAt,
-        partOfDay: c.partOfDay,
-        label: null,
-      });
-    }
+    await insertCandidates(id, cands);
     // TODO push: notify group members "X floated a plan - which times work?" / "you're in a moment".
     return { id };
   }),
@@ -419,9 +461,7 @@ export const eventsRouter = router({
   // Replace the caller's "these times work for me" reactions during collecting. Private: only the
   // caller and the creator (via the tally) ever see them.
   react: protectedProcedure.input(ReactInput).mutation(async ({ ctx, input }) => {
-    const [e] = await db.select().from(events).where(eq(events.id, input.eventId));
-    if (!e) throw new TRPCError({ code: "NOT_FOUND" });
-    await requireMember(e.groupId, ctx.userId);
+    const e = await loadEvent(input.eventId, ctx.userId);
     if (e.phase !== "collecting") {
       throw new TRPCError({ code: "BAD_REQUEST", message: "plan is not collecting reactions" });
     }
@@ -454,9 +494,7 @@ export const eventsRouter = router({
   // reactions (dropping them from the tally/quorum) and excludes them from the moment + reminders.
   // Private: no one else, not even the creator, sees it. Reversible via out:false or by reacting.
   setOptOut: protectedProcedure.input(SetOptOutInput).mutation(async ({ ctx, input }) => {
-    const [e] = await db.select().from(events).where(eq(events.id, input.eventId));
-    if (!e) throw new TRPCError({ code: "NOT_FOUND" });
-    await requireMember(e.groupId, ctx.userId);
+    const e = await loadEvent(input.eventId, ctx.userId);
     if (e.phase !== "collecting") {
       throw new TRPCError({ code: "BAD_REQUEST", message: "plan is not collecting" });
     }
@@ -485,9 +523,7 @@ export const eventsRouter = router({
   // collecting - the crowd simply gains another slot to react to. New candidates carry no
   // part-of-day and no author. Identical minutes are de-duped so two proposers can't clutter the list.
   addCandidate: protectedProcedure.input(AddCandidateInput).mutation(async ({ ctx, input }) => {
-    const [e] = await db.select().from(events).where(eq(events.id, input.eventId));
-    if (!e) throw new TRPCError({ code: "NOT_FOUND" });
-    await requireMember(e.groupId, ctx.userId);
+    const e = await loadEvent(input.eventId, ctx.userId);
     if (e.phase !== "collecting") {
       throw new TRPCError({ code: "BAD_REQUEST", message: "plan is not collecting" });
     }
@@ -495,8 +531,9 @@ export const eventsRouter = router({
     if (Number.isNaN(startsAt.getTime())) {
       throw new TRPCError({ code: "BAD_REQUEST", message: "invalid time" });
     }
-    // A new slot must sit after the lock-in deadline, so it is still a live choice when we lock and
-    // the invariant lockAt <= earliest candidate holds.
+    // A new slot must sit after the lock-in deadline (still a live choice when we lock) and within
+    // the plan's window/horizon (fuzzy: the window's last day; options: a small slack past the
+    // existing spread). Keeps the deadline meaningful without recomputing it.
     if (e.lockAt && startsAt.getTime() <= e.lockAt.getTime()) {
       throw new TRPCError({
         code: "BAD_REQUEST",
@@ -504,6 +541,21 @@ export const eventsRouter = router({
       });
     }
     const existing = await candidatesFor(input.eventId);
+    if (existing.length === 0) {
+      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "plan has no candidates" });
+    }
+    const times = existing.map((c) => c.startsAt.getTime());
+    const horizon = addCandidateHorizon(
+      Math.min(...times),
+      Math.max(...times),
+      e.whenMode === "fuzzy",
+    );
+    if (startsAt.getTime() > horizon) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "that time is past this plan's window",
+      });
+    }
     const dup = existing.find((c) => c.startsAt.getTime() === startsAt.getTime());
     if (dup) return { id: dup.id };
     const id = `${input.eventId}_c_${randomUUID()}`;
@@ -520,9 +572,7 @@ export const eventsRouter = router({
   // The creator locks the winning slot, opening the blind timed moment. With no candidateId we pick
   // the best-supported candidate (falling back to the most-reacted so a lock always succeeds).
   lock: protectedProcedure.input(LockInput).mutation(async ({ ctx, input }) => {
-    const [e] = await db.select().from(events).where(eq(events.id, input.eventId));
-    if (!e) throw new TRPCError({ code: "NOT_FOUND" });
-    await requireMember(e.groupId, ctx.userId);
+    const e = await loadEvent(input.eventId, ctx.userId);
     if (e.isAnonymous) {
       throw new TRPCError({
         code: "FORBIDDEN",
@@ -540,22 +590,15 @@ export const eventsRouter = router({
     const candIds = cands.map((c) => c.id);
     const reactions = await reactionsFor(input.eventId);
 
-    let chosenId =
+    const requestedId =
       input.candidateId && candIds.includes(input.candidateId) ? input.candidateId : null;
-    if (!chosenId) {
-      const winner = pickWinningCandidate(candIds, reactions, e.quorum);
-      chosenId = winner
-        ? winner.candidateId
-        : [...tallyCandidates(candIds, reactions)].sort(
-            (a, b) => b.userIds.length - a.userIds.length,
-          )[0].candidateId;
-    }
+    const chosenId = requestedId ?? pickWinnerOrBestId(candIds, reactions, e.quorum);
     const chosen = cands.find((c) => c.id === chosenId);
     if (!chosen) throw new TRPCError({ code: "BAD_REQUEST", message: "unknown candidate" });
 
     const minutes = input.momentMinutes ?? DEFAULT_MOMENT_MINUTES;
     const now = new Date();
-    const momentEndsAt = momentEnd(now, minutes, chosen.startsAt);
+    const momentEndsAt = computeMomentEnd(now, minutes, chosen.startsAt);
     await db
       .update(events)
       .set({
@@ -582,25 +625,21 @@ export const eventsRouter = router({
     const rows = await db.select().from(events).where(inArray(events.groupId, groupIds));
     const out = await Promise.all(
       rows.map(async (e) => {
-        await settleFloating(e);
-        await settleCollecting(e);
-        await settlePhase(e);
+        await settleLifecycle(e);
         if (e.phase === "floating") return null; // still brewing: shown in the Brewing zone (floats.mine)
         if (e.phase === "fizzled") return null; // silent: a fizzle leaves no trace
-        const [g] = await db.select().from(groups).where(eq(groups.id, e.groupId));
         const resp = await responsesFor(e.id);
-        const revealed = revealedGoing(e, resp);
+        const revealed = goingFromRow(e, resp);
         const { goingCount, preview } = await goingPreview(revealed);
         // A float stays unsigned forever: the originator is never flagged as creator, even post-tip.
         const isCreator = !e.isAnonymous && e.createdByUserId === ctx.userId;
-        const iOpted = (await optedOut(e.id)).has(ctx.userId);
+        const iOptedOut = (await optedOut(e.id)).has(ctx.userId);
+        const myStatus = computeMyStatus(e.phase, ctx.userId, resp, revealed, iOptedOut);
 
-        let myStatus: MyStatus;
         let iReacted = false;
         let candidateCount = 0;
         let readyToLock = false;
         if (e.phase === "collecting") {
-          myStatus = iOpted ? "declined" : "reacting";
           const cands = await candidatesFor(e.id);
           candidateCount = cands.length;
           const myReacts = await db
@@ -619,14 +658,11 @@ export const eventsRouter = router({
                 e.quorum,
               ) !== null;
           }
-        } else {
-          const mineResp = resp.find((r) => r.userId === ctx.userId);
-          myStatus = iOpted && !mineResp ? "declined" : statusFor(ctx.userId, resp, revealed);
         }
 
         return {
           id: e.id,
-          groupName: g?.name ?? "Group",
+          groupName: await getGroupName(e.groupId),
           title: e.title,
           location: e.location,
           whenMode: e.whenMode,
@@ -634,10 +670,10 @@ export const eventsRouter = router({
           startsAt: e.startsAt.toISOString(),
           createdAt: e.createdAt.toISOString(),
           lockAt: e.lockAt?.toISOString() ?? null,
-          msLeftToLock: e.lockAt ? Math.max(0, e.lockAt.getTime() - Date.now()) : null,
+          msLeftToLock: msLeft(e.lockAt),
           momentStartsAt: e.momentStartsAt?.toISOString() ?? null,
           momentEndsAt: e.momentEndsAt?.toISOString() ?? null,
-          msLeft: e.momentEndsAt ? Math.max(0, e.momentEndsAt.getTime() - Date.now()) : null,
+          msLeft: msLeft(e.momentEndsAt),
           myStatus,
           iReacted,
           // Whether the caller has a moment answer on record (any of yes/no/conditional). Drives
@@ -657,18 +693,15 @@ export const eventsRouter = router({
 
   // One plan in full, phase-aware: candidates + my reactions (collecting), the blind countdown
   // (moment), and the revealed IN crowd (cleared). Counts stay private to the creator.
-  get: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
+  get: protectedProcedure.input(ByIdInput).query(async ({ ctx, input }) => {
     const [e] = await db.select().from(events).where(eq(events.id, input.id));
     if (!e) return null;
     await requireMember(e.groupId, ctx.userId);
-    await settleFloating(e);
-    await settleCollecting(e);
-    await settlePhase(e);
+    await settleLifecycle(e);
     if (e.phase === "floating") return null; // a still-brewing float is read via floats.get
-    const [g] = await db.select().from(groups).where(eq(groups.id, e.groupId));
 
     const resp = await responsesFor(e.id);
-    const revealed = revealedGoing(e, resp);
+    const revealed = goingFromRow(e, resp);
     // A float stays unsigned forever: the originator is never flagged as creator, even post-tip.
     const isCreator = !e.isAnonymous && e.createdByUserId === ctx.userId;
     const iOptedOut = (await optedOut(e.id)).has(ctx.userId);
@@ -704,7 +737,7 @@ export const eventsRouter = router({
     for (const row of memberRows) {
       if (row.userId === ctx.userId) continue;
       const [u] = await db.select().from(users).where(eq(users.id, row.userId));
-      members.push({ id: row.userId, name: u?.name ?? "Someone" });
+      members.push({ id: row.userId, name: u?.name ?? FALLBACK_USER_NAME });
     }
 
     const showCrowd = revealed !== null && e.phase !== "fizzled";
@@ -714,7 +747,7 @@ export const eventsRouter = router({
 
     return {
       id: e.id,
-      groupName: g?.name ?? "Group",
+      groupName: await getGroupName(e.groupId),
       title: e.title,
       description: e.description,
       location: e.location,
@@ -724,11 +757,11 @@ export const eventsRouter = router({
       quorum: e.quorum,
       startsAt: e.startsAt.toISOString(),
       lockAt: e.lockAt?.toISOString() ?? null,
-      msLeftToLock: e.lockAt ? Math.max(0, e.lockAt.getTime() - Date.now()) : null,
+      msLeftToLock: msLeft(e.lockAt),
       chosenStartsAt: chosen?.startsAt.toISOString() ?? null,
       momentStartsAt: e.momentStartsAt?.toISOString() ?? null,
       momentEndsAt: e.momentEndsAt?.toISOString() ?? null,
-      msLeft: e.momentEndsAt ? Math.max(0, e.momentEndsAt.getTime() - Date.now()) : null,
+      msLeft: msLeft(e.momentEndsAt),
       revealed: showCrowd,
       isCreator,
       iOptedOut,
@@ -736,14 +769,7 @@ export const eventsRouter = router({
       candidates,
       myReactionCandidateIds: [...myReacts],
       myResponse: mine ? { kind: mine.kind, cond: mine.cond ?? null } : null,
-      myStatus:
-        e.phase === "collecting"
-          ? iOptedOut
-            ? ("declined" as const)
-            : ("reacting" as const)
-          : iOptedOut && !mine
-            ? ("declined" as const)
-            : statusFor(ctx.userId, resp, revealed),
+      myStatus: computeMyStatus(e.phase, ctx.userId, resp, revealed, iOptedOut),
       members,
       going,
     };
@@ -751,9 +777,7 @@ export const eventsRouter = router({
 
   // Record (or replace) this user's commitment during the moment.
   respond: protectedProcedure.input(RespondInput).mutation(async ({ ctx, input }) => {
-    const [e] = await db.select().from(events).where(eq(events.id, input.eventId));
-    if (!e) throw new TRPCError({ code: "NOT_FOUND" });
-    await requireMember(e.groupId, ctx.userId);
+    const e = await loadEvent(input.eventId, ctx.userId);
     if (e.phase !== "moment") {
       throw new TRPCError({ code: "BAD_REQUEST", message: "the moment is not open" });
     }
@@ -776,27 +800,21 @@ export const eventsRouter = router({
 
   // Clear the caller's moment answer (the "Change" action): they return to un-answered, so the plan
   // goes back to Action Required until they answer again.
-  unrespond: protectedProcedure
-    .input(z.object({ eventId: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      const [e] = await db.select().from(events).where(eq(events.id, input.eventId));
-      if (!e) throw new TRPCError({ code: "NOT_FOUND" });
-      await requireMember(e.groupId, ctx.userId);
-      if (e.phase !== "moment") {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "the moment is not open" });
-      }
-      await db
-        .delete(responses)
-        .where(and(eq(responses.eventId, input.eventId), eq(responses.userId, ctx.userId)));
-      return { ok: true as const };
-    }),
+  unrespond: protectedProcedure.input(ResolveInput).mutation(async ({ ctx, input }) => {
+    const e = await loadEvent(input.eventId, ctx.userId);
+    if (e.phase !== "moment") {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "the moment is not open" });
+    }
+    await db
+      .delete(responses)
+      .where(and(eq(responses.eventId, input.eventId), eq(responses.userId, ctx.userId)));
+    return { ok: true as const };
+  }),
 
   // Settle the moment once its countdown has ended: cleared (quorum met or non-contingent) or a
   // silent fizzle. Idempotent and safe to call early (it no-ops until the deadline passes).
   resolve: protectedProcedure.input(ResolveInput).mutation(async ({ ctx, input }) => {
-    const [e] = await db.select().from(events).where(eq(events.id, input.eventId));
-    if (!e) throw new TRPCError({ code: "NOT_FOUND" });
-    await requireMember(e.groupId, ctx.userId);
+    const e = await loadEvent(input.eventId, ctx.userId);
     await settleCollecting(e);
     await settlePhase(e);
     return { ok: true as const, phase: e.phase };

@@ -29,6 +29,34 @@ export type FloatResolution =
   | { kind: "collecting"; ideaId: string; ideaText: string; candidateStartsAtMs: number[] };
 
 /**
+ * Argmax over a slate by distinct-backer count, with the earliest-created chip winning a tie.
+ * We sort the slate by createdAtMs ascending and replace the current pick only on a STRICTLY greater
+ * count, so the earliest-created among equals stays on top. `userFilter` (when given) restricts which
+ * voters count - the time axis only counts the winning idea's backers. tallyCandidates is the sole
+ * gatekeeper for unknown suggestion ids (it zero-fills the supplied slate and ignores the rest), so
+ * no pre-filter on candidateIds is needed. Returns null when `items` is empty.
+ */
+function pickByBackerCount<T extends { id: string; createdAtMs: number }>(
+  items: T[],
+  candidateIds: string[],
+  votes: ReconcileVote[],
+  userFilter?: (userId: string) => boolean,
+): { item: T; backers: string[] } | null {
+  const reactions: CandidateReactionInput[] = votes
+    .filter((v) => (userFilter ? userFilter(v.userId) : true))
+    .map((v) => ({ candidateId: v.suggestionId, userId: v.userId }));
+  const backersById = new Map(
+    tallyCandidates(candidateIds, reactions).map((t) => [t.candidateId, t.userIds]),
+  );
+  let pick: { item: T; backers: string[] } | null = null;
+  for (const item of [...items].sort((a, b) => a.createdAtMs - b.createdAtMs)) {
+    const backers = backersById.get(item.id) ?? [];
+    if (!pick || backers.length > pick.backers.length) pick = { item, backers };
+  }
+  return pick;
+}
+
+/**
  * Reconcile a float to a single concrete outcome at its tip deadline. PURE and side-effect free, so
  * a future AWS Bedrock reconciler can replace the body behind this same signature (semantic chip
  * merge, compromise-finding) without touching the caller.
@@ -56,50 +84,32 @@ export function reconcileFloat(
   if (ideas.length === 0) return { kind: "fizzle" };
 
   // 1. Winning idea: most distinct backers, earliest-created on a tie.
-  const ideaIds = ideas.map((i) => i.id);
-  const ideaVotes: CandidateReactionInput[] = votes
-    .filter((v) => ideaIds.includes(v.suggestionId))
-    .map((v) => ({ candidateId: v.suggestionId, userId: v.userId }));
-  const ideaBackers = new Map(
-    tallyCandidates(ideaIds, ideaVotes).map((t) => [t.candidateId, t.userIds]),
+  const won = pickByBackerCount(
+    ideas,
+    ideas.map((i) => i.id),
+    votes,
   );
-
-  const ideasByCreated = [...ideas].sort((a, b) => a.createdAtMs - b.createdAtMs);
-  let winner: { id: string; text: string; backers: string[] } | null = null;
-  for (const idea of ideasByCreated) {
-    const backers = ideaBackers.get(idea.id) ?? [];
-    if (!winner || backers.length > winner.backers.length) {
-      winner = { id: idea.id, text: idea.text, backers };
-    }
-  }
-  if (!winner) return { kind: "fizzle" };
+  if (!won) return { kind: "fizzle" };
 
   // 2. Min-heat gate on the winning idea's distinct backers.
-  if (winner.backers.length < minHeat) return { kind: "fizzle" };
+  if (won.backers.length < minHeat) return { kind: "fizzle" };
 
   // 3. Best time among the winning idea's backers only.
-  const backerSet = new Set(winner.backers);
-  const timeIds = times.map((t) => t.id);
-  const backerTimeVotes: CandidateReactionInput[] = votes
-    .filter((v) => backerSet.has(v.userId) && timeIds.includes(v.suggestionId))
-    .map((v) => ({ candidateId: v.suggestionId, userId: v.userId }));
-  const timeBackerCount = new Map(
-    tallyCandidates(timeIds, backerTimeVotes).map((t) => [t.candidateId, t.userIds.length]),
+  const backerSet = new Set(won.backers);
+  const best = pickByBackerCount(
+    times,
+    times.map((t) => t.id),
+    votes,
+    (u) => backerSet.has(u),
   );
+  const bestN = best?.backers.length ?? 0;
 
-  const timesByCreated = [...times].sort((a, b) => a.createdAtMs - b.createdAtMs);
-  let bestTime: { startsAtMs: number; n: number } | null = null;
-  for (const t of timesByCreated) {
-    const n = timeBackerCount.get(t.id) ?? 0;
-    if (!bestTime || n > bestTime.n) bestTime = { startsAtMs: t.startsAtMs, n };
-  }
-
-  if (bestTime && bestTime.n >= TIME_CONSENSUS) {
+  if (best && bestN >= TIME_CONSENSUS) {
     return {
       kind: "moment",
-      ideaId: winner.id,
-      ideaText: winner.text,
-      startsAtMs: bestTime.startsAtMs,
+      ideaId: won.item.id,
+      ideaText: won.item.text,
+      startsAtMs: best.item.startsAtMs,
     };
   }
 
@@ -111,5 +121,5 @@ export function reconcileFloat(
       ? [...times].sort((a, b) => a.startsAtMs - b.startsAtMs).map((t) => t.startsAtMs)
       : [...windowSlotsMs].sort((a, b) => a - b);
   if (candidateStartsAtMs.length === 0) return { kind: "fizzle" };
-  return { kind: "collecting", ideaId: winner.id, ideaText: winner.text, candidateStartsAtMs };
+  return { kind: "collecting", ideaId: won.item.id, ideaText: won.item.text, candidateStartsAtMs };
 }

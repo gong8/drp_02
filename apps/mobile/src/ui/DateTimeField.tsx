@@ -4,6 +4,7 @@ import DateTimePicker, {
 } from "@react-native-community/datetimepicker";
 import { useState } from "react";
 import { Platform, Pressable, Text, View } from "react-native";
+import { dateStringFrom, shortDayLabel, timeStringFrom } from "../lib/format";
 import { font, ui } from "../theme";
 import { BottomSheet } from "./BottomSheet";
 import type { DateTimeFieldProps } from "./DateTimeField.types";
@@ -14,18 +15,6 @@ import { HardShadow } from "./HardShadow";
 // `Field` look; tapping opens the native picker - on iOS inside our `BottomSheet`
 // (date = inline calendar tinted with brand pink; time = wheel snapped to `minuteInterval`),
 // on Android via the imperative dialog. Output strings match `isoFrom` in lib/format.
-
-function pad(n: number): string {
-  return n < 10 ? `0${n}` : `${n}`;
-}
-
-function toDateString(d: Date): string {
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
-
-function toTimeString(d: Date): string {
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
 
 function roundUpToInterval(d: Date, interval: number): Date {
   const out = new Date(d);
@@ -64,11 +53,7 @@ function displayValue(mode: "date" | "time", value: string): string | null {
   if (mode === "date") {
     const [y, mo, d] = value.split("-").map(Number);
     if ([y, mo, d].some((n) => Number.isNaN(n))) return value;
-    return new Date(y, mo - 1, d, 12, 0, 0, 0).toLocaleDateString(undefined, {
-      weekday: "short",
-      day: "numeric",
-      month: "short",
-    });
+    return shortDayLabel(new Date(y, mo - 1, d, 12, 0, 0, 0));
   }
   const [h, mi] = value.split(":").map(Number);
   if ([h, mi].some((n) => Number.isNaN(n))) return value;
@@ -78,12 +63,12 @@ function displayValue(mode: "date" | "time", value: string): string | null {
 }
 
 export function DateTimeField({
-  label,
   mode,
   value,
   onChange,
   minuteInterval = 15,
   minimumDate,
+  maximumDate,
   bare = false,
   style,
 }: DateTimeFieldProps) {
@@ -95,7 +80,7 @@ export function DateTimeField({
   const placeholder = mode === "date" ? "Pick a date" : "Pick a time";
 
   function commit(d: Date) {
-    onChange(mode === "date" ? toDateString(d) : toTimeString(d));
+    onChange(mode === "date" ? dateStringFrom(d) : timeStringFrom(d));
   }
 
   function openPicker() {
@@ -108,6 +93,7 @@ export function DateTimeField({
         is24Hour: false,
         minuteInterval: mode === "time" ? minuteInterval : undefined,
         minimumDate: mode === "date" ? minimumDate : undefined,
+        maximumDate: mode === "date" ? maximumDate : undefined,
         display: mode === "date" ? "calendar" : "clock",
         onChange: (event: DateTimePickerEvent, date?: Date) => {
           if (event.type === "set" && date) commit(date);
@@ -155,24 +141,10 @@ export function DateTimeField({
 
   return (
     <View style={style}>
-      {label && !bare ? (
-        <Text
-          style={{
-            fontFamily: font.bold,
-            fontSize: 9,
-            letterSpacing: 1,
-            textTransform: "uppercase",
-            color: ui.ink,
-            marginBottom: 5,
-          }}
-        >
-          {label}
-        </Text>
-      ) : null}
       {bare ? (
         trigger
       ) : (
-        <HardShadow radius={ui.rInput} offset={3}>
+        <HardShadow radius={ui.rInput} offset={ui.shadowInput}>
           {trigger}
         </HardShadow>
       )}
@@ -197,6 +169,7 @@ export function DateTimeField({
               accentColor={ui.brand}
               textColor={ui.ink}
               minimumDate={mode === "date" ? minimumDate : undefined}
+              maximumDate={mode === "date" ? maximumDate : undefined}
               minuteInterval={mode === "time" ? minuteInterval : undefined}
               onChange={(_event: DateTimePickerEvent, date?: Date) => {
                 if (!date) return;

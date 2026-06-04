@@ -1,26 +1,23 @@
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 import { formatSlot } from "./format";
+import type { trpc } from "./trpc"; // type-only: server code is never bundled
 
-// The dashboard payload fields a reminder needs. Structurally a subset of events.mine rows.
-export interface ReminderEvent {
-  id: string;
-  title: string;
-  phase: string;
-  myStatus: string;
-  iReacted: boolean;
-  lockAt: string | null;
-  momentEndsAt: string | null;
-}
+// The dashboard payload fields a reminder needs - a compiler-enforced subset of an events.mine row.
+// Deriving via Pick<> keeps the subset honest (a renamed/dropped field breaks the build) and gives
+// phase/myStatus their real pgEnum / MyStatus unions, so a literal typo fails typecheck.
+export type ReminderEvent = Pick<
+  Awaited<ReturnType<typeof trpc.events.mine.query>>[number],
+  "id" | "title" | "phase" | "myStatus" | "iReacted" | "lockAt" | "momentEndsAt"
+>;
 
-// A brewing float, for the "pile on before it tips" nudge. Subset of floats.mine rows - no title
+// A brewing float, for the "pile on before it tips" nudge. A subset of a floats.mine row - no title
 // (floats are unsigned) and no names. Once it tips it becomes a normal moment and the event
 // reminders above take over.
-export interface ReminderFloat {
-  id: string;
-  groupName: string;
-  tipAt: string | null;
-}
+export type ReminderFloat = Pick<
+  Awaited<ReturnType<typeof trpc.floats.mine.query>>[number],
+  "id" | "groupName" | "tipAt"
+>;
 
 // Show a banner even when the app is foregrounded, so a co-located demo still "dings".
 Notifications.setNotificationHandler({
@@ -102,14 +99,13 @@ export async function syncReminders(
       }
 
       if (e.phase === "moment" && e.myStatus === "awaiting" && e.momentEndsAt) {
-        const remindAt = new Date(e.momentEndsAt).getTime() - RSVP_LEAD_MS;
-        if (remindAt > now) {
-          await schedule(
-            new Date(remindAt),
-            "RSVP closing",
-            `"${e.title}" - are you in? Closing soon.`,
-          );
-        }
+        await scheduleLead(
+          e.momentEndsAt,
+          RSVP_LEAD_MS,
+          now,
+          "RSVP closing",
+          `"${e.title}" - are you in? Closing soon.`,
+        );
       }
     }
 
@@ -117,20 +113,31 @@ export async function syncReminders(
     // once it tips it surfaces as a moment above and gets the normal RSVP reminder.
     for (const f of floats) {
       if (!f.tipAt) continue;
-      const remindAt = new Date(f.tipAt).getTime() - FLOAT_LEAD_MS;
-      if (remindAt > now) {
-        await schedule(
-          new Date(remindAt),
-          "An idea is brewing",
-          `Something's brewing in ${f.groupName} - pile on before it tips.`,
-        );
-      }
+      await scheduleLead(
+        f.tipAt,
+        FLOAT_LEAD_MS,
+        now,
+        "An idea is brewing",
+        `Something's brewing in ${f.groupName} - pile on before it tips.`,
+      );
     }
     // Only mark the signature once a full reschedule succeeded, so a transient failure retries next time.
     lastSignature = signature;
   } catch {
     // best-effort: never let a notification hiccup break the dashboard
   }
+}
+
+// Schedule a "fires leadMs before iso" reminder, but only if that lead time is still in the future.
+async function scheduleLead(
+  iso: string,
+  leadMs: number,
+  now: number,
+  title: string,
+  body: string,
+): Promise<void> {
+  const at = new Date(iso).getTime() - leadMs;
+  if (at > now) await schedule(new Date(at), title, body);
 }
 
 async function schedule(date: Date, title: string, body: string): Promise<void> {

@@ -1,6 +1,6 @@
 import type { ResponseKind } from "../schemas.js";
 
-export interface ResponseInput {
+export interface MomentResponse {
   userId: string;
   kind: ResponseKind;
   cond?: { mode: "all" | "any"; targetIds: string[] };
@@ -13,7 +13,7 @@ export interface ResponseInput {
  * member can satisfy further conditionals, so we loop until nothing changes. A pure conditional
  * cycle has no yes to anchor it and therefore never enters IN - no phantom plans nobody wanted.
  */
-export function resolveIn(responses: ResponseInput[]): Set<string> {
+export function resolveIn(responses: MomentResponse[]): Set<string> {
   const IN = new Set<string>();
   for (const r of responses) {
     if (r.kind === "yes") IN.add(r.userId);
@@ -40,31 +40,6 @@ export function resolveIn(responses: ResponseInput[]): Set<string> {
   return IN;
 }
 
-export function clears(responses: ResponseInput[], quorum: number): boolean {
+export function clears(responses: MomentResponse[], quorum: number): boolean {
   return resolveIn(responses).size >= quorum;
-}
-
-/**
- * Linchpins: participants not yet IN whose hypothetical Yes would tip the plan to clearing.
- * Each is eligible for ONE anonymous, positive, ignorable nudge. Returns [] if already clearing.
- */
-export function findLinchpins(
-  participantIds: string[],
-  responses: ResponseInput[],
-  quorum: number,
-): string[] {
-  if (clears(responses, quorum)) return [];
-  const current = resolveIn(responses);
-  const out: string[] = [];
-  for (const p of participantIds) {
-    if (current.has(p)) continue;
-    const answered = responses.some((r) => r.userId === p && r.kind !== "conditional");
-    if (answered) continue; // already said yes/no - don't nudge
-    const hypothetical: ResponseInput[] = [
-      ...responses.filter((r) => r.userId !== p),
-      { userId: p, kind: "yes" },
-    ];
-    if (clears(hypothetical, quorum)) out.push(p);
-  }
-  return out;
 }
