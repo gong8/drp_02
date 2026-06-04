@@ -1,9 +1,8 @@
-import type { PartOfDay } from "@bethere/shared";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
-import { dateStringFrom, formatSlot, isoFrom, splitIso, timeStringFrom } from "../lib/format";
+import { formatSlot, isoFrom, splitIso } from "../lib/format";
 import { defaultDecidesByForCandidates, MOMENT_MS } from "../lib/lock";
 import { trpc } from "../lib/trpc";
 import { font, ui } from "../theme";
@@ -23,10 +22,6 @@ type Row = { id: string; date: string; time: string };
 type Props = NativeStackScreenProps<MeetupsStackParams, "CreateWizard">;
 
 const STEPS = ["group", "activities", "times", "options", "confirm"] as const;
-
-// Quick part-of-day chips resolve CLIENT-side to a concrete time candidate (today/tomorrow at the
-// band hour) so the server only ever sees concrete timeCandidates - there is no server fuzzy path.
-const PART_HOUR: Record<PartOfDay, number> = { morning: 9, afternoon: 14, evening: 19, late: 22 };
 
 export function CreateWizard({ navigation }: Props) {
   const [step, setStep] = useState(0);
@@ -90,22 +85,6 @@ export function CreateWizard({ navigation }: Props) {
     decidesEdit && decidesOverrideIso && !decidesInvalid ? decidesOverrideIso : undefined;
   // Concrete shortcut: exactly one time AND lockTimes => server opens the moment immediately.
   const isConcrete = timeIsos.length === 1 && lockTimes;
-
-  // Append a concrete time row for a part-of-day chip: the next day that is still in the future
-  // (today if the band hour has not passed, else tomorrow), at the band's hour.
-  function addBandRow(band: PartOfDay) {
-    const now = new Date();
-    const day = new Date(now);
-    day.setHours(PART_HOUR[band], 0, 0, 0);
-    if (day.getTime() <= now.getTime()) day.setDate(day.getDate() + 1);
-    setRows((rs) => {
-      const next = [
-        ...rs.filter((r) => r.date || r.time),
-        { id: `t${nextRowId.current++}`, date: dateStringFrom(day), time: timeStringFrom(day) },
-      ];
-      return next.length ? next : rs;
-    });
-  }
 
   function valid(key: string): boolean {
     switch (key) {
@@ -263,12 +242,6 @@ export function CreateWizard({ navigation }: Props) {
                   )}
                 </View>
               ))}
-              <View style={{ flexDirection: "row", flexWrap: "wrap", marginBottom: 6 }}>
-                <Chip label="Morning" onPress={() => addBandRow("morning")} />
-                <Chip label="Afternoon" onPress={() => addBandRow("afternoon")} />
-                <Chip label="Evening" onPress={() => addBandRow("evening")} />
-                <Chip label="Late" onPress={() => addBandRow("late")} />
-              </View>
               {rows.length < 10 && (
                 <Chip
                   label="+ Add a time"

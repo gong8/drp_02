@@ -19,4 +19,3 @@ export { SelectCheck } from "./SelectCheck";
 export { StickerTag } from "./StickerTag";
 export { Tabs } from "./Tabs";
 export { Toggle } from "./Toggle";
-export { VoteChip } from "./VoteChip";

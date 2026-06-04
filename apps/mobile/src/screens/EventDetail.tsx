@@ -32,7 +32,6 @@ import {
   SelectCheck,
   StickerTag,
   Toggle,
-  VoteChip,
 } from "../ui";
 
 type Detail = NonNullable<Awaited<ReturnType<typeof trpc.events.get.query>>>;
@@ -477,8 +476,8 @@ function CountdownBanner({ label, ms, note }: { label: string; ms: number; note:
 }
 
 // Collecting: PUBLIC vote board. Two candidate lists - TIME and ACTIVITY (what/where) - each a
-// VoteChip with its public +1 count + the caller's own tap. Add controls are hidden when the
-// creator locked that axis. No names - the counts are the group's momentum.
+// table of rows with a checkbox (the caller's own +1) and the public count. Add controls are hidden
+// when the creator locked that axis. No names - the counts are the group's momentum.
 function CollectingView({
   data,
   optedOut,
@@ -500,43 +499,32 @@ function CollectingView({
 }) {
   return (
     <View style={{ marginTop: 16 }}>
-      <Text style={{ fontFamily: font.display, fontSize: 14, color: ui.ink, marginBottom: 4 }}>
-        What do you fancy?
-      </Text>
-      <Text style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted, marginBottom: 10 }}>
-        Tap what you're keen on - a +1 is the group's momentum, not a commitment.
-      </Text>
-
       {(data.activityCandidates.length > 0 || !data.lockThings) && (
         <Section title="What / where">
-          <ChipWrap>
-            {data.activityCandidates.map((c: ActivityCand) => (
-              <VoteChip
-                key={c.id}
-                label={c.text}
-                count={c.count}
-                mine={c.mine}
-                onPress={() => onToggleReaction(c.id)}
-              />
-            ))}
-          </ChipWrap>
+          {data.activityCandidates.map((c: ActivityCand) => (
+            <VoteRow
+              key={c.id}
+              label={c.text}
+              count={c.count}
+              mine={c.mine}
+              onPress={() => onToggleReaction(c.id)}
+            />
+          ))}
           {!data.lockThings && <AddActivity busy={busy} onAdd={onAddActivity} />}
         </Section>
       )}
 
       {(data.timeCandidates.length > 0 || !data.lockTimes) && (
         <Section title="When works?">
-          <ChipWrap>
-            {data.timeCandidates.map((c: TimeCand) => (
-              <VoteChip
-                key={c.id}
-                label={timeChipLabel(c)}
-                count={c.count}
-                mine={c.mine}
-                onPress={() => onToggleReaction(c.id)}
-              />
-            ))}
-          </ChipWrap>
+          {data.timeCandidates.map((c: TimeCand) => (
+            <VoteRow
+              key={c.id}
+              label={timeChipLabel(c)}
+              count={c.count}
+              mine={c.mine}
+              onPress={() => onToggleReaction(c.id)}
+            />
+          ))}
           {!data.lockTimes && <AddTime busy={busy} data={data} onAdd={onAddTime} />}
         </Section>
       )}
@@ -561,7 +549,7 @@ function CollectingView({
             I can't make it
           </Text>
           <Text style={{ fontFamily: font.medium, fontSize: 10, color: ui.muted }}>
-            you won't be asked again - tap anything above to rejoin
+            tap anything above to rejoin
           </Text>
         </View>
       </Pressable>
@@ -593,7 +581,7 @@ function CollectingView({
   );
 }
 
-// A time VoteChip label: the concrete slot, with the part-of-day hint appended when present.
+// A time row label: the concrete slot, with the part-of-day hint appended when present.
 function timeChipLabel(c: TimeCand): string {
   const slot = formatSlot(c.startsAt);
   return c.partOfDay ? `${slot} · ${partOfDayLabel(c.partOfDay)}` : slot;
@@ -610,8 +598,40 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-function ChipWrap({ children }: { children: ReactNode }) {
-  return <View style={{ flexDirection: "row", flexWrap: "wrap" }}>{children}</View>;
+// A votable candidate as a table row: a checkbox (the caller's own +1), the label, and the public
+// count on the right. Tapping toggles the +1. No names - the count is the group's momentum.
+function VoteRow({
+  label,
+  count,
+  mine,
+  onPress,
+}: {
+  label: string;
+  count: number;
+  mine: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        paddingVertical: 11,
+        paddingHorizontal: 13,
+        marginBottom: 8,
+        borderRadius: ui.rInput,
+        borderWidth: ui.border,
+        borderColor: ui.ink,
+        backgroundColor: mine ? "#F1EEF6" : ui.surface,
+      }}
+    >
+      <SelectCheck selected={mine} />
+      <Text style={{ flex: 1, fontFamily: font.bold, fontSize: 14, color: ui.ink }}>{label}</Text>
+      <Text style={{ fontFamily: font.mono, fontSize: 12, color: ui.muted }}>{count}</Text>
+    </Pressable>
+  );
 }
 
 // Inline free-text activity entry: a + that opens a field; de-duped case-insensitively server-side.
