@@ -45,7 +45,8 @@ export type TimeCandidateInput = z.infer<typeof TimeCandidateInput>;
 
 // Network boundary for events.create - ONE unified flow. A plan owns two candidate lists, TIME and
 // ACTIVITY, both optional. Two creator locks (default false = open) decide who may add to each list.
-// `decidesBy` is the editable auto-lock instant; `quorum` defaults server-side.
+// Two editable deadlines, both defaulted server-side: `decidesBy` closes voting + locks the winner;
+// `replyBy` closes the blind yes/no/"I'll go if" window, then reveals + resolves. `quorum` defaults.
 export const CreateEventInput = z.object({
   groupId: z.string(),
   title: z.string().max(80).optional(),
@@ -56,6 +57,7 @@ export const CreateEventInput = z.object({
   lockTimes: z.boolean().optional().default(false),
   lockThings: z.boolean().optional().default(false),
   decidesBy: z.string().optional(),
+  replyBy: z.string().optional(),
   quorum: z.number().int().min(1).max(50).optional(),
 });
 export type CreateEventInput = z.infer<typeof CreateEventInput>;

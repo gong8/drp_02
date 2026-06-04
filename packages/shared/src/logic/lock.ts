@@ -30,6 +30,18 @@ export function defaultDecidesByForCandidates(
 }
 
 /**
+ * Default "reply by" instant: the blind commit window opens at `openMs` (the lock, or creation for a
+ * concrete plan) and closes a sensible bit before the event. We cap the blind window at one day so a
+ * far-off plan does not stay blind for the whole run-up; otherwise it runs to the event. A degenerate
+ * already-here event still gets a minimal window. Always returns an instant strictly in (openMs, eventMs]
+ * for a future event.
+ */
+export function defaultReplyByMs(openMs: number, eventMs: number): number {
+  if (eventMs <= openMs) return openMs + MOMENT_MS;
+  return Math.min(eventMs, openMs + DAY_MS);
+}
+
+/**
  * Upper bound (epoch ms) for a member-added TIME candidate. Allows a small slack past the creator's
  * spread - the spread length, capped at two days - so a member can suggest a slightly later time
  * without an absurd jump. (The old fuzzy/window branch is gone: the wizard sends concrete times.)

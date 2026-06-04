@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { addCandidateHorizon, DAY_MS, defaultDecidesByForCandidates } from "./lock.js";
+import {
+  addCandidateHorizon,
+  DAY_MS,
+  defaultDecidesByForCandidates,
+  defaultReplyByMs,
+  MOMENT_MS,
+} from "./lock.js";
 
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
@@ -30,6 +36,29 @@ describe("defaultDecidesByForCandidates", () => {
   it("falls back to a clamped midpoint when the slot is too close for the lead", () => {
     const earliest = now + 30 * 60 * 1000; // 30 min out
     expect(defaultDecidesByForCandidates(earliest, now)).toBe(now + 15 * 60 * 1000);
+  });
+});
+
+describe("defaultReplyByMs", () => {
+  it("caps the blind reply window at one day for a far-off event", () => {
+    expect(defaultReplyByMs(now, now + 4 * DAY_MS)).toBe(now + DAY_MS);
+  });
+
+  it("runs to the event when it is within a day of opening", () => {
+    expect(defaultReplyByMs(now, now + 3 * HOUR)).toBe(now + 3 * HOUR);
+  });
+
+  it("gives a minimal window when the event is already here", () => {
+    expect(defaultReplyByMs(now, now - 1000)).toBe(now + MOMENT_MS);
+  });
+
+  it("always returns an instant after the open and no later than the event", () => {
+    for (const gapHours of [0.5, 2, 12, 25, 24 * 14]) {
+      const event = now + gapHours * HOUR;
+      const t = defaultReplyByMs(now, event);
+      expect(t).toBeGreaterThan(now);
+      expect(t).toBeLessThanOrEqual(event);
+    }
   });
 });
 
