@@ -37,7 +37,7 @@ import {
 import { FALLBACK_AVATAR_COLOR, FALLBACK_USER_NAME, getUserCard } from "../db/users.js";
 import { msLeft } from "../format.js";
 import { protectedProcedure, router } from "../trpc.js";
-import { planOpensMoment } from "./create-plan.js";
+import { planOpensMoment, resolveTitle } from "./create-plan.js";
 
 export type EventRow = typeof events.$inferSelect;
 type MyStatus = "reacting" | "awaiting" | "going" | "declined";
@@ -146,42 +146,48 @@ async function settlePhase(e: EventRow): Promise<void> {
   e.phase = next;
 }
 
-// Lazily auto-lock a collecting plan whose deadline (`lockAt`) has passed (no scheduler): pick the
-// best-supported slot - the one meeting quorum, else the most-reacted ("lock the best anyway") -
-// and open the blind moment. Opted-out members have no reactions, so they are excluded for free;
-// with zero reactions at all the plan fizzles silently rather than opening an empty moment. Mutates
-// the in-memory row and persists, so reads converge the lifecycle on their own.
+// Lazily auto-lock a collecting plan whose "Decides by" deadline has passed (no scheduler): pick the
+// best-supported TIME candidate (quorum, else most-reacted), resolve the winning activity into the
+// title if empty, and open the blind moment. Opted-out members have no reactions so they drop for
+// free; with no time candidates or zero reactions the plan fizzles silently. Mutates + persists.
 async function settleCollecting(e: EventRow): Promise<void> {
-  if (e.phase !== "collecting" || !e.lockAt || Date.now() < e.lockAt.getTime()) return;
+  if (e.phase !== "collecting" || !e.decidesBy || Date.now() < e.decidesBy.getTime()) return;
   const cands = await candidatesFor(e.id);
+  const timeCands = cands.filter((c) => c.kind === "time" && c.startsAt);
   const reactions = await reactionsFor(e.id);
-  if (cands.length === 0 || reactions.length === 0) {
+  if (timeCands.length === 0 || reactions.length === 0) {
     await fizzle(e);
     return;
   }
-  const candIds = cands.map((c) => c.id);
-  // The slate is non-empty (guarded above), so the winner-or-best id always resolves to a real
-  // candidate here - the lookup is guaranteed to hit.
-  const chosenId = pickWinnerOrBestId(candIds, reactions, e.quorum);
-  const chosen = cands.find((c) => c.id === chosenId) as (typeof cands)[number];
+  const timeIds = timeCands.map((c) => c.id);
+  const chosenId = pickWinnerOrBestId(timeIds, reactions, e.quorum);
+  const chosen = timeCands.find((c) => c.id === chosenId) as (typeof timeCands)[number];
+  const startsAt = chosen.startsAt as Date;
+  const title = resolveTitle(
+    e.title,
+    cands.filter((c) => c.kind === "activity").map((c) => ({ id: c.id, label: c.label })),
+    reactions,
+  );
   const now = new Date();
-  const endsAt = computeMomentEnd(now, DEFAULT_MOMENT_MINUTES, chosen.startsAt);
+  const endsAt = computeMomentEnd(now, DEFAULT_MOMENT_MINUTES, startsAt);
   await db
     .update(events)
     .set({
       phase: "moment",
+      title,
       chosenCandidateId: chosenId,
       momentStartsAt: now,
       momentEndsAt: endsAt,
-      startsAt: chosen.startsAt,
+      startsAt,
       respondByAt: endsAt,
     })
     .where(eq(events.id, e.id));
   e.phase = "moment";
+  e.title = title;
   e.chosenCandidateId = chosenId;
   e.momentStartsAt = now;
   e.momentEndsAt = endsAt;
-  e.startsAt = chosen.startsAt;
+  e.startsAt = startsAt;
 }
 
 // This user's status. During a blind moment we only ever reflect their OWN answer (we cannot leak
@@ -523,16 +529,12 @@ export const eventsRouter = router({
     return { id: newId };
   }),
 
-  // The creator locks the winning slot, opening the blind timed moment. With no candidateId we pick
-  // the best-supported candidate (falling back to the most-reacted so a lock always succeeds).
+  // The creator locks the winning TIME, opening the blind moment. The creator is anonymous to others
+  // but we still authorize via the stored createdByUserId (a self-check, never surfaced). With no
+  // candidateId we pick the best-supported time (most public +1s). If the plan has no title yet, the
+  // winning ACTIVITY becomes the title at lock.
   lock: protectedProcedure.input(LockInput).mutation(async ({ ctx, input }) => {
     const e = await loadEvent(input.eventId, ctx.userId);
-    if (e.isAnonymous) {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "a float is ownerless - it tips on its own",
-      });
-    }
     if (e.createdByUserId !== ctx.userId) {
       throw new TRPCError({ code: "FORBIDDEN", message: "only the creator can lock the moment" });
     }
@@ -540,15 +542,26 @@ export const eventsRouter = router({
       throw new TRPCError({ code: "BAD_REQUEST", message: "plan is not collecting" });
     }
     const cands = await candidatesFor(input.eventId);
-    if (cands.length === 0) throw new TRPCError({ code: "BAD_REQUEST", message: "no candidates" });
-    const candIds = cands.map((c) => c.id);
+    const timeCands = cands.filter((c) => c.kind === "time" && c.startsAt);
+    if (timeCands.length === 0) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "no time candidates to lock" });
+    }
     const reactions = await reactionsFor(input.eventId);
+    const timeIds = timeCands.map((c) => c.id);
 
     const requestedId =
-      input.candidateId && candIds.includes(input.candidateId) ? input.candidateId : null;
-    const chosenId = requestedId ?? pickWinnerOrBestId(candIds, reactions, e.quorum);
-    const chosen = cands.find((c) => c.id === chosenId);
-    if (!chosen) throw new TRPCError({ code: "BAD_REQUEST", message: "unknown candidate" });
+      input.candidateId && timeIds.includes(input.candidateId) ? input.candidateId : null;
+    const chosenId = requestedId ?? pickWinnerOrBestId(timeIds, reactions, e.quorum);
+    const chosen = timeCands.find((c) => c.id === chosenId);
+    if (!chosen || !chosen.startsAt) throw new TRPCError({ code: "BAD_REQUEST", message: "unknown candidate" });
+
+    const title = resolveTitle(
+      e.title,
+      cands
+        .filter((c) => c.kind === "activity")
+        .map((c) => ({ id: c.id, label: c.label })),
+      reactions,
+    );
 
     const minutes = input.momentMinutes ?? DEFAULT_MOMENT_MINUTES;
     const now = new Date();
@@ -557,6 +570,7 @@ export const eventsRouter = router({
       .update(events)
       .set({
         phase: "moment",
+        title,
         chosenCandidateId: chosenId,
         momentStartsAt: now,
         momentEndsAt,
