@@ -58,7 +58,7 @@ export const events = pgTable("events", {
   createdByUserId: text("created_by_user_id")
     .notNull()
     .references(() => users.id),
-  title: text("title").notNull(),
+  activity: text("activity").notNull(),
   description: text("description"),
   location: text("location").notNull(),
   startsAt: timestamp("starts_at").notNull(),
@@ -71,7 +71,7 @@ export const events = pgTable("events", {
   isAnonymous: boolean("is_anonymous").notNull().default(true),
   phase: planPhaseEnum("phase").notNull().default("collecting"),
   lockTimes: boolean("lock_times").notNull().default(false),
-  lockThings: boolean("lock_things").notNull().default(false),
+  lockActivity: boolean("lock_activity").notNull().default(false),
   // Editable "Decides by" deadline. When collecting auto-locks the winning candidates and opens the
   // moment. Null until set. Drives the deadline + auto-lock; settled lazily on read. (was lock_at)
   decidesBy: timestamp("decides_by"),

@@ -57,6 +57,13 @@
       "when": 1780500002000,
       "tag": "0007_add_reply_by",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1780500003000,
+      "tag": "0008_activity_rename",
+      "breakpoints": true
     }
   ]
 }

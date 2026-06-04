@@ -10,12 +10,12 @@ import {
 function row(over: Partial<PastMeetupInput> = {}): PastMeetupInput {
   return {
     id: "e1",
-    title: "Bowling",
+    activity: "Bowling",
     location: "TenPin",
     description: null,
     startsAt: new Date("2026-05-01T18:00:00.000Z"),
     lockTimes: false,
-    lockThings: false,
+    lockActivity: false,
     activityLabels: [],
     ...over,
   };
@@ -23,17 +23,17 @@ function row(over: Partial<PastMeetupInput> = {}): PastMeetupInput {
 
 test("maps a cleared row into a clonable shell", () => {
   const out = shapePastMeetups([
-    row({ activityLabels: ["bowling", "the pub"], lockThings: true, description: "come at 6" }),
+    row({ activityLabels: ["bowling", "the pub"], lockActivity: true, description: "come at 6" }),
   ]);
   assert.equal(out.length, 1);
   assert.deepEqual(out[0], {
     id: "e1",
-    title: "Bowling",
+    activity: "Bowling",
     location: "TenPin",
     description: "come at 6",
     activityCandidates: ["bowling", "the pub"],
     lockTimes: false,
-    lockThings: true,
+    lockActivity: true,
     lastStartsAt: "2026-05-01T18:00:00.000Z",
   });
 });
@@ -59,9 +59,9 @@ test("caps the list at PAST_MEETUPS_LIMIT, keeping the most recent", () => {
   assert.equal(out[0].id, `e${PAST_MEETUPS_LIMIT + 4}`);
 });
 
-test("returns the raw (trimmed) stored title, blank when empty - the client adds any fallback", () => {
-  assert.equal(shapePastMeetups([row({ title: "  Bowling  " })])[0].title, "Bowling");
-  assert.equal(shapePastMeetups([row({ title: "   " })])[0].title, "");
+test("returns the raw (trimmed) stored activity, blank when empty - the client adds any fallback", () => {
+  assert.equal(shapePastMeetups([row({ activity: "  Bowling  " })])[0].activity, "Bowling");
+  assert.equal(shapePastMeetups([row({ activity: "   " })])[0].activity, "");
 });
 
 test("caps a meetup's cloned activities at MAX_CLONE_ACTIVITIES", () => {

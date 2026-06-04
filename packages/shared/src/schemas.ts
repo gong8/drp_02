@@ -110,7 +110,9 @@ export type FieldEdit = z.infer<typeof FieldEdit>;
 // Anonymous, like every other write. The `to` length bounds mirror create (activity/location 80/120,
 // description 500); empty is allowed (an empty activity clears the name so it re-derives from the winning candidate, empty location/notes clears).
 export const UpdateEventInput = ByEvent.extend({
-  activity: FieldEdit.refine((f) => f.to.length <= 80, { message: "activity is too long" }).optional(),
+  activity: FieldEdit.refine((f) => f.to.length <= 80, {
+    message: "activity is too long",
+  }).optional(),
   location: FieldEdit.refine((f) => f.to.length <= 120, {
     message: "location is too long",
   }).optional(),

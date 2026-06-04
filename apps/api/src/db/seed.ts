@@ -42,7 +42,7 @@ async function insertDemoData(): Promise<void> {
       id: p.id,
       groupId: p.groupId,
       createdByUserId: p.createdBy,
-      title: p.title,
+      activity: p.activity,
       description: null,
       location: p.location ?? "",
       startsAt,
@@ -53,7 +53,7 @@ async function insertDemoData(): Promise<void> {
       // Creator anonymity is ALWAYS on in the unified model.
       isAnonymous: true,
       lockTimes: p.lockTimes ?? false,
-      lockThings: p.lockThings ?? false,
+      lockActivity: p.lockActivity ?? false,
       phase: p.phase,
       decidesBy: p.decidesBy ?? null,
       chosenCandidateId: chosen ? candId(p.id, chosen.suffix) : null,
