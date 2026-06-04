@@ -8,13 +8,21 @@ const shell: PastMeetupShell = {
 };
 
 test("wizardSteps inserts the source step only when there is past history", () => {
-  expect(wizardSteps(false)).toEqual(["group", "activities", "times", "options", "confirm"]);
+  expect(wizardSteps(false)).toEqual([
+    "group",
+    "activities",
+    "times",
+    "details",
+    "deadlines",
+    "confirm",
+  ]);
   expect(wizardSteps(true)).toEqual([
     "group",
     "source",
     "activities",
     "times",
-    "options",
+    "details",
+    "deadlines",
     "confirm",
   ]);
 });
