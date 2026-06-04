@@ -1,38 +1,45 @@
 import type { PartOfDay } from "@bethere/shared";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { type ReactNode, useCallback, useRef, useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { useCallback, useRef, useState } from "react";
+import { Pressable, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
 import {
-  clock12,
-  dayUpper,
-  formatSlot,
-  formatTimeLeft,
-  isoFrom,
-  partOfDayLabel,
-} from "../lib/format";
+  DIDNT_COME_TOGETHER,
+  LABEL_CANT_MAKE_IT,
+  NO_NAMES,
+  NOTE_BLIND,
+  NOTE_TOP_PICK,
+  statusLabel,
+} from "../lib/copy";
+import { clock12, dayUpper, formatSlot, isoFrom, partOfDayLabel } from "../lib/format";
 import { addCandidateHorizon } from "../lib/lock";
 import { trpc } from "../lib/trpc";
 import { useBusyAction } from "../lib/useBusyAction";
 import { TICK_MS, useLiveClock } from "../lib/useLiveClock";
 import { font, ui } from "../theme";
 import {
-  Avatar,
-  BackBar,
+  AddComposer,
+  AppText,
+  Band,
   BottomSheet,
   Button,
   Card,
+  CheckOption,
+  Countdown,
   DateTimePill,
   DetailError,
   Field,
+  FieldLabel,
   PersonRow,
   Row,
-  ScreenBackground,
+  ScreenHeader,
   ScreenLoading,
+  ScreenScroll,
+  Section,
+  Segmented,
   SelectCheck,
-  StickerTag,
-  Toggle,
+  StatusPill,
 } from "../ui";
 
 type Detail = NonNullable<Awaited<ReturnType<typeof trpc.events.get.query>>>;
@@ -139,7 +146,7 @@ export function EventDetail({ route, navigation }: Props) {
       .finally(() => pendingReact.current.delete(candidateId));
   }
 
-  // "I can't make it" - a reversible, private exit. Optimistic; tapping any candidate above rejoins
+  // "Can't make it" - a reversible, private exit. Optimistic; tapping any candidate above rejoins
   // (server clears the opt-out on a reaction). Opting out clears your +1s server-side, so drop them
   // locally NOW too (otherwise your votes only fall away on the next 5s poll, which looks laggy).
   // Guard the poll with a sentinel so an in-flight refetch cannot clobber the optimistic state.
@@ -197,8 +204,8 @@ export function EventDetail({ route, navigation }: Props) {
     });
   }
 
-  // "Change my answer" un-commits: it clears the response so the plan returns to Action Required
-  // until a new answer is given, then reopens the choices.
+  // "Change" un-commits: it clears the response so the plan returns to Action Required until a new
+  // answer is given, then reopens the choices.
   function changeAnswer() {
     return runAction(async () => {
       await trpc.events.unrespond.mutate({ eventId });
@@ -261,7 +268,7 @@ export function EventDetail({ route, navigation }: Props) {
         setEditNote("Updated by someone else - review and save again.");
       })
       .catch(() => {
-        setEditNote("Couldn't save - this plan may have closed.");
+        setEditNote("Couldn't save - this meetup may have closed.");
         return load();
       })
       .finally(() => setSavingEdit(false));
@@ -273,7 +280,7 @@ export function EventDetail({ route, navigation }: Props) {
       <DetailError
         error={error}
         onBack={() => navigation.goBack()}
-        notFoundLabel="Plan not found."
+        notFoundLabel="Meetup not found."
       />
     );
 
@@ -283,229 +290,42 @@ export function EventDetail({ route, navigation }: Props) {
   // no single time yet.
   const heroIso = data.chosenStartsAt && data.phase !== "collecting" ? data.chosenStartsAt : null;
   const heroClock = heroIso ? clock12(heroIso) : null;
+  const editable = data.phase !== "cleared" && data.phase !== "fizzled";
 
-  function headerSticker() {
-    // Only the cleared phase gets a sticker; collecting + moment use the full-bleed countdown banner.
-    if (data?.phase === "cleared") return <StickerTag label="It's on" />;
-    return null;
-  }
-
-  let statusLine: string;
-  switch (data.myStatus) {
-    case "going":
-      statusLine = "You're in";
-      break;
-    case "declined":
-      statusLine = "You can't make it";
-      break;
-    default:
-      statusLine = "Awaiting your answer";
-  }
-
-  return (
-    <ScreenBackground
-      header={<BackBar title={data.groupName} onBack={() => navigation.goBack()} />}
-    >
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 2, paddingBottom: 28 }}
-        showsVerticalScrollIndicator={false}
-      >
-        {data.phase === "collecting" && data.decidesBy && (
-          <CountdownBanner label="Voting closes" ms={liveMsToDecide} note="most-wanted wins" />
-        )}
-        {data.phase === "moment" && (
-          <CountdownBanner label="RSVP closes" ms={liveMsLeft} note="who's in reveals then" />
-        )}
-
-        <Card padding={0}>
-          {heroIso && heroClock ? (
-            <View
-              style={{
-                paddingHorizontal: 16,
-                paddingTop: 14,
-                paddingBottom: 12,
-                borderBottomWidth: ui.border,
-                borderBottomColor: ui.ink,
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "flex-start",
-              }}
-            >
-              <View>
-                <Text
-                  style={{ fontFamily: font.bold, fontSize: 12, letterSpacing: 1, color: ui.muted }}
-                >
-                  {dayUpper(heroIso)}
-                </Text>
-                <View style={{ flexDirection: "row", alignItems: "flex-end", marginTop: 3 }}>
-                  <Text
-                    style={{
-                      fontFamily: font.display,
-                      fontSize: 34,
-                      lineHeight: 36,
-                      color: ui.ink,
-                    }}
-                  >
-                    {heroClock.time}
-                  </Text>
-                  <Text
-                    style={{
-                      fontFamily: font.bold,
-                      fontSize: 16,
-                      color: ui.muted,
-                      marginLeft: 5,
-                      marginBottom: 3,
-                    }}
-                  >
-                    {heroClock.ampm}
-                  </Text>
-                </View>
-              </View>
-              {headerSticker()}
-            </View>
-          ) : null}
-          <View style={{ paddingHorizontal: 16, paddingTop: heroIso ? 14 : 16, paddingBottom: 16 }}>
-            <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
-              <Text
-                style={{
-                  flex: 1,
-                  fontFamily: font.display,
-                  fontSize: 24,
-                  letterSpacing: -0.5,
-                  color: ui.ink,
-                }}
-              >
-                {data.activity || data.groupName}
-              </Text>
-              {data.phase !== "cleared" && data.phase !== "fizzled" && (
-                <Pressable
-                  onPress={openEditSheet}
-                  hitSlop={8}
-                  style={{ marginLeft: 10, marginTop: 4 }}
-                >
-                  <Text style={{ fontFamily: font.bold, fontSize: 12, color: ui.brand }}>Edit</Text>
-                </Pressable>
-              )}
-            </View>
-            {data.location ? (
-              <Text
-                style={{ fontFamily: font.medium, fontSize: 12, color: ui.muted, marginTop: 4 }}
-              >
-                at <Text style={{ fontFamily: font.bold, color: ui.ink }}>{data.location}</Text>
-              </Text>
-            ) : null}
-            {data.description ? (
-              <Text
-                style={{
-                  fontFamily: font.medium,
-                  fontSize: 12,
-                  color: ui.muted,
-                  marginTop: 8,
-                  lineHeight: 18,
-                }}
-              >
-                {data.description}
-              </Text>
-            ) : null}
-          </View>
-        </Card>
-
-        {data.phase === "collecting" && (
-          <CollectingView
-            data={data}
-            optedOut={data.iOptedOut}
-            busy={busy}
-            onToggleReaction={toggleReaction}
-            onToggleOptOut={toggleOptOut}
-            onLock={lock}
-            onAddTime={addTime}
-            onAddActivity={addActivity}
-          />
-        )}
-
-        {data.phase === "moment" && (
-          <MomentView
-            data={data}
-            busy={busy}
-            editing={editing}
-            onEdit={changeAnswer}
-            statusLine={statusLine}
-            onYes={() => answer("yes")}
-            onNo={() => answer("no")}
-            onConditional={() => {
-              setCondPicked([]);
-              setSheet(true);
-            }}
-          />
-        )}
-
-        {data.phase === "cleared" && <RevealView data={data} statusLine={statusLine} />}
-
-        {data.phase === "fizzled" && (
-          <View style={{ marginTop: 16 }}>
-            <Card>
-              <Text style={{ fontFamily: font.display, fontSize: 15, color: ui.ink }}>
-                This one didn't come together
-              </Text>
-              <Text
-                style={{
-                  fontFamily: font.medium,
-                  fontSize: 12,
-                  color: ui.muted,
-                  marginTop: 6,
-                  lineHeight: 18,
-                }}
-              >
-                Not enough people were keen this time - no worries, no fuss. Suggest another
-                whenever.
-              </Text>
-            </Card>
-          </View>
-        )}
-      </ScrollView>
-
+  const sheets = (
+    <>
       <BottomSheet visible={sheet} onClose={() => setSheet(false)}>
-        <Text style={{ fontFamily: font.display, fontSize: 16, color: ui.ink }}>I'll go if...</Text>
-        <Text
-          style={{
-            fontFamily: font.medium,
-            fontSize: 10,
-            color: ui.muted,
-            marginTop: 2,
-            marginBottom: 10,
-          }}
-        >
-          ...these people are going
-        </Text>
-        <Toggle
-          options={["At least one", "All of them"]}
+        <Section title="Go if these people are in" size="lg" />
+        <Segmented
+          options={["At least one", "All of them"] as const}
           value={condModeLabel}
           onChange={setCondModeLabel}
+          variant="bar"
         />
         <View style={{ marginTop: 12, marginBottom: 4 }}>
           {data.members.map((m: Member) => {
             const on = condPicked.includes(m.id);
             return (
-              <Pressable
+              <PersonRow
                 key={m.id}
+                name={m.name}
+                color={ui.muted}
+                index={0}
+                divided={false}
+                padding={9}
                 onPress={() =>
                   setCondPicked((p) => (on ? p.filter((x) => x !== m.id) : [...p, m.id]))
                 }
-                style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 9 }}
-              >
-                <Avatar initial={m.name.charAt(0).toUpperCase()} color={ui.muted} size={26} />
-                <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>{m.name}</Text>
-                <View style={{ marginLeft: "auto" }}>
-                  <SelectCheck selected={on} />
-                </View>
-              </Pressable>
+                right={
+                  <View style={{ marginLeft: "auto" }}>
+                    <SelectCheck selected={on} />
+                  </View>
+                }
+              />
             );
           })}
           {data.members.length === 0 && (
-            <Text style={{ fontFamily: font.medium, fontSize: 12, color: ui.muted }}>
-              No one else in this group.
-            </Text>
+            <AppText variant="caption">No one else in this group.</AppText>
           )}
         </View>
         <Button
@@ -524,18 +344,7 @@ export function EventDetail({ route, navigation }: Props) {
       </BottomSheet>
 
       <BottomSheet visible={editSheet} onClose={() => setEditSheet(false)}>
-        <Text style={{ fontFamily: font.display, fontSize: 16, color: ui.ink }}>Edit details</Text>
-        <Text
-          style={{
-            fontFamily: font.medium,
-            fontSize: 10,
-            color: ui.muted,
-            marginTop: 2,
-            marginBottom: 12,
-          }}
-        >
-          Anyone in the group can tidy these up.
-        </Text>
+        <Section title="Edit details" size="lg" />
         {(data.phase === "moment" || data.phase === "cleared") && (
           <Field
             label="Activity"
@@ -563,17 +372,9 @@ export function EventDetail({ route, navigation }: Props) {
           style={{ marginTop: 12 }}
         />
         {editNote ? (
-          <Text
-            style={{
-              fontFamily: font.medium,
-              fontSize: 11,
-              color: ui.brand,
-              marginTop: 12,
-              lineHeight: 16,
-            }}
-          >
+          <AppText variant="caption" style={{ color: ui.brand, marginTop: 12, lineHeight: 16 }}>
             {editNote}
-          </Text>
+          </AppText>
         ) : null}
         <Button
           label="Save"
@@ -583,64 +384,172 @@ export function EventDetail({ route, navigation }: Props) {
           style={{ marginTop: 14 }}
         />
       </BottomSheet>
-    </ScreenBackground>
+    </>
+  );
+
+  return (
+    <ScreenScroll
+      header={<ScreenHeader title={data.activity || "Meetup"} onBack={() => navigation.goBack()} />}
+      bottomPad={28}
+      footer={sheets}
+    >
+      {data.phase === "collecting" && data.decidesBy && (
+        <CountdownBanner label="Voting closes" ms={liveMsToDecide} note={NOTE_TOP_PICK} />
+      )}
+      {data.phase === "moment" && (
+        <CountdownBanner label="RSVP closes" ms={liveMsLeft} note={NOTE_BLIND} />
+      )}
+
+      <Card padding={0}>
+        {heroIso && heroClock ? (
+          <View
+            style={{
+              paddingHorizontal: 16,
+              paddingTop: 14,
+              paddingBottom: 12,
+              borderBottomWidth: ui.border,
+              borderBottomColor: ui.ink,
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+            }}
+          >
+            <View>
+              <FieldLabel tone="muted" style={{ letterSpacing: 1 }}>
+                {dayUpper(heroIso)}
+              </FieldLabel>
+              <View style={{ flexDirection: "row", alignItems: "flex-end", marginTop: 3 }}>
+                <Text
+                  style={{ fontFamily: font.display, fontSize: 34, lineHeight: 36, color: ui.ink }}
+                >
+                  {heroClock.time}
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: font.bold,
+                    fontSize: 16,
+                    color: ui.muted,
+                    marginLeft: 5,
+                    marginBottom: 3,
+                  }}
+                >
+                  {heroClock.ampm}
+                </Text>
+              </View>
+            </View>
+            {data.phase === "cleared" ? <StatusPill label="It's on" /> : null}
+          </View>
+        ) : null}
+        <View style={{ paddingHorizontal: 16, paddingTop: heroIso ? 14 : 16, paddingBottom: 16 }}>
+          <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
+            <Text
+              style={{
+                flex: 1,
+                fontFamily: font.display,
+                fontSize: 24,
+                letterSpacing: -0.5,
+                color: ui.ink,
+              }}
+            >
+              {data.activity || data.groupName}
+            </Text>
+            {editable && (
+              <Pressable
+                onPress={openEditSheet}
+                hitSlop={8}
+                style={{ marginLeft: 10, marginTop: 4 }}
+              >
+                <Text style={{ fontFamily: font.bold, fontSize: 12, color: ui.brand }}>Edit</Text>
+              </Pressable>
+            )}
+          </View>
+          <AppText variant="caption" style={{ marginTop: 4 }}>
+            {data.groupName}
+            {data.location ? ` · ${data.location}` : ""}
+          </AppText>
+          {data.description ? (
+            <AppText variant="caption" style={{ marginTop: 8, lineHeight: 18 }}>
+              {data.description}
+            </AppText>
+          ) : null}
+        </View>
+      </Card>
+
+      {data.phase === "collecting" && (
+        <CollectingView
+          data={data}
+          optedOut={data.iOptedOut}
+          busy={busy}
+          onToggleReaction={toggleReaction}
+          onToggleOptOut={toggleOptOut}
+          onLock={lock}
+          onAddTime={addTime}
+          onAddActivity={addActivity}
+        />
+      )}
+
+      {data.phase === "moment" && (
+        <MomentView
+          data={data}
+          busy={busy}
+          editing={editing}
+          onEdit={changeAnswer}
+          statusLine={statusLabel(data.myStatus)}
+          onYes={() => answer("yes")}
+          onNo={() => answer("no")}
+          onConditional={() => {
+            setCondPicked([]);
+            setSheet(true);
+          }}
+        />
+      )}
+
+      {data.phase === "cleared" && (
+        <RevealView data={data} statusLine={statusLabel(data.myStatus)} />
+      )}
+
+      {data.phase === "fizzled" && (
+        <View style={{ marginTop: 16 }}>
+          <Card>
+            <Text style={{ fontFamily: font.display, fontSize: 15, color: ui.ink }}>
+              {DIDNT_COME_TOGETHER}
+            </Text>
+            <AppText variant="caption" style={{ marginTop: 6, lineHeight: 18 }}>
+              Not enough people in. Suggest another anytime.
+            </AppText>
+          </Card>
+        </View>
+      )}
+    </ScreenScroll>
   );
 }
 
 // A full-bleed countdown banner for the time-pressured phases (the collecting deadline and the
-// moment reveal). Stretches edge-to-edge with top/bottom ink rules - visually distinct from rounded
-// cards. States the time plainly: "<label> in <duration>" (or "Closing now" once past), where the
-// caller's `label` names what closes ("Voting closes" / "RSVP closes") for dashboard-consistent copy.
+// moment reveal). The duration is the loud element; `note` is a one-word tag on the right.
 function CountdownBanner({ label, ms, note }: { label: string; ms: number; note: string }) {
   return (
-    <View
-      style={{
-        marginHorizontal: -16,
-        marginTop: -2,
-        marginBottom: 14,
-        backgroundColor: ui.brand,
-        borderColor: ui.ink,
-        borderTopWidth: ui.border,
-        borderBottomWidth: ui.border,
-        paddingVertical: 14,
-        paddingHorizontal: 16,
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-      }}
-    >
-      <Text
-        style={{
-          fontFamily: font.black,
-          fontSize: 22,
-          letterSpacing: -0.5,
-          color: "#fff",
-          flex: 1,
-          marginRight: 12,
-          fontVariant: ["tabular-nums"],
-        }}
-      >
-        {ms <= 0 ? "Closing now" : `${label} in ${formatTimeLeft(ms)}`}
-      </Text>
+    <Band style={{ marginTop: -2, marginBottom: 14, flexDirection: "row", alignItems: "center" }}>
+      <View style={{ flex: 1 }}>
+        <Countdown ms={ms} label={label} color={ui.onInk} big />
+      </View>
       <Text
         style={{
           fontFamily: font.bold,
-          fontSize: 10,
-          color: "#fff",
+          fontSize: 11,
+          color: ui.onInk,
           opacity: 0.92,
-          maxWidth: 130,
-          textAlign: "right",
+          marginLeft: 12,
         }}
       >
         {note}
       </Text>
-    </View>
+    </Band>
   );
 }
 
-// Collecting: PUBLIC vote board. Two candidate lists - TIME and ACTIVITY (what/where) - each a
-// table of rows with a checkbox (the caller's own +1) and the public count. Add controls are hidden
-// when the creator locked that axis. No names - the counts are the group's momentum.
+// Collecting: PUBLIC vote board. Two candidate lists - ACTIVITY (what) and TIME (when) - each a table
+// of rows with a checkbox (the caller's own +1) and the public count. The add control is the SAME
+// composer for both lists; it is hidden when the creator locked that axis. No names ever shown.
 function CollectingView({
   data,
   optedOut,
@@ -663,7 +572,7 @@ function CollectingView({
   return (
     <View style={{ marginTop: 16 }}>
       {(data.activityCandidates.length > 0 || !data.lockActivity) && (
-        <Section title="Activity">
+        <Section title="What">
           {data.activityCandidates.map((c: ActivityCand) => (
             <VoteRow
               key={c.id}
@@ -678,7 +587,7 @@ function CollectingView({
       )}
 
       {(data.timeCandidates.length > 0 || !data.lockTimes) && (
-        <Section title="When works?">
+        <Section title="When">
           {data.timeCandidates.map((c: TimeCand) => (
             <VoteRow
               key={c.id}
@@ -692,45 +601,21 @@ function CollectingView({
         </Section>
       )}
 
-      {/* Opt-out: a distinct, tinted row (private, reversible). */}
-      <Pressable
-        onPress={onToggleOptOut}
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 10,
-          padding: 12,
-          borderRadius: ui.rInput,
-          backgroundColor: "#F1EEF6",
-          borderWidth: ui.border,
-          borderColor: ui.ink,
-        }}
-      >
-        <SelectCheck selected={optedOut} accent={ui.ink} />
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>
-            I can't make it
-          </Text>
-          <Text style={{ fontFamily: font.medium, fontSize: 10, color: ui.muted }}>
-            tap anything above to rejoin
-          </Text>
-        </View>
-      </Pressable>
+      <CheckOption
+        label={LABEL_CANT_MAKE_IT}
+        sub="Tap anything above to rejoin"
+        on={optedOut}
+        onToggle={onToggleOptOut}
+        accent={ui.ink}
+        tinted
+      />
 
-      <Text
-        style={{
-          fontFamily: font.medium,
-          fontSize: 10,
-          color: ui.muted,
-          textAlign: "center",
-          marginTop: 16,
-        }}
-      >
-        No names - just the group.
-      </Text>
+      <AppText variant="caption" style={{ textAlign: "center", marginTop: 16 }}>
+        {NO_NAMES}
+      </AppText>
 
       {/* No manual lock for members (pure deadline); this dev-only button forces it for demos. Needs
-          at least one time candidate to lock onto - otherwise the server rejects it (nothing to schedule). */}
+          at least one time candidate to lock onto - otherwise the server rejects it. */}
       {__DEV__ && data.isCreator && data.timeCandidates.length > 0 && (
         <View style={{ marginTop: 16 }}>
           <Button
@@ -749,17 +634,6 @@ function CollectingView({
 function timeChipLabel(c: TimeCand): string {
   const slot = formatSlot(c.startsAt);
   return c.partOfDay ? `${slot} · ${partOfDayLabel(c.partOfDay)}` : slot;
-}
-
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <View style={{ marginBottom: 22 }}>
-      <Text style={{ fontFamily: font.display, fontSize: 13, color: ui.ink, marginBottom: 10 }}>
-        {title}
-      </Text>
-      {children}
-    </View>
-  );
 }
 
 // A votable candidate as a table row: a checkbox (the caller's own +1), the label, and the public
@@ -793,41 +667,33 @@ function VoteRow({
   );
 }
 
-// Inline free-text activity entry: an always-present compact field with an inline "Add"; de-duped
-// case-insensitively server-side.
+// Inline free-text activity entry through the shared AddComposer (one add affordance for both lists).
 function AddActivity({ busy, onAdd }: { busy: boolean; onAdd: (text: string) => void }) {
   const [text, setText] = useState("");
-  const submit = () => {
-    const t = text.trim();
-    if (!t) return;
-    onAdd(t);
-    setText("");
-  };
   return (
-    <Field
-      label="Add an activity"
-      value={text}
-      onChangeText={setText}
-      placeholder="bowling, the pub..."
-      right={
-        <Pressable onPress={submit} hitSlop={8} disabled={busy || !text.trim()}>
-          <Text
-            style={{
-              fontFamily: font.bold,
-              fontSize: 13,
-              color: text.trim() ? ui.brand : ui.muted,
-            }}
-          >
-            Add
-          </Text>
-        </Pressable>
-      }
-    />
+    <AddComposer
+      triggerLabel="+ add an activity"
+      busy={busy}
+      canSubmit={!!text.trim()}
+      onSubmit={() => {
+        const t = text.trim();
+        if (t) onAdd(t);
+        setText("");
+      }}
+      onCancel={() => setText("")}
+    >
+      <Field
+        label="Activity"
+        value={text}
+        onChangeText={setText}
+        placeholder="bowling, the pub..."
+      />
+    </AddComposer>
   );
 }
 
-// Inline concrete time entry: a + that opens a date/time pill, bounded to a sensible horizon from
-// the existing candidate spread. De-duped by minute server-side.
+// Inline concrete time entry through the shared AddComposer, bounded to a sensible horizon from the
+// existing candidate spread. De-duped by minute server-side.
 function AddTime({
   busy,
   data,
@@ -837,7 +703,6 @@ function AddTime({
   data: Detail;
   onAdd: (startsAt: string, partOfDay?: PartOfDay) => void;
 }) {
-  const [open, setOpen] = useState(false);
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("");
   const newIso = isoFrom(newDate, newTime);
@@ -851,22 +716,21 @@ function AddTime({
       : decideMs + 14 * 24 * 60 * 60 * 1000,
   );
 
-  if (!open) {
-    return (
-      <Pressable onPress={() => setOpen(true)} hitSlop={6} style={{ marginTop: 2 }}>
-        <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.brand }}>+ add a time</Text>
-      </Pressable>
-    );
-  }
-  const submit = () => {
-    if (!newIso) return;
-    onAdd(newIso);
+  const reset = () => {
     setNewDate("");
     setNewTime("");
-    setOpen(false);
   };
   return (
-    <View style={{ marginTop: 6 }}>
+    <AddComposer
+      triggerLabel="+ add a time"
+      busy={busy}
+      canSubmit={!!newIso}
+      onSubmit={() => {
+        if (newIso) onAdd(newIso);
+        reset();
+      }}
+      onCancel={reset}
+    >
       <DateTimePill
         dateValue={newDate}
         timeValue={newTime}
@@ -875,26 +739,7 @@ function AddTime({
         minimumDate={addMinDate}
         maximumDate={addMaxDate}
       />
-      <View style={{ flexDirection: "row", gap: 16, marginTop: 10, alignItems: "center" }}>
-        <Pressable onPress={submit} hitSlop={8} disabled={busy || !newIso}>
-          <Text
-            style={{ fontFamily: font.bold, fontSize: 13, color: newIso ? ui.brand : ui.muted }}
-          >
-            Add
-          </Text>
-        </Pressable>
-        <Pressable
-          hitSlop={8}
-          onPress={() => {
-            setNewDate("");
-            setNewTime("");
-            setOpen(false);
-          }}
-        >
-          <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.muted }}>Cancel</Text>
-        </Pressable>
-      </View>
-    </View>
+    </AddComposer>
   );
 }
 
@@ -922,34 +767,28 @@ function MomentView({
   // A blind conditional reads as "awaiting" server-side (we cannot resolve it without leaking), so
   // give the committed-conditional case its own heading instead of the misleading "Awaiting...".
   const lockedHeading =
-    data.myResponse?.kind === "conditional" ? "You're in if your people are" : statusLine;
+    data.myResponse?.kind === "conditional" ? "In if your people are" : statusLine;
   return (
     <View style={{ marginTop: 16 }}>
       {showAnswer ? (
         <>
-          <Text style={{ fontFamily: font.display, fontSize: 14, color: ui.ink, marginBottom: 4 }}>
-            Are you in?
-          </Text>
-          <Text
-            style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted, marginBottom: 10 }}
-          >
-            No one sees who's in until the timer ends. Answer honestly.
-          </Text>
-          <Button
-            label={"✓  I'm in"}
-            variant="affirmative"
-            disabled={busy}
-            onPress={onYes}
-            style={{ marginBottom: 10 }}
-          />
-          <Button
-            label="I'll go if..."
-            variant="outline"
-            disabled={busy}
-            onPress={onConditional}
-            style={{ marginBottom: 10 }}
-          />
-          <Button label="Can't make it" variant="outline" disabled={busy} onPress={onNo} />
+          <Section title="Are you in?" sub="Blind until close.">
+            <Button
+              label="I'm in"
+              variant="affirmative"
+              disabled={busy}
+              onPress={onYes}
+              style={{ marginBottom: 10 }}
+            />
+            <Button
+              label="Go if..."
+              variant="outline"
+              disabled={busy}
+              onPress={onConditional}
+              style={{ marginBottom: 10 }}
+            />
+            <Button label={LABEL_CANT_MAKE_IT} variant="outline" disabled={busy} onPress={onNo} />
+          </Section>
         </>
       ) : (
         <>
@@ -957,14 +796,12 @@ function MomentView({
             {lockedHeading}
           </Text>
           <Card>
-            <Text
-              style={{ fontFamily: font.medium, fontSize: 12, color: ui.muted, lineHeight: 18 }}
-            >
-              Locked in. Who's in is revealed when the timer ends - hang tight.
-            </Text>
+            <AppText variant="caption" style={{ lineHeight: 18 }}>
+              Locked in. Revealed at close.
+            </AppText>
           </Card>
           <Button
-            label="Change my answer"
+            label="Change"
             variant="outline"
             disabled={busy}
             onPress={onEdit}
@@ -983,18 +820,9 @@ function RevealView({ data, statusLine }: { data: Detail; statusLine: string }) 
       <Text style={{ fontFamily: font.bold, fontSize: 14, color: ui.ink, marginBottom: 12 }}>
         {statusLine}
       </Text>
-      <Text
-        style={{
-          fontFamily: font.bold,
-          fontSize: 9,
-          letterSpacing: 1,
-          textTransform: "uppercase",
-          color: ui.muted,
-          marginBottom: 8,
-        }}
-      >
+      <FieldLabel tone="muted" style={{ marginBottom: 8 }}>
         Who's in
-      </Text>
+      </FieldLabel>
       <Card padding={0}>
         {data.going.map((p, i) => (
           <PersonRow
@@ -1006,9 +834,9 @@ function RevealView({ data, statusLine }: { data: Detail; statusLine: string }) 
           />
         ))}
         {data.going.length === 0 && (
-          <Text style={{ fontFamily: font.medium, fontSize: 12, color: ui.muted, padding: 14 }}>
+          <AppText variant="caption" style={{ padding: 14 }}>
             No one's in.
-          </Text>
+          </AppText>
         )}
       </Card>
     </View>

@@ -129,7 +129,7 @@ function CardFooter({ e, now }: { e: Ev; now: number }) {
 function MeetCard({ e, now, onPress }: { e: Ev; now: number; onPress: () => void }) {
   const bucket = planBucket(e, now);
   const sub = e.activity
-    ? `${e.groupName}${e.location ? ` . ${e.location}` : ""}`
+    ? `${e.groupName}${e.location ? ` · ${e.location}` : ""}`
     : e.location || e.groupName;
   return (
     <Card
