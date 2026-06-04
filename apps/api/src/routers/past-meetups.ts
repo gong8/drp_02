@@ -4,6 +4,10 @@ import { FALLBACK_TITLE } from "./create-plan.js";
 // same activity is a possible future refinement, not done here (see the spec's "Risks / notes").
 export const PAST_MEETUPS_LIMIT = 20;
 
+// A clone is sent through events.create, whose CreateEventInput caps activityCandidates at 10. An open
+// plan can collect more than that, so cap the cloned list to stay within the create bound.
+export const MAX_CLONE_ACTIVITIES = 10;
+
 // A cleared plan's row, reduced to the fields a redo needs. The router maps Drizzle rows into this so
 // the shaping below stays pure and testable without a database.
 export type PastMeetupInput = {
@@ -41,7 +45,7 @@ export function shapePastMeetups(rows: PastMeetupInput[]): PastMeetup[] {
       title: r.title.trim() || FALLBACK_TITLE,
       location: r.location,
       description: r.description,
-      activityCandidates: r.activityLabels,
+      activityCandidates: r.activityLabels.slice(0, MAX_CLONE_ACTIVITIES),
       lockTimes: r.lockTimes,
       lockThings: r.lockThings,
       lastStartsAt: r.startsAt.toISOString(),
