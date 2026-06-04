@@ -4,6 +4,7 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } fro
 import type { MeetupsStackParams } from "../../App";
 import { formatSlot, isoFrom, splitIso } from "../lib/format";
 import { defaultDecidesByForCandidates, defaultReplyByMs, MOMENT_MS } from "../lib/lock";
+import { EMPTY_PREFILL, type Prefill, prefillFromMeetup, wizardSteps } from "../lib/redo";
 import { trpc } from "../lib/trpc";
 import { font, ui } from "../theme";
 import {
@@ -19,18 +20,22 @@ import {
 } from "../ui";
 
 type Group = Awaited<ReturnType<typeof trpc.groups.mine.query>>[number];
+type PastMeetup = Awaited<ReturnType<typeof trpc.events.pastForGroup.query>>[number];
 type TimeRow = { id: string; date: string; time: string };
 type Props = NativeStackScreenProps<MeetupsStackParams, "CreateWizard">;
 
-const STEPS = ["group", "activities", "times", "options", "confirm"] as const;
-
 export function CreateWizard({ navigation }: Props) {
   const [step, setStep] = useState(0);
-  const stepKey = STEPS[step];
-  const isLastStep = step === STEPS.length - 1;
 
   const [groups, setGroups] = useState<Group[]>([]);
   const [groupId, setGroupId] = useState<string | null>(null);
+  const [pastMeetups, setPastMeetups] = useState<PastMeetup[]>([]);
+  // The source-step choice: null = not chosen yet, "fresh" = start blank, otherwise a past-meetup id.
+  const [source, setSource] = useState<"fresh" | string | null>(null);
+
+  const STEPS = wizardSteps(pastMeetups.length > 0);
+  const stepKey = STEPS[step];
+  const isLastStep = step === STEPS.length - 1;
   // Title is optional - leave it blank and the server resolves the winning activity into it at lock.
   const [title, setTitle] = useState("");
   const [location, setLocation] = useState("");
@@ -69,6 +74,20 @@ export function CreateWizard({ navigation }: Props) {
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
+
+  // When the chosen group changes, refresh its redo list and drop any clone/source from the previous
+  // group (the source step is only meaningful for the currently selected group). Intentionally keyed on
+  // groupId alone - applyPrefill is a stable helper and re-running on its identity is not wanted.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: groupId is the only intended trigger.
+  useEffect(() => {
+    if (!groupId) return;
+    setSource(null);
+    applyPrefill(EMPTY_PREFILL);
+    trpc.events.pastForGroup
+      .query({ groupId })
+      .then(setPastMeetups)
+      .catch(() => setPastMeetups([]));
+  }, [groupId]);
 
   const timeIsos = rows.map((r) => isoFrom(r.date, r.time)).filter((x): x is string => x !== null);
   const earliestMs = timeIsos.length
@@ -129,11 +148,27 @@ export function CreateWizard({ navigation }: Props) {
     switch (key) {
       case "group":
         return !!groupId;
+      case "source":
+        return source !== null;
       case "options":
         return !decidesInvalid && !replyInvalid;
       default:
         return true; // activities, times, confirm - all optional
     }
+  }
+
+  function applyPrefill(p: Prefill) {
+    setActivityChips(p.activityChips);
+    setActivityDraft("");
+    setLockTimes(p.lockTimes);
+    setLockThings(p.lockThings);
+    setLocation(p.location);
+    setDescription(p.description);
+    // Time is never carried - reset to a single blank row so the creator sets it fresh.
+    setRows([{ id: "t0", date: "", time: "" }]);
+    nextRowId.current = 1;
+    setDecidesEdit(false);
+    setReplyEdit(false);
   }
 
   // Fold the typed-but-not-added activity into the chip list (case-insensitive de-dup), returning
@@ -242,6 +277,62 @@ export function CreateWizard({ navigation }: Props) {
                   </Text>
                 )}
               </View>
+            </Step>
+          )}
+
+          {stepKey === "source" && (
+            <Step
+              title="Fresh, or do one again?"
+              sub="This group has done things before. Reuse one to skip the setup - you'll just pick a new time."
+            >
+              <Pressable
+                onPress={() => {
+                  setSource("fresh");
+                  applyPrefill(EMPTY_PREFILL);
+                }}
+              >
+                <Card
+                  padding={14}
+                  style={{ marginBottom: 11, borderColor: source === "fresh" ? ui.brand : ui.ink }}
+                >
+                  <Text style={{ fontFamily: font.display, fontSize: 16, color: ui.ink }}>
+                    Start fresh
+                  </Text>
+                  <Text
+                    style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted, marginTop: 2 }}
+                  >
+                    A blank meetup
+                  </Text>
+                </Card>
+              </Pressable>
+              {pastMeetups.map((m) => (
+                <Pressable
+                  key={m.id}
+                  onPress={() => {
+                    setSource(m.id);
+                    applyPrefill(prefillFromMeetup(m));
+                  }}
+                >
+                  <Card
+                    padding={14}
+                    style={{ marginBottom: 11, borderColor: source === m.id ? ui.brand : ui.ink }}
+                  >
+                    <Text style={{ fontFamily: font.display, fontSize: 16, color: ui.ink }}>
+                      {m.title}
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: font.medium,
+                        fontSize: 11,
+                        color: ui.muted,
+                        marginTop: 2,
+                      }}
+                    >
+                      {m.location ? `${m.location} · ` : ""}last on {formatSlot(m.lastStartsAt)}
+                    </Text>
+                  </Card>
+                </Pressable>
+              ))}
             </Step>
           )}
 
