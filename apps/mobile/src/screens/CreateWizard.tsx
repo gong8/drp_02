@@ -38,7 +38,7 @@ export function CreateWizard({ navigation }: Props) {
   // Activity ("what / where") candidates - chips, optional, no names ever shown.
   const [activityChips, setActivityChips] = useState<string[]>([]);
   const [activityDraft, setActivityDraft] = useState("");
-  // Time candidates - concrete multi-row rows, optional. Part-of-day chips append concrete rows.
+  // Time candidates - concrete multi-row date/time rows, optional.
   const [rows, setRows] = useState<Row[]>([{ id: "t0", date: "", time: "" }]);
   const nextRowId = useRef(1);
   // Creator locks - both default OFF (open). Decides-by is editable.
