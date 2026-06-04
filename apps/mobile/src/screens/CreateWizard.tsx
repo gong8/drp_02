@@ -4,7 +4,7 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
 import { dateStringFrom, formatSlot, isoFrom, splitIso, timeStringFrom } from "../lib/format";
-import { defaultDecidesByForCandidates } from "../lib/lock";
+import { defaultDecidesByForCandidates, MOMENT_MS } from "../lib/lock";
 import { trpc } from "../lib/trpc";
 import { font, ui } from "../theme";
 import {
@@ -80,10 +80,12 @@ export function CreateWizard({ navigation }: Props) {
       ? new Date(defaultDecidesByForCandidates(earliestMs, Date.now())).toISOString()
       : null;
   const decidesOverrideIso = decidesEdit ? isoFrom(decidesDate, decidesTime) : null;
+  // Match the server bound (events.create): a custom deadline must leave a full moment of headroom
+  // before the earliest time, not just land before it - otherwise submit fails server-side.
   const decidesInvalid =
     !!decidesOverrideIso &&
     earliestMs != null &&
-    new Date(decidesOverrideIso).getTime() >= earliestMs;
+    new Date(decidesOverrideIso).getTime() > earliestMs - MOMENT_MS;
   const decidesToSend =
     decidesEdit && decidesOverrideIso && !decidesInvalid ? decidesOverrideIso : undefined;
   // Concrete shortcut: exactly one time AND lockTimes => server opens the moment immediately.
@@ -329,7 +331,7 @@ export function CreateWizard({ navigation }: Props) {
                         marginTop: 8,
                       }}
                     >
-                      It has to decide before your earliest time.
+                      It has to decide at least an hour before your earliest time.
                     </Text>
                   )}
                   <View style={{ flexDirection: "row", marginTop: 12 }}>

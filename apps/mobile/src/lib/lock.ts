@@ -6,7 +6,7 @@
 // shared as *types* everywhere else. Keep these in sync with the shared helpers; the server is the
 // source of truth for what is actually applied. See docs/tech-debt.md.
 
-const MOMENT_MS = 60 * 60 * 1000;
+export const MOMENT_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * MOMENT_MS;
 
 function clamp(value: number, lo: number, hi: number): number {
