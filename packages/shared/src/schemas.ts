@@ -93,10 +93,19 @@ export const ReactInput = ByEvent.extend({
 });
 export type ReactInput = z.infer<typeof ReactInput>;
 
-// Network boundary for events.addCandidate - any group member proposes a new concrete time while
-// the plan is still collecting. `startsAt` is an ISO string, like one entry of an options menu.
+// Network boundary for events.toggleReaction - ONE public +1 toggle on a single candidate of EITHER
+// kind. Inserting/removing the caller's row; counts are public during collecting (momentum).
+export const ToggleReactionInput = ByEvent.extend({ candidateId: z.string() });
+export type ToggleReactionInput = z.infer<typeof ToggleReactionInput>;
+
+// Network boundary for events.addCandidate - any member adds to a list while collecting, kind-gated
+// server-side by the creator's locks. A "time" candidate needs `startsAt` (+ optional partOfDay
+// hint); an "activity" candidate needs `text`. Adding a candidate +1s it for the author.
 export const AddCandidateInput = ByEvent.extend({
-  startsAt: z.string(),
+  kind: CandidateKind,
+  startsAt: z.string().optional(),
+  partOfDay: PartOfDay.optional(),
+  text: z.string().min(1).max(80).optional(),
 });
 export type AddCandidateInput = z.infer<typeof AddCandidateInput>;
 
