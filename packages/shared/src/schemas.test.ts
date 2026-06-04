@@ -5,15 +5,15 @@ describe("UpdateEventInput", () => {
   it("parses a single-field compare-and-set edit", () => {
     const r = UpdateEventInput.safeParse({
       eventId: "e_1",
-      title: { from: "", to: "Bowling night" },
+      activity: { from: "", to: "Bowling night" },
     });
     expect(r.success).toBe(true);
   });
 
-  it("allows an empty `to` (empty title reverts to auto-derive, empty notes clears)", () => {
+  it("allows an empty `to` (empty activity reverts to auto-derive, empty notes clears)", () => {
     const r = UpdateEventInput.safeParse({
       eventId: "e_1",
-      title: { from: "Pub", to: "" },
+      activity: { from: "Pub", to: "" },
       description: { from: "old", to: "" },
     });
     expect(r.success).toBe(true);
@@ -23,10 +23,10 @@ describe("UpdateEventInput", () => {
     expect(UpdateEventInput.safeParse({ eventId: "e_1" }).success).toBe(true);
   });
 
-  it("rejects an oversize title `to` (> 80)", () => {
+  it("rejects an oversize activity `to` (> 80)", () => {
     const r = UpdateEventInput.safeParse({
       eventId: "e_1",
-      title: { from: "", to: "x".repeat(81) },
+      activity: { from: "", to: "x".repeat(81) },
     });
     expect(r.success).toBe(false);
   });
