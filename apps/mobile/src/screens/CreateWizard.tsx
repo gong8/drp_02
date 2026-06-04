@@ -31,9 +31,8 @@ export function CreateWizard({ navigation }: Props) {
 
   const [groups, setGroups] = useState<Group[]>([]);
   const [groupId, setGroupId] = useState<string | null>(null);
-  // Title is never set in the wizard - the server resolves the winning activity into it at lock, so
-  // we always send it blank (omitted). Kept here as the single source for the create call's `title`.
-  const title = "";
+  // Title is optional - leave it blank and the server resolves the winning activity into it at lock.
+  const [title, setTitle] = useState("");
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
   // Activity ("what") candidates - ideas, optional, no names ever shown.
@@ -288,6 +287,15 @@ export function CreateWizard({ navigation }: Props) {
                   </Pressable>
                 }
               />
+              <CheckRow
+                label="Lock the activity"
+                sub={
+                  canLockActivity ? "The group can't add more activities" : "Add an activity first"
+                }
+                on={lockThingsEff}
+                disabled={!canLockActivity}
+                onToggle={() => setLockThings((v) => !v)}
+              />
             </Step>
           )}
 
@@ -318,17 +326,32 @@ export function CreateWizard({ navigation }: Props) {
                   }
                 />
               )}
+              <CheckRow
+                label="Lock the times"
+                sub={canLockTimes ? "The group can't add more times" : "Add a time first"}
+                on={lockTimesEff}
+                disabled={!canLockTimes}
+                onToggle={() => setLockTimes((v) => !v)}
+              />
             </Step>
           )}
 
           {stepKey === "options" && (
             <Step title="A few options" sub="All optional - skip if you like.">
               <Field
+                label="Title"
+                optional
+                value={title}
+                onChangeText={setTitle}
+                placeholder="Bowling night"
+              />
+              <Field
                 label="Location"
                 optional
                 value={location}
                 onChangeText={setLocation}
                 placeholder="TenPin Bexleyheath"
+                style={{ marginTop: 12 }}
               />
               <Field
                 label="Notes"
@@ -338,22 +361,6 @@ export function CreateWizard({ navigation }: Props) {
                 placeholder="Come at 6, we'll eat around 8"
                 multiline
                 style={{ marginTop: 12 }}
-              />
-              <CheckRow
-                label="Lock the times"
-                sub={canLockTimes ? "The group can't add more times" : "Add a time first"}
-                on={lockTimesEff}
-                disabled={!canLockTimes}
-                onToggle={() => setLockTimes((v) => !v)}
-              />
-              <CheckRow
-                label="Lock the activity"
-                sub={
-                  canLockActivity ? "The group can't add more activities" : "Add an activity first"
-                }
-                on={lockThingsEff}
-                disabled={!canLockActivity}
-                onToggle={() => setLockThings((v) => !v)}
               />
               {!isConcrete && (
                 <>
