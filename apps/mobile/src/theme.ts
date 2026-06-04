@@ -6,13 +6,18 @@ export const ui = {
   muted: "#7D7A86",
   hairline: "rgba(0,0,0,0.10)",
   scrim: "rgba(24,18,34,0.45)",
-  brand: "#FF5CA8", // pink: urgent + primary
+  onInk: "#FFFFFF", // text/icon on an ink or brand fill
+  tint: "#F1EEF6", // lavender selection tint (your own pick, the opt-out row)
+  brand: "#FF5CA8", // pink: urgent / reply / time-pressure + primary
   going: "#34A853", // green: going + affirmative
+  open: "#7E6BB0", // purple: open / still being decided
+  gutter: 16, // the screen edge gutter (scroll padding, header padding, full-bleed bleed)
   rCard: 18,
   rButton: 14,
   rInput: 12,
   rTab: 8,
   rSmall: 6,
+  rPill: 999, // fully rounded (circular chrome, pills)
   border: 2,
   shadow: 4, // hard offset in px (cards, buttons)
   shadowInput: 3, // tighter hard offset for inputs, chips, and small pressables
