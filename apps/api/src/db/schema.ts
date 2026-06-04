@@ -75,6 +75,9 @@ export const events = pgTable("events", {
   // Editable "Decides by" deadline. When collecting auto-locks the winning candidates and opens the
   // moment. Null until set. Drives the deadline + auto-lock; settled lazily on read. (was lock_at)
   decidesBy: timestamp("decides_by"),
+  // Editable "Reply by": when the blind RSVP window closes, then the plan reveals who's in and
+  // resolves. Null until set/defaulted; momentEndsAt is set from it (clamped to the event) at lock.
+  replyBy: timestamp("reply_by"),
   chosenCandidateId: text("chosen_candidate_id"),
   momentStartsAt: timestamp("moment_starts_at"),
   momentEndsAt: timestamp("moment_ends_at"),
