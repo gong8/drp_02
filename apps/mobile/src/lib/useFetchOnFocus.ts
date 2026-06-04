@@ -8,7 +8,7 @@ import { useCallback } from "react";
 //
 // behaviour-identical, just named. Intentionally narrow: it does NOT add an active-flag guard,
 // polling, or teardown. Screens that also poll on an interval or need to drop a stale response on
-// blur (Dashboard, FloatBoard, EventDetail) keep their own richer useFocusEffect plus useLiveClock -
+// blur (Dashboard, EventDetail) keep their own richer useFocusEffect plus useLiveClock -
 // those five lifecycles genuinely diverge and a generic hook could not stay behaviour-identical (see
 // docs/refactor/2026-06-03-refactor-report.md, cluster 15).
 export function useFetchOnFocus(load: () => void): void {

@@ -38,7 +38,7 @@ export function splitIso(iso: string): { date: string; time: string } {
   return { date: dateStringFrom(d), time: timeStringFrom(d) };
 }
 
-// Date -> "Wed 4 Jun" short day label (shared by FloatBoard + DateTimeField).
+// Date -> "Wed 4 Jun" short day label (used by DateTimeField).
 export function shortDayLabel(d: Date): string {
   return d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
 }

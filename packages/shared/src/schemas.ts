@@ -12,7 +12,9 @@ export const Conditional = z.object({
 });
 export type Conditional = z.infer<typeof Conditional>;
 
-// Rough time-of-day band a fuzzy plan is anchored to. Maps to a concrete hour (see window.ts).
+// Rough time-of-day band the wizard offers. The wizard maps a band to a concrete hour client-side
+// (see window.ts) when expanding it into time candidates; it also travels as an optional hint on a
+// time candidate. The server only ever sees the resulting concrete instants.
 export const PartOfDay = z.enum(["morning", "afternoon", "evening", "late"]);
 export type PartOfDay = z.infer<typeof PartOfDay>;
 
@@ -22,7 +24,8 @@ export type PartOfDay = z.infer<typeof PartOfDay>;
 export const CandidateKind = z.enum(["time", "activity"]);
 export type CandidateKind = z.infer<typeof CandidateKind>;
 
-// How loose a fuzzy plan's window is. Expanded into concrete day candidates server-side.
+// How loose a window the wizard offers. The wizard expands it into concrete day candidates
+// client-side (see window.ts); the server only sees the resulting concrete instants.
 export const Timescale = z.enum(["tonight", "this_week", "this_weekend", "next_two_weeks"]);
 export type Timescale = z.infer<typeof Timescale>;
 

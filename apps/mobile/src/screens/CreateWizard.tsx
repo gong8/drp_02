@@ -551,7 +551,7 @@ function CheckRow({
 // The plain-English outcome mirror. Three shapes per the contract:
 //  - one exact time + lockTimes => it just happens (the concrete shortcut)
 //  - 2+ times => a menu the group reacts to
-//  - 0 times => loose; the group floats times and the best-supported wins
+//  - 0 times => loose; the group suggests times and the best-supported wins
 function confirmMirror({
   timeCount,
   activityCount,
@@ -573,5 +573,5 @@ function confirmMirror({
   if (timeCount >= 2) {
     return `You're offering ${timeCount} times - the group reacts and the best-supported one wins.${things}`;
   }
-  return `No fixed time yet - the group floats times and the best-supported one wins.${things}`;
+  return `No fixed time yet - the group suggests times and the best-supported one wins.${things}`;
 }

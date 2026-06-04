@@ -236,7 +236,7 @@ function remainingFrac(e: Ev, now: number): number {
   return Math.max(0, Math.min(1, (end - now) / (end - start)));
 }
 
-// The shared body of a deadline card (Action Required + Brewing read as one set): a title + group
+// The shared body of a deadline card (the Action Required set reads as one): a title + group
 // header, a nudge + live countdown row, the draining bar (green -> pink as time runs low), and an
 // uppercase spec line underneath. Callers supply the words; the layout and pixels stay identical.
 function DeadlineCard({
@@ -488,7 +488,7 @@ export function Dashboard({ navigation }: Props) {
             ))}
         </ScrollView>
 
-        {/* Floating CTA: a transparent-to-page-colour scrim lets the list fade out underneath it
+        {/* Pinned CTA: a transparent-to-page-colour scrim lets the list fade out underneath it
             instead of leaving a flat dead band of gradient behind the button. */}
         <LinearGradient
           colors={["transparent", ui.gradient[1]]}

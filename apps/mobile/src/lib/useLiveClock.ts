@@ -5,7 +5,7 @@ import { useCallback, useState } from "react";
 export const TICK_MS = 1000;
 
 // A focus-scoped live clock: returns a `now` timestamp that re-renders the screen once per
-// `intervalMs` while the screen is focused, and stops on blur. Three screens (Dashboard, FloatBoard,
+// `intervalMs` while the screen is focused, and stops on blur. Two screens (Dashboard and
 // EventDetail) each hand-rolled this exact `useState(Date.now())` + `setInterval` + active-flag
 // teardown inside a useFocusEffect; this is that piece, verbatim.
 //
