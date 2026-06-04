@@ -8,15 +8,7 @@ import type { trpc } from "./trpc"; // type-only: server code is never bundled
 // phase/myStatus their real pgEnum / MyStatus unions, so a literal typo fails typecheck.
 export type ReminderEvent = Pick<
   Awaited<ReturnType<typeof trpc.events.mine.query>>[number],
-  "id" | "title" | "phase" | "myStatus" | "iReacted" | "lockAt" | "momentEndsAt"
->;
-
-// A brewing float, for the "pile on before it tips" nudge. A subset of a floats.mine row - no title
-// (floats are unsigned) and no names. Once it tips it becomes a normal moment and the event
-// reminders above take over.
-export type ReminderFloat = Pick<
-  Awaited<ReturnType<typeof trpc.floats.mine.query>>[number],
-  "id" | "groupName" | "tipAt"
+  "id" | "title" | "phase" | "myStatus" | "iReacted" | "decidesBy" | "momentEndsAt"
 >;
 
 // Show a banner even when the app is foregrounded, so a co-located demo still "dings".
@@ -29,9 +21,8 @@ Notifications.setNotificationHandler({
   }),
 });
 
-const LOCK_LEAD_MS = 60 * 60 * 1000; // "locks soon" reminder this far before the deadline
+const DECIDE_LEAD_MS = 60 * 60 * 1000; // "decides soon" reminder this far before the deadline
 const RSVP_LEAD_MS = 15 * 60 * 1000; // "RSVP closing" reminder this far before the moment ends
-const FLOAT_LEAD_MS = 30 * 60 * 1000; // "pile on" nudge this far before a float tips
 
 let permissionAsked = false;
 let lastSignature = "";
@@ -62,13 +53,10 @@ export async function ensurePermission(): Promise<boolean> {
 // A signature guard makes the 5s dashboard poll a no-op unless a reminder-relevant field changed.
 // NOTE: device-local only - it can only schedule for plans this device has already loaded (see
 // docs/tech-debt.md). Verify on a real Expo Go device; remote push needs a dev build.
-export async function syncReminders(
-  events: ReminderEvent[],
-  floats: ReminderFloat[] = [],
-): Promise<void> {
-  const signature = `${events
-    .map((e) => `${e.id}:${e.phase}:${e.myStatus}:${e.iReacted}:${e.lockAt}:${e.momentEndsAt}`)
-    .join("|")}#${floats.map((f) => `${f.id}:${f.tipAt}`).join("|")}`;
+export async function syncReminders(events: ReminderEvent[]): Promise<void> {
+  const signature = events
+    .map((e) => `${e.id}:${e.phase}:${e.myStatus}:${e.iReacted}:${e.decidesBy}:${e.momentEndsAt}`)
+    .join("|");
   if (signature === lastSignature) return;
 
   try {
@@ -80,18 +68,18 @@ export async function syncReminders(
     for (const e of events) {
       if (e.myStatus === "declined") continue; // opted out / not coming - no pings
 
-      if (e.phase === "collecting" && e.lockAt) {
-        const lockMs = new Date(e.lockAt).getTime();
-        if (!e.iReacted && lockMs - LOCK_LEAD_MS > now) {
+      if (e.phase === "collecting" && e.decidesBy) {
+        const decideMs = new Date(e.decidesBy).getTime();
+        if (!e.iReacted && decideMs - DECIDE_LEAD_MS > now) {
           await schedule(
-            new Date(lockMs - LOCK_LEAD_MS),
-            "Locks soon",
-            `"${e.title}" locks ${formatSlot(e.lockAt)} - tap the times you can make.`,
+            new Date(decideMs - DECIDE_LEAD_MS),
+            "Decides soon",
+            `"${e.title}" decides ${formatSlot(e.decidesBy)} - tap what you're keen on.`,
           );
         }
-        if (lockMs > now) {
+        if (decideMs > now) {
           await schedule(
-            new Date(lockMs),
+            new Date(decideMs),
             "Who's in?",
             `"${e.title}" just opened for the moment - say if you're in.`,
           );
@@ -109,18 +97,6 @@ export async function syncReminders(
       }
     }
 
-    // Brewing floats: a "pile on before it tips" nudge. No names, no title (floats are unsigned);
-    // once it tips it surfaces as a moment above and gets the normal RSVP reminder.
-    for (const f of floats) {
-      if (!f.tipAt) continue;
-      await scheduleLead(
-        f.tipAt,
-        FLOAT_LEAD_MS,
-        now,
-        "An idea is brewing",
-        `Something's brewing in ${f.groupName} - pile on before it tips.`,
-      );
-    }
     // Only mark the signature once a full reschedule succeeded, so a transient failure retries next time.
     lastSignature = signature;
   } catch {
