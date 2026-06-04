@@ -32,9 +32,9 @@ export function addCandidateHorizon(earliestMs: number, latestMs: number): numbe
   return latestMs + Math.min(span, 2 * DAY_MS);
 }
 
-// The blind reply window opens at openMs (the lock, or now for a concrete plan) and closes a sensible
-// bit before the event, capped at one day so a far-off plan is not blind for the whole run-up.
+// A sensible lead before the event, same shape as the "decides by" default, so the two deadlines feel
+// like one system. Degenerate (already-here) events still get a minimal window.
 export function defaultReplyByMs(openMs: number, eventMs: number): number {
   if (eventMs <= openMs) return openMs + MOMENT_MS;
-  return Math.min(eventMs, openMs + DAY_MS);
+  return defaultDecidesByForCandidates(eventMs, openMs);
 }

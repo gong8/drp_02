@@ -116,7 +116,15 @@ export function CreateWizard({ navigation }: Props) {
     earliestMs != null &&
     (new Date(replyOverrideIso).getTime() <= replyFloorMs ||
       new Date(replyOverrideIso).getTime() > earliestMs);
-  const replyToSend = replyEdit && replyOverrideIso && !replyInvalid ? replyOverrideIso : undefined;
+  // Always send the reply-by we showed (the edit, or the default), so the server stores exactly what
+  // the creator saw and uses it at lock - never recomputing its own default (anchored to lock time,
+  // which would diverge from the shown value, e.g. after a dev "decide now").
+  const replyToSend =
+    autoReplyIso == null
+      ? undefined
+      : replyEdit && replyOverrideIso && !replyInvalid
+        ? replyOverrideIso
+        : autoReplyIso;
 
   function valid(key: string): boolean {
     switch (key) {
