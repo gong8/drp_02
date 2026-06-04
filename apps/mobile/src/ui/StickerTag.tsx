@@ -11,7 +11,7 @@ export function StickerTag({ label, color = ui.brand }: { label: string; color?:
     >
       <Text
         style={{
-          fontFamily: font.mono,
+          fontFamily: font.display,
           fontSize: 9,
           color: "#fff",
           backgroundColor: color,

@@ -1,7 +1,6 @@
 import { ClerkProvider } from "@clerk/clerk-expo";
 import { Archivo_800ExtraBold, Archivo_900Black } from "@expo-google-fonts/archivo";
 import { Inter_400Regular, Inter_500Medium, Inter_700Bold } from "@expo-google-fonts/inter";
-import { SpaceMono_700Bold } from "@expo-google-fonts/space-mono";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -124,7 +123,6 @@ export default function App() {
     Inter_400Regular,
     Inter_500Medium,
     Inter_700Bold,
-    SpaceMono_700Bold,
   });
   if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: "#FCEFE8" }} />;
   return (

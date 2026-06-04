@@ -23,5 +23,4 @@ export const font = {
   black: "Archivo_900Black",
   medium: "Inter_500Medium",
   bold: "Inter_700Bold",
-  mono: "SpaceMono_700Bold",
 } as const;

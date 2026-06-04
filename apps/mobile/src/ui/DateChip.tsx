@@ -5,7 +5,8 @@ export function DateChip({ children, small = false }: { children: string; small?
   return (
     <Text
       style={{
-        fontFamily: font.mono,
+        fontFamily: font.bold,
+        fontVariant: ["tabular-nums"],
         fontSize: small ? 9 : 10,
         color: ui.ink,
         borderWidth: 1,
