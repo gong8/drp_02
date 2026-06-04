@@ -40,7 +40,7 @@ import { FALLBACK_AVATAR_COLOR, FALLBACK_USER_NAME, getUserCard } from "../db/us
 import { msLeft } from "../format.js";
 import { protectedProcedure, router } from "../trpc.js";
 import { displayActivity, planOpensMoment, resolveActivity } from "./create-plan.js";
-import { type PastMeetupInput, shapePastMeetups } from "./past-meetups.js";
+import { shapePastMeetups } from "./past-meetups.js";
 
 export type EventRow = typeof events.$inferSelect;
 type MyStatus = "reacting" | "awaiting" | "going" | "declined";
