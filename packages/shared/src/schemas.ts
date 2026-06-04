@@ -100,6 +100,27 @@ export const LockInput = ByEvent.extend({
 });
 export type LockInput = z.infer<typeof LockInput>;
 
+// One editable text field's optimistic compare-and-set: `from` is the value the client loaded, `to`
+// is the new value. The server writes `to` only if the current DB value still equals `from` (else it
+// reports a conflict and leaves the field untouched), so concurrent edits never silently clobber.
+export const FieldEdit = z.object({ from: z.string(), to: z.string() });
+export type FieldEdit = z.infer<typeof FieldEdit>;
+
+// Network boundary for events.update - ANY member edits a plan's text metadata (title/location/notes)
+// before it is cleared/fizzled. Each field is an optional CAS; an omitted field is left untouched.
+// Anonymous, like every other write. The `to` length bounds mirror create (title/location 80/120,
+// description 500); empty is allowed (empty title reverts to auto-derive, empty location/notes clears).
+export const UpdateEventInput = ByEvent.extend({
+  title: FieldEdit.refine((f) => f.to.length <= 80, { message: "title is too long" }).optional(),
+  location: FieldEdit.refine((f) => f.to.length <= 120, {
+    message: "location is too long",
+  }).optional(),
+  description: FieldEdit.refine((f) => f.to.length <= 500, {
+    message: "notes are too long",
+  }).optional(),
+});
+export type UpdateEventInput = z.infer<typeof UpdateEventInput>;
+
 // Network boundary for events.respond - a commitment during the moment.
 export const RespondInput = ByEvent.extend({
   kind: ResponseKind,

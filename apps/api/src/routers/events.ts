@@ -20,6 +20,7 @@ import {
   revealGoing,
   SetOptOutInput,
   ToggleReactionInput,
+  UpdateEventInput,
 } from "@bethere/shared";
 import { TRPCError } from "@trpc/server";
 import { and, eq, inArray } from "drizzle-orm";
@@ -177,7 +178,6 @@ async function settleCollecting(e: EventRow): Promise<void> {
     .update(events)
     .set({
       phase: "moment",
-      title,
       chosenCandidateId: chosenId,
       momentStartsAt: now,
       momentEndsAt: endsAt,
@@ -185,6 +185,16 @@ async function settleCollecting(e: EventRow): Promise<void> {
       respondByAt: endsAt,
     })
     .where(eq(events.id, e.id));
+  // Fill the derived title only if the row still has none. A member may have edited the title
+  // concurrently (events.update); guarding the write on title still being "" means an auto-lock can
+  // never clobber an explicit title. resolveTitle already returns e.title unchanged when non-empty,
+  // so this writes the activity-derived name solely for the never-named case.
+  if (title) {
+    await db
+      .update(events)
+      .set({ title })
+      .where(and(eq(events.id, e.id), eq(events.title, "")));
+  }
   e.phase = "moment";
   e.title = title;
   e.chosenCandidateId = chosenId;
@@ -633,7 +643,6 @@ export const eventsRouter = router({
       .update(events)
       .set({
         phase: "moment",
-        title,
         chosenCandidateId: chosenId,
         momentStartsAt: now,
         momentEndsAt,
@@ -641,7 +650,59 @@ export const eventsRouter = router({
         respondByAt: momentEndsAt,
       })
       .where(eq(events.id, input.eventId));
+    // Fill the derived title only if the row still has none, so a member's concurrent edit (events
+    // .update) is never clobbered at lock. resolveTitle keeps a non-empty title as-is, so this only
+    // names the never-titled case (guarded on the stored title still being "").
+    if (title) {
+      await db
+        .update(events)
+        .set({ title })
+        .where(and(eq(events.id, input.eventId), eq(events.title, "")));
+    }
     return { ok: true as const, chosenCandidateId: chosenId };
+  }),
+
+  // Any member edits a plan's text metadata - title, location, notes - while it is not yet
+  // cleared/fizzled. Anonymous, like every other write (no creator check, no attribution). Each field
+  // is an optimistic compare-and-set: the client sends the value it loaded (`from`) and the new value
+  // (`to`); we apply `to` only if the row's current value still equals `from`, else we report the
+  // field in `conflicts` carrying the now-current value and leave it untouched. A SELECT ... FOR UPDATE
+  // serializes concurrent updates, so same-field edits never clobber (first wins, second conflicts)
+  // and different-field edits both apply. An empty title reverts to auto-derive (stored ""); an empty
+  // location stays "" (the column is notNull); empty notes clear to null.
+  update: protectedProcedure.input(UpdateEventInput).mutation(async ({ ctx, input }) => {
+    return db.transaction(async (tx) => {
+      const [e] = await tx.select().from(events).where(eq(events.id, input.eventId)).for("update");
+      if (!e) throw new TRPCError({ code: "NOT_FOUND" });
+      await requireMember(e.groupId, ctx.userId);
+      if (e.phase === "cleared" || e.phase === "fizzled") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "this plan is final" });
+      }
+
+      const set: Partial<typeof events.$inferInsert> = {};
+      const conflicts: { field: string; current: string }[] = [];
+      // title/location are non-null strings; description is nullable, so treat its current as "".
+      if (input.title) {
+        if (e.title === input.title.from) set.title = input.title.to;
+        else conflicts.push({ field: "title", current: e.title });
+      }
+      if (input.location) {
+        if (e.location === input.location.from) set.location = input.location.to;
+        else conflicts.push({ field: "location", current: e.location });
+      }
+      if (input.description) {
+        const current = e.description ?? "";
+        if (current === input.description.from) {
+          set.description = input.description.to === "" ? null : input.description.to;
+        } else conflicts.push({ field: "description", current });
+      }
+
+      const applied = Object.keys(set);
+      if (applied.length > 0) {
+        await tx.update(events).set(set).where(eq(events.id, input.eventId));
+      }
+      return { applied, conflicts };
+    });
   }),
 
   // The dashboard: every (non-fizzled) plan in the user's groups, phase-aware.
@@ -789,6 +850,9 @@ export const eventsRouter = router({
         cands.filter((c) => c.kind === "activity").map((c) => ({ id: c.id, label: c.label })),
         reactions,
       ),
+      // The RAW stored title (often "" while collecting); the edit sheet needs it so an empty title
+      // keeps auto-deriving rather than locking in the derived placeholder.
+      titleRaw: e.title,
       description: e.description,
       location: e.location,
       phase: e.phase,
