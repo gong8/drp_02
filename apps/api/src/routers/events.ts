@@ -37,11 +37,15 @@ import {
 import { FALLBACK_AVATAR_COLOR, FALLBACK_USER_NAME, getUserCard } from "../db/users.js";
 import { msLeft } from "../format.js";
 import { protectedProcedure, router } from "../trpc.js";
+import { planOpensMoment } from "./create-plan.js";
 
 export type EventRow = typeof events.$inferSelect;
 type MyStatus = "reacting" | "awaiting" | "going" | "declined";
 
 const DEFAULT_QUORUM = 2;
+// With no time candidates a plan still collects (on activities); anchor its placeholder start and
+// default decides-by this far out so the deadline is sane without a concrete time to hang it on.
+const DEFAULT_HORIZON_MS = 7 * 24 * 60 * 60 * 1000;
 
 async function responsesFor(eventId: string): Promise<MomentResponse[]> {
   const rows = await db.select().from(responses).where(eq(responses.eventId, eventId));
@@ -262,74 +266,73 @@ function computeMyStatus(
 }
 
 export const eventsRouter = router({
-  // Create one plan. The `when` precision routes everything: an exact time opens straight into the
-  // blind moment and always happens; an options menu or a fuzzy window starts collecting reactions.
+  // Create one plan. It owns two candidate lists - TIME and ACTIVITY - each react-able with public
+  // +1 counts. The creator is ALWAYS anonymous. The only real fork is the concrete shortcut: one time
+  // candidate that the creator locks opens the blind moment immediately; everything else collects.
   create: protectedProcedure.input(CreateEventInput).mutation(async ({ ctx, input }) => {
     await requireMember(input.groupId, ctx.userId);
     const id = `e_${randomUUID()}`;
-    const when = input.when;
 
-    let cands: { id: string; startsAt: Date; partOfDay: PartOfDay | null }[] = [];
-    if (when.mode === "exact") {
-      cands = [{ id: `${id}_c1`, startsAt: new Date(when.startsAt), partOfDay: null }];
-    } else if (when.mode === "options") {
-      cands = when.options.map((iso, i) => ({
-        id: `${id}_c${i + 1}`,
-        startsAt: new Date(iso),
-        partOfDay: null,
-      }));
-    } else {
-      const slots = expandWindow(when.timescale, when.band, Date.now());
-      cands = slots.map((s, i) => ({
-        id: `${id}_d${i + 1}`,
-        startsAt: new Date(s.startsAt),
-        partOfDay: s.partOfDay,
-      }));
+    const timeInputs = input.timeCandidates ?? [];
+    const activityInputs = input.activityCandidates ?? [];
+
+    const timeCands = timeInputs
+      .map((t, i) => ({
+        id: `${id}_t${i + 1}`,
+        kind: "time" as const,
+        startsAt: new Date(t.startsAt),
+        partOfDay: t.partOfDay ?? null,
+        label: null,
+      }))
+      .filter((c) => !Number.isNaN(c.startsAt.getTime()))
+      .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
+
+    const activityCands = activityInputs.map((text, i) => ({
+      id: `${id}_a${i + 1}`,
+      kind: "activity" as const,
+      startsAt: null,
+      partOfDay: null,
+      label: text,
+    }));
+
+    const opensMoment = planOpensMoment(timeCands.length, input.lockTimes);
+    const quorum = input.quorum ?? (opensMoment ? 1 : DEFAULT_QUORUM);
+
+    // Time anchors. With no time candidates a plan still collects (on activities), so anchor the
+    // placeholder start + the default decides-by to a sensible horizon instead of a candidate.
+    const now = Date.now();
+    const earliestMs = timeCands.length > 0 ? timeCands[0].startsAt.getTime() : now + DEFAULT_HORIZON_MS;
+    const lastMs =
+      timeCands.length > 0 ? timeCands[timeCands.length - 1].startsAt.getTime() : earliestMs;
+    const startsAt = new Date(earliestMs); // the chosen time when opensMoment; a placeholder otherwise
+
+    // The concrete shortcut opens the blind moment now and runs until the event itself; respond stays
+    // open the whole time and the crowd reveals when it starts. If that time is already here, fall
+    // back to a short window so there is always a real moment to answer.
+    const momentStartsAt = opensMoment ? new Date() : null;
+    let momentEndsAt: Date | null = opensMoment ? startsAt : null;
+    if (opensMoment && momentEndsAt && momentEndsAt.getTime() <= now) {
+      momentEndsAt = new Date(now + MOMENT_MS);
     }
-    cands.sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
+    const respondByAt = momentEndsAt ?? new Date(lastMs);
 
-    const exact = when.mode === "exact";
-    const quorum = input.quorum ?? (exact ? 1 : DEFAULT_QUORUM);
-    const startsAt = cands[0].startsAt; // the chosen time for exact; a placeholder until lock otherwise
-    // Exact plans open the blind moment now and run until the event itself, so respond stays open the
-    // whole time and the crowd reveals when it starts. If that time is already here, fall back to a
-    // short window so there is always a real moment to answer (and we never reveal before anyone can).
-    const momentStartsAt = exact ? new Date() : null;
-    let momentEndsAt: Date | null = exact ? startsAt : null;
-    if (exact && momentEndsAt && momentEndsAt.getTime() <= Date.now()) {
-      momentEndsAt = new Date(Date.now() + MOMENT_MS);
-    }
-    const respondByAt = momentEndsAt ?? cands[cands.length - 1].startsAt;
-
-    // Non-exact plans collect until a fixed deadline, then auto-lock the winning slot. Options anchor
-    // the default to the earliest proposed time; a fuzzy window anchors to its last slot. An explicit
-    // creator override is honoured if it sits after now and leaves the blind moment room before the
-    // anchor. The deadline never moves once stored.
-    let lockAt: Date | null = null;
-    if (!exact) {
-      const earliestMs = cands[0].startsAt.getTime();
-      const lastMs = cands[cands.length - 1].startsAt.getTime();
-      const fuzzy = when.mode === "fuzzy";
-      const anchorMs = fuzzy ? lastMs : earliestMs;
-      if (input.lockAt) {
-        const t = new Date(input.lockAt);
-        if (
-          Number.isNaN(t.getTime()) ||
-          t.getTime() <= Date.now() ||
-          t.getTime() > anchorMs - MOMENT_MS
-        ) {
+    // Collecting plans converge by a fixed deadline ("Decides by"), then auto-pick the winner. The
+    // creator may override it; the override must sit after now and leave the blind moment room before
+    // the time window. With no time candidates we only have activities, so any future deadline is fine.
+    let decidesBy: Date | null = null;
+    if (!opensMoment) {
+      if (input.decidesBy) {
+        const t = new Date(input.decidesBy);
+        const tooLate = timeCands.length > 0 && t.getTime() > earliestMs - MOMENT_MS;
+        if (Number.isNaN(t.getTime()) || t.getTime() <= now || tooLate) {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message: "lock-in time must be after now and leave room before the plan's window",
+            message: "decides-by must be after now and leave room before the plan's window",
           });
         }
-        lockAt = t;
+        decidesBy = t;
       } else {
-        lockAt = new Date(
-          fuzzy
-            ? defaultLockAtForWindow(lastMs, Date.now())
-            : defaultLockAtForOptions(earliestMs, Date.now()),
-        );
+        decidesBy = new Date(defaultDecidesByForCandidates(earliestMs, now));
       }
     }
 
@@ -337,23 +340,25 @@ export const eventsRouter = router({
       id,
       groupId: input.groupId,
       createdByUserId: ctx.userId,
-      title: input.title,
+      title: input.title ?? "",
       description: input.description ?? null,
       location: input.location ?? "",
       startsAt,
       respondByAt,
       status: "open",
-      whenMode: when.mode,
-      contingent: !exact,
+      contingent: !opensMoment,
       quorum,
-      phase: exact ? "moment" : "collecting",
-      lockAt,
-      chosenCandidateId: exact ? cands[0].id : null,
+      isAnonymous: true,
+      lockTimes: input.lockTimes,
+      lockThings: input.lockThings,
+      phase: opensMoment ? "moment" : "collecting",
+      decidesBy,
+      chosenCandidateId: opensMoment && timeCands.length > 0 ? timeCands[0].id : null,
       momentStartsAt,
       momentEndsAt,
     });
-    await insertCandidates(id, cands);
-    // TODO push: notify group members "X floated a plan - which times work?" / "you're in a moment".
+    await insertCandidates(id, [...timeCands, ...activityCands]);
+    // TODO push: notify group members "a plan went out - what works?" / "you're in a moment".
     return { id };
   }),
 
