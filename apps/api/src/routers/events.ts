@@ -362,36 +362,49 @@ export const eventsRouter = router({
     return { id };
   }),
 
-  // Replace the caller's "these times work for me" reactions during collecting. Private: only the
-  // caller and the creator (via the tally) ever see them.
-  react: protectedProcedure.input(ReactInput).mutation(async ({ ctx, input }) => {
+  // Toggle the caller's public +1 on ONE candidate (time or activity) during collecting. Counts are
+  // PUBLIC (momentum), but who reacted is never shown. Adding a +1 rejoins anyone who had opted out.
+  toggleReaction: protectedProcedure.input(ToggleReactionInput).mutation(async ({ ctx, input }) => {
     const e = await loadEvent(input.eventId, ctx.userId);
     if (e.phase !== "collecting") {
       throw new TRPCError({ code: "BAD_REQUEST", message: "plan is not collecting reactions" });
     }
-    const cands = await candidatesFor(input.eventId);
-    const valid = new Set(cands.map((c) => c.id));
-    const chosen = input.worksCandidateIds.filter((cid) => valid.has(cid));
-    await db
-      .delete(candidateReactions)
+    const [cand] = await db
+      .select()
+      .from(eventCandidates)
+      .where(eq(eventCandidates.id, input.candidateId));
+    if (!cand || cand.eventId !== input.eventId) throw new TRPCError({ code: "NOT_FOUND" });
+
+    const mine = await db
+      .select()
+      .from(candidateReactions)
       .where(
         and(
           eq(candidateReactions.eventId, input.eventId),
+          eq(candidateReactions.candidateId, input.candidateId),
           eq(candidateReactions.userId, ctx.userId),
         ),
       );
-    for (const candidateId of chosen) {
+    if (mine.length > 0) {
       await db
-        .insert(candidateReactions)
-        .values({ eventId: input.eventId, candidateId, userId: ctx.userId });
+        .delete(candidateReactions)
+        .where(
+          and(
+            eq(candidateReactions.eventId, input.eventId),
+            eq(candidateReactions.candidateId, input.candidateId),
+            eq(candidateReactions.userId, ctx.userId),
+          ),
+        );
+      return { reacted: false as const };
     }
-    // Reacting to a time rejoins anyone who had opted out (mutual exclusion with "I can't make it").
-    if (chosen.length > 0) {
-      await db
-        .delete(eventOptOuts)
-        .where(and(eq(eventOptOuts.eventId, input.eventId), eq(eventOptOuts.userId, ctx.userId)));
-    }
-    return { recorded: true as const };
+    await db
+      .insert(candidateReactions)
+      .values({ eventId: input.eventId, candidateId: input.candidateId, userId: ctx.userId });
+    // A +1 rejoins anyone who had opted out (mutual exclusion with "I can't make it").
+    await db
+      .delete(eventOptOuts)
+      .where(and(eq(eventOptOuts.eventId, input.eventId), eq(eventOptOuts.userId, ctx.userId)));
+    return { reacted: true as const };
   }),
 
   // A member bows out of a collecting plan ("I can't make it") or rejoins. Opting out clears their
