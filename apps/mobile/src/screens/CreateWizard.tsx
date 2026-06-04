@@ -1,9 +1,10 @@
+import type { PartOfDay } from "@bethere/shared";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
-import { formatSlot, isoFrom, splitIso } from "../lib/format";
-import { defaultLockAtForOptions } from "../lib/lock";
+import { dateStringFrom, formatSlot, isoFrom, splitIso, timeStringFrom } from "../lib/format";
+import { defaultDecidesByForCandidates } from "../lib/lock";
 import { trpc } from "../lib/trpc";
 import { font, ui } from "../theme";
 import {
@@ -15,51 +16,42 @@ import {
   Field,
   ScreenBackground,
   ScreenLoading,
-  Toggle,
 } from "../ui";
 
 type Group = Awaited<ReturnType<typeof trpc.groups.mine.query>>[number];
-type Branch = "float" | "rough" | "set";
 type Row = { id: string; date: string; time: string };
 type Props = NativeStackScreenProps<MeetupsStackParams, "CreateWizard">;
 
-const STEPS: Record<Branch, string[]> = {
-  float: ["group", "spark", "window"],
-  rough: ["group", "what", "when", "details", "lock"],
-  set: ["group", "what", "when", "details"],
-};
-const TITLES: Record<Branch, string> = {
-  float: "Float an idea",
-  rough: "Rough plan",
-  set: "It's set",
-};
-const SUBMIT_LABELS: Record<Branch, string> = {
-  float: "Float it",
-  rough: "Suggest it",
-  set: "Start the moment",
-};
+const STEPS = ["group", "activities", "times", "options", "confirm"] as const;
 
-export function CreateWizard({ route, navigation }: Props) {
-  const { branch } = route.params;
-  const steps = STEPS[branch];
+// Quick part-of-day chips resolve CLIENT-side to a concrete time candidate (today/tomorrow at the
+// band hour) so the server only ever sees concrete timeCandidates - there is no server fuzzy path.
+const PART_HOUR: Record<PartOfDay, number> = { morning: 9, afternoon: 14, evening: 19, late: 22 };
+
+export function CreateWizard({ navigation }: Props) {
   const [step, setStep] = useState(0);
-  const stepKey = steps[step];
-  const isLastStep = step === steps.length - 1;
+  const stepKey = STEPS[step];
+  const isLastStep = step === STEPS.length - 1;
 
   const [groups, setGroups] = useState<Group[]>([]);
   const [groupId, setGroupId] = useState<string | null>(null);
-  const [title, setTitle] = useState("");
+  // Title is never set in the wizard - the server resolves the winning activity into it at lock, so
+  // we always send it blank (omitted). Kept here as the single source for the create call's `title`.
+  const title = "";
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
-  const [rows, setRows] = useState<Row[]>([{ id: "o0", date: "", time: "" }]);
+  // Activity ("what / where") candidates - chips, optional, no names ever shown.
+  const [activityChips, setActivityChips] = useState<string[]>([]);
+  const [activityDraft, setActivityDraft] = useState("");
+  // Time candidates - concrete multi-row rows, optional. Part-of-day chips append concrete rows.
+  const [rows, setRows] = useState<Row[]>([{ id: "t0", date: "", time: "" }]);
   const nextRowId = useRef(1);
-  const [lockEdit, setLockEdit] = useState(false);
-  const [lockDate, setLockDate] = useState("");
-  const [lockTime, setLockTime] = useState("");
-  // Float-only.
-  const [ideaChips, setIdeaChips] = useState<string[]>([]);
-  const [ideaDraft, setIdeaDraft] = useState("");
-  const [timescale, setTimescale] = useState<"this_week" | "this_weekend">("this_week");
+  // Creator locks - both default OFF (open). Decides-by is editable.
+  const [lockTimes, setLockTimes] = useState(false);
+  const [lockThings, setLockThings] = useState(false);
+  const [decidesEdit, setDecidesEdit] = useState(false);
+  const [decidesDate, setDecidesDate] = useState("");
+  const [decidesTime, setDecidesTime] = useState("");
 
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -79,93 +71,88 @@ export function CreateWizard({ route, navigation }: Props) {
       .finally(() => setLoading(false));
   }, []);
 
-  const exactIso = isoFrom(rows[0].date, rows[0].time);
-  const optionIsos = rows
-    .map((r) => isoFrom(r.date, r.time))
-    .filter((x): x is string => x !== null);
-  const earliestMs = optionIsos.length
-    ? Math.min(...optionIsos.map((iso) => new Date(iso).getTime()))
+  const timeIsos = rows.map((r) => isoFrom(r.date, r.time)).filter((x): x is string => x !== null);
+  const earliestMs = timeIsos.length
+    ? Math.min(...timeIsos.map((iso) => new Date(iso).getTime()))
     : null;
-  const autoLockIso =
+  const autoDecidesIso =
     earliestMs != null
-      ? new Date(defaultLockAtForOptions(earliestMs, Date.now())).toISOString()
+      ? new Date(defaultDecidesByForCandidates(earliestMs, Date.now())).toISOString()
       : null;
-  const lockOverrideIso = lockEdit ? isoFrom(lockDate, lockTime) : null;
-  const lockInvalid =
-    !!lockOverrideIso && earliestMs != null && new Date(lockOverrideIso).getTime() >= earliestMs;
-  const lockToSend = lockEdit && lockOverrideIso && !lockInvalid ? lockOverrideIso : undefined;
-  const sparkReady = ideaChips.length > 0 || ideaDraft.trim().length > 0;
+  const decidesOverrideIso = decidesEdit ? isoFrom(decidesDate, decidesTime) : null;
+  const decidesInvalid =
+    !!decidesOverrideIso &&
+    earliestMs != null &&
+    new Date(decidesOverrideIso).getTime() >= earliestMs;
+  const decidesToSend =
+    decidesEdit && decidesOverrideIso && !decidesInvalid ? decidesOverrideIso : undefined;
+  // Concrete shortcut: exactly one time AND lockTimes => server opens the moment immediately.
+  const isConcrete = timeIsos.length === 1 && lockTimes;
+
+  // Append a concrete time row for a part-of-day chip: the next day that is still in the future
+  // (today if the band hour has not passed, else tomorrow), at the band's hour.
+  function addBandRow(band: PartOfDay) {
+    const now = new Date();
+    const day = new Date(now);
+    day.setHours(PART_HOUR[band], 0, 0, 0);
+    if (day.getTime() <= now.getTime()) day.setDate(day.getDate() + 1);
+    setRows((rs) => {
+      const next = [
+        ...rs.filter((r) => r.date || r.time),
+        { id: `t${nextRowId.current++}`, date: dateStringFrom(day), time: timeStringFrom(day) },
+      ];
+      return next.length ? next : rs;
+    });
+  }
 
   function valid(key: string): boolean {
     switch (key) {
       case "group":
         return !!groupId;
-      case "what":
-        return title.trim() !== "";
-      case "when":
-        return branch === "set" ? exactIso !== null : optionIsos.length >= 1;
-      case "lock":
-        return !lockInvalid;
-      case "spark":
-        return sparkReady;
+      case "options":
+        return !decidesInvalid;
       default:
-        return true; // details, window
+        return true; // activities, times, confirm - all optional
     }
   }
 
-  // Fold the typed-but-not-added idea into the chip list (case-insensitive de-dup), returning the
-  // resulting set so submit can use it synchronously.
-  function commitDraftIdea(): string[] {
-    const t = ideaDraft.trim();
-    if (!t) return ideaChips;
-    setIdeaDraft("");
-    if (ideaChips.some((c) => c.toLowerCase() === t.toLowerCase())) return ideaChips;
-    const next = [...ideaChips, t];
-    setIdeaChips(next);
+  // Fold the typed-but-not-added activity into the chip list (case-insensitive de-dup), returning
+  // the resulting set so submit can use it synchronously.
+  function commitDraftActivity(): string[] {
+    const t = activityDraft.trim();
+    if (!t) return activityChips;
+    setActivityDraft("");
+    if (activityChips.some((c) => c.toLowerCase() === t.toLowerCase())) return activityChips;
+    const next = [...activityChips, t];
+    setActivityChips(next);
     return next;
   }
 
-  function startEditLock() {
-    if (autoLockIso) {
-      const { date, time } = splitIso(autoLockIso);
-      setLockDate(date);
-      setLockTime(time);
+  function startEditDecides() {
+    if (autoDecidesIso) {
+      const { date, time } = splitIso(autoDecidesIso);
+      setDecidesDate(date);
+      setDecidesTime(time);
     }
-    setLockEdit(true);
+    setDecidesEdit(true);
   }
 
   async function submit() {
     if (busy || !groupId) return;
     setBusy(true);
+    const activities = commitDraftActivity();
     try {
-      if (branch === "float") {
-        const ideas = commitDraftIdea();
-        const { id } = await trpc.floats.create.mutate({
-          groupId,
-          ideas,
-          window: { timescale, band: "evening" },
-        });
-        navigation.reset({
-          index: 1,
-          routes: [{ name: "Dashboard" }, { name: "FloatBoard", params: { eventId: id } }],
-        });
-        return;
-      }
-      const base = {
+      await trpc.events.create.mutate({
         groupId,
-        title: title.trim(),
+        title: title.trim() || undefined,
         description: description.trim() || undefined,
         location: location.trim() || undefined,
-      };
-      if (branch === "set" && exactIso) {
-        await trpc.events.create.mutate({ ...base, when: { mode: "exact", startsAt: exactIso } });
-      } else {
-        await trpc.events.create.mutate({
-          ...base,
-          when: { mode: "options", options: optionIsos },
-          lockAt: lockToSend,
-        });
-      }
+        timeCandidates: timeIsos.map((startsAt) => ({ startsAt })),
+        activityCandidates: activities.length ? activities : undefined,
+        lockTimes,
+        lockThings,
+        decidesBy: decidesToSend,
+      });
       navigation.reset({ index: 0, routes: [{ name: "Dashboard" }] });
     } catch {
       setError(true);
@@ -175,7 +162,7 @@ export function CreateWizard({ route, navigation }: Props) {
 
   function goNext() {
     if (!valid(stepKey) || busy) return;
-    if (stepKey === "spark") commitDraftIdea();
+    if (stepKey === "activities") commitDraftActivity();
     if (isLastStep) submit();
     else setStep(step + 1);
   }
@@ -186,10 +173,10 @@ export function CreateWizard({ route, navigation }: Props) {
 
   if (loading) return <ScreenLoading />;
 
-  const nextLabel = isLastStep ? SUBMIT_LABELS[branch] : "Next";
+  const nextLabel = isLastStep ? "Send to the group" : "Next";
 
   return (
-    <ScreenBackground header={<BackBar title={TITLES[branch]} onBack={goBack} />}>
+    <ScreenBackground header={<BackBar title="New meetup" onBack={goBack} />}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -201,7 +188,7 @@ export function CreateWizard({ route, navigation }: Props) {
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
-          <ProgressDots steps={steps} index={step} />
+          <ProgressDots steps={STEPS} index={step} />
           {error && (
             <Text style={{ fontFamily: font.medium, color: ui.brand, marginBottom: 10 }}>
               Something went wrong. Try again.
@@ -228,67 +215,37 @@ export function CreateWizard({ route, navigation }: Props) {
             </Step>
           )}
 
-          {stepKey === "what" && (
-            <Step title="What is it?">
-              <Field label="Title" value={title} onChangeText={setTitle} placeholder="Bowling" />
-            </Step>
-          )}
-
-          {stepKey === "spark" && (
+          {stepKey === "activities" && (
             <Step
-              title="What's the spark?"
-              sub="Drop a loose idea or two - the group adds more and piles on. You stay anonymous."
+              title="What do you fancy?"
+              sub="Drop a few options - what or where. Optional, and the group can add more. No names - it's the group's."
             >
               <View style={{ flexDirection: "row", flexWrap: "wrap", marginBottom: 4 }}>
-                {ideaChips.map((c) => (
+                {activityChips.map((c) => (
                   <RemovableChip
                     key={c}
                     label={c}
-                    onRemove={() => setIdeaChips((cs) => cs.filter((x) => x !== c))}
+                    onRemove={() => setActivityChips((cs) => cs.filter((x) => x !== c))}
                   />
                 ))}
               </View>
               <Field
-                label="Add an idea"
-                value={ideaDraft}
-                onChangeText={setIdeaDraft}
+                label="Add a place or thing"
+                optional
+                value={activityDraft}
+                onChangeText={setActivityDraft}
                 placeholder="bowling, the pub..."
               />
               <View style={{ flexDirection: "row", marginTop: 10 }}>
-                <Chip label="+ Add" onPress={commitDraftIdea} />
+                <Chip label="+ Add" onPress={commitDraftActivity} />
               </View>
             </Step>
           )}
 
-          {stepKey === "window" && (
-            <Step
-              title="Roughly when?"
-              sub="Just a window - the exact time gets sorted as people pile on."
-            >
-              <Toggle
-                options={["This week", "This weekend"]}
-                value={timescale === "this_week" ? "This week" : "This weekend"}
-                onChange={(v) => setTimescale(v === "This weekend" ? "this_weekend" : "this_week")}
-              />
-            </Step>
-          )}
-
-          {stepKey === "when" && branch === "set" && (
-            <Step title="When is it?">
-              <DateTimePill
-                dateValue={rows[0].date}
-                timeValue={rows[0].time}
-                onDate={(t) => updateRow(rows[0].id, { date: t })}
-                onTime={(t) => updateRow(rows[0].id, { time: t })}
-                minimumDate={new Date()}
-              />
-            </Step>
-          )}
-
-          {stepKey === "when" && branch === "rough" && (
+          {stepKey === "times" && (
             <Step
               title="When could it be?"
-              sub="Offer a time or two - people react and the best-supported wins."
+              sub="Offer a time or two, or skip - people react and the best-supported wins. Optional."
             >
               {rows.map((r) => (
                 <View key={r.id} style={{ position: "relative", marginBottom: 10 }}>
@@ -304,19 +261,25 @@ export function CreateWizard({ route, navigation }: Props) {
                   )}
                 </View>
               ))}
-              {rows.length < 6 && (
+              <View style={{ flexDirection: "row", flexWrap: "wrap", marginBottom: 6 }}>
+                <Chip label="Morning" onPress={() => addBandRow("morning")} />
+                <Chip label="Afternoon" onPress={() => addBandRow("afternoon")} />
+                <Chip label="Evening" onPress={() => addBandRow("evening")} />
+                <Chip label="Late" onPress={() => addBandRow("late")} />
+              </View>
+              {rows.length < 10 && (
                 <Chip
                   label="+ Add a time"
                   onPress={() =>
-                    setRows((rs) => [...rs, { id: `o${nextRowId.current++}`, date: "", time: "" }])
+                    setRows((rs) => [...rs, { id: `t${nextRowId.current++}`, date: "", time: "" }])
                   }
                 />
               )}
             </Step>
           )}
 
-          {stepKey === "details" && (
-            <Step title="Anything else?" sub="Both optional - skip if you like.">
+          {stepKey === "options" && (
+            <Step title="A few options" sub="All optional - skip if you like.">
               <Field
                 label="Location"
                 optional
@@ -333,21 +296,31 @@ export function CreateWizard({ route, navigation }: Props) {
                 multiline
                 style={{ marginTop: 12 }}
               />
-            </Step>
-          )}
-
-          {stepKey === "lock" && (
-            <Step title="When does it lock?">
-              {lockEdit ? (
-                <Card>
+              <CheckRow
+                label="Lock the times"
+                sub="The group can't add more times"
+                on={lockTimes}
+                onToggle={() => setLockTimes((v) => !v)}
+              />
+              <CheckRow
+                label="Lock the places"
+                sub="The group can't add more places or things"
+                on={lockThings}
+                onToggle={() => setLockThings((v) => !v)}
+              />
+              <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink, marginTop: 18 }}>
+                Decides by
+              </Text>
+              {decidesEdit ? (
+                <Card style={{ marginTop: 8 }}>
                   <DateTimePill
-                    dateValue={lockDate}
-                    timeValue={lockTime}
-                    onDate={setLockDate}
-                    onTime={setLockTime}
+                    dateValue={decidesDate}
+                    timeValue={decidesTime}
+                    onDate={setDecidesDate}
+                    onTime={setDecidesTime}
                     minimumDate={new Date()}
                   />
-                  {lockInvalid && (
+                  {decidesInvalid && (
                     <Text
                       style={{
                         fontFamily: font.medium,
@@ -356,37 +329,69 @@ export function CreateWizard({ route, navigation }: Props) {
                         marginTop: 8,
                       }}
                     >
-                      The deadline has to be before your earliest time.
+                      It has to decide before your earliest time.
                     </Text>
                   )}
                   <View style={{ flexDirection: "row", marginTop: 12 }}>
                     <Chip
                       label="Use default"
                       onPress={() => {
-                        setLockEdit(false);
-                        setLockDate("");
-                        setLockTime("");
+                        setDecidesEdit(false);
+                        setDecidesDate("");
+                        setDecidesTime("");
                       }}
                     />
                   </View>
                 </Card>
               ) : (
-                <Card>
+                <Card style={{ marginTop: 8 }}>
                   <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>
-                    {autoLockIso ? `Locks ${formatSlot(autoLockIso)}` : "Pick a time first"}
+                    {autoDecidesIso
+                      ? `Decides ${formatSlot(autoDecidesIso)}`
+                      : "A sensible deadline"}
                   </Text>
                   <Text
                     style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted, marginTop: 3 }}
                   >
-                    the evening before - best-supported time wins
+                    {autoDecidesIso
+                      ? "before your earliest time - best-supported wins"
+                      : "add times to set this, or we'll pick a horizon"}
                   </Text>
-                  {autoLockIso && (
+                  {autoDecidesIso && (
                     <View style={{ flexDirection: "row", marginTop: 10 }}>
-                      <Chip label="Change" onPress={startEditLock} />
+                      <Chip label="Change" onPress={startEditDecides} />
                     </View>
                   )}
                 </Card>
               )}
+            </Step>
+          )}
+
+          {stepKey === "confirm" && (
+            <Step title="Ready to send?">
+              <Card>
+                <Text
+                  style={{ fontFamily: font.bold, fontSize: 14, color: ui.ink, lineHeight: 21 }}
+                >
+                  {confirmMirror({
+                    timeCount: timeIsos.length,
+                    activityCount: activityChips.length + (activityDraft.trim() ? 1 : 0),
+                    isConcrete,
+                    firstTimeIso: timeIsos[0] ?? null,
+                  })}
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: font.medium,
+                    fontSize: 12,
+                    color: ui.muted,
+                    marginTop: 12,
+                    lineHeight: 18,
+                  }}
+                >
+                  No names - it's the group's.
+                </Text>
+              </Card>
             </Step>
           )}
 
@@ -403,7 +408,7 @@ export function CreateWizard({ route, navigation }: Props) {
   );
 }
 
-function ProgressDots({ steps, index }: { steps: string[]; index: number }) {
+function ProgressDots({ steps, index }: { steps: readonly string[]; index: number }) {
   return (
     <View style={{ flexDirection: "row", gap: 6, marginBottom: 16 }}>
       {steps.map((stepKey, i) => (
@@ -494,4 +499,77 @@ function RemoveDot({ onPress }: { onPress: () => void }) {
       <Text style={{ fontFamily: font.bold, fontSize: 13, lineHeight: 13, color: ui.ink }}>×</Text>
     </Pressable>
   );
+}
+
+function CheckRow({
+  label,
+  sub,
+  on,
+  onToggle,
+}: {
+  label: string;
+  sub: string;
+  on: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onToggle}
+      style={{ flexDirection: "row", alignItems: "center", marginTop: 16 }}
+    >
+      <View
+        style={{
+          width: 22,
+          height: 22,
+          borderRadius: 6,
+          borderWidth: ui.border,
+          borderColor: ui.ink,
+          backgroundColor: on ? ui.ink : "transparent",
+          alignItems: "center",
+          justifyContent: "center",
+          marginRight: 12,
+        }}
+      >
+        {on && (
+          <Text style={{ fontFamily: font.bold, fontSize: 13, lineHeight: 13, color: "#fff" }}>
+            ✓
+          </Text>
+        )}
+      </View>
+      <View style={{ flexShrink: 1 }}>
+        <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>{label}</Text>
+        <Text style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted, marginTop: 1 }}>
+          {sub}
+        </Text>
+      </View>
+    </Pressable>
+  );
+}
+
+// The plain-English outcome mirror. Three shapes per the contract:
+//  - one exact time + lockTimes => it just happens (the concrete shortcut)
+//  - 2+ times => a menu the group reacts to
+//  - 0 times => loose; the group floats times and the best-supported wins
+function confirmMirror({
+  timeCount,
+  activityCount,
+  isConcrete,
+  firstTimeIso,
+}: {
+  timeCount: number;
+  activityCount: number;
+  isConcrete: boolean;
+  firstTimeIso: string | null;
+}): string {
+  const things =
+    activityCount > 0
+      ? ` The group picks from ${activityCount} ${activityCount === 1 ? "thing" : "things"} to do.`
+      : " The group adds what to do.";
+  if (isConcrete && firstTimeIso) {
+    return `It's on for ${formatSlot(firstTimeIso)} - this one just happens, the group says who's in.${things}`;
+  }
+  if (timeCount >= 2) {
+    return `You're offering ${timeCount} times - the group reacts and the best-supported one wins.${things}`;
+  }
+  return `No fixed time yet - the group floats times and the best-supported one wins.${things}`;
 }
