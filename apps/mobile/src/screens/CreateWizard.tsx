@@ -37,8 +37,6 @@ export function CreateWizard({ navigation }: Props) {
   const STEPS = wizardSteps(pastMeetups.length > 0);
   const stepKey = STEPS[step];
   const isLastStep = step === STEPS.length - 1;
-  // Title is optional - leave it blank and the server resolves the winning activity into it at lock.
-  const [title, setTitle] = useState("");
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
   // Activity ("what") candidates - ideas, optional, no names ever shown.
@@ -49,7 +47,7 @@ export function CreateWizard({ navigation }: Props) {
   const nextRowId = useRef(1);
   // Creator locks - both default OFF (open). Decides-by is editable.
   const [lockTimes, setLockTimes] = useState(false);
-  const [lockThings, setLockThings] = useState(false);
+  const [lockActivity, setLockActivity] = useState(false);
   const [decidesEdit, setDecidesEdit] = useState(false);
   const [decidesDate, setDecidesDate] = useState("");
   const [decidesTime, setDecidesTime] = useState("");
@@ -117,10 +115,10 @@ export function CreateWizard({ navigation }: Props) {
   const canLockTimes = timeIsos.length > 0;
   const canLockActivity = activityCount > 0;
   const lockTimesEff = lockTimes && canLockTimes;
-  const lockThingsEff = lockThings && canLockActivity;
+  const lockActivityEff = lockActivity && canLockActivity;
   // Concrete shortcut: skip voting only when BOTH axes are pinned - one locked time AND a locked
   // activity. Must match the server's planOpensMoment so the preview never diverges.
-  const isConcrete = timeIsos.length === 1 && lockTimesEff && lockThingsEff && activityCount <= 1;
+  const isConcrete = timeIsos.length === 1 && lockTimesEff && lockActivityEff && activityCount <= 1;
 
   // Reply-by: the blind RSVP window opens at the vote-close (or now, for a concrete plan) and must sit
   // after it and no later than the earliest time. Default + cap mirror the server (defaultReplyByMs).
@@ -163,11 +161,10 @@ export function CreateWizard({ navigation }: Props) {
   }
 
   function applyPrefill(p: Prefill) {
-    setTitle(p.title);
     setActivityChips(p.activityChips);
     setActivityDraft("");
     setLockTimes(p.lockTimes);
-    setLockThings(p.lockThings);
+    setLockActivity(p.lockActivity);
     setLocation(p.location);
     setDescription(p.description);
     // Time is never carried - reset to a single blank row so the creator sets it fresh.
@@ -214,13 +211,12 @@ export function CreateWizard({ navigation }: Props) {
     try {
       await trpc.events.create.mutate({
         groupId,
-        title: title.trim() || undefined,
         description: description.trim() || undefined,
         location: location.trim() || undefined,
         timeCandidates: timeIsos.map((startsAt) => ({ startsAt })),
         activityCandidates: activities.length ? activities : undefined,
         lockTimes: lockTimesEff,
-        lockThings: lockThingsEff,
+        lockActivity: lockActivityEff,
         decidesBy: decidesToSend,
         replyBy: replyToSend,
       });
@@ -303,7 +299,7 @@ export function CreateWizard({ navigation }: Props) {
               {pastMeetups.map((m) => (
                 <SourceCard
                   key={m.id}
-                  title={m.title || "Untitled meetup"}
+                  title={m.activity}
                   sub={`${m.location ? `${m.location} · ` : ""}last on ${formatSlot(m.lastStartsAt)}`}
                   selected={source === m.id}
                   onPress={() => {
@@ -318,7 +314,7 @@ export function CreateWizard({ navigation }: Props) {
           {stepKey === "activities" && (
             <Step
               title="What do you fancy?"
-              sub="Drop a few activities - optional, and the group can add more. No names - it's the group's."
+              sub="Drop a few activities - optional, and the group can add more. It is the group's, shown without who suggested what."
             >
               {activityChips.map((c) => (
                 <Row key={c}>
@@ -362,9 +358,9 @@ export function CreateWizard({ navigation }: Props) {
                 sub={
                   canLockActivity ? "The group can't add more activities" : "Add an activity first"
                 }
-                on={lockThingsEff}
+                on={lockActivityEff}
                 disabled={!canLockActivity}
-                onToggle={() => setLockThings((v) => !v)}
+                onToggle={() => setLockActivity((v) => !v)}
               />
             </Step>
           )}
@@ -409,19 +405,11 @@ export function CreateWizard({ navigation }: Props) {
           {stepKey === "options" && (
             <Step title="A few options" sub="All optional - skip if you like.">
               <Field
-                label="Title"
-                optional
-                value={title}
-                onChangeText={setTitle}
-                placeholder="Bowling night"
-              />
-              <Field
                 label="Location"
                 optional
                 value={location}
                 onChangeText={setLocation}
                 placeholder="TenPin Bexleyheath"
-                style={{ marginTop: 12 }}
               />
               <Field
                 label="Notes"
@@ -579,7 +567,7 @@ export function CreateWizard({ navigation }: Props) {
                     timeCount: timeIsos.length,
                     activityCount,
                     timeFixed: timeIsos.length === 1 && lockTimesEff,
-                    activityFixed: lockThingsEff && activityCount <= 1,
+                    activityFixed: lockActivityEff && activityCount <= 1,
                     firstTimeIso: timeIsos[0] ?? null,
                   })}
                 </Text>
@@ -592,7 +580,7 @@ export function CreateWizard({ navigation }: Props) {
                     lineHeight: 18,
                   }}
                 >
-                  No names - it's the group's.
+                  Shown without names - it is the group's.
                 </Text>
               </Card>
             </Step>

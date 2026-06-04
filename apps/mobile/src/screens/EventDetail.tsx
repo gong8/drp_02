@@ -62,7 +62,7 @@ export function EventDetail({ route, navigation }: Props) {
   // Edit-details sheet (title/location/notes). Anyone can edit while the plan is live; saves use a
   // per-field compare-and-set so a concurrent edit by someone else surfaces here instead of clobbering.
   const [editSheet, setEditSheet] = useState(false);
-  const [editTitle, setEditTitle] = useState("");
+  const [editActivity, setEditActivity] = useState("");
   const [editLocation, setEditLocation] = useState("");
   const [editNotes, setEditNotes] = useState("");
   const [editNote, setEditNote] = useState("");
@@ -172,7 +172,7 @@ export function EventDetail({ route, navigation }: Props) {
   }
 
   // Add a candidate while collecting (server +1s it for the author); refetch so it shows. Kind-gated
-  // server-side: a time when lockTimes / an activity when lockThings is FORBIDDEN (UI hides the add).
+  // server-side: a time when lockTimes / an activity when lockActivity is FORBIDDEN (UI hides the add).
   function addTime(startsAt: string, partOfDay?: PartOfDay) {
     return runAction(() =>
       trpc.events.addCandidate.mutate(
@@ -211,7 +211,7 @@ export function EventDetail({ route, navigation }: Props) {
   // the current derived title so that intent reads clearly.
   function openEditSheet() {
     if (!data) return;
-    setEditTitle(data.titleRaw);
+    setEditActivity(data.activityRaw);
     setEditLocation(data.location);
     setEditNotes(data.description ?? "");
     setEditNote("");
@@ -225,20 +225,21 @@ export function EventDetail({ route, navigation }: Props) {
   // the plan just went final) shows an inline error and refetches so the screen reflects reality.
   function saveEdit() {
     if (!data || savingEdit) return;
-    const loadedTitle = data.titleRaw;
+    const loadedActivity = data.activityRaw;
     const loadedLocation = data.location;
     const loadedNotes = data.description ?? "";
     const patch: {
-      title?: { from: string; to: string };
+      activity?: { from: string; to: string };
       location?: { from: string; to: string };
       description?: { from: string; to: string };
     } = {};
-    if (editTitle !== loadedTitle) patch.title = { from: loadedTitle, to: editTitle };
+    if (editActivity !== loadedActivity)
+      patch.activity = { from: loadedActivity, to: editActivity };
     if (editLocation !== loadedLocation)
       patch.location = { from: loadedLocation, to: editLocation };
     if (editNotes !== loadedNotes) patch.description = { from: loadedNotes, to: editNotes };
     // Nothing changed - just close.
-    if (!patch.title && !patch.location && !patch.description) {
+    if (!patch.activity && !patch.location && !patch.description) {
       setEditSheet(false);
       return;
     }
@@ -253,7 +254,7 @@ export function EventDetail({ route, navigation }: Props) {
         }
         // Adopt the server's current value for each conflicted field and keep the sheet open.
         for (const c of res.conflicts) {
-          if (c.field === "title") setEditTitle(c.current);
+          if (c.field === "activity") setEditActivity(c.current);
           else if (c.field === "location") setEditLocation(c.current);
           else if (c.field === "description") setEditNotes(c.current);
         }
@@ -375,7 +376,7 @@ export function EventDetail({ route, navigation }: Props) {
                   color: ui.ink,
                 }}
               >
-                {data.title}
+                {data.activity || data.groupName}
               </Text>
               {data.phase !== "cleared" && data.phase !== "fizzled" && (
                 <Pressable
@@ -535,13 +536,15 @@ export function EventDetail({ route, navigation }: Props) {
         >
           Anyone in the group can tidy these up.
         </Text>
-        <Field
-          label="Title"
-          optional
-          value={editTitle}
-          onChangeText={setEditTitle}
-          placeholder={data.title}
-        />
+        {(data.phase === "moment" || data.phase === "cleared") && (
+          <Field
+            label="Activity"
+            optional
+            value={editActivity}
+            onChangeText={setEditActivity}
+            placeholder={data.activity}
+          />
+        )}
         <Field
           label="Location"
           optional
@@ -659,7 +662,7 @@ function CollectingView({
 }) {
   return (
     <View style={{ marginTop: 16 }}>
-      {(data.activityCandidates.length > 0 || !data.lockThings) && (
+      {(data.activityCandidates.length > 0 || !data.lockActivity) && (
         <Section title="Activity">
           {data.activityCandidates.map((c: ActivityCand) => (
             <VoteRow
@@ -670,7 +673,7 @@ function CollectingView({
               onPress={() => onToggleReaction(c.id)}
             />
           ))}
-          {!data.lockThings && <AddActivity busy={busy} onAdd={onAddActivity} />}
+          {!data.lockActivity && <AddActivity busy={busy} onAdd={onAddActivity} />}
         </Section>
       )}
 

@@ -1,10 +1,9 @@
 import { EMPTY_PREFILL, type PastMeetupShell, prefillFromMeetup, wizardSteps } from "./redo";
 
 const shell: PastMeetupShell = {
-  title: "Bowling night",
   activityCandidates: ["bowling", "the pub"],
   lockTimes: true,
-  lockThings: false,
+  lockActivity: false,
   location: "TenPin",
   description: "come at 6",
 };
@@ -21,12 +20,11 @@ test("wizardSteps inserts the source step only when there is past history", () =
   ]);
 });
 
-test("prefillFromMeetup carries title, activities, locks, location, and notes", () => {
+test("prefillFromMeetup carries activities, locks, location, and notes", () => {
   expect(prefillFromMeetup(shell)).toEqual({
-    title: "Bowling night",
     activityChips: ["bowling", "the pub"],
     lockTimes: true,
-    lockThings: false,
+    lockActivity: false,
     location: "TenPin",
     description: "come at 6",
   });
@@ -38,10 +36,9 @@ test("prefillFromMeetup maps a null description to an empty string", () => {
 
 test("EMPTY_PREFILL is the start-fresh baseline", () => {
   expect(EMPTY_PREFILL).toEqual({
-    title: "",
     activityChips: [],
     lockTimes: false,
-    lockThings: false,
+    lockActivity: false,
     location: "",
     description: "",
   });

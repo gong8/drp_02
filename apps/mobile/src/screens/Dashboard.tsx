@@ -185,13 +185,12 @@ function MeetCard({ e, onPress }: { e: Ev; onPress: () => void }) {
               marginRight: 8,
             }}
           >
-            {e.title}
+            {e.activity || e.groupName}
           </Text>
           {cardSticker(e)}
         </View>
         <Text style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted, marginTop: 2 }}>
-          {e.groupName}
-          {e.location ? ` · ${e.location}` : ""}
+          {e.activity ? `${e.groupName}${e.location ? ` · ${e.location}` : ""}` : e.location}
         </Text>
 
         <View
@@ -310,8 +309,8 @@ function ActionCard({
   const spec = isMoment ? formatSlot(e.startsAt) : `${e.candidateCount} on the table`;
   return (
     <DeadlineCard
-      title={e.title}
-      groupName={e.groupName}
+      title={e.activity || e.groupName}
+      groupName={e.activity ? e.groupName : ""}
       nudge={actionVerb(e)}
       countdown={countdown}
       hot={msLeft < 3600000}
