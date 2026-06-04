@@ -6,14 +6,14 @@
 // shared as *types* everywhere else. Keep these in sync with the shared helpers; the server is the
 // source of truth for what is actually applied. See docs/tech-debt.md.
 
-const MOMENT_MS = 60 * 60 * 1000;
+export const MOMENT_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * MOMENT_MS;
 
 function clamp(value: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, value));
 }
 
-export function defaultLockAtForOptions(
+export function defaultDecidesByForCandidates(
   earliestMs: number,
   nowMs: number,
   momentMs: number = MOMENT_MS,
@@ -27,12 +27,14 @@ export function defaultLockAtForOptions(
   return Math.round(latest > nowMs ? Math.min(midpoint, latest) : midpoint);
 }
 
-export function addCandidateHorizon(
-  earliestMs: number,
-  latestMs: number,
-  isFuzzy: boolean,
-): number {
-  if (isFuzzy) return latestMs;
+export function addCandidateHorizon(earliestMs: number, latestMs: number): number {
   const span = latestMs - earliestMs;
   return latestMs + Math.min(span, 2 * DAY_MS);
+}
+
+// The blind reply window opens at openMs (the lock, or now for a concrete plan) and closes a sensible
+// bit before the event, capped at one day so a far-off plan is not blind for the whole run-up.
+export function defaultReplyByMs(openMs: number, eventMs: number): number {
+  if (eventMs <= openMs) return openMs + MOMENT_MS;
+  return Math.min(eventMs, openMs + DAY_MS);
 }

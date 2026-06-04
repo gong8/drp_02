@@ -15,11 +15,10 @@ test("flags a reaction by someone not in the group", () => {
       groupId: "g1",
       createdBy: "u_a",
       title: "T",
-      whenMode: "options",
       contingent: true,
       quorum: 2,
       phase: "collecting",
-      candidates: [{ suffix: "c1", startsAt: new Date(), reactedBy: ["u_b"] }],
+      candidates: [{ suffix: "c1", kind: "time", startsAt: new Date(), reactedBy: ["u_b"] }],
     },
   ];
   const errs = seedIntegrityErrors(users, groups, plans);
@@ -38,11 +37,10 @@ test("flags a chosenSuffix that matches no candidate", () => {
       groupId: "g1",
       createdBy: "u_a",
       title: "T",
-      whenMode: "exact",
       contingent: false,
       quorum: 1,
       phase: "cleared",
-      candidates: [{ suffix: "c1", startsAt: new Date() }],
+      candidates: [{ suffix: "c1", kind: "time", startsAt: new Date() }],
       chosenSuffix: "c9",
     },
   ];
@@ -50,5 +48,27 @@ test("flags a chosenSuffix that matches no candidate", () => {
   assert.ok(
     errs.some((e) => e.includes("chosenSuffix")),
     `expected a chosenSuffix error, got ${JSON.stringify(errs)}`,
+  );
+});
+
+test("flags a collecting plan with no time candidate", () => {
+  const users = [{ id: "u_a" }];
+  const groups = [{ id: "g1", members: ["u_a"] }];
+  const plans: Plan[] = [
+    {
+      id: "p1",
+      groupId: "g1",
+      createdBy: "u_a",
+      title: "",
+      contingent: true,
+      quorum: 1,
+      phase: "collecting",
+      candidates: [{ suffix: "a1", kind: "activity", label: "bowling", reactedBy: ["u_a"] }],
+    },
+  ];
+  const errs = seedIntegrityErrors(users, groups, plans);
+  assert.ok(
+    errs.some((e) => e.includes("at least one time candidate")),
+    `expected a time-candidate error, got ${JSON.stringify(errs)}`,
   );
 });

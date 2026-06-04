@@ -17,19 +17,15 @@ import { CreateGroup } from "./src/screens/CreateGroup";
 import { CreateWizard } from "./src/screens/CreateWizard";
 import { Dashboard } from "./src/screens/Dashboard";
 import { EventDetail } from "./src/screens/EventDetail";
-import { FloatBoard } from "./src/screens/FloatBoard";
 import { GroupDetail } from "./src/screens/GroupDetail";
 import { GroupsList } from "./src/screens/GroupsList";
-import { NewDial } from "./src/screens/NewDial";
 import { SignIn } from "./src/screens/SignIn";
 import { font, ui } from "./src/theme";
 
 export type MeetupsStackParams = {
   Dashboard: undefined;
   EventDetail: { eventId: string };
-  NewDial: undefined;
-  CreateWizard: { branch: "float" | "rough" | "set" };
-  FloatBoard: { eventId: string };
+  CreateWizard: undefined;
 };
 export type GroupsStackParams = {
   GroupsList: undefined;
@@ -48,9 +44,7 @@ function MeetupsStackScreen() {
     <MeetupsStack.Navigator screenOptions={stackHeader}>
       <MeetupsStack.Screen name="Dashboard" component={Dashboard} />
       <MeetupsStack.Screen name="EventDetail" component={EventDetail} />
-      <MeetupsStack.Screen name="NewDial" component={NewDial} />
       <MeetupsStack.Screen name="CreateWizard" component={CreateWizard} />
-      <MeetupsStack.Screen name="FloatBoard" component={FloatBoard} />
     </MeetupsStack.Navigator>
   );
 }

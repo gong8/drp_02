@@ -2,7 +2,7 @@ import { useCallback } from "react";
 
 // Inputs for the busy-guarded action runner: the screen's own busy flag + its setters and reload.
 // The hook reads the screen's existing state rather than owning it, so a screen can adopt it without
-// changing where busy/error live (EventDetail, FloatBoard, and GroupDetail each already hold these).
+// changing where busy/error live (EventDetail and GroupDetail each already hold these).
 type BusyActionDeps = {
   busy: boolean;
   setBusy: (busy: boolean) => void;
@@ -11,8 +11,8 @@ type BusyActionDeps = {
 };
 
 // The repeated "guard while busy -> set busy -> mutate -> reload -> clear busy (surfacing errors)"
-// skeleton, factored into one runner. EventDetail (lock/addCandidate/answer/changeAnswer) and
-// FloatBoard (addIdea/addTime) each open-code this body per handler; GroupDetail already factored it
+// skeleton, factored into one runner. EventDetail (lock/addTime/addActivity/answer/changeAnswer)
+// open-codes this body per handler; GroupDetail already factored it
 // locally as `run(fn)`. This is that body, byte-for-byte:
 //
 //   if (busy) return;
