@@ -30,4 +30,7 @@ SELECT "event_id", "suggestion_id", "user_id"
 FROM "float_votes";--> statement-breakpoint
 
 -- 6. Back-migrate phase: floating plans (former floats) now collect like everything else.
-UPDATE "events" SET "phase" = 'collecting' WHERE "phase" = 'floating';
+-- Compare via ::text, NOT the enum literal 'floating': this whole migration set runs in ONE
+-- transaction on a fresh DB, where 0004's `ALTER TYPE plan_phase ADD VALUE 'floating'` is not yet
+-- committed, so referencing it as an enum literal here raises 55P04 (unsafe use of new value).
+UPDATE "events" SET "phase" = 'collecting' WHERE "phase"::text = 'floating';
