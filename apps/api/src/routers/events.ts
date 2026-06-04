@@ -6,8 +6,8 @@ import {
   type CandidateKind,
   CreateEventInput,
   clears,
-  DEFAULT_MOMENT_MINUTES,
   defaultDecidesByForCandidates,
+  defaultReplyByMs,
   LockInput,
   MOMENT_MS,
   type MomentResponse,
@@ -79,13 +79,15 @@ function goingFromRow(e: EventRow, resp: MomentResponse[]): string[] | null {
   });
 }
 
-// The blind moment always ends by the event itself. Use the configured window, but never run past
-// the chosen start; if the start is already here, fall back to a full window so there is always a
-// real moment to answer (and we never reveal before anyone could respond).
-function computeMomentEnd(now: Date, minutes: number, chosenStartsAt: Date): Date {
-  const windowEnd = new Date(now.getTime() + minutes * 60 * 1000);
-  if (chosenStartsAt.getTime() <= now.getTime()) return windowEnd;
-  return new Date(Math.min(windowEnd.getTime(), chosenStartsAt.getTime()));
+// When the blind moment ends: the creator's "reply by" if set, else the default (one-day-capped from
+// the open, to the event). Clamped to leave a real window after the moment starts and to never run
+// past the event itself; if the event is already here, fall back to a full short window so there is
+// always a moment to answer (and we never reveal before anyone could respond).
+function resolveMomentEnd(openMs: number, eventMs: number, replyByMs: number | null): Date {
+  if (eventMs <= openMs) return new Date(openMs + MOMENT_MS);
+  const wanted = replyByMs ?? defaultReplyByMs(openMs, eventMs);
+  const floor = openMs + Math.min(MOMENT_MS, eventMs - openMs);
+  return new Date(Math.min(eventMs, Math.max(wanted, floor)));
 }
 
 // Who has opted out of a (collecting) plan. Their reactions are already cleared, so this is only
@@ -170,7 +172,7 @@ async function settleCollecting(e: EventRow): Promise<void> {
     reactions,
   );
   const now = new Date();
-  const endsAt = computeMomentEnd(now, DEFAULT_MOMENT_MINUTES, startsAt);
+  const endsAt = resolveMomentEnd(now.getTime(), startsAt.getTime(), e.replyBy?.getTime() ?? null);
   await db
     .update(events)
     .set({
@@ -322,15 +324,7 @@ export const eventsRouter = router({
       timeCands.length > 0 ? timeCands[timeCands.length - 1].startsAt.getTime() : earliestMs;
     const startsAt = new Date(earliestMs); // the chosen time when opensMoment; a placeholder otherwise
 
-    // The concrete shortcut opens the blind moment now and runs until the event itself; respond stays
-    // open the whole time and the crowd reveals when it starts. If that time is already here, fall
-    // back to a short window so there is always a real moment to answer.
     const momentStartsAt = opensMoment ? new Date() : null;
-    let momentEndsAt: Date | null = opensMoment ? startsAt : null;
-    if (opensMoment && momentEndsAt && momentEndsAt.getTime() <= now) {
-      momentEndsAt = new Date(now + MOMENT_MS);
-    }
-    const respondByAt = momentEndsAt ?? new Date(lastMs);
 
     // Collecting plans converge by a fixed deadline ("Decides by"), then auto-pick the winner. The
     // creator may override it; the override must sit after now and leave the blind moment room before
@@ -352,6 +346,30 @@ export const eventsRouter = router({
       }
     }
 
+    // Reply-by: when the blind RSVP window closes (then it reveals + resolves). Editable; defaulted at
+    // lock when unset. Must sit after the vote closes (or now, for a concrete plan) and no later than
+    // the earliest event time. Loose plans (no times yet) have no editor; it defaults at lock.
+    let replyBy: Date | null = null;
+    if (input.replyBy) {
+      const t = new Date(input.replyBy);
+      const floorMs = decidesBy ? decidesBy.getTime() : now;
+      const tooLate = timeCands.length > 0 && t.getTime() > earliestMs;
+      if (Number.isNaN(t.getTime()) || t.getTime() <= floorMs || tooLate) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "reply-by must be after the vote closes and no later than the event",
+        });
+      }
+      replyBy = t;
+    }
+
+    // The concrete shortcut opens the blind moment now and runs until reply-by (default one-day-capped,
+    // to the event). Otherwise the moment opens later, at the lock.
+    const momentEndsAt: Date | null = opensMoment
+      ? resolveMomentEnd(now, earliestMs, replyBy?.getTime() ?? null)
+      : null;
+    const respondByAt = momentEndsAt ?? new Date(lastMs);
+
     await db.insert(events).values({
       id,
       groupId: input.groupId,
@@ -369,6 +387,7 @@ export const eventsRouter = router({
       lockThings: input.lockThings,
       phase: opensMoment ? "moment" : "collecting",
       decidesBy,
+      replyBy,
       chosenCandidateId: opensMoment && timeCands.length > 0 ? timeCands[0].id : null,
       momentStartsAt,
       momentEndsAt,
@@ -578,9 +597,12 @@ export const eventsRouter = router({
       reactions,
     );
 
-    const minutes = input.momentMinutes ?? DEFAULT_MOMENT_MINUTES;
     const now = new Date();
-    const momentEndsAt = computeMomentEnd(now, minutes, chosen.startsAt);
+    const momentEndsAt = resolveMomentEnd(
+      now.getTime(),
+      chosen.startsAt.getTime(),
+      e.replyBy?.getTime() ?? null,
+    );
     await db
       .update(events)
       .set({
@@ -751,6 +773,9 @@ export const eventsRouter = router({
       startsAt: e.startsAt.toISOString(),
       decidesBy: e.decidesBy?.toISOString() ?? null,
       msLeftToDecide: msLeft(e.decidesBy),
+      // The planned RSVP deadline (set/defaulted at lock); shown while collecting so the creator can
+      // see when replies will close. Once the moment opens, momentEndsAt is the live countdown.
+      replyBy: e.replyBy?.toISOString() ?? null,
       chosenStartsAt: chosen?.startsAt?.toISOString() ?? null,
       momentStartsAt: e.momentStartsAt?.toISOString() ?? null,
       momentEndsAt: e.momentEndsAt?.toISOString() ?? null,
