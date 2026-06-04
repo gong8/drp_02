@@ -81,12 +81,16 @@ export function CreateWizard({ navigation }: Props) {
   // biome-ignore lint/correctness/useExhaustiveDependencies: groupId is the only intended trigger.
   useEffect(() => {
     if (!groupId) return;
+    let active = true;
     setSource(null);
     applyPrefill(EMPTY_PREFILL);
     trpc.events.pastForGroup
       .query({ groupId })
-      .then(setPastMeetups)
-      .catch(() => setPastMeetups([]));
+      .then((m) => active && setPastMeetups(m))
+      .catch(() => active && setPastMeetups([]));
+    return () => {
+      active = false;
+    };
   }, [groupId]);
 
   const timeIsos = rows.map((r) => isoFrom(r.date, r.time)).filter((x): x is string => x !== null);
