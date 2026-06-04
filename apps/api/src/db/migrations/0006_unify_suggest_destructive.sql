@@ -6,6 +6,9 @@
 DROP TABLE "float_votes";--> statement-breakpoint
 DROP TABLE "float_suggestions";--> statement-breakpoint
 
+-- Align the is_anonymous DB default with the always-anonymous model (schema declares true).
+ALTER TABLE "events" ALTER COLUMN "is_anonymous" SET DEFAULT true;--> statement-breakpoint
+
 -- 2. Drop dead event columns.
 ALTER TABLE "events" DROP COLUMN "min_heat";--> statement-breakpoint
 ALTER TABLE "events" DROP COLUMN "when_mode";--> statement-breakpoint
