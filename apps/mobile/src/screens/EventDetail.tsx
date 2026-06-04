@@ -771,25 +771,23 @@ function MomentView({
   return (
     <View style={{ marginTop: 16 }}>
       {showAnswer ? (
-        <>
-          <Section title="Are you in?" sub="Blind until close.">
-            <Button
-              label="I'm in"
-              variant="affirmative"
-              disabled={busy}
-              onPress={onYes}
-              style={{ marginBottom: 10 }}
-            />
-            <Button
-              label="Go if..."
-              variant="outline"
-              disabled={busy}
-              onPress={onConditional}
-              style={{ marginBottom: 10 }}
-            />
-            <Button label={LABEL_CANT_MAKE_IT} variant="outline" disabled={busy} onPress={onNo} />
-          </Section>
-        </>
+        <Section title="Are you in?" sub="Blind until close.">
+          <Button
+            label="I'm in"
+            variant="affirmative"
+            disabled={busy}
+            onPress={onYes}
+            style={{ marginBottom: 10 }}
+          />
+          <Button
+            label="Go if..."
+            variant="outline"
+            disabled={busy}
+            onPress={onConditional}
+            style={{ marginBottom: 10 }}
+          />
+          <Button label={LABEL_CANT_MAKE_IT} variant="outline" disabled={busy} onPress={onNo} />
+        </Section>
       ) : (
         <>
           <Text style={{ fontFamily: font.bold, fontSize: 14, color: ui.ink, marginBottom: 12 }}>
