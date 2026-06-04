@@ -64,9 +64,9 @@ test("isActionRequired: only live plans still wanting you", () => {
   expect(isActionRequired(plan({ phase: "moment", iResponded: true }))).toBe(false);
   expect(isActionRequired(plan({ phase: "collecting", iReacted: false }))).toBe(true);
   expect(isActionRequired(plan({ phase: "collecting", iReacted: true }))).toBe(false);
-  expect(isActionRequired(plan({ phase: "collecting", iReacted: false, myStatus: "declined" }))).toBe(
-    false,
-  );
+  expect(
+    isActionRequired(plan({ phase: "collecting", iReacted: false, myStatus: "declined" })),
+  ).toBe(false);
   expect(isActionRequired(plan({ phase: "cleared", iResponded: false }))).toBe(false);
 });
 
@@ -85,8 +85,13 @@ test("activeDeadline maps phase to the right field + label", () => {
 test("compareForDisplay: upcoming soonest-first, then past most-recent-first", () => {
   const upSoon = plan({ phase: "cleared", startsAt: SOON });
   const upLater = plan({ phase: "cleared", startsAt: LATER });
-  const pastOld = plan({ phase: "cleared", startsAt: new Date(NOW - 2 * 86_400_000).toISOString() });
+  const pastOld = plan({
+    phase: "cleared",
+    startsAt: new Date(NOW - 2 * 86_400_000).toISOString(),
+  });
   const pastRecent = plan({ phase: "cleared", startsAt: PAST });
-  const sorted = [pastOld, upLater, pastRecent, upSoon].sort((a, b) => compareForDisplay(a, b, NOW));
+  const sorted = [pastOld, upLater, pastRecent, upSoon].sort((a, b) =>
+    compareForDisplay(a, b, NOW),
+  );
   expect(sorted).toEqual([upSoon, upLater, pastRecent, pastOld]);
 });

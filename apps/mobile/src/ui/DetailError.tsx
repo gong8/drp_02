@@ -1,10 +1,10 @@
-import { Text, View } from "react-native";
-import { font, ui } from "../theme";
-import { BackBar } from "./BackBar";
-import { ScreenBackground } from "./ScreenBackground";
+import { ERR_NETWORK } from "../lib/copy";
+import { EmptyState } from "./EmptyState";
+import { ScreenHeader } from "./ScreenHeader";
+import { ScreenScroll } from "./ScreenScroll";
 
 // The error / not-found state shared by the detail screens: a back bar over a muted line that reads
-// "Couldn't reach the server." on a fetch error, else the screen's own not-found label.
+// the network error on a fetch failure, else the screen's own not-found label.
 export function DetailError({
   error,
   onBack,
@@ -15,13 +15,8 @@ export function DetailError({
   notFoundLabel: string;
 }) {
   return (
-    <ScreenBackground>
-      <View style={{ padding: 16 }}>
-        <BackBar title="Back" onBack={onBack} />
-        <Text style={{ fontFamily: font.medium, color: ui.muted }}>
-          {error ? "Couldn't reach the server." : notFoundLabel}
-        </Text>
-      </View>
-    </ScreenBackground>
+    <ScreenScroll header={<ScreenHeader title="Back" onBack={onBack} />}>
+      <EmptyState>{error ? ERR_NETWORK : notFoundLabel}</EmptyState>
+    </ScreenScroll>
   );
 }
