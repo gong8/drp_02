@@ -9,6 +9,7 @@ export function Card({
   children,
   padding = 12,
   radius = ui.rCard,
+  tone = ui.surface,
   onPress,
   disabled = false,
   style,
@@ -16,12 +17,13 @@ export function Card({
   children: ReactNode;
   padding?: number;
   radius?: number;
+  tone?: string;
   onPress?: () => void;
   disabled?: boolean;
   style?: ViewStyle;
 }) {
   const boxStyle: ViewStyle = {
-    backgroundColor: ui.surface,
+    backgroundColor: tone,
     borderWidth: ui.border,
     borderColor: ui.ink,
     borderRadius: radius,
