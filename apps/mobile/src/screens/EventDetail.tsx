@@ -1,7 +1,8 @@
+import type { PartOfDay } from "@bethere/shared";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import { type ReactNode, useCallback, useRef, useState } from "react";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
 import {
   clock12,
@@ -24,19 +25,21 @@ import {
   Card,
   DateTimePill,
   DetailError,
+  Field,
   PersonRow,
   ScreenBackground,
   ScreenLoading,
   SelectCheck,
   StickerTag,
   Toggle,
+  VoteChip,
 } from "../ui";
 
 type Detail = NonNullable<Awaited<ReturnType<typeof trpc.events.get.query>>>;
 type Member = Detail["members"][number];
-type Candidate = Detail["candidates"][number];
+type TimeCand = Detail["timeCandidates"][number];
+type ActivityCand = Detail["activityCandidates"][number];
 type CondModeLabel = "At least one" | "All of them";
-type SaveState = "idle" | "saving" | "saved" | "error";
 type Props = NativeStackScreenProps<MeetupsStackParams, "EventDetail">;
 
 export function EventDetail({ route, navigation }: Props) {
@@ -51,22 +54,16 @@ export function EventDetail({ route, navigation }: Props) {
   const [sheet, setSheet] = useState(false);
   const [condModeLabel, setCondModeLabel] = useState<CondModeLabel>("At least one");
   const [condPicked, setCondPicked] = useState<string[]>([]);
-  // collecting reactions (seeded once from the server, then edited locally)
-  const [reactPicked, setReactPicked] = useState<string[]>([]);
-  const [optedOutLocal, setOptedOutLocal] = useState(false);
-  // Surfaces whether the latest tap (a reaction or the opt-out) has been persisted yet.
-  const [saveState, setSaveState] = useState<SaveState>("idle");
-  const seededFor = useRef<string>("");
   const phaseRef = useRef<string>("");
-  // Auto-save: the latest reaction set waiting to be persisted + its debounce timer (no submit btn).
-  const pendingPicks = useRef<string[] | null>(null);
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Suggestion ids with an in-flight toggleReaction: while pending we skip applying poll data so the
+  // optimistic chip never flickers (the next clean poll reconciles the true public count).
+  const pendingReact = useRef<Set<string>>(new Set());
 
   const load = useCallback(() => {
     return trpc.events.get
       .query({ id: eventId })
       .then((d) => {
-        setData(d);
+        if (d && pendingReact.current.size === 0) setData(d);
         setError(false);
       })
       .catch(() => setError(true))
@@ -75,25 +72,6 @@ export function EventDetail({ route, navigation }: Props) {
 
   // Busy-guarded mutate-then-reload runner shared by lock/addCandidate/answer/changeAnswer.
   const runAction = useBusyAction({ busy, setBusy, setError, load });
-
-  // Persist the current reaction set, debounced (see toggleReact). Deliberately NOT followed by a
-  // refetch: that would clobber the optimistic picks and flicker; the 5s poll refreshes the tally
-  // and lock-readiness on its own. Failures are swallowed (the next poll reconciles).
-  const flushReact = useCallback(() => {
-    if (saveTimer.current) {
-      clearTimeout(saveTimer.current);
-      saveTimer.current = null;
-    }
-    if (pendingPicks.current) {
-      const worksCandidateIds = pendingPicks.current;
-      pendingPicks.current = null;
-      setSaveState("saving");
-      trpc.events.react
-        .mutate({ eventId, worksCandidateIds })
-        .then(() => setSaveState("saved"))
-        .catch(() => setSaveState("error"));
-    }
-  }, [eventId]);
 
   // The 1s ticker only drives the live moment countdown, so only run it during the moment.
   const now = useLiveClock(
@@ -112,71 +90,44 @@ export function EventDetail({ route, navigation }: Props) {
       return () => {
         active = false;
         clearInterval(poll);
-        flushReact(); // persist any reaction tap not yet saved before leaving the screen
       };
-    }, [load, flushReact]),
+    }, [load]),
   );
 
   phaseRef.current = data?.phase ?? "";
 
-  // Seed the reaction picks once per plan (not per focus) so returning to the screen never clobbers
-  // candidate taps the user has not yet submitted.
-  useEffect(() => {
-    if (data && data.phase === "collecting" && seededFor.current !== eventId) {
-      setReactPicked(data.myReactionCandidateIds);
-      setOptedOutLocal(data.iOptedOut);
-      seededFor.current = eventId;
-    }
-  }, [data, eventId]);
-
-  // Tapping a candidate IS the answer - toggle optimistically and save after a short debounce, so
-  // there is no separate "submit" step competing with the deadline. Tapping a time also rejoins
-  // anyone who had opted out.
-  function toggleReact(id: string) {
-    setOptedOutLocal(false);
-    setReactPicked((p) => {
-      const next = p.includes(id) ? p.filter((x) => x !== id) : [...p, id];
-      pendingPicks.current = next;
-      return next;
-    });
-    setSaveState("saving");
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(flushReact, 500);
+  // One public +1 / un-+1 on a candidate (either kind), optimistic. Adding a reaction also clears
+  // the caller's opt-out (server-side); a failed toggle reverts; the 5s poll reconciles.
+  function toggleReaction(candidateId: string) {
+    const flipMine = <T extends { id: string; mine: boolean; count: number }>(rows: T[]): T[] =>
+      rows.map((c) =>
+        c.id === candidateId ? { ...c, mine: !c.mine, count: c.count + (c.mine ? -1 : 1) } : c,
+      );
+    const flip = (d: Detail | null): Detail | null =>
+      d
+        ? {
+            ...d,
+            timeCandidates: flipMine(d.timeCandidates),
+            activityCandidates: flipMine(d.activityCandidates),
+            iOptedOut: false,
+          }
+        : d;
+    setData(flip);
+    pendingReact.current.add(candidateId);
+    trpc.events.toggleReaction
+      .mutate({ eventId, candidateId })
+      .catch(() => setData(flip))
+      .finally(() => pendingReact.current.delete(candidateId));
   }
 
-  // "I can't make it" - a reversible, private exit. Opting out clears local picks; tapping it again
-  // (or any time above) rejoins. Optimistic, with the same save-state feedback as a reaction.
-  async function toggleOptOut() {
-    const next = !optedOutLocal;
-    setOptedOutLocal(next);
-    if (next) {
-      if (saveTimer.current) clearTimeout(saveTimer.current);
-      pendingPicks.current = null;
-      setReactPicked([]);
-    }
-    setSaveState("saving");
-    try {
-      await trpc.events.setOptOut.mutate({ eventId, out: next });
-      setSaveState("saved");
-      await load();
-    } catch {
-      setOptedOutLocal(!next);
-      setSaveState("error");
-    }
-  }
-
-  // Re-send the current intent after a failed save (tap on the error status).
-  function retrySave() {
-    setSaveState("saving");
-    if (optedOutLocal) {
-      trpc.events.setOptOut
-        .mutate({ eventId, out: true })
-        .then(() => setSaveState("saved"))
-        .catch(() => setSaveState("error"));
-    } else {
-      pendingPicks.current = reactPicked;
-      flushReact();
-    }
+  // "I can't make it" - a reversible, private exit. Optimistic; tapping any candidate above rejoins
+  // (server clears the opt-out on a reaction). The 5s poll reconciles.
+  function toggleOptOut() {
+    const next = !(data?.iOptedOut ?? false);
+    setData((d) => (d ? { ...d, iOptedOut: next } : d));
+    trpc.events.setOptOut
+      .mutate({ eventId, out: next })
+      .catch(() => setData((d) => (d ? { ...d, iOptedOut: !next } : d)));
   }
 
   function lock(candidateId?: string) {
@@ -187,10 +138,20 @@ export function EventDetail({ route, navigation }: Props) {
     );
   }
 
-  // Anyone in the group can float a new time into the menu while collecting; refetch so it shows.
-  function addCandidate(startsAt: string) {
-    if (!data) return;
-    return runAction(() => trpc.events.addCandidate.mutate({ eventId, startsAt }));
+  // Add a candidate while collecting (server +1s it for the author); refetch so it shows. Kind-gated
+  // server-side: a time when lockTimes / an activity when lockThings is FORBIDDEN (UI hides the add).
+  function addTime(startsAt: string, partOfDay?: PartOfDay) {
+    return runAction(() =>
+      trpc.events.addCandidate.mutate(
+        partOfDay
+          ? { eventId, kind: "time", startsAt, partOfDay }
+          : { eventId, kind: "time", startsAt },
+      ),
+    );
+  }
+
+  function addActivity(text: string) {
+    return runAction(() => trpc.events.addCandidate.mutate({ eventId, kind: "activity", text }));
   }
 
   function answer(
@@ -223,7 +184,7 @@ export function EventDetail({ route, navigation }: Props) {
     );
 
   const liveMsLeft = data.momentEndsAt ? new Date(data.momentEndsAt).getTime() - now : 0;
-  const liveMsToLock = data.lockAt ? new Date(data.lockAt).getTime() - now : 0;
+  const liveMsToDecide = data.decidesBy ? new Date(data.decidesBy).getTime() - now : 0;
   // The chosen time, shown as a hero banner once a slot is locked (moment/cleared); collecting has
   // no single time yet.
   const heroIso = data.chosenStartsAt && data.phase !== "collecting" ? data.chosenStartsAt : null;
@@ -256,8 +217,8 @@ export function EventDetail({ route, navigation }: Props) {
         contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 2, paddingBottom: 28 }}
         showsVerticalScrollIndicator={false}
       >
-        {data.phase === "collecting" && data.lockAt && (
-          <CountdownBanner label="Locks in" ms={liveMsToLock} note="best-supported time wins" />
+        {data.phase === "collecting" && data.decidesBy && (
+          <CountdownBanner label="Decides by" ms={liveMsToDecide} note="most-wanted wins" />
         )}
         {data.phase === "moment" && (
           <CountdownBanner label="Closes in" ms={liveMsLeft} note="who's in reveals then" />
@@ -337,15 +298,13 @@ export function EventDetail({ route, navigation }: Props) {
         {data.phase === "collecting" && (
           <CollectingView
             data={data}
-            picked={reactPicked}
-            optedOut={optedOutLocal}
-            saveState={saveState}
+            optedOut={data.iOptedOut}
             busy={busy}
-            onToggle={toggleReact}
+            onToggleReaction={toggleReaction}
             onToggleOptOut={toggleOptOut}
-            onRetry={retrySave}
             onLock={lock}
-            onAddCandidate={addCandidate}
+            onAddTime={addTime}
+            onAddActivity={addActivity}
           />
         )}
 
@@ -382,7 +341,8 @@ export function EventDetail({ route, navigation }: Props) {
                   lineHeight: 18,
                 }}
               >
-                Not enough people were free this time - no worries, no fuss. Float another whenever.
+                Not enough people were keen this time - no worries, no fuss. Suggest another
+                whenever.
               </Text>
             </Card>
           </View>
@@ -510,176 +470,113 @@ function CountdownBanner({ label, ms, note }: { label: string; ms: number; note:
   );
 }
 
-// Collecting: tap which candidate times work, or opt out; the plan auto-locks at its deadline.
+// Collecting: PUBLIC vote board. Two candidate lists - TIME and ACTIVITY (what/where) - each a
+// VoteChip with its public +1 count + the caller's own tap. Add controls are hidden when the
+// creator locked that axis. No names - the counts are the group's momentum.
 function CollectingView({
   data,
-  picked,
   optedOut,
-  saveState,
   busy,
-  onToggle,
+  onToggleReaction,
   onToggleOptOut,
-  onRetry,
   onLock,
-  onAddCandidate,
+  onAddTime,
+  onAddActivity,
 }: {
   data: Detail;
-  picked: string[];
   optedOut: boolean;
-  saveState: SaveState;
   busy: boolean;
-  onToggle: (id: string) => void;
+  onToggleReaction: (candidateId: string) => void;
   onToggleOptOut: () => void;
-  onRetry: () => void;
   onLock: (candidateId?: string) => void;
-  onAddCandidate: (startsAt: string) => void;
+  onAddTime: (startsAt: string, partOfDay?: PartOfDay) => void;
+  onAddActivity: (text: string) => void;
 }) {
-  const [addOpen, setAddOpen] = useState(false);
-  const [newDate, setNewDate] = useState("");
-  const [newTime, setNewTime] = useState("");
-  const newIso = isoFrom(newDate, newTime);
-
-  const candidateTimes = data.candidates.map((c: Candidate) => new Date(c.startsAt).getTime());
-  const lockMs = data.lockAt ? new Date(data.lockAt).getTime() : Date.now();
-  const addMinDate = new Date(Math.max(Date.now(), lockMs));
-  const addMaxDate = new Date(
-    addCandidateHorizon(
-      Math.min(...candidateTimes),
-      Math.max(...candidateTimes),
-      data.whenMode === "fuzzy",
-    ),
-  );
-
-  // Shared table-row style; the first row overrides to no top divider.
-  const row = {
-    flexDirection: "row" as const,
-    alignItems: "center" as const,
-    gap: 10,
-    padding: 12,
-    borderTopWidth: 1,
-    borderTopColor: ui.hairline,
-  };
-
   return (
     <View style={{ marginTop: 16 }}>
       <Text style={{ fontFamily: font.display, fontSize: 14, color: ui.ink, marginBottom: 4 }}>
-        Which of these work?
+        What do you fancy?
       </Text>
       <Text style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted, marginBottom: 10 }}>
-        Tap the times you can make - private to you.
+        Tap what you're keen on - a +1 is the group's momentum, not a commitment.
       </Text>
-      <Card padding={0}>
-        {data.candidates.map((c: Candidate, i: number) => {
-          const on = !optedOut && picked.includes(c.id);
-          return (
-            <Pressable
-              key={c.id}
-              onPress={() => onToggle(c.id)}
-              style={{ ...row, borderTopWidth: i === 0 ? 0 : 1 }}
-            >
-              <SelectCheck selected={on} />
-              <View>
-                <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>
-                  {formatSlot(c.startsAt)}
-                </Text>
-                {c.partOfDay ? (
-                  <Text style={{ fontFamily: font.medium, fontSize: 10, color: ui.muted }}>
-                    {partOfDayLabel(c.partOfDay)}
-                  </Text>
-                ) : null}
-              </View>
-            </Pressable>
-          );
-        })}
 
-        {!addOpen && (
-          <Pressable onPress={() => setAddOpen(true)} style={row}>
-            <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.brand }}>
-              + Add a time
-            </Text>
-          </Pressable>
-        )}
-
-        {/* Opt-out: a distinct, tinted last row of the same table (mutually exclusive). */}
-        <Pressable onPress={onToggleOptOut} style={{ ...row, backgroundColor: "#F1EEF6" }}>
-          <SelectCheck selected={optedOut} accent={ui.ink} />
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>
-              I can't make it
-            </Text>
-            <Text style={{ fontFamily: font.medium, fontSize: 10, color: ui.muted }}>
-              you won't be asked again - tap a time to rejoin
-            </Text>
-          </View>
-        </Pressable>
-      </Card>
-
-      <SaveStatus state={saveState} onRetry={onRetry} />
-
-      {addOpen && (
-        <Card style={{ marginTop: 14 }}>
-          <Text
-            style={{
-              fontFamily: font.bold,
-              fontSize: 9,
-              letterSpacing: 1,
-              textTransform: "uppercase",
-              color: ui.ink,
-              marginBottom: 10,
-            }}
-          >
-            Add a time
-          </Text>
-          <DateTimePill
-            dateValue={newDate}
-            timeValue={newTime}
-            onDate={setNewDate}
-            onTime={setNewTime}
-            minimumDate={addMinDate}
-            maximumDate={addMaxDate}
-          />
-          <View
-            style={{
-              flexDirection: "row",
-              gap: 16,
-              marginTop: 14,
-              alignItems: "center",
-              justifyContent: "flex-end",
-            }}
-          >
-            <Pressable
-              hitSlop={8}
-              onPress={() => {
-                setNewDate("");
-                setNewTime("");
-                setAddOpen(false);
-              }}
-            >
-              <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.muted }}>Cancel</Text>
-            </Pressable>
-            <View style={{ width: 110 }}>
-              <Button
-                label="Add"
-                variant="primary"
-                disabled={busy || !newIso}
-                onPress={() => {
-                  if (!newIso) return;
-                  onAddCandidate(newIso);
-                  setNewDate("");
-                  setNewTime("");
-                  setAddOpen(false);
-                }}
+      {(data.activityCandidates.length > 0 || !data.lockThings) && (
+        <Section title="What / where">
+          <ChipWrap>
+            {data.activityCandidates.map((c: ActivityCand) => (
+              <VoteChip
+                key={c.id}
+                label={c.text}
+                count={c.count}
+                mine={c.mine}
+                onPress={() => onToggleReaction(c.id)}
               />
-            </View>
-          </View>
-        </Card>
+            ))}
+          </ChipWrap>
+          {!data.lockThings && <AddActivity busy={busy} onAdd={onAddActivity} />}
+        </Section>
       )}
+
+      {(data.timeCandidates.length > 0 || !data.lockTimes) && (
+        <Section title="When works?">
+          <ChipWrap>
+            {data.timeCandidates.map((c: TimeCand) => (
+              <VoteChip
+                key={c.id}
+                label={timeChipLabel(c)}
+                count={c.count}
+                mine={c.mine}
+                onPress={() => onToggleReaction(c.id)}
+              />
+            ))}
+          </ChipWrap>
+          {!data.lockTimes && <AddTime busy={busy} data={data} onAdd={onAddTime} />}
+        </Section>
+      )}
+
+      {/* Opt-out: a distinct, tinted row (private, reversible). */}
+      <Pressable
+        onPress={onToggleOptOut}
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 10,
+          padding: 12,
+          borderRadius: ui.rInput,
+          backgroundColor: "#F1EEF6",
+          borderWidth: ui.border,
+          borderColor: ui.ink,
+        }}
+      >
+        <SelectCheck selected={optedOut} accent={ui.ink} />
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>
+            I can't make it
+          </Text>
+          <Text style={{ fontFamily: font.medium, fontSize: 10, color: ui.muted }}>
+            you won't be asked again - tap anything above to rejoin
+          </Text>
+        </View>
+      </Pressable>
+
+      <Text
+        style={{
+          fontFamily: font.medium,
+          fontSize: 10,
+          color: ui.muted,
+          textAlign: "center",
+          marginTop: 16,
+        }}
+      >
+        No names - just the group.
+      </Text>
 
       {/* No manual lock for members (pure deadline); this dev-only button forces it for demos. */}
       {__DEV__ && data.isCreator && (
         <View style={{ marginTop: 16 }}>
           <Button
-            label="Force lock now (dev)"
+            label="Decide now (dev)"
             variant="outline"
             disabled={busy}
             onPress={() => onLock()}
@@ -690,29 +587,142 @@ function CollectingView({
   );
 }
 
-// Tiny inline indicator for the auto-save: "Saving..." -> "Saved", or a tappable retry on failure.
-function SaveStatus({ state, onRetry }: { state: SaveState; onRetry: () => void }) {
-  if (state === "idle") return null;
-  if (state === "error") {
+// A time VoteChip label: the concrete slot, with the part-of-day hint appended when present.
+function timeChipLabel(c: TimeCand): string {
+  const slot = formatSlot(c.startsAt);
+  return c.partOfDay ? `${slot} · ${partOfDayLabel(c.partOfDay)}` : slot;
+}
+
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <View style={{ marginBottom: 22 }}>
+      <Text style={{ fontFamily: font.display, fontSize: 13, color: ui.ink, marginBottom: 10 }}>
+        {title}
+      </Text>
+      {children}
+    </View>
+  );
+}
+
+function ChipWrap({ children }: { children: ReactNode }) {
+  return <View style={{ flexDirection: "row", flexWrap: "wrap" }}>{children}</View>;
+}
+
+// Inline free-text activity entry: a + that opens a field; de-duped case-insensitively server-side.
+function AddActivity({ busy, onAdd }: { busy: boolean; onAdd: (text: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
+  if (!open) {
     return (
-      <Pressable onPress={onRetry} hitSlop={8} style={{ marginTop: 10 }}>
-        <Text style={{ fontFamily: font.bold, fontSize: 11, color: ui.brand }}>
-          Couldn't save - tap to retry
+      <Pressable onPress={() => setOpen(true)} hitSlop={6} style={{ marginTop: 2 }}>
+        <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.brand }}>
+          + add a place/thing
         </Text>
       </Pressable>
     );
   }
+  const submit = () => {
+    const t = text.trim();
+    if (!t) return;
+    onAdd(t);
+    setText("");
+    setOpen(false);
+  };
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 10 }}>
-      {state === "saving" ? (
-        <ActivityIndicator size="small" color={ui.muted} />
-      ) : (
-        <Text style={{ fontSize: 12, color: ui.going }}>{"✓"}</Text>
-      )}
-      <Text style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted }}>
-        {state === "saving" ? "Saving..." : "Saved - private to you"}
-      </Text>
+    <View style={{ marginTop: 6 }}>
+      <Field
+        label="Add a place or thing"
+        value={text}
+        onChangeText={setText}
+        placeholder="bowling, the pub..."
+      />
+      <View style={{ flexDirection: "row", gap: 16, marginTop: 12, justifyContent: "flex-end" }}>
+        <Pressable
+          hitSlop={8}
+          onPress={() => {
+            setText("");
+            setOpen(false);
+          }}
+        >
+          <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.muted }}>Cancel</Text>
+        </Pressable>
+        <View style={{ width: 110 }}>
+          <Button label="Add" variant="primary" disabled={busy || !text.trim()} onPress={submit} />
+        </View>
+      </View>
     </View>
+  );
+}
+
+// Inline concrete time entry: a + that opens a date/time pill, bounded to a sensible horizon from
+// the existing candidate spread. De-duped by minute server-side.
+function AddTime({
+  busy,
+  data,
+  onAdd,
+}: {
+  busy: boolean;
+  data: Detail;
+  onAdd: (startsAt: string, partOfDay?: PartOfDay) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [newDate, setNewDate] = useState("");
+  const [newTime, setNewTime] = useState("");
+  const newIso = isoFrom(newDate, newTime);
+
+  const times = data.timeCandidates.map((c: TimeCand) => new Date(c.startsAt).getTime());
+  const decideMs = data.decidesBy ? new Date(data.decidesBy).getTime() : Date.now();
+  const addMinDate = new Date(Math.max(Date.now(), decideMs));
+  const addMaxDate = new Date(
+    times.length
+      ? addCandidateHorizon(Math.min(...times), Math.max(...times))
+      : decideMs + 14 * 24 * 60 * 60 * 1000,
+  );
+
+  if (!open) {
+    return (
+      <Pressable onPress={() => setOpen(true)} hitSlop={6} style={{ marginTop: 2 }}>
+        <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.brand }}>+ add a time</Text>
+      </Pressable>
+    );
+  }
+  return (
+    <Card style={{ marginTop: 8 }}>
+      <DateTimePill
+        dateValue={newDate}
+        timeValue={newTime}
+        onDate={setNewDate}
+        onTime={setNewTime}
+        minimumDate={addMinDate}
+        maximumDate={addMaxDate}
+      />
+      <View style={{ flexDirection: "row", gap: 16, marginTop: 14, justifyContent: "flex-end" }}>
+        <Pressable
+          hitSlop={8}
+          onPress={() => {
+            setNewDate("");
+            setNewTime("");
+            setOpen(false);
+          }}
+        >
+          <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.muted }}>Cancel</Text>
+        </Pressable>
+        <View style={{ width: 110 }}>
+          <Button
+            label="Add"
+            variant="primary"
+            disabled={busy || !newIso}
+            onPress={() => {
+              if (!newIso) return;
+              onAdd(newIso);
+              setNewDate("");
+              setNewTime("");
+              setOpen(false);
+            }}
+          />
+        </View>
+      </View>
+    </Card>
   );
 }
 
