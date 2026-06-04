@@ -2,28 +2,24 @@ import { randomUUID } from "node:crypto";
 import {
   AddCandidateInput,
   addCandidateHorizon,
-  addDays,
   ByIdInput,
+  CandidateKind,
   CreateEventInput,
   clears,
-  DAY_MS,
   DEFAULT_MOMENT_MINUTES,
-  defaultLockAtForOptions,
-  defaultLockAtForWindow,
-  expandWindow,
+  defaultDecidesByForCandidates,
   LockInput,
   MOMENT_MS,
   type MomentResponse,
   type PartOfDay,
   pickWinnerOrBestId,
   pickWinningCandidate,
-  ReactInput,
   ResolveInput,
   RespondInput,
-  reconcileFloat,
   resolveIn,
   revealGoing,
   SetOptOutInput,
+  ToggleReactionInput,
 } from "@bethere/shared";
 import { TRPCError } from "@trpc/server";
 import { and, eq, inArray } from "drizzle-orm";
@@ -34,8 +30,6 @@ import {
   eventCandidates,
   eventOptOuts,
   events,
-  floatSuggestions,
-  floatVotes,
   groupMembers,
   responses,
   users,
@@ -64,7 +58,11 @@ async function reactionsFor(eventId: string): Promise<{ candidateId: string; use
 
 async function candidatesFor(eventId: string): Promise<(typeof eventCandidates.$inferSelect)[]> {
   const rows = await db.select().from(eventCandidates).where(eq(eventCandidates.eventId, eventId));
-  return rows.sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
+  return rows.sort((a, b) => {
+    const at = a.startsAt?.getTime() ?? Number.POSITIVE_INFINITY;
+    const bt = b.startsAt?.getTime() ?? Number.POSITIVE_INFINITY;
+    return at - bt;
+  });
 }
 
 // The crowd is hidden until the moment ends (or the plan is cleared/fizzled), so a live moment
@@ -100,19 +98,27 @@ async function fizzle(e: EventRow): Promise<void> {
   e.phase = "fizzled";
 }
 
-// Persist a plan's candidate slate (one row per slot, no label) so create and the settleFloating
-// collecting fallback agree on exactly how a candidate row is shaped.
+// Persist a plan's candidate slate (one row per slot). Time candidates carry a startsAt + optional
+// part-of-day hint; activity candidates carry a label and a null startsAt. Single source for the
+// candidate row shape across create and the addCandidate mutation.
 async function insertCandidates(
   eventId: string,
-  rows: { id: string; startsAt: Date; partOfDay: PartOfDay | null }[],
+  rows: {
+    id: string;
+    kind: CandidateKind;
+    startsAt: Date | null;
+    partOfDay: PartOfDay | null;
+    label: string | null;
+  }[],
 ): Promise<void> {
   for (const r of rows) {
     await db.insert(eventCandidates).values({
       id: r.id,
       eventId,
+      kind: r.kind,
       startsAt: r.startsAt,
       partOfDay: r.partOfDay,
-      label: null,
+      label: r.label,
     });
   }
 }
@@ -164,111 +170,6 @@ async function settleCollecting(e: EventRow): Promise<void> {
   e.momentStartsAt = now;
   e.momentEndsAt = endsAt;
   e.startsAt = chosen.startsAt;
-}
-
-// A float left this far past its tip deadline (a dormant group nobody opened) fizzles rather than
-// resurrecting a stale idea into a live plan.
-const FLOAT_STALE_MS = 7 * DAY_MS;
-
-// Lazily tip a float whose deadline (`lockAt`) has passed (no scheduler), mirroring settleCollecting.
-// reconcileFloat crystallizes the chips into a concrete outcome: a clear idea + an agreed time opens
-// the blind moment; a hot idea with no agreed time opens a short collecting round on the proposed
-// times; a cold idea (or a stale one) fizzles silently. `isAnonymous` stays set forever, so the
-// resulting plan is named for RSVPs while the originator is never surfaced. Mutates + persists.
-export async function settleFloating(e: EventRow): Promise<void> {
-  if (e.phase !== "floating" || !e.lockAt || Date.now() < e.lockAt.getTime()) return;
-  if (Date.now() - e.lockAt.getTime() > FLOAT_STALE_MS) {
-    await fizzle(e);
-    return;
-  }
-
-  const sugg = await db.select().from(floatSuggestions).where(eq(floatSuggestions.eventId, e.id));
-  const allVotes = await db.select().from(floatVotes).where(eq(floatVotes.eventId, e.id));
-  const ideas = sugg
-    .filter((s) => s.axis === "idea")
-    .map((s) => ({ id: s.id, text: s.text ?? "", createdAtMs: s.createdAt.getTime() }));
-  const times = sugg
-    .filter((s) => s.axis === "time")
-    .map((s) => ({
-      id: s.id,
-      startsAtMs: (s.startsAt ?? e.startsAt).getTime(),
-      createdAtMs: s.createdAt.getTime(),
-    }));
-  // Collecting-fallback candidates when the float grew no time chips: a few days from the window
-  // placeholder at its band hour, future only.
-  const windowSlotsMs =
-    times.length > 0
-      ? []
-      : Array.from({ length: 5 }, (_, i) => addDays(new Date(e.startsAt), i).getTime()).filter(
-          (ms) => ms >= Date.now(),
-        );
-
-  const result = reconcileFloat(
-    ideas,
-    times,
-    allVotes.map((v) => ({ suggestionId: v.suggestionId, userId: v.userId })),
-    e.minHeat,
-    windowSlotsMs,
-  );
-
-  if (result.kind === "fizzle") {
-    await fizzle(e);
-    return;
-  }
-
-  const now = new Date();
-  if (result.kind === "moment") {
-    const chosenStartsAt = new Date(result.startsAtMs);
-    const endsAt = computeMomentEnd(now, DEFAULT_MOMENT_MINUTES, chosenStartsAt);
-    await db
-      .update(events)
-      .set({
-        phase: "moment",
-        title: result.ideaText,
-        startsAt: chosenStartsAt,
-        momentStartsAt: now,
-        momentEndsAt: endsAt,
-        respondByAt: endsAt,
-      })
-      .where(eq(events.id, e.id));
-    e.phase = "moment";
-    e.title = result.ideaText;
-    e.startsAt = chosenStartsAt;
-    e.momentStartsAt = now;
-    e.momentEndsAt = endsAt;
-    // TODO push (notifications seam): "the float caught on: <idea>, <time> - you in?"
-    return;
-  }
-
-  // collecting: the idea is hot but the time is unresolved - crystallize the idea as the title and
-  // open a normal collecting round on the proposed (future) times so the group can converge a slot.
-  const slots = [...new Set(result.candidateStartsAtMs)]
-    .filter((ms) => ms > Date.now())
-    .sort((a, b) => a - b);
-  if (slots.length === 0) {
-    await fizzle(e);
-    return;
-  }
-  const lockAt = new Date(defaultLockAtForWindow(slots[slots.length - 1], now.getTime()));
-  await db
-    .update(events)
-    .set({
-      phase: "collecting",
-      title: result.ideaText,
-      startsAt: new Date(slots[0]),
-      respondByAt: new Date(slots[slots.length - 1]),
-      lockAt,
-    })
-    .where(eq(events.id, e.id));
-  await insertCandidates(
-    e.id,
-    slots.map((ms, i) => ({ id: `${e.id}_d${i + 1}`, startsAt: new Date(ms), partOfDay: null })),
-  );
-  e.phase = "collecting";
-  e.title = result.ideaText;
-  e.startsAt = new Date(slots[0]);
-  e.lockAt = lockAt;
-  // TODO push (notifications seam): "the float caught on: <idea> - which time works?"
 }
 
 // This user's status. During a blind moment we only ever reflect their OWN answer (we cannot leak
@@ -337,11 +238,9 @@ export async function loadEvent(eventId: string, userId: string): Promise<EventR
   return e;
 }
 
-// Run the canonical convergence pass in its load-bearing order: a float tips, then a collecting
-// round locks, then a moment clears/fizzles. Each step no-ops unless the row is in its phase, so the
-// whole sequence is safe to run on any row.
+// Run the convergence pass in its load-bearing order: a collecting round locks, then a moment
+// clears/fizzles. Each step no-ops unless the row is in its phase, so it is safe on any row.
 async function settleLifecycle(e: EventRow): Promise<void> {
-  await settleFloating(e);
   await settleCollecting(e);
   await settlePhase(e);
 }
