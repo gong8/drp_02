@@ -11,11 +11,11 @@ function clamp(value: number, lo: number, hi: number): number {
 }
 
 /**
- * Default deadline for an options/exact-N plan, anchored to a deliberate proposed time. The notice
- * lead scales as a third of the time-to-earliest (so the active reacting phase gets the larger
- * share) and caps at one day. Returns an instant strictly in (now, earliest).
+ * Default "decides by" instant for a collecting plan, anchored to its earliest TIME candidate. The
+ * notice lead scales as a third of the time-to-earliest (so the active reacting phase gets the
+ * larger share) and caps at one day. Returns an instant strictly in (now, earliest).
  */
-export function defaultLockAtForOptions(
+export function defaultDecidesByForCandidates(
   earliestMs: number,
   nowMs: number,
   momentMs: number = MOMENT_MS,
@@ -51,16 +51,11 @@ export function defaultLockAtForWindow(
 }
 
 /**
- * Upper bound (epoch ms) for a member-added candidate time. Fuzzy plans stay inside the expanded
- * window (its last slot). Options plans allow a small slack past the creator's spread - the spread
- * length, capped at two days - so a member can suggest a slightly later time without an absurd jump.
+ * Upper bound (epoch ms) for a member-added TIME candidate. Allows a small slack past the creator's
+ * spread - the spread length, capped at two days - so a member can suggest a slightly later time
+ * without an absurd jump. (The old fuzzy/window branch is gone: the wizard sends concrete times.)
  */
-export function addCandidateHorizon(
-  earliestMs: number,
-  latestMs: number,
-  isFuzzy: boolean,
-): number {
-  if (isFuzzy) return latestMs;
+export function addCandidateHorizon(earliestMs: number, latestMs: number): number {
   const span = latestMs - earliestMs;
   return latestMs + Math.min(span, 2 * DAY_MS);
 }
