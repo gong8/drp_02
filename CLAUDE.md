@@ -4,13 +4,14 @@ Persistent guidance for Claude Code in this repo. These cover things you can't i
 
 ## Project
 
-`drp_02` is **BeThere**, a group meetup-coordination app (Expo mobile + Fastify/tRPC backend). The current model is the **convergence model** (M3, merged to `dev` via DRP-29): a creator floats one plan to a group and the only fork they choose is how precisely to pin the time (`whenMode`):
+`drp_02` is **BeThere**, a group meetup-coordination app (Expo mobile + Fastify/tRPC backend). The current model is the **unified suggest flow** (M3, replacing the older three-mode `whenMode` fork): a creator sends ONE plan to a group through ONE create flow. A plan owns two candidate lists - **TIME** (when) and **ACTIVITY** (what/where) - and members add to and publicly +1 either list during `collecting`. The creator never picks a "mode"; they only set two flags, both default `false` (open):
 
-- **exact** - a fixed time; skips collecting, opens straight into a blind timed **moment**, always happens.
-- **options** - a short menu of fixed times; members react ("works for me"), best-supported wins.
-- **fuzzy** - a loose window (timescale + part-of-day band) expanded into day candidates members react to.
+- **lockTimes** - when `true`, the time list is fixed: members vote but cannot add times.
+- **lockThings** - when `true`, the activity (what/where) list is fixed: members vote but cannot add activities.
 
-Everything after the `when` is shared: a plan moves `collecting -> moment -> cleared` (or a silent `fizzled`); during the moment members RSVP **yes / no / "I'll go if [people]"** (conditionals resolved server-side); a per-user dashboard groups plans by **Reacting / Awaiting / Going / Declined**; groups support membership CRUD. Full design: `ARCHITECTURE.md`.
+Concrete shortcut: exactly ONE time candidate AND `lockTimes === true` skips `collecting` and opens straight into a blind timed **moment** (the old "exact" plan).
+
+Everything after collecting is shared: a plan moves `collecting -> moment -> cleared` (or a silent `fizzled`); candidate +1 counts are **public during collecting** (momentum) but no voter names are ever shown - creator anonymity is ALWAYS on; at lock the most-voted TIME candidate wins (and, if the title is empty, the most-voted ACTIVITY candidate becomes the title); the plan then runs a **blind moment** where members RSVP **yes / no / "I'll go if [people]"** (conditionals resolved server-side); a per-user dashboard groups plans by **Reacting / Awaiting / Going / Declined**; groups support membership CRUD. Full design: `ARCHITECTURE.md`.
 
 > The original standalone **loose-availability** prototype still lives in `archive/loose-availability/` (excluded from the build, do not edit it); its ideas were folded back into the convergence model. M2 concrete-event mockups: `docs/mockups/m2/ALL_MOCKUPS.pdf`.
 
