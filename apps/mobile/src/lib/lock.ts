@@ -13,7 +13,7 @@ function clamp(value: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, value));
 }
 
-export function defaultLockAtForOptions(
+export function defaultDecidesByForCandidates(
   earliestMs: number,
   nowMs: number,
   momentMs: number = MOMENT_MS,
@@ -27,12 +27,7 @@ export function defaultLockAtForOptions(
   return Math.round(latest > nowMs ? Math.min(midpoint, latest) : midpoint);
 }
 
-export function addCandidateHorizon(
-  earliestMs: number,
-  latestMs: number,
-  isFuzzy: boolean,
-): number {
-  if (isFuzzy) return latestMs;
+export function addCandidateHorizon(earliestMs: number, latestMs: number): number {
   const span = latestMs - earliestMs;
   return latestMs + Math.min(span, 2 * DAY_MS);
 }
