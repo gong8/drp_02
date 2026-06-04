@@ -2,9 +2,10 @@ import { Pressable, Text, View } from "react-native";
 import { font, ui } from "../theme";
 import { HardShadow } from "./HardShadow";
 
-// A chip on a float board: a label with a visible +1 count. Tapping toggles your own +1 (filled =
-// you're in on it). Counts are public momentum; names are never shown. One tap, optimistic.
-export function FloatChip({
+// A votable candidate chip (time or activity): a label with a visible PUBLIC +1 count. Tapping
+// toggles the caller's own +1 (filled = you're in on it). Counts are public momentum during
+// collecting; names are never shown. One tap, optimistic.
+export function VoteChip({
   label,
   count,
   mine,
