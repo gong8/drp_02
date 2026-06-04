@@ -12,6 +12,7 @@ export { DetailError } from "./DetailError";
 export { EmptyState } from "./EmptyState";
 export { Field } from "./Field";
 export { FieldLabel } from "./FieldLabel";
+export { FormError } from "./FormError";
 export { HardShadow } from "./HardShadow";
 export { PersonRow } from "./PersonRow";
 export { Pill, StatusPill } from "./Pill";

@@ -5,8 +5,13 @@ import { useCallback, useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
 import { AccountAvatar } from "../components/AccountAvatar";
-import { candidateCountLabel, DIDNT_COME_TOGETHER, goingCountLabel } from "../lib/copy";
-import { formatSlot, formatTimeLeft } from "../lib/format";
+import {
+  candidateCountLabel,
+  DIDNT_COME_TOGETHER,
+  ERR_NETWORK,
+  goingCountLabel,
+} from "../lib/copy";
+import { countdownLabel, formatSlot, HOT_MS } from "../lib/format";
 import { syncReminders } from "../lib/notifications";
 import {
   activeDeadline,
@@ -101,8 +106,8 @@ function CardFooter({ e, now }: { e: Ev; now: number }) {
     return (
       <>
         <AppText variant="caption">{candidateCountLabel(e.candidateCount)}</AppText>
-        <AppText variant="caption" style={{ color: ms < 3_600_000 ? ui.brand : ui.muted }}>
-          {ms <= 0 ? "Closing now" : `${formatTimeLeft(ms)} left`}
+        <AppText variant="caption" style={{ color: ms < HOT_MS ? ui.brand : ui.muted }}>
+          {countdownLabel(ms)}
         </AppText>
       </>
     );
@@ -138,17 +143,9 @@ function MeetCard({ e, now, onPress }: { e: Ev; now: number; onPress: () => void
       style={{ marginBottom: 11, opacity: bucket === "done" ? 0.62 : 1 }}
     >
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-        <Text
-          style={{
-            fontFamily: font.display,
-            fontSize: 16,
-            color: ui.ink,
-            flexShrink: 1,
-            marginRight: 8,
-          }}
-        >
+        <AppText variant="title" style={{ flexShrink: 1, marginRight: 8 }}>
           {e.activity || e.groupName}
-        </Text>
+        </AppText>
         {bucket === "going" ? (
           <StatusPill label="In" color={ui.going} />
         ) : bucket === "open" ? (
@@ -255,13 +252,11 @@ export function Dashboard({ navigation }: Props) {
 
   return (
     <ScreenScroll header={header} bottomPad={hasGroups ? 104 : 24} footer={footer || undefined}>
-      {error && <EmptyState>Couldn't reach the server.</EmptyState>}
+      {error && <EmptyState>{ERR_NETWORK}</EmptyState>}
 
       {!error && !hasGroups && (
         <Card>
-          <Text style={{ fontFamily: font.display, fontSize: 16, color: ui.ink }}>
-            No groups yet
-          </Text>
+          <AppText variant="title">No groups yet</AppText>
           <AppText variant="caption" style={{ marginTop: 6, lineHeight: 18 }}>
             You need a group before you can plan a meetup. Create one to start.
           </AppText>

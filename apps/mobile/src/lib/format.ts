@@ -134,3 +134,12 @@ export function formatTimeLeft(ms: number): string {
   }
   return "under a minute";
 }
+
+// The "under an hour is hot" threshold, shared by every countdown surface.
+export const HOT_MS = 3_600_000;
+
+// The standalone time-left phrase shared by the Countdown primitive and the dashboard card footer:
+// "Closing now" once passed, else "<duration> left". One home for the terminal string + wording.
+export function countdownLabel(ms: number): string {
+  return ms <= 0 ? "Closing now" : `${formatTimeLeft(ms)} left`;
+}

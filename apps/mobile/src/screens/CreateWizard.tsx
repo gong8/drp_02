@@ -1,6 +1,6 @@
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useEffect, useRef, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, View, type ViewStyle } from "react-native";
 import type { MeetupsStackParams } from "../../App";
 import { ERR_SAVE, NO_NAMES, NOTE_TOP_PICK, STEP_COPY } from "../lib/copy";
 import { formatSlot, isoFrom, splitIso } from "../lib/format";
@@ -16,6 +16,7 @@ import {
   Chip,
   DateTimePill,
   Field,
+  FormError,
   Row,
   ScreenHeader,
   ScreenLoading,
@@ -258,11 +259,7 @@ export function CreateWizard({ navigation }: Props) {
   return (
     <ScreenScroll header={<ScreenHeader title="New meetup" onBack={goBack} />} avoidKeyboard>
       <ProgressDots steps={STEPS} index={step} />
-      {error && (
-        <AppText variant="caption" style={{ color: ui.brand, marginBottom: 10 }}>
-          {ERR_SAVE}
-        </AppText>
-      )}
+      {error && <FormError>{ERR_SAVE}</FormError>}
 
       <Section title={copy.title} sub={copy.sub} size="lg">
         {stepKey === "group" && (
@@ -407,118 +404,55 @@ export function CreateWizard({ navigation }: Props) {
         {stepKey === "deadlines" && (
           <>
             {!isConcrete && (
-              <View>
-                <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>
-                  Decides by
-                </Text>
-                {decidesEdit ? (
-                  <Card style={{ marginTop: 8 }}>
-                    <DateTimePill
-                      dateValue={decidesDate}
-                      timeValue={decidesTime}
-                      onDate={setDecidesDate}
-                      onTime={setDecidesTime}
-                      minimumDate={new Date()}
-                    />
-                    {decidesInvalid && (
-                      <AppText variant="caption" style={{ color: ui.brand, marginTop: 8 }}>
-                        It has to decide at least an hour before your earliest time.
-                      </AppText>
-                    )}
-                    <View style={{ flexDirection: "row", marginTop: 12 }}>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        label="Use default"
-                        onPress={() => {
-                          setDecidesEdit(false);
-                          setDecidesDate("");
-                          setDecidesTime("");
-                        }}
-                      />
-                    </View>
-                  </Card>
-                ) : (
-                  <Card style={{ marginTop: 8 }}>
-                    <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>
-                      {autoDecidesIso
-                        ? `Decides ${formatSlot(autoDecidesIso)}`
-                        : "A sensible deadline"}
-                    </Text>
-                    <AppText variant="caption" style={{ marginTop: 3 }}>
-                      {autoDecidesIso
-                        ? NOTE_TOP_PICK
-                        : "Add times to set this, or we'll pick a horizon"}
-                    </AppText>
-                    {autoDecidesIso && (
-                      <View style={{ flexDirection: "row", marginTop: 10 }}>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          label="Change"
-                          onPress={startEditDecides}
-                        />
-                      </View>
-                    )}
-                  </Card>
-                )}
-              </View>
+              <DeadlineField
+                heading="Decides by"
+                editing={decidesEdit}
+                date={decidesDate}
+                time={decidesTime}
+                onDate={setDecidesDate}
+                onTime={setDecidesTime}
+                minimumDate={new Date()}
+                invalid={decidesInvalid}
+                invalidNote="It has to decide at least an hour before your earliest time."
+                defaultLine={
+                  autoDecidesIso ? `Decides ${formatSlot(autoDecidesIso)}` : "A sensible deadline"
+                }
+                defaultSub={
+                  autoDecidesIso ? NOTE_TOP_PICK : "Add times to set this, or we'll pick a horizon"
+                }
+                onEdit={autoDecidesIso ? startEditDecides : undefined}
+                onUseDefault={() => {
+                  setDecidesEdit(false);
+                  setDecidesDate("");
+                  setDecidesTime("");
+                }}
+              />
             )}
 
             {earliestMs != null && (
-              <View style={{ marginTop: isConcrete ? 0 : 18 }}>
-                <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>Reply by</Text>
-                {replyEdit ? (
-                  <Card style={{ marginTop: 8 }}>
-                    <DateTimePill
-                      dateValue={replyDate}
-                      timeValue={replyTime}
-                      onDate={setReplyDate}
-                      onTime={setReplyTime}
-                      minimumDate={new Date(replyFloorMs)}
-                      maximumDate={new Date(earliestMs)}
-                    />
-                    {replyInvalid && (
-                      <AppText variant="caption" style={{ color: ui.brand, marginTop: 8 }}>
-                        Replies close after voting ends and no later than your earliest time.
-                      </AppText>
-                    )}
-                    <View style={{ flexDirection: "row", marginTop: 12 }}>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        label="Use default"
-                        onPress={() => {
-                          setReplyEdit(false);
-                          setReplyDate("");
-                          setReplyTime("");
-                        }}
-                      />
-                    </View>
-                  </Card>
-                ) : (
-                  <Card style={{ marginTop: 8 }}>
-                    <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>
-                      {autoReplyIso
-                        ? `Replies close ${formatSlot(autoReplyIso)}`
-                        : "A sensible deadline"}
-                    </Text>
-                    <AppText variant="caption" style={{ marginTop: 3 }}>
-                      Blind until then, then it reveals who's in
-                    </AppText>
-                    {autoReplyIso && (
-                      <View style={{ flexDirection: "row", marginTop: 10 }}>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          label="Change"
-                          onPress={startEditReply}
-                        />
-                      </View>
-                    )}
-                  </Card>
-                )}
-              </View>
+              <DeadlineField
+                style={{ marginTop: isConcrete ? 0 : 18 }}
+                heading="Reply by"
+                editing={replyEdit}
+                date={replyDate}
+                time={replyTime}
+                onDate={setReplyDate}
+                onTime={setReplyTime}
+                minimumDate={new Date(replyFloorMs)}
+                maximumDate={new Date(earliestMs)}
+                invalid={replyInvalid}
+                invalidNote="Replies close after voting ends and no later than your earliest time."
+                defaultLine={
+                  autoReplyIso ? `Replies close ${formatSlot(autoReplyIso)}` : "A sensible deadline"
+                }
+                defaultSub="Blind until then, then it reveals who's in"
+                onEdit={autoReplyIso ? startEditReply : undefined}
+                onUseDefault={() => {
+                  setReplyEdit(false);
+                  setReplyDate("");
+                  setReplyTime("");
+                }}
+              />
             )}
           </>
         )}
@@ -588,7 +522,7 @@ function SourceCard({
     <Card padding={14} onPress={onPress} style={{ marginBottom: 11 }}>
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <View style={{ flex: 1, marginRight: 12 }}>
-          <Text style={{ fontFamily: font.display, fontSize: 16, color: ui.ink }}>{title}</Text>
+          <AppText variant="title">{title}</AppText>
           <AppText variant="caption" style={{ marginTop: 2 }}>
             {sub}
           </AppText>
@@ -620,6 +554,81 @@ function RemoveDot({ onPress }: { onPress: () => void }) {
     >
       <Text style={{ fontFamily: font.bold, fontSize: 13, lineHeight: 13, color: ui.ink }}>×</Text>
     </Pressable>
+  );
+}
+
+// One deadline editor (decides-by / reply-by): a heading over a default-mode Card (the chosen line +
+// a sub + an optional "Change") or an edit-mode Card (a date/time pill + an optional invalid note + a
+// "Use default"). The two deadlines on the deadlines step are the same shape, so they share this.
+function DeadlineField({
+  heading,
+  editing,
+  date,
+  time,
+  onDate,
+  onTime,
+  minimumDate,
+  maximumDate,
+  invalid,
+  invalidNote,
+  defaultLine,
+  defaultSub,
+  onEdit,
+  onUseDefault,
+  style,
+}: {
+  heading: string;
+  editing: boolean;
+  date: string;
+  time: string;
+  onDate: (t: string) => void;
+  onTime: (t: string) => void;
+  minimumDate: Date;
+  maximumDate?: Date;
+  invalid: boolean;
+  invalidNote: string;
+  defaultLine: string;
+  defaultSub: string;
+  onEdit?: () => void;
+  onUseDefault: () => void;
+  style?: ViewStyle;
+}) {
+  return (
+    <View style={style}>
+      <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>{heading}</Text>
+      {editing ? (
+        <Card style={{ marginTop: 8 }}>
+          <DateTimePill
+            dateValue={date}
+            timeValue={time}
+            onDate={onDate}
+            onTime={onTime}
+            minimumDate={minimumDate}
+            maximumDate={maximumDate}
+          />
+          {invalid && (
+            <AppText variant="caption" style={{ color: ui.brand, marginTop: 8 }}>
+              {invalidNote}
+            </AppText>
+          )}
+          <View style={{ flexDirection: "row", marginTop: 12 }}>
+            <Button size="sm" variant="outline" label="Use default" onPress={onUseDefault} />
+          </View>
+        </Card>
+      ) : (
+        <Card style={{ marginTop: 8 }}>
+          <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>{defaultLine}</Text>
+          <AppText variant="caption" style={{ marginTop: 3 }}>
+            {defaultSub}
+          </AppText>
+          {onEdit && (
+            <View style={{ flexDirection: "row", marginTop: 10 }}>
+              <Button size="sm" variant="outline" label="Change" onPress={onEdit} />
+            </View>
+          )}
+        </Card>
+      )}
+    </View>
   );
 }
 

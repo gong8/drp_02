@@ -5,7 +5,10 @@ import { useCallback, useRef, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
 import {
+  DEADLINE_RSVP,
+  DEADLINE_VOTING,
   DIDNT_COME_TOGETHER,
+  ERR_SAVE,
   LABEL_CANT_MAKE_IT,
   NO_NAMES,
   NOTE_BLIND,
@@ -268,7 +271,7 @@ export function EventDetail({ route, navigation }: Props) {
         setEditNote("Updated by someone else - review and save again.");
       })
       .catch(() => {
-        setEditNote("Couldn't save - this meetup may have closed.");
+        setEditNote(`${ERR_SAVE} This meetup may have closed.`);
         return load();
       })
       .finally(() => setSavingEdit(false));
@@ -394,10 +397,10 @@ export function EventDetail({ route, navigation }: Props) {
       footer={sheets}
     >
       {data.phase === "collecting" && data.decidesBy && (
-        <CountdownBanner label="Voting closes" ms={liveMsToDecide} note={NOTE_TOP_PICK} />
+        <CountdownBanner label={DEADLINE_VOTING} ms={liveMsToDecide} note={NOTE_TOP_PICK} />
       )}
       {data.phase === "moment" && (
-        <CountdownBanner label="RSVP closes" ms={liveMsLeft} note={NOTE_BLIND} />
+        <CountdownBanner label={DEADLINE_RSVP} ms={liveMsLeft} note={NOTE_BLIND} />
       )}
 
       <Card padding={0}>
@@ -521,6 +524,15 @@ export function EventDetail({ route, navigation }: Props) {
         </View>
       )}
     </ScreenScroll>
+  );
+}
+
+// The committed-answer / outcome status line, shared by the moment locked-in view and the reveal.
+function StatusHeading({ children }: { children: string }) {
+  return (
+    <Text style={{ fontFamily: font.bold, fontSize: 14, color: ui.ink, marginBottom: 12 }}>
+      {children}
+    </Text>
   );
 }
 
@@ -790,9 +802,7 @@ function MomentView({
         </Section>
       ) : (
         <>
-          <Text style={{ fontFamily: font.bold, fontSize: 14, color: ui.ink, marginBottom: 12 }}>
-            {lockedHeading}
-          </Text>
+          <StatusHeading>{lockedHeading}</StatusHeading>
           <Card>
             <AppText variant="caption" style={{ lineHeight: 18 }}>
               Locked in. Revealed at close.
@@ -815,9 +825,7 @@ function MomentView({
 function RevealView({ data, statusLine }: { data: Detail; statusLine: string }) {
   return (
     <View style={{ marginTop: 16 }}>
-      <Text style={{ fontFamily: font.bold, fontSize: 14, color: ui.ink, marginBottom: 12 }}>
-        {statusLine}
-      </Text>
+      <StatusHeading>{statusLine}</StatusHeading>
       <FieldLabel tone="muted" style={{ marginBottom: 8 }}>
         Who's in
       </FieldLabel>

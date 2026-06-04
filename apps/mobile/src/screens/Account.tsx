@@ -1,8 +1,8 @@
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useNavigation } from "@react-navigation/native";
-import { Text, View } from "react-native";
+import { View } from "react-native";
 import { useDevAuth, useDisplayName } from "../lib/auth";
-import { font, ui } from "../theme";
+import { ui } from "../theme";
 import { AppText, Avatar, Button, Card, ScreenHeader, ScreenScroll } from "../ui";
 
 // The Account screen. Reached from the top-right avatar on either tab, so it has a back button. Holds
@@ -32,7 +32,7 @@ export function Account() {
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
           <Avatar initial={name.charAt(0).toUpperCase()} color={ui.brand} size={44} />
           <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: font.display, fontSize: 16, color: ui.ink }}>{name}</Text>
+            <AppText variant="title">{name}</AppText>
             {email ? (
               <AppText variant="caption" style={{ marginTop: 2 }}>
                 {email}

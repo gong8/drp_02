@@ -1,5 +1,5 @@
 import { Text, View } from "react-native";
-import { formatTimeLeft } from "../lib/format";
+import { countdownLabel, HOT_MS } from "../lib/format";
 import { font, ui } from "../theme";
 
 // The one time-left display. Leads with the DURATION (big, tabular) so "how long is left" is the
@@ -17,8 +17,8 @@ export function Countdown({
   color?: string;
   big?: boolean;
 }) {
-  const hot = ms < 3_600_000;
-  const duration = ms <= 0 ? "Closing now" : `${formatTimeLeft(ms)} left`;
+  const hot = ms < HOT_MS;
+  const duration = countdownLabel(ms);
   const c = color ?? (hot ? ui.brand : ui.ink);
   return (
     <View>
