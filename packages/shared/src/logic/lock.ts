@@ -1,8 +1,5 @@
 export const MOMENT_MS = 60 * 60 * 1000;
 export const DAY_MS = 24 * MOMENT_MS;
-// The minutes knob for the default moment length. MOMENT_MS stays the ms source of truth; this is
-// the same value expressed in minutes for the procedures that take a minutes argument (momentEnd).
-export const DEFAULT_MOMENT_MINUTES = MOMENT_MS / 60000; // 60
 
 function clamp(value: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, value));

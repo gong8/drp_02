@@ -93,10 +93,10 @@ export const SetOptOutInput = ByEvent.extend({
 export type SetOptOutInput = z.infer<typeof SetOptOutInput>;
 
 // Network boundary for events.lock - the creator opens the blind moment on a slot. `candidateId`
-// omitted means the server picks the best-supported candidate. `momentMinutes` sets the countdown.
+// omitted means the server picks the best-supported candidate. The window closes at the plan's
+// reply-by (set/defaulted server-side), so no countdown length is passed here.
 export const LockInput = ByEvent.extend({
   candidateId: z.string().optional(),
-  momentMinutes: z.number().int().min(1).max(1440).optional(),
 });
 export type LockInput = z.infer<typeof LockInput>;
 

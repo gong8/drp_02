@@ -137,9 +137,7 @@ export function EventDetail({ route, navigation }: Props) {
 
   function lock(candidateId?: string) {
     return runAction(() =>
-      trpc.events.lock.mutate(
-        candidateId ? { eventId, candidateId, momentMinutes: 60 } : { eventId, momentMinutes: 60 },
-      ),
+      trpc.events.lock.mutate(candidateId ? { eventId, candidateId } : { eventId }),
     );
   }
 
