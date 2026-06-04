@@ -664,7 +664,9 @@ function VoteRow({
   return (
     <Row onPress={onPress} tinted={mine}>
       <SelectCheck selected={mine} />
-      <Text style={{ flex: 1, fontFamily: font.bold, fontSize: 14, color: ui.ink }}>{label}</Text>
+      <AppText variant="rowLabel" style={{ flex: 1 }}>
+        {label}
+      </AppText>
       <Text
         style={{
           fontFamily: font.bold,

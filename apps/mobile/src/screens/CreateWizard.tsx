@@ -308,9 +308,9 @@ export function CreateWizard({ navigation }: Props) {
           <>
             {activityChips.map((c) => (
               <Row key={c}>
-                <Text style={{ flex: 1, fontFamily: font.bold, fontSize: 14, color: ui.ink }}>
+                <AppText variant="rowLabel" style={{ flex: 1 }}>
                   {c}
-                </Text>
+                </AppText>
                 <TextButton
                   label="×"
                   tone="muted"
