@@ -59,7 +59,7 @@ export function EventDetail({ route, navigation }: Props) {
   const [condModeLabel, setCondModeLabel] = useState<CondModeLabel>("At least one");
   const [condPicked, setCondPicked] = useState<string[]>([]);
 
-  // Edit-details sheet (title/location/notes). Anyone can edit while the plan is live; saves use a
+  // Edit-details sheet (activity/location/notes). Anyone can edit while the plan is live; saves use a
   // per-field compare-and-set so a concurrent edit by someone else surfaces here instead of clobbering.
   const [editSheet, setEditSheet] = useState(false);
   const [editActivity, setEditActivity] = useState("");
@@ -206,9 +206,9 @@ export function EventDetail({ route, navigation }: Props) {
     });
   }
 
-  // Open the edit sheet, prefilled from the loaded values. Title prefills from the RAW stored title
-  // (often ""), so an empty field means "keep auto-naming from the activity" - the placeholder shows
-  // the current derived title so that intent reads clearly.
+  // Open the edit sheet, prefilled from the loaded values. The name prefills from the RAW stored
+  // activity (often ""), so an empty field means "keep auto-naming from the activity list" - the
+  // placeholder shows the current activity so that intent reads clearly.
   function openEditSheet() {
     if (!data) return;
     setEditActivity(data.activityRaw);
@@ -551,7 +551,7 @@ export function EventDetail({ route, navigation }: Props) {
           value={editLocation}
           onChangeText={setEditLocation}
           placeholder="TenPin Bexleyheath"
-          style={{ marginTop: 12 }}
+          style={{ marginTop: data.phase === "moment" || data.phase === "cleared" ? 12 : 0 }}
         />
         <Field
           label="Notes"

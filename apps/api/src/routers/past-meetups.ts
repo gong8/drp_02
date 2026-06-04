@@ -20,8 +20,9 @@ export type PastMeetupInput = {
 };
 
 // The clonable shell the client pre-fills the wizard from. Carries no time (always stale) and no RSVP
-// data. `activity` is the plan's raw resolved name (may be ""); the client both prefills it and shows
-// a fallback when blank - keeping the placeholder out of the cloned activity field.
+// data. The plan's name rides in `activityCandidates` (the wizard pre-fills from that list, not a
+// separate name field). `activity` is the plan's raw resolved name (may be ""); the redo card shows
+// it with a fallback when blank.
 export type PastMeetup = {
   id: string;
   activity: string;

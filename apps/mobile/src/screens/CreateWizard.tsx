@@ -299,7 +299,7 @@ export function CreateWizard({ navigation }: Props) {
               {pastMeetups.map((m) => (
                 <SourceCard
                   key={m.id}
-                  title={m.activity}
+                  title={m.activity || "Untitled meetup"}
                   sub={`${m.location ? `${m.location} · ` : ""}last on ${formatSlot(m.lastStartsAt)}`}
                   selected={source === m.id}
                   onPress={() => {
