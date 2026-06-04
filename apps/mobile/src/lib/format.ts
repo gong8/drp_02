@@ -113,3 +113,24 @@ export function formatCountdown(ms: number): string {
   if (hours < 24) return `${hours}h ${pad2(totalMins % 60)}m`;
   return `${Math.floor(hours / 24)}d ${hours % 24}h`;
 }
+
+// A bare, verbose duration phrase for the largest whole unit: "2 days", "1 hour", "23 minutes",
+// "under a minute". Returns the duration ALONE (no "left"/"in") so callers compose phase-aware copy,
+// e.g. `${label} in ${formatTimeLeft(ms)}` -> "Voting closes in 2 days". Callers special-case the
+// passed `ms <= 0` themselves to render "Closing now" (this returns the bare "now").
+export function formatTimeLeft(ms: number): string {
+  if (ms <= 0) return "now";
+  if (ms >= 86400000) {
+    const n = Math.floor(ms / 86400000);
+    return `${n} day${n !== 1 ? "s" : ""}`;
+  }
+  if (ms >= 3600000) {
+    const n = Math.floor(ms / 3600000);
+    return `${n} hour${n !== 1 ? "s" : ""}`;
+  }
+  if (ms >= 60000) {
+    const n = Math.floor(ms / 60000);
+    return `${n} minute${n !== 1 ? "s" : ""}`;
+  }
+  return "under a minute";
+}

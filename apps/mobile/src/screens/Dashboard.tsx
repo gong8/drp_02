@@ -4,7 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { type ReactNode, useCallback, useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
-import { formatCountdown, formatSlot } from "../lib/format";
+import { formatCountdown, formatSlot, formatTimeLeft } from "../lib/format";
 import { syncReminders } from "../lib/notifications";
 import { trpc } from "../lib/trpc";
 import { useLiveClock } from "../lib/useLiveClock";
@@ -14,7 +14,6 @@ import {
   Button,
   Card,
   DateChip,
-  DrainBar,
   Heading,
   ScreenBackground,
   ScreenLoading,
@@ -221,32 +220,16 @@ function deadlineMs(e: Ev, now: number): number {
   return iso ? Math.max(0, new Date(iso).getTime() - now) : 0;
 }
 
-// Fraction of the window still left (1 = just opened, 0 = at the deadline) for the drain bar.
-function remainingFrac(e: Ev, now: number): number {
-  let start: number | null = null;
-  let end: number | null = null;
-  if (e.phase === "moment" && e.momentEndsAt) {
-    end = new Date(e.momentEndsAt).getTime();
-    start = e.momentStartsAt ? new Date(e.momentStartsAt).getTime() : end - 3_600_000;
-  } else if (e.phase === "collecting" && e.decidesBy) {
-    end = new Date(e.decidesBy).getTime();
-    start = new Date(e.createdAt).getTime();
-  }
-  if (start === null || end === null || end <= start) return 1;
-  return Math.max(0, Math.min(1, (end - now) / (end - start)));
-}
-
 // The shared body of a deadline card (the Action Required set reads as one): a title + group
-// header, a nudge + live countdown row, the draining bar (green -> pink as time runs low), and an
-// uppercase spec line underneath. Callers supply the words; the layout and pixels stay identical.
+// header, a nudge + prominent plain-language time-left line, and an uppercase spec line underneath.
+// Callers supply the words; the layout and pixels stay identical.
 function DeadlineCard({
   title,
   groupName,
   nudge,
   countdown,
-  spec,
-  frac,
   hot,
+  spec,
   onPress,
   last,
 }: {
@@ -254,9 +237,8 @@ function DeadlineCard({
   groupName: string;
   nudge: string;
   countdown: string;
-  spec: string;
-  frac: number;
   hot: boolean;
+  spec: string;
   onPress: () => void;
   last?: boolean;
 }) {
@@ -280,18 +262,25 @@ function DeadlineCard({
           <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.brand, flexShrink: 1 }}>
             {`${nudge} ›`}
           </Text>
-          <Text style={{ fontFamily: font.mono, fontSize: 11, color: hot ? ui.brand : ui.ink }}>
-            {countdown}
-          </Text>
         </View>
-        <DrainBar frac={frac} hot={hot} />
         <Text
           style={{
-            fontFamily: font.mono,
+            fontFamily: font.bold,
+            fontSize: 14,
+            color: hot ? ui.brand : ui.ink,
+            fontVariant: ["tabular-nums"],
+          }}
+        >
+          {countdown}
+        </Text>
+        <Text
+          style={{
+            fontFamily: font.bold,
             fontSize: 10,
             letterSpacing: 0.5,
             color: ui.muted,
             marginTop: 8,
+            fontVariant: ["tabular-nums"],
           }}
         >
           {spec}
@@ -301,8 +290,8 @@ function DeadlineCard({
   );
 }
 
-// An Action Required card: the plan's title + group, the explicit action + a live deadline, then
-// the specific time (moment) or option count (collecting).
+// An Action Required card: the plan's title + group, the explicit action + a prominent plain
+// time-left line, then the specific time (moment) or option count (collecting).
 function ActionCard({
   e,
   now,
@@ -314,19 +303,19 @@ function ActionCard({
   onPress: () => void;
   last?: boolean;
 }) {
-  const frac = remainingFrac(e, now);
   const isMoment = e.phase === "moment";
-  const countdownWord = isMoment ? "closes" : "decides";
+  const msLeft = deadlineMs(e, now);
+  const label = isMoment ? "RSVP closes" : "Voting closes";
+  const countdown = msLeft <= 0 ? "Closing now" : `${label} in ${formatTimeLeft(msLeft)}`;
   const spec = isMoment ? formatSlot(e.startsAt) : `${e.candidateCount} on the table`;
   return (
     <DeadlineCard
       title={e.title}
       groupName={e.groupName}
       nudge={actionVerb(e)}
-      countdown={`${countdownWord} ${formatCountdown(deadlineMs(e, now))}`}
+      countdown={countdown}
+      hot={msLeft < 3600000}
       spec={spec.toUpperCase()}
-      frac={frac}
-      hot={frac < 0.25}
       onPress={onPress}
       last={last}
     />
@@ -339,7 +328,7 @@ export function Dashboard({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [filter, setFilter] = useState<Filter>("All");
-  // Local clock so the Action Required countdowns + drain bars tick live (the poll is only every 5s).
+  // Local clock so the Action Required countdowns tick live (the poll is only every 5s).
   const now = useLiveClock();
 
   useFocusEffect(

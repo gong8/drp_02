@@ -7,8 +7,8 @@ import type { MeetupsStackParams } from "../../App";
 import {
   clock12,
   dayUpper,
-  formatCountdown,
   formatSlot,
+  formatTimeLeft,
   isoFrom,
   partOfDayLabel,
 } from "../lib/format";
@@ -58,6 +58,15 @@ export function EventDetail({ route, navigation }: Props) {
   const [sheet, setSheet] = useState(false);
   const [condModeLabel, setCondModeLabel] = useState<CondModeLabel>("At least one");
   const [condPicked, setCondPicked] = useState<string[]>([]);
+
+  // Edit-details sheet (title/location/notes). Anyone can edit while the plan is live; saves use a
+  // per-field compare-and-set so a concurrent edit by someone else surfaces here instead of clobbering.
+  const [editSheet, setEditSheet] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editLocation, setEditLocation] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+  const [editNote, setEditNote] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
   const phaseRef = useRef<string>("");
   // Suggestion ids with an in-flight toggleReaction: while pending we skip applying poll data so the
   // optimistic chip never flickers (the next clean poll reconciles the true public count).
@@ -197,6 +206,66 @@ export function EventDetail({ route, navigation }: Props) {
     });
   }
 
+  // Open the edit sheet, prefilled from the loaded values. Title prefills from the RAW stored title
+  // (often ""), so an empty field means "keep auto-naming from the activity" - the placeholder shows
+  // the current derived title so that intent reads clearly.
+  function openEditSheet() {
+    if (!data) return;
+    setEditTitle(data.titleRaw);
+    setEditLocation(data.location);
+    setEditNotes(data.description ?? "");
+    setEditNote("");
+    setEditSheet(true);
+  }
+
+  // Save edits with a per-field compare-and-set: send only the fields whose input diverged from what
+  // we loaded, each as { from: loaded, to: typed }. The server writes a field only if its current DB
+  // value still equals `from`. If something changed under us, `conflicts` carries the now-current
+  // value: we adopt it into the input, keep the sheet open, and ask the user to review. A throw (e.g.
+  // the plan just went final) shows an inline error and refetches so the screen reflects reality.
+  function saveEdit() {
+    if (!data || savingEdit) return;
+    const loadedTitle = data.titleRaw;
+    const loadedLocation = data.location;
+    const loadedNotes = data.description ?? "";
+    const patch: {
+      title?: { from: string; to: string };
+      location?: { from: string; to: string };
+      description?: { from: string; to: string };
+    } = {};
+    if (editTitle !== loadedTitle) patch.title = { from: loadedTitle, to: editTitle };
+    if (editLocation !== loadedLocation)
+      patch.location = { from: loadedLocation, to: editLocation };
+    if (editNotes !== loadedNotes) patch.description = { from: loadedNotes, to: editNotes };
+    // Nothing changed - just close.
+    if (!patch.title && !patch.location && !patch.description) {
+      setEditSheet(false);
+      return;
+    }
+    setSavingEdit(true);
+    setEditNote("");
+    trpc.events.update
+      .mutate({ eventId: data.id, ...patch })
+      .then((res) => {
+        if (res.conflicts.length === 0) {
+          setEditSheet(false);
+          return load();
+        }
+        // Adopt the server's current value for each conflicted field and keep the sheet open.
+        for (const c of res.conflicts) {
+          if (c.field === "title") setEditTitle(c.current);
+          else if (c.field === "location") setEditLocation(c.current);
+          else if (c.field === "description") setEditNotes(c.current);
+        }
+        setEditNote("Updated by someone else - review and save again.");
+      })
+      .catch(() => {
+        setEditNote("Couldn't save - this plan may have closed.");
+        return load();
+      })
+      .finally(() => setSavingEdit(false));
+  }
+
   if (loading) return <ScreenLoading />;
   if (error || !data)
     return (
@@ -242,10 +311,10 @@ export function EventDetail({ route, navigation }: Props) {
         showsVerticalScrollIndicator={false}
       >
         {data.phase === "collecting" && data.decidesBy && (
-          <CountdownBanner label="Decides by" ms={liveMsToDecide} note="most-wanted wins" />
+          <CountdownBanner label="Voting closes" ms={liveMsToDecide} note="most-wanted wins" />
         )}
         {data.phase === "moment" && (
-          <CountdownBanner label="Closes in" ms={liveMsLeft} note="who's in reveals then" />
+          <CountdownBanner label="RSVP closes" ms={liveMsLeft} note="who's in reveals then" />
         )}
 
         <Card padding={0}>
@@ -264,19 +333,24 @@ export function EventDetail({ route, navigation }: Props) {
             >
               <View>
                 <Text
-                  style={{ fontFamily: font.mono, fontSize: 12, letterSpacing: 1, color: ui.muted }}
+                  style={{ fontFamily: font.bold, fontSize: 12, letterSpacing: 1, color: ui.muted }}
                 >
                   {dayUpper(heroIso)}
                 </Text>
                 <View style={{ flexDirection: "row", alignItems: "flex-end", marginTop: 3 }}>
                   <Text
-                    style={{ fontFamily: font.mono, fontSize: 34, lineHeight: 36, color: ui.ink }}
+                    style={{
+                      fontFamily: font.display,
+                      fontSize: 34,
+                      lineHeight: 36,
+                      color: ui.ink,
+                    }}
                   >
                     {heroClock.time}
                   </Text>
                   <Text
                     style={{
-                      fontFamily: font.mono,
+                      fontFamily: font.bold,
                       fontSize: 16,
                       color: ui.muted,
                       marginLeft: 5,
@@ -291,11 +365,28 @@ export function EventDetail({ route, navigation }: Props) {
             </View>
           ) : null}
           <View style={{ paddingHorizontal: 16, paddingTop: heroIso ? 14 : 16, paddingBottom: 16 }}>
-            <Text
-              style={{ fontFamily: font.display, fontSize: 24, letterSpacing: -0.5, color: ui.ink }}
-            >
-              {data.title}
-            </Text>
+            <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
+              <Text
+                style={{
+                  flex: 1,
+                  fontFamily: font.display,
+                  fontSize: 24,
+                  letterSpacing: -0.5,
+                  color: ui.ink,
+                }}
+              >
+                {data.title}
+              </Text>
+              {data.phase !== "cleared" && data.phase !== "fizzled" && (
+                <Pressable
+                  onPress={openEditSheet}
+                  hitSlop={8}
+                  style={{ marginLeft: 10, marginTop: 4 }}
+                >
+                  <Text style={{ fontFamily: font.bold, fontSize: 12, color: ui.brand }}>Edit</Text>
+                </Pressable>
+              )}
+            </View>
             {data.location ? (
               <Text
                 style={{ fontFamily: font.medium, fontSize: 12, color: ui.muted, marginTop: 4 }}
@@ -430,12 +521,73 @@ export function EventDetail({ route, navigation }: Props) {
           style={{ marginTop: 12 }}
         />
       </BottomSheet>
+
+      <BottomSheet visible={editSheet} onClose={() => setEditSheet(false)}>
+        <Text style={{ fontFamily: font.display, fontSize: 16, color: ui.ink }}>Edit details</Text>
+        <Text
+          style={{
+            fontFamily: font.medium,
+            fontSize: 10,
+            color: ui.muted,
+            marginTop: 2,
+            marginBottom: 12,
+          }}
+        >
+          Anyone in the group can tidy these up.
+        </Text>
+        <Field
+          label="Title"
+          optional
+          value={editTitle}
+          onChangeText={setEditTitle}
+          placeholder={data.title}
+        />
+        <Field
+          label="Location"
+          optional
+          value={editLocation}
+          onChangeText={setEditLocation}
+          placeholder="TenPin Bexleyheath"
+          style={{ marginTop: 12 }}
+        />
+        <Field
+          label="Notes"
+          optional
+          value={editNotes}
+          onChangeText={setEditNotes}
+          placeholder="Come at 6, we'll eat around 8"
+          multiline
+          style={{ marginTop: 12 }}
+        />
+        {editNote ? (
+          <Text
+            style={{
+              fontFamily: font.medium,
+              fontSize: 11,
+              color: ui.brand,
+              marginTop: 12,
+              lineHeight: 16,
+            }}
+          >
+            {editNote}
+          </Text>
+        ) : null}
+        <Button
+          label="Save"
+          variant="primary"
+          disabled={savingEdit}
+          onPress={saveEdit}
+          style={{ marginTop: 14 }}
+        />
+      </BottomSheet>
     </ScreenBackground>
   );
 }
 
-// A full-bleed countdown bar for the time-pressured phases (the collecting deadline and the moment
-// reveal). Stretches edge-to-edge with top/bottom ink rules - visually distinct from rounded cards.
+// A full-bleed countdown banner for the time-pressured phases (the collecting deadline and the
+// moment reveal). Stretches edge-to-edge with top/bottom ink rules - visually distinct from rounded
+// cards. States the time plainly: "<label> in <duration>" (or "Closing now" once past), where the
+// caller's `label` names what closes ("Voting closes" / "RSVP closes") for dashboard-consistent copy.
 function CountdownBanner({ label, ms, note }: { label: string; ms: number; note: string }) {
   return (
     <View
@@ -454,30 +606,19 @@ function CountdownBanner({ label, ms, note }: { label: string; ms: number; note:
         justifyContent: "space-between",
       }}
     >
-      <View>
-        <Text
-          style={{
-            fontFamily: font.bold,
-            fontSize: 9,
-            letterSpacing: 1.4,
-            textTransform: "uppercase",
-            color: "#fff",
-          }}
-        >
-          {label}
-        </Text>
-        <Text
-          style={{
-            fontFamily: font.black,
-            fontSize: 28,
-            letterSpacing: -1,
-            color: "#fff",
-            marginTop: 2,
-          }}
-        >
-          {formatCountdown(ms)}
-        </Text>
-      </View>
+      <Text
+        style={{
+          fontFamily: font.black,
+          fontSize: 22,
+          letterSpacing: -0.5,
+          color: "#fff",
+          flex: 1,
+          marginRight: 12,
+          fontVariant: ["tabular-nums"],
+        }}
+      >
+        {ms <= 0 ? "Closing now" : `${label} in ${formatTimeLeft(ms)}`}
+      </Text>
       <Text
         style={{
           fontFamily: font.bold,
@@ -635,7 +776,16 @@ function VoteRow({
     <Row onPress={onPress} tinted={mine}>
       <SelectCheck selected={mine} />
       <Text style={{ flex: 1, fontFamily: font.bold, fontSize: 14, color: ui.ink }}>{label}</Text>
-      <Text style={{ fontFamily: font.mono, fontSize: 12, color: ui.muted }}>{count}</Text>
+      <Text
+        style={{
+          fontFamily: font.bold,
+          fontSize: 12,
+          color: ui.muted,
+          fontVariant: ["tabular-nums"],
+        }}
+      >
+        {count}
+      </Text>
     </Row>
   );
 }

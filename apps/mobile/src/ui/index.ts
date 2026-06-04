@@ -7,7 +7,6 @@ export { Chip } from "./Chip";
 export { DateChip } from "./DateChip";
 export { DateTimePill } from "./DateTimePill";
 export { DetailError } from "./DetailError";
-export { DrainBar } from "./DrainBar";
 export { Field } from "./Field";
 export { FieldLabel } from "./FieldLabel";
 export { HardShadow } from "./HardShadow";
