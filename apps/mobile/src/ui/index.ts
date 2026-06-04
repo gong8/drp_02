@@ -13,6 +13,7 @@ export { FieldLabel } from "./FieldLabel";
 export { HardShadow } from "./HardShadow";
 export { Heading } from "./Heading";
 export { PersonRow } from "./PersonRow";
+export { Row } from "./Row";
 export { ScreenBackground } from "./ScreenBackground";
 export { ScreenLoading } from "./ScreenLoading";
 export { SelectCheck } from "./SelectCheck";

@@ -27,6 +27,7 @@ import {
   DetailError,
   Field,
   PersonRow,
+  Row,
   ScreenBackground,
   ScreenLoading,
   SelectCheck,
@@ -498,7 +499,7 @@ function CollectingView({
   return (
     <View style={{ marginTop: 16 }}>
       {(data.activityCandidates.length > 0 || !data.lockThings) && (
-        <Section title="What / where">
+        <Section title="What">
           {data.activityCandidates.map((c: ActivityCand) => (
             <VoteRow
               key={c.id}
@@ -611,71 +612,44 @@ function VoteRow({
   onPress: () => void;
 }) {
   return (
-    <Pressable
-      onPress={onPress}
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 12,
-        paddingVertical: 11,
-        paddingHorizontal: 13,
-        marginBottom: 8,
-        borderRadius: ui.rInput,
-        borderWidth: ui.border,
-        borderColor: ui.ink,
-        backgroundColor: mine ? "#F1EEF6" : ui.surface,
-      }}
-    >
+    <Row onPress={onPress} tinted={mine}>
       <SelectCheck selected={mine} />
       <Text style={{ flex: 1, fontFamily: font.bold, fontSize: 14, color: ui.ink }}>{label}</Text>
       <Text style={{ fontFamily: font.mono, fontSize: 12, color: ui.muted }}>{count}</Text>
-    </Pressable>
+    </Row>
   );
 }
 
-// Inline free-text activity entry: a + that opens a field; de-duped case-insensitively server-side.
+// Inline free-text activity entry: an always-present compact field with an inline "Add"; de-duped
+// case-insensitively server-side.
 function AddActivity({ busy, onAdd }: { busy: boolean; onAdd: (text: string) => void }) {
-  const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
-  if (!open) {
-    return (
-      <Pressable onPress={() => setOpen(true)} hitSlop={6} style={{ marginTop: 2 }}>
-        <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.brand }}>
-          + add a place/thing
-        </Text>
-      </Pressable>
-    );
-  }
   const submit = () => {
     const t = text.trim();
     if (!t) return;
     onAdd(t);
     setText("");
-    setOpen(false);
   };
   return (
-    <View style={{ marginTop: 6 }}>
-      <Field
-        label="Add a place or thing"
-        value={text}
-        onChangeText={setText}
-        placeholder="bowling, the pub..."
-      />
-      <View style={{ flexDirection: "row", gap: 16, marginTop: 12, justifyContent: "flex-end" }}>
-        <Pressable
-          hitSlop={8}
-          onPress={() => {
-            setText("");
-            setOpen(false);
-          }}
-        >
-          <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.muted }}>Cancel</Text>
+    <Field
+      label="Add an idea"
+      value={text}
+      onChangeText={setText}
+      placeholder="bowling, the pub..."
+      right={
+        <Pressable onPress={submit} hitSlop={8} disabled={busy || !text.trim()}>
+          <Text
+            style={{
+              fontFamily: font.bold,
+              fontSize: 13,
+              color: text.trim() ? ui.brand : ui.muted,
+            }}
+          >
+            Add
+          </Text>
         </Pressable>
-        <View style={{ width: 110 }}>
-          <Button label="Add" variant="primary" disabled={busy || !text.trim()} onPress={submit} />
-        </View>
-      </View>
-    </View>
+      }
+    />
   );
 }
 
@@ -711,8 +685,15 @@ function AddTime({
       </Pressable>
     );
   }
+  const submit = () => {
+    if (!newIso) return;
+    onAdd(newIso);
+    setNewDate("");
+    setNewTime("");
+    setOpen(false);
+  };
   return (
-    <Card style={{ marginTop: 8 }}>
+    <View style={{ marginTop: 6 }}>
       <DateTimePill
         dateValue={newDate}
         timeValue={newTime}
@@ -721,7 +702,14 @@ function AddTime({
         minimumDate={addMinDate}
         maximumDate={addMaxDate}
       />
-      <View style={{ flexDirection: "row", gap: 16, marginTop: 14, justifyContent: "flex-end" }}>
+      <View style={{ flexDirection: "row", gap: 16, marginTop: 10, alignItems: "center" }}>
+        <Pressable onPress={submit} hitSlop={8} disabled={busy || !newIso}>
+          <Text
+            style={{ fontFamily: font.bold, fontSize: 13, color: newIso ? ui.brand : ui.muted }}
+          >
+            Add
+          </Text>
+        </Pressable>
         <Pressable
           hitSlop={8}
           onPress={() => {
@@ -732,22 +720,8 @@ function AddTime({
         >
           <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.muted }}>Cancel</Text>
         </Pressable>
-        <View style={{ width: 110 }}>
-          <Button
-            label="Add"
-            variant="primary"
-            disabled={busy || !newIso}
-            onPress={() => {
-              if (!newIso) return;
-              onAdd(newIso);
-              setNewDate("");
-              setNewTime("");
-              setOpen(false);
-            }}
-          />
-        </View>
       </View>
-    </Card>
+    </View>
   );
 }
 

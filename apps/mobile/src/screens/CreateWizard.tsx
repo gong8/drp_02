@@ -13,12 +13,13 @@ import {
   Chip,
   DateTimePill,
   Field,
+  Row,
   ScreenBackground,
   ScreenLoading,
 } from "../ui";
 
 type Group = Awaited<ReturnType<typeof trpc.groups.mine.query>>[number];
-type Row = { id: string; date: string; time: string };
+type TimeRow = { id: string; date: string; time: string };
 type Props = NativeStackScreenProps<MeetupsStackParams, "CreateWizard">;
 
 const STEPS = ["group", "activities", "times", "options", "confirm"] as const;
@@ -35,11 +36,11 @@ export function CreateWizard({ navigation }: Props) {
   const title = "";
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
-  // Activity ("what / where") candidates - chips, optional, no names ever shown.
+  // Activity ("what") candidates - ideas, optional, no names ever shown.
   const [activityChips, setActivityChips] = useState<string[]>([]);
   const [activityDraft, setActivityDraft] = useState("");
   // Time candidates - concrete multi-row date/time rows, optional.
-  const [rows, setRows] = useState<Row[]>([{ id: "t0", date: "", time: "" }]);
+  const [rows, setRows] = useState<TimeRow[]>([{ id: "t0", date: "", time: "" }]);
   const nextRowId = useRef(1);
   // Creator locks - both default OFF (open). Decides-by is editable.
   const [lockTimes, setLockTimes] = useState(false);
@@ -56,7 +57,7 @@ export function CreateWizard({ navigation }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
 
-  const updateRow = (id: string, patch: Partial<Row>) =>
+  const updateRow = (id: string, patch: Partial<TimeRow>) =>
     setRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
 
   useEffect(() => {
@@ -232,27 +233,45 @@ export function CreateWizard({ navigation }: Props) {
           {stepKey === "activities" && (
             <Step
               title="What do you fancy?"
-              sub="Drop a few options - what or where. Optional, and the group can add more. No names - it's the group's."
+              sub="Drop a few ideas - optional, and the group can add more. No names - it's the group's."
             >
-              <View style={{ flexDirection: "row", flexWrap: "wrap", marginBottom: 4 }}>
-                {activityChips.map((c) => (
-                  <RemovableChip
-                    key={c}
-                    label={c}
-                    onRemove={() => setActivityChips((cs) => cs.filter((x) => x !== c))}
-                  />
-                ))}
-              </View>
+              {activityChips.map((c) => (
+                <Row key={c}>
+                  <Text style={{ flex: 1, fontFamily: font.bold, fontSize: 14, color: ui.ink }}>
+                    {c}
+                  </Text>
+                  <Pressable
+                    onPress={() => setActivityChips((cs) => cs.filter((x) => x !== c))}
+                    hitSlop={10}
+                  >
+                    <Text style={{ fontFamily: font.bold, fontSize: 16, color: ui.muted }}>×</Text>
+                  </Pressable>
+                </Row>
+              ))}
               <Field
-                label="Add a place or thing"
+                label="Add an idea"
                 optional
                 value={activityDraft}
                 onChangeText={setActivityDraft}
                 placeholder="bowling, the pub..."
+                right={
+                  <Pressable
+                    onPress={commitDraftActivity}
+                    hitSlop={8}
+                    disabled={!activityDraft.trim()}
+                  >
+                    <Text
+                      style={{
+                        fontFamily: font.bold,
+                        fontSize: 13,
+                        color: activityDraft.trim() ? ui.brand : ui.muted,
+                      }}
+                    >
+                      Add
+                    </Text>
+                  </Pressable>
+                }
               />
-              <View style={{ flexDirection: "row", marginTop: 10 }}>
-                <Chip label="+ Add" onPress={commitDraftActivity} />
-              </View>
             </Step>
           )}
 
@@ -527,28 +546,6 @@ function Step({ title, sub, children }: { title: string; sub?: string; children:
       )}
       {children}
     </View>
-  );
-}
-
-function RemovableChip({ label, onRemove }: { label: string; onRemove: () => void }) {
-  return (
-    <Pressable
-      onPress={onRemove}
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 7,
-        backgroundColor: ui.ink,
-        borderRadius: ui.rInput,
-        paddingVertical: 7,
-        paddingHorizontal: 12,
-        marginRight: 8,
-        marginBottom: 8,
-      }}
-    >
-      <Text style={{ fontFamily: font.bold, fontSize: 12, color: "#fff" }}>{label}</Text>
-      <Text style={{ fontFamily: font.bold, fontSize: 13, lineHeight: 13, color: "#fff" }}>×</Text>
-    </Pressable>
   );
 }
 
