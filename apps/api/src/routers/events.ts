@@ -486,7 +486,7 @@ export const eventsRouter = router({
     return { ok: true as const };
   }),
 
-  // Any member adds a candidate while collecting - a new time, or a new place/thing - and the crowd
+  // Any member adds a candidate while collecting - a new time, or a new activity - and the crowd
   // gains another row to +1. Kind-gated by the creator's locks: a locked axis rejects new candidates.
   // Time candidates dedupe by minute; activity candidates dedupe case-insensitively. Adding +1s it.
   addCandidate: protectedProcedure.input(AddCandidateInput).mutation(async ({ ctx, input }) => {
@@ -555,8 +555,7 @@ export const eventsRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "an activity needs a name" });
       }
       const text = input.text.trim();
-      if (!text)
-        throw new TRPCError({ code: "BAD_REQUEST", message: "an activity needs a name" });
+      if (!text) throw new TRPCError({ code: "BAD_REQUEST", message: "an activity needs a name" });
       const key = text.toLowerCase();
       const dup = existing.find(
         (c) => c.kind === "activity" && (c.label ?? "").trim().toLowerCase() === key,

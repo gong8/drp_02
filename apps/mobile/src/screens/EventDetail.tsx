@@ -499,7 +499,7 @@ function CollectingView({
   return (
     <View style={{ marginTop: 16 }}>
       {(data.activityCandidates.length > 0 || !data.lockThings) && (
-        <Section title="What">
+        <Section title="Activity">
           {data.activityCandidates.map((c: ActivityCand) => (
             <VoteRow
               key={c.id}
@@ -632,7 +632,7 @@ function AddActivity({ busy, onAdd }: { busy: boolean; onAdd: (text: string) => 
   };
   return (
     <Field
-      label="Add an idea"
+      label="Add an activity"
       value={text}
       onChangeText={setText}
       placeholder="bowling, the pub..."

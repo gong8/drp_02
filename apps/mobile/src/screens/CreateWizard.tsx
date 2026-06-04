@@ -88,8 +88,10 @@ export function CreateWizard({ navigation }: Props) {
     new Date(decidesOverrideIso).getTime() > earliestMs - MOMENT_MS;
   const decidesToSend =
     decidesEdit && decidesOverrideIso && !decidesInvalid ? decidesOverrideIso : undefined;
-  // Concrete shortcut: exactly one time AND lockTimes => server opens the moment immediately.
-  const isConcrete = timeIsos.length === 1 && lockTimes;
+  const activityCount = activityChips.length + (activityDraft.trim() ? 1 : 0);
+  // Concrete shortcut: skip voting only when BOTH axes are pinned - one locked time AND at most one
+  // locked activity. Must match the server's planOpensMoment so the preview never diverges.
+  const isConcrete = timeIsos.length === 1 && lockTimes && lockThings && activityCount <= 1;
 
   // Reply-by: the blind RSVP window opens at the vote-close (or now, for a concrete plan) and must sit
   // after it and no later than the earliest time. Default + cap mirror the server (defaultReplyByMs).
@@ -233,7 +235,7 @@ export function CreateWizard({ navigation }: Props) {
           {stepKey === "activities" && (
             <Step
               title="What do you fancy?"
-              sub="Drop a few ideas - optional, and the group can add more. No names - it's the group's."
+              sub="Drop a few activities - optional, and the group can add more. No names - it's the group's."
             >
               {activityChips.map((c) => (
                 <Row key={c}>
@@ -249,7 +251,7 @@ export function CreateWizard({ navigation }: Props) {
                 </Row>
               ))}
               <Field
-                label="Add an idea"
+                label="Add an activity"
                 optional
                 value={activityDraft}
                 onChangeText={setActivityDraft}
@@ -330,66 +332,77 @@ export function CreateWizard({ navigation }: Props) {
                 onToggle={() => setLockTimes((v) => !v)}
               />
               <CheckRow
-                label="Lock the places"
-                sub="The group can't add more places or things"
+                label="Lock the activity"
+                sub="The group can't add more activities"
                 on={lockThings}
                 onToggle={() => setLockThings((v) => !v)}
               />
-              <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink, marginTop: 18 }}>
-                Decides by
-              </Text>
-              {decidesEdit ? (
-                <Card style={{ marginTop: 8 }}>
-                  <DateTimePill
-                    dateValue={decidesDate}
-                    timeValue={decidesTime}
-                    onDate={setDecidesDate}
-                    onTime={setDecidesTime}
-                    minimumDate={new Date()}
-                  />
-                  {decidesInvalid && (
-                    <Text
-                      style={{
-                        fontFamily: font.medium,
-                        fontSize: 11,
-                        color: ui.brand,
-                        marginTop: 8,
-                      }}
-                    >
-                      It has to decide at least an hour before your earliest time.
-                    </Text>
-                  )}
-                  <View style={{ flexDirection: "row", marginTop: 12 }}>
-                    <Chip
-                      label="Use default"
-                      onPress={() => {
-                        setDecidesEdit(false);
-                        setDecidesDate("");
-                        setDecidesTime("");
-                      }}
-                    />
-                  </View>
-                </Card>
-              ) : (
-                <Card style={{ marginTop: 8 }}>
-                  <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>
-                    {autoDecidesIso
-                      ? `Decides ${formatSlot(autoDecidesIso)}`
-                      : "A sensible deadline"}
-                  </Text>
+              {!isConcrete && (
+                <>
                   <Text
-                    style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted, marginTop: 3 }}
+                    style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink, marginTop: 18 }}
                   >
-                    {autoDecidesIso
-                      ? "before your earliest time - best-supported wins"
-                      : "add times to set this, or we'll pick a horizon"}
+                    Decides by
                   </Text>
-                  {autoDecidesIso && (
-                    <View style={{ flexDirection: "row", marginTop: 10 }}>
-                      <Chip label="Change" onPress={startEditDecides} />
-                    </View>
+                  {decidesEdit ? (
+                    <Card style={{ marginTop: 8 }}>
+                      <DateTimePill
+                        dateValue={decidesDate}
+                        timeValue={decidesTime}
+                        onDate={setDecidesDate}
+                        onTime={setDecidesTime}
+                        minimumDate={new Date()}
+                      />
+                      {decidesInvalid && (
+                        <Text
+                          style={{
+                            fontFamily: font.medium,
+                            fontSize: 11,
+                            color: ui.brand,
+                            marginTop: 8,
+                          }}
+                        >
+                          It has to decide at least an hour before your earliest time.
+                        </Text>
+                      )}
+                      <View style={{ flexDirection: "row", marginTop: 12 }}>
+                        <Chip
+                          label="Use default"
+                          onPress={() => {
+                            setDecidesEdit(false);
+                            setDecidesDate("");
+                            setDecidesTime("");
+                          }}
+                        />
+                      </View>
+                    </Card>
+                  ) : (
+                    <Card style={{ marginTop: 8 }}>
+                      <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>
+                        {autoDecidesIso
+                          ? `Decides ${formatSlot(autoDecidesIso)}`
+                          : "A sensible deadline"}
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: font.medium,
+                          fontSize: 11,
+                          color: ui.muted,
+                          marginTop: 3,
+                        }}
+                      >
+                        {autoDecidesIso
+                          ? "before your earliest time - best-supported wins"
+                          : "add times to set this, or we'll pick a horizon"}
+                      </Text>
+                      {autoDecidesIso && (
+                        <View style={{ flexDirection: "row", marginTop: 10 }}>
+                          <Chip label="Change" onPress={startEditDecides} />
+                        </View>
+                      )}
+                    </Card>
                   )}
-                </Card>
+                </>
               )}
 
               {earliestMs != null && (
@@ -469,7 +482,7 @@ export function CreateWizard({ navigation }: Props) {
                 >
                   {confirmMirror({
                     timeCount: timeIsos.length,
-                    activityCount: activityChips.length + (activityDraft.trim() ? 1 : 0),
+                    activityCount,
                     isConcrete,
                     firstTimeIso: timeIsos[0] ?? null,
                   })}
@@ -618,10 +631,11 @@ function CheckRow({
   );
 }
 
-// The plain-English outcome mirror. Three shapes per the contract:
-//  - one exact time + lockTimes => it just happens (the concrete shortcut)
+// The plain-English outcome mirror. Shapes:
+//  - concrete (both axes pinned) => it just happens; no voting at all
 //  - 2+ times => a menu the group reacts to
-//  - 0 times => loose; the group suggests times and the best-supported wins
+//  - 0/1 times not pinned => loose; the group suggests times and the best-supported wins
+// The activity clause only promises a vote when the plan actually collects.
 function confirmMirror({
   timeCount,
   activityCount,
@@ -633,15 +647,17 @@ function confirmMirror({
   isConcrete: boolean;
   firstTimeIso: string | null;
 }): string {
-  const things =
-    activityCount > 0
-      ? ` The group picks from ${activityCount} ${activityCount === 1 ? "thing" : "things"} to do.`
-      : " The group adds what to do.";
   if (isConcrete && firstTimeIso) {
-    return `It's on for ${formatSlot(firstTimeIso)} - this one just happens, the group says who's in.${things}`;
+    return activityCount === 1
+      ? `It's on for ${formatSlot(firstTimeIso)} - one set activity, the group just says who's in.`
+      : `It's on for ${formatSlot(firstTimeIso)} - this one just happens, the group says who's in.`;
   }
+  const activity =
+    activityCount > 0
+      ? ` Plus ${activityCount} ${activityCount === 1 ? "activity" : "activities"} to pick from.`
+      : " The group adds the activity.";
   if (timeCount >= 2) {
-    return `You're offering ${timeCount} times - the group reacts and the best-supported one wins.${things}`;
+    return `You're offering ${timeCount} times - the group reacts and the best-supported one wins.${activity}`;
   }
-  return `No fixed time yet - the group suggests times and the best-supported one wins.${things}`;
+  return `No fixed time yet - the group suggests times and the best-supported one wins.${activity}`;
 }
