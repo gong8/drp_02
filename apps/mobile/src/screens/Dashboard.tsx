@@ -556,7 +556,7 @@ export function Dashboard({ navigation }: Props) {
           }}
         >
           {hasGroups && !error ? (
-            <Button size="lg" label="New meetup" onPress={() => navigation.navigate("NewDial")} />
+            <Button size="lg" label="New meetup" onPress={() => navigation.navigate("CreateWizard")} />
           ) : (
             <Button
               size="lg"
