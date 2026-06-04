@@ -3,7 +3,7 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
 import { formatSlot, isoFrom, splitIso } from "../lib/format";
-import { defaultDecidesByForCandidates, MOMENT_MS } from "../lib/lock";
+import { defaultDecidesByForCandidates, defaultReplyByMs, MOMENT_MS } from "../lib/lock";
 import { trpc } from "../lib/trpc";
 import { font, ui } from "../theme";
 import {
@@ -47,6 +47,10 @@ export function CreateWizard({ navigation }: Props) {
   const [decidesEdit, setDecidesEdit] = useState(false);
   const [decidesDate, setDecidesDate] = useState("");
   const [decidesTime, setDecidesTime] = useState("");
+  // Reply-by (the RSVP window close) is editable too - only offered once a time is on the table.
+  const [replyEdit, setReplyEdit] = useState(false);
+  const [replyDate, setReplyDate] = useState("");
+  const [replyTime, setReplyTime] = useState("");
 
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -86,12 +90,31 @@ export function CreateWizard({ navigation }: Props) {
   // Concrete shortcut: exactly one time AND lockTimes => server opens the moment immediately.
   const isConcrete = timeIsos.length === 1 && lockTimes;
 
+  // Reply-by: the blind RSVP window opens at the vote-close (or now, for a concrete plan) and must sit
+  // after it and no later than the earliest time. Default + cap mirror the server (defaultReplyByMs).
+  const replyFloorMs = isConcrete
+    ? Date.now()
+    : decidesToSend
+      ? new Date(decidesToSend).getTime()
+      : autoDecidesIso
+        ? new Date(autoDecidesIso).getTime()
+        : Date.now();
+  const autoReplyIso =
+    earliestMs != null ? new Date(defaultReplyByMs(replyFloorMs, earliestMs)).toISOString() : null;
+  const replyOverrideIso = replyEdit ? isoFrom(replyDate, replyTime) : null;
+  const replyInvalid =
+    !!replyOverrideIso &&
+    earliestMs != null &&
+    (new Date(replyOverrideIso).getTime() <= replyFloorMs ||
+      new Date(replyOverrideIso).getTime() > earliestMs);
+  const replyToSend = replyEdit && replyOverrideIso && !replyInvalid ? replyOverrideIso : undefined;
+
   function valid(key: string): boolean {
     switch (key) {
       case "group":
         return !!groupId;
       case "options":
-        return !decidesInvalid;
+        return !decidesInvalid && !replyInvalid;
       default:
         return true; // activities, times, confirm - all optional
     }
@@ -118,6 +141,15 @@ export function CreateWizard({ navigation }: Props) {
     setDecidesEdit(true);
   }
 
+  function startEditReply() {
+    if (autoReplyIso) {
+      const { date, time } = splitIso(autoReplyIso);
+      setReplyDate(date);
+      setReplyTime(time);
+    }
+    setReplyEdit(true);
+  }
+
   async function submit() {
     if (busy || !groupId) return;
     setBusy(true);
@@ -133,6 +165,7 @@ export function CreateWizard({ navigation }: Props) {
         lockTimes,
         lockThings,
         decidesBy: decidesToSend,
+        replyBy: replyToSend,
       });
       navigation.reset({ index: 0, routes: [{ name: "Dashboard" }] });
     } catch {
@@ -338,6 +371,73 @@ export function CreateWizard({ navigation }: Props) {
                     </View>
                   )}
                 </Card>
+              )}
+
+              {earliestMs != null && (
+                <>
+                  <Text
+                    style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink, marginTop: 18 }}
+                  >
+                    Reply by
+                  </Text>
+                  {replyEdit ? (
+                    <Card style={{ marginTop: 8 }}>
+                      <DateTimePill
+                        dateValue={replyDate}
+                        timeValue={replyTime}
+                        onDate={setReplyDate}
+                        onTime={setReplyTime}
+                        minimumDate={new Date(replyFloorMs)}
+                        maximumDate={new Date(earliestMs)}
+                      />
+                      {replyInvalid && (
+                        <Text
+                          style={{
+                            fontFamily: font.medium,
+                            fontSize: 11,
+                            color: ui.brand,
+                            marginTop: 8,
+                          }}
+                        >
+                          Replies close after voting ends and no later than your earliest time.
+                        </Text>
+                      )}
+                      <View style={{ flexDirection: "row", marginTop: 12 }}>
+                        <Chip
+                          label="Use default"
+                          onPress={() => {
+                            setReplyEdit(false);
+                            setReplyDate("");
+                            setReplyTime("");
+                          }}
+                        />
+                      </View>
+                    </Card>
+                  ) : (
+                    <Card style={{ marginTop: 8 }}>
+                      <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>
+                        {autoReplyIso
+                          ? `Replies close ${formatSlot(autoReplyIso)}`
+                          : "A sensible deadline"}
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: font.medium,
+                          fontSize: 11,
+                          color: ui.muted,
+                          marginTop: 3,
+                        }}
+                      >
+                        blind until then - then it reveals who's in
+                      </Text>
+                      {autoReplyIso && (
+                        <View style={{ flexDirection: "row", marginTop: 10 }}>
+                          <Chip label="Change" onPress={startEditReply} />
+                        </View>
+                      )}
+                    </Card>
+                  )}
+                </>
               )}
             </Step>
           )}
