@@ -49,13 +49,12 @@ export type TimeCandidateInput = z.infer<typeof TimeCandidateInput>;
 // `replyBy` closes the blind yes/no/"I'll go if" window, then reveals + resolves. `quorum` defaults.
 export const CreateEventInput = z.object({
   groupId: z.string(),
-  title: z.string().max(80).optional(),
   description: z.string().max(500).optional(),
   location: z.string().max(120).optional(),
   timeCandidates: z.array(TimeCandidateInput).max(10).optional(),
   activityCandidates: z.array(z.string().min(1).max(80)).max(10).optional(),
   lockTimes: z.boolean().optional().default(false),
-  lockThings: z.boolean().optional().default(false),
+  lockActivity: z.boolean().optional().default(false),
   decidesBy: z.string().optional(),
   replyBy: z.string().optional(),
   quorum: z.number().int().min(1).max(50).optional(),
@@ -106,12 +105,12 @@ export type LockInput = z.infer<typeof LockInput>;
 export const FieldEdit = z.object({ from: z.string(), to: z.string() });
 export type FieldEdit = z.infer<typeof FieldEdit>;
 
-// Network boundary for events.update - ANY member edits a plan's text metadata (title/location/notes)
+// Network boundary for events.update - ANY member edits a plan's text metadata (activity/location/notes)
 // before it is cleared/fizzled. Each field is an optional CAS; an omitted field is left untouched.
-// Anonymous, like every other write. The `to` length bounds mirror create (title/location 80/120,
-// description 500); empty is allowed (empty title reverts to auto-derive, empty location/notes clears).
+// Anonymous, like every other write. The `to` length bounds mirror create (activity/location 80/120,
+// description 500); empty is allowed (an empty activity clears the name so it re-derives from the winning candidate, empty location/notes clears).
 export const UpdateEventInput = ByEvent.extend({
-  title: FieldEdit.refine((f) => f.to.length <= 80, { message: "title is too long" }).optional(),
+  activity: FieldEdit.refine((f) => f.to.length <= 80, { message: "activity is too long" }).optional(),
   location: FieldEdit.refine((f) => f.to.length <= 120, {
     message: "location is too long",
   }).optional(),
