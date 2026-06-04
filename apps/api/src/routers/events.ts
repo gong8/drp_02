@@ -37,7 +37,7 @@ import {
 import { FALLBACK_AVATAR_COLOR, FALLBACK_USER_NAME, getUserCard } from "../db/users.js";
 import { msLeft } from "../format.js";
 import { protectedProcedure, router } from "../trpc.js";
-import { planOpensMoment, resolveTitle } from "./create-plan.js";
+import { displayTitle, planOpensMoment, resolveTitle } from "./create-plan.js";
 
 export type EventRow = typeof events.$inferSelect;
 type MyStatus = "reacting" | "awaiting" | "going" | "declined";
@@ -621,18 +621,20 @@ export const eventsRouter = router({
         let iReacted = false;
         let candidateCount = 0;
         let readyToLock = false;
+        // Collecting plans have no real title yet (it is fixed at lock); show the leading activity or
+        // a placeholder so a card never renders blank. Locked plans already carry a real title.
+        let title = e.title;
         if (e.phase === "collecting") {
           const cands = await candidatesFor(e.id);
           candidateCount = cands.length;
-          const myReacts = await db
-            .select()
-            .from(candidateReactions)
-            .where(
-              and(eq(candidateReactions.eventId, e.id), eq(candidateReactions.userId, ctx.userId)),
-            );
-          iReacted = myReacts.length > 0;
+          const reactions = await reactionsFor(e.id);
+          iReacted = reactions.some((r) => r.userId === ctx.userId);
+          title = displayTitle(
+            e.title,
+            cands.filter((c) => c.kind === "activity").map((c) => ({ id: c.id, label: c.label })),
+            reactions,
+          );
           if (isCreator) {
-            const reactions = await reactionsFor(e.id);
             const timeIds = cands.filter((c) => c.kind === "time" && c.startsAt).map((c) => c.id);
             readyToLock = pickWinningCandidate(timeIds, reactions, e.quorum) !== null;
           }
@@ -641,7 +643,7 @@ export const eventsRouter = router({
         return {
           id: e.id,
           groupName: await getGroupName(e.groupId),
-          title: e.title,
+          title,
           location: e.location,
           phase: e.phase,
           startsAt: e.startsAt.toISOString(),
@@ -733,7 +735,12 @@ export const eventsRouter = router({
     return {
       id: e.id,
       groupName: await getGroupName(e.groupId),
-      title: e.title,
+      // No real title until lock; show the leading activity (or a placeholder) so it never renders blank.
+      title: displayTitle(
+        e.title,
+        cands.filter((c) => c.kind === "activity").map((c) => ({ id: c.id, label: c.label })),
+        reactions,
+      ),
       description: e.description,
       location: e.location,
       phase: e.phase,

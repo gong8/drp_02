@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { planOpensMoment, resolveTitle } from "./create-plan.js";
+import { displayTitle, FALLBACK_TITLE, planOpensMoment, resolveTitle } from "./create-plan.js";
 
 test("one time candidate with lockTimes opens the moment (concrete shortcut)", () => {
   assert.equal(planOpensMoment(1, true), true);
@@ -40,4 +40,25 @@ test("resolveTitle picks the most-voted activity when title is empty", () => {
 
 test("resolveTitle falls back to empty when there are no activities", () => {
   assert.equal(resolveTitle("", [], []), "");
+});
+
+test("displayTitle shows the leading activity when the title is empty", () => {
+  const acts = [
+    { id: "a1", label: "Pizza" },
+    { id: "a2", label: "Sushi" },
+  ];
+  const reactions = [
+    { candidateId: "a2", userId: "u1" },
+    { candidateId: "a2", userId: "u2" },
+    { candidateId: "a1", userId: "u1" },
+  ];
+  assert.equal(displayTitle("", acts, reactions), "Sushi");
+});
+
+test("displayTitle falls back to the placeholder with no title and no activities", () => {
+  assert.equal(displayTitle("", [], []), FALLBACK_TITLE);
+});
+
+test("displayTitle keeps a real title as-is", () => {
+  assert.equal(displayTitle("Bowling", [{ id: "a1", label: "Pizza" }], []), "Bowling");
 });

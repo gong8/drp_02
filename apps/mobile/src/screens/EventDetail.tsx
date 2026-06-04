@@ -566,8 +566,9 @@ function CollectingView({
         No names - just the group.
       </Text>
 
-      {/* No manual lock for members (pure deadline); this dev-only button forces it for demos. */}
-      {__DEV__ && data.isCreator && (
+      {/* No manual lock for members (pure deadline); this dev-only button forces it for demos. Needs
+          at least one time candidate to lock onto - otherwise the server rejects it (nothing to schedule). */}
+      {__DEV__ && data.isCreator && data.timeCandidates.length > 0 && (
         <View style={{ marginTop: 16 }}>
           <Button
             label="Decide now (dev)"
