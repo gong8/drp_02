@@ -4,14 +4,16 @@ A group meetup-coordination app. A creator sends one plan to a group; the group 
 
 ## How a plan works
 
-One create flow, one votable plan. The creator gives the plan an optional title, location, and two candidate lists - **times** (when) and **activities** (what/where) - either of which may be empty. They set two flags, both off by default:
+One create flow, one votable plan. The creator gives the plan an optional location and two candidate lists - **times** (when) and **activities** (what/where) - either of which may be empty; the activity that wins becomes the plan's name. They set two flags, both off by default:
 
 - **lockTimes** - leave it off and members can add their own times; turn it on to fix the time list to vote-only.
-- **lockThings** - leave it off and members can add their own activities; turn it on to fix the activity list to vote-only.
+- **lockActivity** - leave it off and members can add their own activities; turn it on to fix the activity list to vote-only.
 
-During **collecting**, members add to the open lists and tap **+1** on any candidate. Counts are public (momentum) but voter names are never shown. A "Decides by" deadline (editable, defaulting from the candidate spread) ends collecting: the most-voted time wins and - if no title was set - the most-voted activity becomes the title.
+During **collecting**, members add to the open lists and tap **+1** on any candidate. Counts are public (momentum) but voter names are never shown. A "Decides by" deadline (editable, defaulting from the candidate spread) ends collecting: the most-voted time wins, and the most-voted activity becomes the plan's name.
 
-Shortcut: exactly one time with **lockTimes** on skips collecting and opens straight into the moment (this is the old "set a time" / exact plan). Once collecting ends (or instantly, for that shortcut) the plan runs a blind **moment**: members commit, nobody sees who else is in until it ends, and it clears if enough commit (or always, for the contingent-free shortcut) or silently fizzles. See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full model.
+Shortcut: a fully pinned plan - one time with **lockTimes**, and the activity locked too - skips collecting and opens straight into the moment (this is the old "set a time" / exact plan). Once collecting ends (or instantly, for that shortcut) the plan runs a blind **moment**: members commit, nobody sees who else is in until it ends, and it clears if enough commit (or always, for the contingent-free shortcut) or silently fizzles.
+
+Plans are editable and repeatable. Any member can fix a live plan's name, location, or notes (concurrent edits surface a conflict rather than clobbering), and the create flow can **redo a past meetup** - start from a previous plan in the same group and it brings back what you did as a locked activity, so you only pick a new time. See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full model.
 
 ## Structure
 

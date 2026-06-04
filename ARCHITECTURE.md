@@ -11,19 +11,20 @@ anonymity is always on. The creator picks no "mode"; they set two flags, both de
 `false` (open):
 
 - **lockTimes** - when `true`, the TIME list is vote-only (members cannot add times).
-- **lockThings** - when `true`, the ACTIVITY list is vote-only (members cannot add
+- **lockActivity** - when `true`, the ACTIVITY list is vote-only (members cannot add
   activities).
 
-Concrete shortcut: exactly ONE time candidate with `lockTimes === true` skips
-collecting (`contingent` false) and opens straight into a blind timed **moment** that
-always happens ("it's on, who's in?") - this subsumes the old "exact" plan.
+Concrete shortcut: a fully pinned plan - exactly ONE time candidate with `lockTimes` AND
+at most one activity candidate with `lockActivity` - skips collecting (`contingent` false)
+and opens straight into a blind timed **moment** that always happens ("it's on, who's
+in?") - this subsumes the old "exact" plan. Any open or contested axis starts collecting.
 
 Everything after collecting is shared: a plan moves through phases
 `collecting -> moment -> cleared` (or a silent `fizzled`). During collecting, members
 add to the open lists and tap **+1**; counts are public (momentum) but blind to names.
-At lock the most-voted TIME candidate wins, and if the title is empty the most-voted
-ACTIVITY candidate becomes the title; the plan then runs a blind **moment** where
-members RSVP **yes / no / "I'll go if [people]"**. The dashboard groups each user's
+At lock the most-voted TIME candidate wins, and the most-voted ACTIVITY candidate
+becomes the plan's `activity` (its name) if one is not already set; the plan then runs a
+blind **moment** where members RSVP **yes / no / "I'll go if [people]"**. The dashboard groups each user's
 plans by **Reacting / Awaiting / Going / Declined**.
 
 ## Components
@@ -31,7 +32,7 @@ plans by **Reacting / Awaiting / Going / Declined**.
 ```mermaid
 flowchart LR
   subgraph mobile["@bethere/mobile · Expo RN"]
-    UI["Dashboard · CreateEvent · EventDetail\nGroupsList · GroupDetail · CreateGroup\nAccount · SignIn (Clerk)"] --> C["tRPC client"]
+    UI["Dashboard · CreateWizard · EventDetail\nGroupsList · GroupDetail · CreateGroup\nAccount · SignIn (Clerk)"] --> C["tRPC client"]
   end
   subgraph api["@bethere/api · Fastify + tRPC"]
     AUTH["createContext\nClerk verify | x-user-id dev bypass"]
@@ -41,7 +42,7 @@ flowchart LR
     R --> SVC --> D["Drizzle ORM"]
     R --> D
   end
-  DB[("Postgres (7 tables)\nusers · groups · group_members\nevents · event_candidates\ncandidate_reactions · responses")]
+  DB[("Postgres (8 tables)\nusers · groups · group_members\nevents · event_candidates\ncandidate_reactions · event_opt_outs · responses")]
   S["@bethere/shared\nZod schemas + pure logic\nresolveIn · clears · findLinchpins\nrevealGoing · tallyCandidates\npickWinningCandidate · pickWinnerOrBestId"]
 
   C -- "HTTP /trpc (JSON)" --> AUTH
@@ -53,7 +54,7 @@ flowchart LR
 Plain-text fallback:
 
 ```
-[Expo RN: 8 screens] --tRPC/HTTP--> [Fastify + tRPC API] --Drizzle--> [Postgres: 7 tables]
+[Expo RN: 8 screens] --tRPC/HTTP--> [Fastify + tRPC API] --Drizzle--> [Postgres: 8 tables]
           ^                                  ^
           |            @bethere/shared        |
           +--- Zod types + resolve/reveal ----+
@@ -66,19 +67,19 @@ sequenceDiagram
   participant U as User (mobile)
   participant A as API (tRPC)
   participant DB as Postgres
-  U->>A: events.create { title?, location?, timeCandidates?, activityCandidates?, lockTimes, lockThings, group }
-  alt 1 time candidate AND lockTimes
+  U->>A: events.create { groupId, description?, location?, timeCandidates?, activityCandidates?, lockTimes, lockActivity, decidesBy?, replyBy?, quorum? }
+  alt both axes pinned (concrete shortcut)
     A->>DB: insert event (phase=moment, contingent=false), 1 time candidate
     Note over A: concrete shortcut: opens straight into the blind moment; always clears
   else collecting
     A->>DB: insert event (phase=collecting, contingent=true) + TIME and ACTIVITY candidates
     U->>A: events.toggleReaction { candidateId }  (PUBLIC +1, either kind)
     A->>DB: insert/delete caller's candidate_reactions row
-    U->>A: events.addCandidate { kind, startsAt? | text? }  (gated by lockTimes/lockThings)
+    U->>A: events.addCandidate { kind, startsAt? | text? }  (gated by lockTimes/lockActivity)
     A->>DB: insert candidate (+1s it for the author)
     Note over A: public counts visible to all (momentum); "Decides by" deadline ends collecting
     U->>A: events.lock { candidateId? }  (creator self only, still anonymous)
-    A->>DB: winning TIME -> moment window; if title empty, winning ACTIVITY -> title; phase=moment
+    A->>DB: winning TIME -> moment window; if activity empty, winning ACTIVITY -> activity; phase=moment
   end
   U->>A: events.mine / events.get
   A-->>U: phase-aware view (blind during moment: no tally, no who-is-in)
@@ -89,13 +90,23 @@ sequenceDiagram
   A->>DB: cleared -> status=resolved, reveal IN crowd · fizzled -> hidden
 ```
 
+Two flows wrap this lifecycle. **Editing:** any group member (not just the creator) can
+`events.update` a plan's text - its `activity` once locked, plus `location` and
+`description` - until it clears or fizzles; each field is an optimistic compare-and-set
+(`FieldEdit { from, to }`) under `SELECT ... FOR UPDATE`, so a stale edit reports a
+conflict instead of clobbering a concurrent one. **Redo:** the create wizard can clone a
+previous meetup - `events.pastForGroup` returns a group's cleared plans as shells
+(activity, location, notes; newest first, capped at 20) and the wizard preloads the won
+activity as a single `lockActivity`-pinned chip, so a redo keeps the same thing and you
+only pick a new time. Neither the old time nor any RSVPs carry over.
+
 ## Packages
 
 | Package | Role |
 |---|---|
-| `@bethere/shared` | Single source of truth: Zod schemas (`CreateEventInput`, `TimeCandidateInput`, `AddCandidateInput`, `ToggleReactionInput`, `LockInput`, `RespondInput`, `CandidateKind` enum `"time" \| "activity"`, `PlanPhase`) + framework-free pure logic - `resolveIn`/`clears`/`findLinchpins` (conditional resolution), `revealGoing` (the blind-until-reveal gate), `tallyCandidates`/`pickWinningCandidate`/`pickWinnerOrBestId` (collecting, kind-agnostic, public count = `userIds.length`), `defaultDecidesByForCandidates` (the "Decides by" default). Unit-tested. |
-| `@bethere/api` | Fastify + tRPC server; Clerk auth with a dev bypass (`createContext`); Drizzle/Postgres; `health`/`groups`/`events` routers; `settlePhase` resolves a moment lazily on read (no scheduler). Reseeds a replayable demo on boot. |
-| `@bethere/mobile` | Expo RN; eight screens (Dashboard, CreateEvent, EventDetail, GroupsList, GroupDetail, CreateGroup, Account, SignIn) driving the typed tRPC client; Clerk sign-in with a dev fallback. |
+| `@bethere/shared` | Single source of truth: Zod schemas (`CreateEventInput`, `UpdateEventInput` + `FieldEdit`, `TimeCandidateInput`, `AddCandidateInput`, `ToggleReactionInput`, `SetOptOutInput`, `LockInput`, `RespondInput`, `CandidateKind` enum `"time" \| "activity"`, `PlanPhase`) + framework-free pure logic - `resolveIn`/`clears`/`findLinchpins` (conditional resolution), `revealGoing` (the blind-until-reveal gate), `tallyCandidates`/`pickWinningCandidate`/`pickWinnerOrBestId` (collecting, kind-agnostic, public count = `userIds.length`), `defaultDecidesByForCandidates` (the "Decides by" default). Unit-tested. |
+| `@bethere/api` | Fastify + tRPC server; Clerk auth with a dev bypass (`createContext`); Drizzle/Postgres; `health`/`groups`/`events` routers (events also exposes `update` for per-field CAS edits and `pastForGroup` for redo shells); `settlePhase` resolves a moment lazily on read (no scheduler). Reseeds a replayable demo on boot. |
+| `@bethere/mobile` | Expo RN; eight screens (Dashboard, CreateWizard, EventDetail, GroupsList, GroupDetail, CreateGroup, Account, SignIn) driving the typed tRPC client; Clerk sign-in with a dev fallback. |
 
 ## Type chain
 
