@@ -305,7 +305,7 @@ export const eventsRouter = router({
     const timeInputs = input.timeCandidates ?? [];
     const activityInputs = input.activityCandidates ?? [];
 
-    const timeCands = timeInputs
+    const sortedTimeInputs = timeInputs
       .map((t, i) => ({
         id: `${id}_t${i + 1}`,
         kind: "time" as const,
@@ -315,6 +315,17 @@ export const eventsRouter = router({
       }))
       .filter((c) => !Number.isNaN(c.startsAt.getTime()))
       .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
+    // Collapse candidates that land in the same minute (the wizard's granularity), keeping the
+    // earliest. A single intended slot sent twice must stay one row - otherwise it splits +1
+    // momentum and defeats the concrete-moment shortcut (planOpensMoment needs exactly one time).
+    // This mirrors addCandidate's minute dedupe so create and add agree.
+    const seenMinutes = new Set<number>();
+    const timeCands = sortedTimeInputs.filter((c) => {
+      const minute = Math.floor(c.startsAt.getTime() / 60_000);
+      if (seenMinutes.has(minute)) return false;
+      seenMinutes.add(minute);
+      return true;
+    });
 
     const activityCands = activityInputs.map((text, i) => ({
       id: `${id}_a${i + 1}`,
@@ -558,8 +569,14 @@ export const eventsRouter = router({
           });
         }
       }
+      // Dedupe by minute (the comment above and the wizard's granularity): a candidate at HH:MM:00
+      // and a new add at HH:MM:30 are the same slot, so the add +1s the existing row.
+      const startMinute = Math.floor(startsAt.getTime() / 60_000);
       const dup = existing.find(
-        (c) => c.kind === "time" && c.startsAt?.getTime() === startsAt.getTime(),
+        (c) =>
+          c.kind === "time" &&
+          c.startsAt != null &&
+          Math.floor(c.startsAt.getTime() / 60_000) === startMinute,
       );
       if (dup) {
         await reactFor(input.eventId, dup.id, ctx.userId);
