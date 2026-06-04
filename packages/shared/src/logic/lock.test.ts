@@ -1,11 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  addCandidateHorizon,
-  DAY_MS,
-  defaultDecidesByForCandidates,
-  defaultLockAtForWindow,
-  MAX_REACT_MS,
-} from "./lock.js";
+import { addCandidateHorizon, DAY_MS, defaultDecidesByForCandidates } from "./lock.js";
 
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
@@ -36,32 +30,6 @@ describe("defaultDecidesByForCandidates", () => {
   it("falls back to a clamped midpoint when the slot is too close for the lead", () => {
     const earliest = now + 30 * 60 * 1000; // 30 min out
     expect(defaultDecidesByForCandidates(earliest, now)).toBe(now + 15 * 60 * 1000);
-  });
-});
-
-describe("defaultLockAtForWindow", () => {
-  it("locks after ~a third of a short window", () => {
-    const last = now + 6 * HOUR;
-    expect(defaultLockAtForWindow(last, now)).toBe(now + 2 * HOUR);
-  });
-
-  it("caps the react window at three days for a long window", () => {
-    const last = now + 14 * DAY_MS;
-    expect(defaultLockAtForWindow(last, now)).toBe(now + MAX_REACT_MS);
-  });
-
-  it("always returns a value strictly after now and before the last slot", () => {
-    for (const spanHours of [1, 4, 24, 24 * 7, 24 * 14]) {
-      const last = now + spanHours * HOUR;
-      const t = defaultLockAtForWindow(last, now);
-      expect(t).toBeGreaterThan(now);
-      expect(t).toBeLessThan(last);
-    }
-  });
-
-  it("falls back to the midpoint when the whole window fits inside one moment", () => {
-    const last = now + 30 * 60 * 1000; // 30 min span
-    expect(defaultLockAtForWindow(last, now)).toBe(now + 15 * 60 * 1000);
   });
 });
 
