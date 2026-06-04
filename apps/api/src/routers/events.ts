@@ -247,8 +247,8 @@ export async function requireMember(groupId: string, userId: string): Promise<vo
 }
 
 // Load an event for a member-scoped mutation: fetch by id, 404 if missing, then assert membership.
-// The shared head of the NOT_FOUND mutations (react/setOptOut/addCandidate/lock/respond/unrespond/
-// resolve); the null-returning reads (events.get, floats.get) keep their own preamble.
+// The shared head of the NOT_FOUND mutations (toggleReaction/setOptOut/addCandidate/lock/respond/
+// unrespond/resolve); the null-returning read (events.get) keeps its own preamble.
 export async function loadEvent(eventId: string, userId: string): Promise<EventRow> {
   const [e] = await db.select().from(events).where(eq(events.id, eventId));
   if (!e) throw new TRPCError({ code: "NOT_FOUND" });
