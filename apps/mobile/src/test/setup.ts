@@ -18,6 +18,7 @@ jest.mock("@clerk/clerk-expo", () => {
     useUser: () => ({ isSignedIn: false, isLoaded: true, user: null }),
     useSignIn: () => ({ isLoaded: true, signIn: { create: jest.fn() } }),
     useOAuth: () => ({ startOAuthFlow: jest.fn() }),
+    useSSO: () => ({ startSSOFlow: jest.fn() }),
   };
 });
 

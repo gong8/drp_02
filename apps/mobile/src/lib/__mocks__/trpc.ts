@@ -11,7 +11,15 @@
 // The exported `trpc` is typed as the real client (via `typeof import("../trpc")`), so screens
 // and tests keep full type safety; only the runtime behavior is swapped.
 
-const calls = new Map<string, ReturnType<typeof jest.fn>>();
+// jest loads this file under two specifiers (as the mock for "../trpc" AND via a direct import of
+// the helpers), which would give each instance its own registry - so resetTrpcMock would clear a
+// different Map than the screen's procedures recorded into. Anchor the registry on globalThis so
+// every instance shares ONE Map and reset always clears the fns the screen actually called.
+type MockFn = ReturnType<typeof jest.fn>;
+const REGISTRY_KEY = Symbol.for("bethere.trpcMock.registry");
+const registryHolder = globalThis as unknown as { [REGISTRY_KEY]?: Map<string, MockFn> };
+const calls: Map<string, MockFn> = registryHolder[REGISTRY_KEY] ?? new Map<string, MockFn>();
+registryHolder[REGISTRY_KEY] = calls;
 
 function leaf(path: string): ReturnType<typeof jest.fn> {
   let fn = calls.get(path);
