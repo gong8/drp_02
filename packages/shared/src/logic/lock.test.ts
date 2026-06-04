@@ -40,24 +40,26 @@ describe("defaultDecidesByForCandidates", () => {
 });
 
 describe("defaultReplyByMs", () => {
-  it("caps the blind reply window at one day for a far-off event", () => {
-    expect(defaultReplyByMs(now, now + 4 * DAY_MS)).toBe(now + DAY_MS);
+  it("reveals a lead before the event, capped at a day for a far-off event", () => {
+    // lead = clamp((4d)/3, 1h, 1d) = 1 day before the event
+    expect(defaultReplyByMs(now, now + 4 * DAY_MS)).toBe(now + 4 * DAY_MS - DAY_MS);
   });
 
-  it("runs to the event when it is within a day of opening", () => {
-    expect(defaultReplyByMs(now, now + 3 * HOUR)).toBe(now + 3 * HOUR);
+  it("uses a proportional lead (a third of the run-up) for a nearer event", () => {
+    // lead = clamp((3h)/3, 1h, 1d) = 1h before the event
+    expect(defaultReplyByMs(now, now + 3 * HOUR)).toBe(now + 3 * HOUR - HOUR);
   });
 
   it("gives a minimal window when the event is already here", () => {
     expect(defaultReplyByMs(now, now - 1000)).toBe(now + MOMENT_MS);
   });
 
-  it("always returns an instant after the open and no later than the event", () => {
+  it("always returns an instant strictly between the open and the event", () => {
     for (const gapHours of [0.5, 2, 12, 25, 24 * 14]) {
       const event = now + gapHours * HOUR;
       const t = defaultReplyByMs(now, event);
       expect(t).toBeGreaterThan(now);
-      expect(t).toBeLessThanOrEqual(event);
+      expect(t).toBeLessThan(event);
     }
   });
 });

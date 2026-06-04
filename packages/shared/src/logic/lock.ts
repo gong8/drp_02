@@ -27,15 +27,14 @@ export function defaultDecidesByForCandidates(
 }
 
 /**
- * Default "reply by" instant: the blind commit window opens at `openMs` (the lock, or creation for a
- * concrete plan) and closes a sensible bit before the event. We cap the blind window at one day so a
- * far-off plan does not stay blind for the whole run-up; otherwise it runs to the event. A degenerate
- * already-here event still gets a minimal window. Always returns an instant strictly in (openMs, eventMs]
- * for a future event.
+ * Default "reply by" instant: a sensible lead BEFORE the event - the same shape as the "decides by"
+ * default (lead = a third of the run-up, floored at a moment, capped at a day), so the two deadlines
+ * feel like one system. A degenerate already-here event still gets a minimal window. Always returns
+ * an instant strictly in (openMs, eventMs) for a future event.
  */
 export function defaultReplyByMs(openMs: number, eventMs: number): number {
   if (eventMs <= openMs) return openMs + MOMENT_MS;
-  return Math.min(eventMs, openMs + DAY_MS);
+  return defaultDecidesByForCandidates(eventMs, openMs);
 }
 
 /**
