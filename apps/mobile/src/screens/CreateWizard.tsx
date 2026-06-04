@@ -89,9 +89,15 @@ export function CreateWizard({ navigation }: Props) {
   const decidesToSend =
     decidesEdit && decidesOverrideIso && !decidesInvalid ? decidesOverrideIso : undefined;
   const activityCount = activityChips.length + (activityDraft.trim() ? 1 : 0);
-  // Concrete shortcut: skip voting only when BOTH axes are pinned - one locked time AND at most one
-  // locked activity. Must match the server's planOpensMoment so the preview never diverges.
-  const isConcrete = timeIsos.length === 1 && lockTimes && lockThings && activityCount <= 1;
+  // You can only lock an axis that has something on it (you can't fix nothing). A lock with no
+  // candidate is ignored, so the checkbox is disabled until at least one exists.
+  const canLockTimes = timeIsos.length > 0;
+  const canLockActivity = activityCount > 0;
+  const lockTimesEff = lockTimes && canLockTimes;
+  const lockThingsEff = lockThings && canLockActivity;
+  // Concrete shortcut: skip voting only when BOTH axes are pinned - one locked time AND a locked
+  // activity. Must match the server's planOpensMoment so the preview never diverges.
+  const isConcrete = timeIsos.length === 1 && lockTimesEff && lockThingsEff && activityCount <= 1;
 
   // Reply-by: the blind RSVP window opens at the vote-close (or now, for a concrete plan) and must sit
   // after it and no later than the earliest time. Default + cap mirror the server (defaultReplyByMs).
@@ -165,8 +171,8 @@ export function CreateWizard({ navigation }: Props) {
         location: location.trim() || undefined,
         timeCandidates: timeIsos.map((startsAt) => ({ startsAt })),
         activityCandidates: activities.length ? activities : undefined,
-        lockTimes,
-        lockThings,
+        lockTimes: lockTimesEff,
+        lockThings: lockThingsEff,
         decidesBy: decidesToSend,
         replyBy: replyToSend,
       });
@@ -327,14 +333,18 @@ export function CreateWizard({ navigation }: Props) {
               />
               <CheckRow
                 label="Lock the times"
-                sub="The group can't add more times"
-                on={lockTimes}
+                sub={canLockTimes ? "The group can't add more times" : "Add a time first"}
+                on={lockTimesEff}
+                disabled={!canLockTimes}
                 onToggle={() => setLockTimes((v) => !v)}
               />
               <CheckRow
                 label="Lock the activity"
-                sub="The group can't add more activities"
-                on={lockThings}
+                sub={
+                  canLockActivity ? "The group can't add more activities" : "Add an activity first"
+                }
+                on={lockThingsEff}
+                disabled={!canLockActivity}
                 onToggle={() => setLockThings((v) => !v)}
               />
               {!isConcrete && (
@@ -483,7 +493,8 @@ export function CreateWizard({ navigation }: Props) {
                   {confirmMirror({
                     timeCount: timeIsos.length,
                     activityCount,
-                    isConcrete,
+                    timeFixed: timeIsos.length === 1 && lockTimesEff,
+                    activityFixed: lockThingsEff && activityCount <= 1,
                     firstTimeIso: timeIsos[0] ?? null,
                   })}
                 </Text>
@@ -591,16 +602,23 @@ function CheckRow({
   sub,
   on,
   onToggle,
+  disabled = false,
 }: {
   label: string;
   sub: string;
   on: boolean;
   onToggle: () => void;
+  disabled?: boolean;
 }) {
   return (
     <Pressable
-      onPress={onToggle}
-      style={{ flexDirection: "row", alignItems: "center", marginTop: 16 }}
+      onPress={disabled ? undefined : onToggle}
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        marginTop: 16,
+        opacity: disabled ? 0.4 : 1,
+      }}
     >
       <View
         style={{
@@ -631,33 +649,47 @@ function CheckRow({
   );
 }
 
-// The plain-English outcome mirror. Shapes:
-//  - concrete (both axes pinned) => it just happens; no voting at all
-//  - 2+ times => a menu the group reacts to
-//  - 0/1 times not pinned => loose; the group suggests times and the best-supported wins
-// The activity clause only promises a vote when the plan actually collects.
+// The plain-English outcome mirror. It describes each axis by whether it is FIXED (locked to its
+// candidates so there is nothing to vote on) or still being decided, so the preview matches what the
+// server actually does. Both fixed => concrete (skip voting); otherwise the open/contested axis is
+// what the group votes on.
 function confirmMirror({
   timeCount,
   activityCount,
-  isConcrete,
+  timeFixed,
+  activityFixed,
   firstTimeIso,
 }: {
   timeCount: number;
   activityCount: number;
-  isConcrete: boolean;
+  timeFixed: boolean;
+  activityFixed: boolean;
   firstTimeIso: string | null;
 }): string {
-  if (isConcrete && firstTimeIso) {
-    return activityCount === 1
-      ? `It's on for ${formatSlot(firstTimeIso)} - one set activity, the group just says who's in.`
-      : `It's on for ${formatSlot(firstTimeIso)} - this one just happens, the group says who's in.`;
+  // The WHEN clause.
+  const when = timeFixed && firstTimeIso ? `It's on for ${formatSlot(firstTimeIso)}` : null;
+
+  if (when) {
+    // Time is set; only the activity (maybe) and the who's-in remain.
+    if (activityFixed) {
+      return activityCount === 1
+        ? `${when} - the activity's set too, so the group just says who's in.`
+        : `${when} - the group just says who's in.`;
+    }
+    return `${when} - the group decides what to do, then says who's in.`;
   }
-  const activity =
-    activityCount > 0
-      ? ` Plus ${activityCount} ${activityCount === 1 ? "activity" : "activities"} to pick from.`
-      : " The group adds the activity.";
-  if (timeCount >= 2) {
-    return `You're offering ${timeCount} times - the group reacts and the best-supported one wins.${activity}`;
-  }
-  return `No fixed time yet - the group suggests times and the best-supported one wins.${activity}`;
+
+  // Time is not fixed: the group converges on the time.
+  const timePart =
+    timeCount >= 1
+      ? `the group votes on your ${timeCount} time${timeCount === 1 ? "" : "s"}`
+      : "the group suggests the times";
+  const activityPart = activityFixed
+    ? activityCount === 1
+      ? " (activity already set)"
+      : ""
+    : activityCount >= 1
+      ? ` and picks from ${activityCount} ${activityCount === 1 ? "activity" : "activities"}`
+      : " and what to do";
+  return `No fixed time yet - ${timePart}${activityPart}, best-supported wins, then who's in.`;
 }

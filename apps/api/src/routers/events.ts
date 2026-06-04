@@ -312,6 +312,18 @@ export const eventsRouter = router({
       label: text,
     }));
 
+    // You can only lock an axis that has at least one candidate - locking nothing would just leave a
+    // plan that can never converge (a locked, empty time axis can never get a time and silently fizzles).
+    if (input.lockTimes && timeCands.length === 0) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "cannot lock the times with no time" });
+    }
+    if (input.lockThings && activityCands.length === 0) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "cannot lock the activity with no activity",
+      });
+    }
+
     const opensMoment = planOpensMoment(
       timeCands.length,
       input.lockTimes,

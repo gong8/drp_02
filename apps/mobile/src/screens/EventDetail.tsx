@@ -42,6 +42,10 @@ type ActivityCand = Detail["activityCandidates"][number];
 type CondModeLabel = "At least one" | "All of them";
 type Props = NativeStackScreenProps<MeetupsStackParams, "EventDetail">;
 
+// Sentinel key for the in-flight-mutation poll guard, used by the opt-out toggle (which is not tied
+// to a single candidate id) so a refetch cannot clobber its optimistic state.
+const OPTOUT_PENDING = "__optout__";
+
 export function EventDetail({ route, navigation }: Props) {
   const { eventId } = route.params;
   const [data, setData] = useState<Detail | null>(null);
@@ -127,13 +131,29 @@ export function EventDetail({ route, navigation }: Props) {
   }
 
   // "I can't make it" - a reversible, private exit. Optimistic; tapping any candidate above rejoins
-  // (server clears the opt-out on a reaction). The 5s poll reconciles.
+  // (server clears the opt-out on a reaction). Opting out clears your +1s server-side, so drop them
+  // locally NOW too (otherwise your votes only fall away on the next 5s poll, which looks laggy).
+  // Guard the poll with a sentinel so an in-flight refetch cannot clobber the optimistic state.
   function toggleOptOut() {
     const next = !(data?.iOptedOut ?? false);
-    setData((d) => (d ? { ...d, iOptedOut: next } : d));
+    const prev = data;
+    const clearMine = <T extends { mine: boolean; count: number }>(rows: T[]): T[] =>
+      next ? rows.map((c) => (c.mine ? { ...c, mine: false, count: c.count - 1 } : c)) : rows;
+    setData((d) =>
+      d
+        ? {
+            ...d,
+            iOptedOut: next,
+            timeCandidates: clearMine(d.timeCandidates),
+            activityCandidates: clearMine(d.activityCandidates),
+          }
+        : d,
+    );
+    pendingReact.current.add(OPTOUT_PENDING);
     trpc.events.setOptOut
       .mutate({ eventId, out: next })
-      .catch(() => setData((d) => (d ? { ...d, iOptedOut: !next } : d)));
+      .catch(() => setData(prev))
+      .finally(() => pendingReact.current.delete(OPTOUT_PENDING));
   }
 
   function lock(candidateId?: string) {
