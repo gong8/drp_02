@@ -23,7 +23,6 @@ import {
 } from "../ui";
 
 type Ev = Awaited<ReturnType<typeof trpc.events.mine.query>>[number];
-type Float = Awaited<ReturnType<typeof trpc.floats.mine.query>>[number];
 type Props = NativeStackScreenProps<MeetupsStackParams, "Dashboard">;
 
 const FILTERS = ["All", "Going", "Awaiting", "Declined"] as const;
@@ -39,21 +38,18 @@ function matchesFilter(e: Ev, filter: Filter): boolean {
 
 // A full-bleed banded section (edge-to-edge, ink rules top + bottom, same motif as the timer
 // banners) that COVERS a whole group of cards - an uppercase heading + count over the children.
-// Two tones share this shell: the loud pink "Action required" (wants an urgent answer) and the
-// calmer lavender "Brewing" (wants a pile-on). Tone drives the band fill and the heading/count ink.
+// The loud pink "Action required" band: plans that want your urgent answer.
 function SectionBand({
   title,
   count,
-  tone,
   children,
 }: {
   title: string;
   count: number;
-  tone: "action" | "brewing";
   children: ReactNode;
 }) {
-  const bg = tone === "action" ? ui.brand : ui.gradient[1];
-  const fg = tone === "action" ? "#fff" : ui.ink;
+  const bg = ui.brand;
+  const fg = "#fff";
   return (
     <View
       style={{
@@ -119,13 +115,13 @@ function CardFooter({ e }: { e: Ev }) {
   if (e.phase === "collecting") {
     return (
       <>
-        <DateChip>{`${e.candidateCount} times`}</DateChip>
+        <DateChip>{`${e.candidateCount} on the table`}</DateChip>
         <Hint>
           {e.myStatus === "declined"
             ? "You're sitting this out"
             : e.iReacted
-              ? "You've picked your times"
-              : "Tap to pick times"}
+              ? "You've had your say"
+              : "Tap to weigh in"}
         </Hint>
       </>
     );
@@ -165,7 +161,7 @@ function CardFooter({ e }: { e: Ev }) {
 // locked in. A settled plan you're not in wears nothing; absence is the signal.
 function cardSticker(e: Ev) {
   if (e.phase === "collecting")
-    return e.myStatus === "declined" ? null : <StickerTag label="Which times?" />;
+    return e.myStatus === "declined" ? null : <StickerTag label="Weigh in" />;
   if (e.phase === "moment") return <StickerTag label={`Locks ${formatCountdown(e.msLeft ?? 0)}`} />;
   if (e.phase === "cleared" && e.myStatus === "going")
     return <StickerTag label="You're in" color={ui.going} />;
@@ -216,12 +212,12 @@ function MeetCard({ e, onPress }: { e: Ev; onPress: () => void }) {
 
 // What the user must do, by phase.
 function actionVerb(e: Ev): string {
-  return e.phase === "moment" ? "Say if you're in" : "Pick your times";
+  return e.phase === "moment" ? "Say if you're in" : "Have your say";
 }
 
-// Live ms to the relevant deadline (the lock for collecting, the close for a moment).
+// Live ms to the relevant deadline (the decides-by for collecting, the close for a moment).
 function deadlineMs(e: Ev, now: number): number {
-  const iso = e.phase === "moment" ? e.momentEndsAt : e.lockAt;
+  const iso = e.phase === "moment" ? e.momentEndsAt : e.decidesBy;
   return iso ? Math.max(0, new Date(iso).getTime() - now) : 0;
 }
 
@@ -232,8 +228,8 @@ function remainingFrac(e: Ev, now: number): number {
   if (e.phase === "moment" && e.momentEndsAt) {
     end = new Date(e.momentEndsAt).getTime();
     start = e.momentStartsAt ? new Date(e.momentStartsAt).getTime() : end - 3_600_000;
-  } else if (e.phase === "collecting" && e.lockAt) {
-    end = new Date(e.lockAt).getTime();
+  } else if (e.phase === "collecting" && e.decidesBy) {
+    end = new Date(e.decidesBy).getTime();
     start = new Date(e.createdAt).getTime();
   }
   if (start === null || end === null || end <= start) return 1;
@@ -320,8 +316,8 @@ function ActionCard({
 }) {
   const frac = remainingFrac(e, now);
   const isMoment = e.phase === "moment";
-  const countdownWord = isMoment ? "closes" : "locks";
-  const spec = isMoment ? formatSlot(e.startsAt) : `${e.candidateCount} options`;
+  const countdownWord = isMoment ? "closes" : "decides";
+  const spec = isMoment ? formatSlot(e.startsAt) : `${e.candidateCount} on the table`;
   return (
     <DeadlineCard
       title={e.title}
@@ -337,41 +333,8 @@ function ActionCard({
   );
 }
 
-// An anonymous float as a card: no title, no names - just the group, a pile-on nudge, a draining
-// auto-tip bar, and how much has accreted so far.
-function FloatCard({
-  f,
-  now,
-  onPress,
-  last,
-}: {
-  f: Float;
-  now: number;
-  onPress: () => void;
-  last?: boolean;
-}) {
-  const tipMs = f.tipAt ? Math.max(0, new Date(f.tipAt).getTime() - now) : 0;
-  const start = new Date(f.createdAt).getTime();
-  const end = f.tipAt ? new Date(f.tipAt).getTime() : start;
-  const frac = end <= start ? 1 : Math.max(0, Math.min(1, (end - now) / (end - start)));
-  return (
-    <DeadlineCard
-      title="An idea is brewing"
-      groupName={f.groupName}
-      nudge="Pile on"
-      countdown={`auto-tips ${formatCountdown(tipMs)}`}
-      spec={`${f.ideaCount} IDEAS · ${f.timeCount} TIMES`}
-      frac={frac}
-      hot={frac < 0.25}
-      onPress={onPress}
-      last={last}
-    />
-  );
-}
-
 export function Dashboard({ navigation }: Props) {
   const [events, setEvents] = useState<Ev[]>([]);
-  const [floats, setFloats] = useState<Float[]>([]);
   const [hasGroups, setHasGroups] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -383,16 +346,15 @@ export function Dashboard({ navigation }: Props) {
     useCallback(() => {
       let active = true;
       const fetchAll = () =>
-        Promise.all([trpc.events.mine.query(), trpc.groups.mine.query(), trpc.floats.mine.query()])
-          .then(([e, g, f]) => {
+        Promise.all([trpc.events.mine.query(), trpc.groups.mine.query()])
+          .then(([e, g]) => {
             if (active) {
               setEvents(e);
-              setFloats(f);
               setHasGroups(g.length > 0);
               setError(false);
-              // Schedule local deadline/moment/brewing reminders from the freshest payload (no-op
-              // unless something reminder-relevant changed). Device-local; fine for supervised demos.
-              syncReminders(e, f);
+              // Schedule local deadline/moment reminders from the freshest payload (no-op unless
+              // something reminder-relevant changed). Device-local; fine for supervised demos.
+              syncReminders(e);
             }
           })
           .catch(() => active && setError(true))
@@ -485,7 +447,7 @@ export function Dashboard({ navigation }: Props) {
             ) : (
               <>
                 {actionItems.length > 0 && (
-                  <SectionBand title="Action required" count={actionItems.length} tone="action">
+                  <SectionBand title="Action required" count={actionItems.length}>
                     {actionItems.map((e, i) => (
                       <ActionCard
                         key={e.id}
@@ -493,20 +455,6 @@ export function Dashboard({ navigation }: Props) {
                         now={now}
                         last={i === actionItems.length - 1}
                         onPress={() => navigation.navigate("EventDetail", { eventId: e.id })}
-                      />
-                    ))}
-                  </SectionBand>
-                )}
-
-                {floats.length > 0 && (
-                  <SectionBand title="Brewing" count={floats.length} tone="brewing">
-                    {floats.map((f, i) => (
-                      <FloatCard
-                        key={f.id}
-                        f={f}
-                        now={now}
-                        last={i === floats.length - 1}
-                        onPress={() => navigation.navigate("FloatBoard", { eventId: f.id })}
                       />
                     ))}
                   </SectionBand>
