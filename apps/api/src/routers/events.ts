@@ -594,13 +594,12 @@ export const eventsRouter = router({
     const out = await Promise.all(
       rows.map(async (e) => {
         await settleLifecycle(e);
-        if (e.phase === "floating") return null; // still brewing: shown in the Brewing zone (floats.mine)
         if (e.phase === "fizzled") return null; // silent: a fizzle leaves no trace
         const resp = await responsesFor(e.id);
         const revealed = goingFromRow(e, resp);
         const { goingCount, preview } = await goingPreview(revealed);
-        // A float stays unsigned forever: the originator is never flagged as creator, even post-tip.
-        const isCreator = !e.isAnonymous && e.createdByUserId === ctx.userId;
+        // A private self-check: returned as a boolean only, never the id - the creator stays anonymous.
+        const isCreator = e.createdByUserId === ctx.userId;
         const iOptedOut = (await optedOut(e.id)).has(ctx.userId);
         const myStatus = computeMyStatus(e.phase, ctx.userId, resp, revealed, iOptedOut);
 
@@ -619,12 +618,8 @@ export const eventsRouter = router({
           iReacted = myReacts.length > 0;
           if (isCreator) {
             const reactions = await reactionsFor(e.id);
-            readyToLock =
-              pickWinningCandidate(
-                cands.map((c) => c.id),
-                reactions,
-                e.quorum,
-              ) !== null;
+            const timeIds = cands.filter((c) => c.kind === "time").map((c) => c.id);
+            readyToLock = pickWinningCandidate(timeIds, reactions, e.quorum) !== null;
           }
         }
 
@@ -633,20 +628,16 @@ export const eventsRouter = router({
           groupName: await getGroupName(e.groupId),
           title: e.title,
           location: e.location,
-          whenMode: e.whenMode,
           phase: e.phase,
           startsAt: e.startsAt.toISOString(),
           createdAt: e.createdAt.toISOString(),
-          lockAt: e.lockAt?.toISOString() ?? null,
-          msLeftToLock: msLeft(e.lockAt),
+          decidesBy: e.decidesBy?.toISOString() ?? null,
+          msLeftToDecide: msLeft(e.decidesBy),
           momentStartsAt: e.momentStartsAt?.toISOString() ?? null,
           momentEndsAt: e.momentEndsAt?.toISOString() ?? null,
           msLeft: msLeft(e.momentEndsAt),
           myStatus,
           iReacted,
-          // Whether the caller has a moment answer on record (any of yes/no/conditional). Drives
-          // "is this still Action Required" for the moment, where myStatus alone can't tell a blind
-          // conditional ("awaiting") from a genuine no-answer.
           iResponded: resp.some((r) => r.userId === ctx.userId),
           candidateCount,
           isCreator,
@@ -659,43 +650,54 @@ export const eventsRouter = router({
     return out.filter((x): x is NonNullable<typeof x> => x !== null);
   }),
 
-  // One plan in full, phase-aware: candidates + my reactions (collecting), the blind countdown
-  // (moment), and the revealed IN crowd (cleared). Counts stay private to the creator.
+  // One plan in full, phase-aware: time + activity candidates with public +1 counts (collecting),
+  // the blind countdown (moment), and the revealed IN crowd (cleared).
   get: protectedProcedure.input(ByIdInput).query(async ({ ctx, input }) => {
     const [e] = await db.select().from(events).where(eq(events.id, input.id));
     if (!e) return null;
     await requireMember(e.groupId, ctx.userId);
     await settleLifecycle(e);
-    if (e.phase === "floating") return null; // a still-brewing float is read via floats.get
 
     const resp = await responsesFor(e.id);
     const revealed = goingFromRow(e, resp);
-    // A float stays unsigned forever: the originator is never flagged as creator, even post-tip.
-    const isCreator = !e.isAnonymous && e.createdByUserId === ctx.userId;
+    // A private self-check: returned as a boolean only, never the id - the creator stays anonymous.
+    const isCreator = e.createdByUserId === ctx.userId;
     const iOptedOut = (await optedOut(e.id)).has(ctx.userId);
 
     const cands = await candidatesFor(e.id);
     const reactions = await reactionsFor(e.id);
-    const myReacts = new Set(
-      reactions.filter((r) => r.userId === ctx.userId).map((r) => r.candidateId),
-    );
-    // Per-candidate counts are deliberately NOT returned: nobody (not even the creator) sees how
-    // many are free for each slot before the lock. The auto-lock picks the winner server-side.
-    const candidates = cands.map((c) => ({
-      id: c.id,
-      startsAt: c.startsAt.toISOString(),
-      partOfDay: c.partOfDay,
-      label: c.label,
-      worksForMe: myReacts.has(c.id),
-    }));
+    // Public per-candidate +1 counts (momentum) for BOTH kinds; who reacted is never returned, only
+    // the count and whether the caller themselves reacted.
+    const countBy = new Map<string, number>();
+    const mineSet = new Set<string>();
+    for (const r of reactions) {
+      countBy.set(r.candidateId, (countBy.get(r.candidateId) ?? 0) + 1);
+      if (r.userId === ctx.userId) mineSet.add(r.candidateId);
+    }
+    const timeCandidates = cands
+      .filter((c) => c.kind === "time" && c.startsAt)
+      .map((c) => ({
+        id: c.id,
+        startsAt: (c.startsAt as Date).toISOString(),
+        partOfDay: c.partOfDay,
+        count: countBy.get(c.id) ?? 0,
+        mine: mineSet.has(c.id),
+      }));
+    const activityCandidates = cands
+      .filter((c) => c.kind === "activity")
+      .map((c) => ({
+        id: c.id,
+        text: c.label ?? "",
+        count: countBy.get(c.id) ?? 0,
+        mine: mineSet.has(c.id),
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    const timeIds = timeCandidates.map((c) => c.id);
     const readyToLock =
       isCreator &&
       e.phase === "collecting" &&
-      pickWinningCandidate(
-        cands.map((c) => c.id),
-        reactions,
-        e.quorum,
-      ) !== null;
+      pickWinningCandidate(timeIds, reactions, e.quorum) !== null;
 
     const memberRows = await db
       .select()
@@ -719,14 +721,15 @@ export const eventsRouter = router({
       title: e.title,
       description: e.description,
       location: e.location,
-      whenMode: e.whenMode,
       phase: e.phase,
       contingent: e.contingent,
       quorum: e.quorum,
+      lockTimes: e.lockTimes,
+      lockThings: e.lockThings,
       startsAt: e.startsAt.toISOString(),
-      lockAt: e.lockAt?.toISOString() ?? null,
-      msLeftToLock: msLeft(e.lockAt),
-      chosenStartsAt: chosen?.startsAt.toISOString() ?? null,
+      decidesBy: e.decidesBy?.toISOString() ?? null,
+      msLeftToDecide: msLeft(e.decidesBy),
+      chosenStartsAt: chosen?.startsAt?.toISOString() ?? null,
       momentStartsAt: e.momentStartsAt?.toISOString() ?? null,
       momentEndsAt: e.momentEndsAt?.toISOString() ?? null,
       msLeft: msLeft(e.momentEndsAt),
@@ -734,8 +737,8 @@ export const eventsRouter = router({
       isCreator,
       iOptedOut,
       readyToLock,
-      candidates,
-      myReactionCandidateIds: [...myReacts],
+      timeCandidates,
+      activityCandidates,
       myResponse: mine ? { kind: mine.kind, cond: mine.cond ?? null } : null,
       myStatus: computeMyStatus(e.phase, ctx.userId, resp, revealed, iOptedOut),
       members,
