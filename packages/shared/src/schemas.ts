@@ -55,18 +55,27 @@ export const WhenInput = z.discriminatedUnion("mode", [
 ]);
 export type WhenInput = z.infer<typeof WhenInput>;
 
-// Network boundary for events.create - one plan, with the `when` expressed at variable precision.
+// One time candidate the wizard sends: a concrete instant plus an optional part-of-day hint (the
+// wizard resolves part-of-day chips to concrete days CLIENT-side, so the server only sees instants).
+export const TimeCandidateInput = z.object({
+  startsAt: z.string(),
+  partOfDay: PartOfDay.optional(),
+});
+export type TimeCandidateInput = z.infer<typeof TimeCandidateInput>;
+
+// Network boundary for events.create - ONE unified flow. A plan owns two candidate lists, TIME and
+// ACTIVITY, both optional. Two creator locks (default false = open) decide who may add to each list.
+// `decidesBy` is the editable auto-lock instant; `quorum` defaults server-side.
 export const CreateEventInput = z.object({
   groupId: z.string(),
-  title: z.string().min(1).max(80),
+  title: z.string().max(80).optional(),
   description: z.string().max(500).optional(),
   location: z.string().max(120).optional(),
-  when: WhenInput,
-  // When collecting auto-locks the winning slot and opens the moment (ISO string). Only meaningful
-  // for options/fuzzy plans; ignored for exact. Defaulted server-side ("the day before") when
-  // omitted, and validated to sit after now and no later than the earliest proposed slot.
-  lockAt: z.string().optional(),
-  // Min people (incl. resolved conditionals) for the moment to clear. Defaulted server-side.
+  timeCandidates: z.array(TimeCandidateInput).max(10).optional(),
+  activityCandidates: z.array(z.string().min(1).max(80)).max(10).optional(),
+  lockTimes: z.boolean().optional().default(false),
+  lockThings: z.boolean().optional().default(false),
+  decidesBy: z.string().optional(),
   quorum: z.number().int().min(1).max(50).optional(),
 });
 export type CreateEventInput = z.infer<typeof CreateEventInput>;
