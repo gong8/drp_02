@@ -75,12 +75,12 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     <View
       style={{
         flexDirection: "row",
-        justifyContent: "center",
         gap: 10,
         backgroundColor: ui.surface,
         borderTopWidth: ui.border,
         borderTopColor: ui.ink,
         paddingTop: 10,
+        paddingHorizontal: ui.gutter,
         paddingBottom: bottomGap,
       }}
     >
@@ -99,12 +99,12 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           <Pressable
             onPress={onPress}
             style={{
+              alignItems: "center",
               backgroundColor: focused ? ui.brand : ui.surface,
               borderWidth: ui.border,
               borderColor: ui.ink,
               borderRadius: ui.rPill,
-              paddingVertical: 8,
-              paddingHorizontal: 24,
+              paddingVertical: 12,
             }}
           >
             <Text
@@ -119,7 +119,7 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           </Pressable>
         );
         return (
-          <View key={route.key}>
+          <View key={route.key} style={{ flex: 1 }}>
             {focused ? (
               <HardShadow radius={ui.rPill} offset={ui.shadowInput}>
                 {pill}
