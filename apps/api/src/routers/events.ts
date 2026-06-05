@@ -26,7 +26,7 @@ import {
 import { TRPCError } from "@trpc/server";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { getGroupName } from "../db/groups.js";
+import { FALLBACK_GROUP_NAME, getGroupNames } from "../db/groups.js";
 import {
   candidateReactions,
   eventCandidates,
@@ -34,9 +34,8 @@ import {
   events,
   groupMembers,
   responses,
-  users,
 } from "../db/schema.js";
-import { FALLBACK_AVATAR_COLOR, FALLBACK_USER_NAME, getUserCard } from "../db/users.js";
+import { FALLBACK_AVATAR_COLOR, FALLBACK_USER_NAME, getUserCards } from "../db/users.js";
 import { msLeft } from "../format.js";
 import { protectedProcedure, router } from "../trpc.js";
 import { displayActivity, planOpensMoment, resolveActivity } from "./create-plan.js";
@@ -90,13 +89,6 @@ function resolveMomentEnd(openMs: number, eventMs: number, replyByMs: number | n
   const wanted = replyByMs ?? defaultReplyByMs(openMs, eventMs);
   const floor = openMs + Math.min(MOMENT_MS, eventMs - openMs);
   return new Date(Math.min(eventMs, Math.max(wanted, floor)));
-}
-
-// Who has opted out of a (collecting) plan. Their reactions are already cleared, so this is only
-// needed to reflect their own "declined" status; the tally never sees them.
-async function optedOut(eventId: string): Promise<Set<string>> {
-  const rows = await db.select().from(eventOptOuts).where(eq(eventOptOuts.eventId, eventId));
-  return new Set(rows.map((r) => r.userId));
 }
 
 // Fizzle a plan: persist the silent dead-end (and resolve it) then mirror onto the in-memory row so
@@ -233,33 +225,6 @@ function computeBaseStatus(
   return "awaiting"; // a conditional we cannot resolve blind
 }
 
-async function buildGoing(
-  revealed: string[],
-): Promise<{ id: string; name: string; color: string }[]> {
-  const out: { id: string; name: string; color: string }[] = [];
-  for (const id of revealed) {
-    out.push(await getUserCard(id));
-  }
-  return out;
-}
-
-async function goingPreview(revealed: string[] | null): Promise<{
-  goingCount: number | null;
-  preview: { uid: string; color: string; initial: string }[];
-}> {
-  if (!revealed) return { goingCount: null, preview: [] };
-  const preview: { uid: string; color: string; initial: string }[] = [];
-  for (const uid of revealed.slice(0, 4)) {
-    const [u] = await db.select().from(users).where(eq(users.id, uid));
-    preview.push({
-      uid,
-      color: u?.avatarColor ?? FALLBACK_AVATAR_COLOR,
-      initial: (u?.name ?? "?").charAt(0).toUpperCase(),
-    });
-  }
-  return { goingCount: revealed.length, preview };
-}
-
 // Caller must belong to the group. Identity (ctx.userId) is a dev stub today, so this is
 // correctness/scoping rather than real auth - see docs/tech-debt.md for the auth gap.
 export async function requireMember(groupId: string, userId: string): Promise<void> {
@@ -302,6 +267,99 @@ function computeMyStatus(
   return iOptedOut && !resp.find((r) => r.userId === userId)
     ? "declined"
     : computeBaseStatus(userId, resp, revealed);
+}
+
+// A read-only bulk loader: for a set of SETTLED event rows, issue ONE inArray query each for
+// responses, candidates, reactions, and opt-outs (instead of per-event SELECTs), then resolve group
+// names and user cards in one batched query each. This collapses mine/get's N+1 per-plan read chain
+// to a fixed handful of round-trips. It is strictly post-settle - settleLifecycle must run on each
+// row first (it writes the events row), then this reads the settled rows so derived phase/going stay
+// correct. Anonymity is unaffected: it only groups rows in memory; callers still surface counts and
+// the caller's own booleans, never voter ids. `extraUserIds` lets a caller (get) pull additional
+// cards (e.g. group members) into the same batched user query.
+async function loadEventBundle(
+  rows: EventRow[],
+  extraUserIds: string[] = [],
+): Promise<{
+  responses: (id: string) => MomentResponse[];
+  candidates: (id: string) => (typeof eventCandidates.$inferSelect)[];
+  reactions: (id: string) => { candidateId: string; userId: string }[];
+  optOuts: (id: string) => Set<string>;
+  groupName: (id: string) => string;
+  userCard: (id: string) => { id: string; name: string; color: string };
+  hasUser: (id: string) => boolean;
+}> {
+  const ids = rows.map((e) => e.id);
+
+  const [respRows, candRows, reactRows, optRows] =
+    ids.length === 0
+      ? ([[], [], [], []] as [
+          (typeof responses.$inferSelect)[],
+          (typeof eventCandidates.$inferSelect)[],
+          (typeof candidateReactions.$inferSelect)[],
+          (typeof eventOptOuts.$inferSelect)[],
+        ])
+      : await Promise.all([
+          db.select().from(responses).where(inArray(responses.eventId, ids)),
+          db.select().from(eventCandidates).where(inArray(eventCandidates.eventId, ids)),
+          db.select().from(candidateReactions).where(inArray(candidateReactions.eventId, ids)),
+          db.select().from(eventOptOuts).where(inArray(eventOptOuts.eventId, ids)),
+        ]);
+
+  const respMap = new Map<string, MomentResponse[]>();
+  for (const r of respRows) {
+    const list = respMap.get(r.eventId) ?? [];
+    list.push({ userId: r.userId, kind: r.kind, cond: r.cond ?? undefined });
+    respMap.set(r.eventId, list);
+  }
+  const candMap = new Map<string, (typeof eventCandidates.$inferSelect)[]>();
+  for (const c of candRows) {
+    const list = candMap.get(c.eventId) ?? [];
+    list.push(c);
+    candMap.set(c.eventId, list);
+  }
+  // Preserve candidatesFor's order: startsAt asc, nulls (activities) last.
+  for (const list of candMap.values()) {
+    list.sort((a, b) => {
+      const at = a.startsAt?.getTime() ?? Number.POSITIVE_INFINITY;
+      const bt = b.startsAt?.getTime() ?? Number.POSITIVE_INFINITY;
+      return at - bt;
+    });
+  }
+  const reactMap = new Map<string, { candidateId: string; userId: string }[]>();
+  for (const r of reactRows) {
+    const list = reactMap.get(r.eventId) ?? [];
+    list.push({ candidateId: r.candidateId, userId: r.userId });
+    reactMap.set(r.eventId, list);
+  }
+  const optMap = new Map<string, Set<string>>();
+  for (const o of optRows) {
+    const set = optMap.get(o.eventId) ?? new Set<string>();
+    set.add(o.userId);
+    optMap.set(o.eventId, set);
+  }
+
+  const groupNameMap = await getGroupNames([...new Set(rows.map((e) => e.groupId))]);
+
+  // The uids any card may render: each row's revealed crowd (going preview / full going list) plus
+  // any extra ids the caller needs (get's members). Resolve them all in one batched users query.
+  const uidUnion = new Set<string>(extraUserIds);
+  for (const e of rows) {
+    const revealed = goingFromRow(e, respMap.get(e.id) ?? []);
+    if (revealed) for (const uid of revealed) uidUnion.add(uid);
+  }
+  const userCardMap = await getUserCards([...uidUnion]);
+
+  return {
+    responses: (id) => respMap.get(id) ?? [],
+    candidates: (id) => candMap.get(id) ?? [],
+    reactions: (id) => reactMap.get(id) ?? [],
+    optOuts: (id) => optMap.get(id) ?? new Set(),
+    groupName: (id) => groupNameMap.get(id) ?? FALLBACK_GROUP_NAME,
+    userCard: (id) =>
+      userCardMap.get(id) ?? { id, name: FALLBACK_USER_NAME, color: FALLBACK_AVATAR_COLOR },
+    hasUser: (id) => userCardMap.has(id),
+  };
 }
 
 export const eventsRouter = router({
@@ -806,66 +864,74 @@ export const eventsRouter = router({
     if (groupIds.length === 0) return [];
 
     const rows = await db.select().from(events).where(inArray(events.groupId, groupIds));
-    const out = await Promise.all(
-      rows.map(async (e) => {
-        await settleLifecycle(e);
-        if (e.phase === "fizzled") return null; // silent: a fizzle leaves no trace
-        const resp = await responsesFor(e.id);
-        const revealed = goingFromRow(e, resp);
-        const { goingCount, preview } = await goingPreview(revealed);
-        // A private self-check: returned as a boolean only, never the id - the creator stays anonymous.
-        const isCreator = e.createdByUserId === ctx.userId;
-        const iOptedOut = (await optedOut(e.id)).has(ctx.userId);
-        const myStatus = computeMyStatus(e.phase, ctx.userId, resp, revealed, iOptedOut);
+    // Settle each row first (it writes the events row and is phase-ordered), drop the silent fizzles,
+    // then bulk-load the surviving rows' read data in a fixed handful of batched queries.
+    for (const e of rows) await settleLifecycle(e);
+    const live = rows.filter((e) => e.phase !== "fizzled"); // silent: a fizzle leaves no trace
+    const bundle = await loadEventBundle(live);
 
-        let iReacted = false;
-        let candidateCount = 0;
-        let readyToLock = false;
-        // Collecting plans have no real activity yet (it is fixed at lock); show the leading activity
-        // candidate (or blank, the client falls back) so a card stays meaningful. Locked plans already
-        // carry a real activity name.
-        let activity = e.activity;
-        if (e.phase === "collecting") {
-          const cands = await candidatesFor(e.id);
-          candidateCount = cands.length;
-          const reactions = await reactionsFor(e.id);
-          iReacted = reactions.some((r) => r.userId === ctx.userId);
-          activity = displayActivity(
-            e.activity,
-            cands.filter((c) => c.kind === "activity").map((c) => ({ id: c.id, label: c.label })),
-            reactions,
-          );
-          if (isCreator) {
-            const timeIds = cands.filter((c) => c.kind === "time" && c.startsAt).map((c) => c.id);
-            readyToLock = pickWinningCandidate(timeIds, reactions, e.quorum) !== null;
-          }
+    return live.map((e) => {
+      const resp = bundle.responses(e.id);
+      const revealed = goingFromRow(e, resp);
+      // Going preview: the first 4 revealed cards (count is the full revealed length, or null blind).
+      const goingCount = revealed ? revealed.length : null;
+      const preview = (revealed ?? []).slice(0, 4).map((uid) => {
+        const card = bundle.userCard(uid);
+        // Match goingPreview's old fallback: a missing users row shows "?" (not the name sentinel).
+        const initial = (bundle.hasUser(uid) ? card.name : "?").charAt(0).toUpperCase();
+        return { uid, color: card.color, initial };
+      });
+      // A private self-check: returned as a boolean only, never the id - the creator stays anonymous.
+      const isCreator = e.createdByUserId === ctx.userId;
+      const iOptedOut = bundle.optOuts(e.id).has(ctx.userId);
+      const myStatus = computeMyStatus(e.phase, ctx.userId, resp, revealed, iOptedOut);
+
+      let iReacted = false;
+      let candidateCount = 0;
+      let readyToLock = false;
+      // Collecting plans have no real activity yet (it is fixed at lock); show the leading activity
+      // candidate (or blank, the client falls back) so a card stays meaningful. Locked plans already
+      // carry a real activity name.
+      let activity = e.activity;
+      if (e.phase === "collecting") {
+        const cands = bundle.candidates(e.id);
+        candidateCount = cands.length;
+        const reactions = bundle.reactions(e.id);
+        iReacted = reactions.some((r) => r.userId === ctx.userId);
+        activity = displayActivity(
+          e.activity,
+          cands.filter((c) => c.kind === "activity").map((c) => ({ id: c.id, label: c.label })),
+          reactions,
+        );
+        if (isCreator) {
+          const timeIds = cands.filter((c) => c.kind === "time" && c.startsAt).map((c) => c.id);
+          readyToLock = pickWinningCandidate(timeIds, reactions, e.quorum) !== null;
         }
+      }
 
-        return {
-          id: e.id,
-          groupName: await getGroupName(e.groupId),
-          activity,
-          location: e.location,
-          phase: e.phase,
-          startsAt: e.startsAt.toISOString(),
-          createdAt: e.createdAt.toISOString(),
-          decidesBy: e.decidesBy?.toISOString() ?? null,
-          msLeftToDecide: msLeft(e.decidesBy),
-          momentStartsAt: e.momentStartsAt?.toISOString() ?? null,
-          momentEndsAt: e.momentEndsAt?.toISOString() ?? null,
-          msLeft: msLeft(e.momentEndsAt),
-          myStatus,
-          iReacted,
-          iResponded: resp.some((r) => r.userId === ctx.userId),
-          candidateCount,
-          isCreator,
-          readyToLock,
-          goingCount,
-          goingPreview: preview,
-        };
-      }),
-    );
-    return out.filter((x): x is NonNullable<typeof x> => x !== null);
+      return {
+        id: e.id,
+        groupName: bundle.groupName(e.groupId),
+        activity,
+        location: e.location,
+        phase: e.phase,
+        startsAt: e.startsAt.toISOString(),
+        createdAt: e.createdAt.toISOString(),
+        decidesBy: e.decidesBy?.toISOString() ?? null,
+        msLeftToDecide: msLeft(e.decidesBy),
+        momentStartsAt: e.momentStartsAt?.toISOString() ?? null,
+        momentEndsAt: e.momentEndsAt?.toISOString() ?? null,
+        msLeft: msLeft(e.momentEndsAt),
+        myStatus,
+        iReacted,
+        iResponded: resp.some((r) => r.userId === ctx.userId),
+        candidateCount,
+        isCreator,
+        readyToLock,
+        goingCount,
+        goingPreview: preview,
+      };
+    });
   }),
 
   // The redo picker: a group's past (cleared) meetups, each reduced to a clonable shell - the won
@@ -899,14 +965,25 @@ export const eventsRouter = router({
     await requireMember(e.groupId, ctx.userId);
     await settleLifecycle(e);
 
-    const resp = await responsesFor(e.id);
+    // Members are a membership query (not in the bundle); read them first so their uids join the
+    // bundle's batched user-card query alongside the revealed crowd.
+    const memberRows = await db
+      .select({ userId: groupMembers.userId })
+      .from(groupMembers)
+      .where(eq(groupMembers.groupId, e.groupId));
+    const bundle = await loadEventBundle(
+      [e],
+      memberRows.map((m) => m.userId),
+    );
+
+    const resp = bundle.responses(e.id);
     const revealed = goingFromRow(e, resp);
     // A private self-check: returned as a boolean only, never the id - the creator stays anonymous.
     const isCreator = e.createdByUserId === ctx.userId;
-    const iOptedOut = (await optedOut(e.id)).has(ctx.userId);
+    const iOptedOut = bundle.optOuts(e.id).has(ctx.userId);
 
-    const cands = await candidatesFor(e.id);
-    const reactions = await reactionsFor(e.id);
+    const cands = bundle.candidates(e.id);
+    const reactions = bundle.reactions(e.id);
     // Public per-candidate +1 counts (momentum) for BOTH kinds; who reacted is never returned, only
     // the count and whether the caller themselves reacted.
     const countBy = new Map<string, number>();
@@ -940,25 +1017,20 @@ export const eventsRouter = router({
       e.phase === "collecting" &&
       pickWinningCandidate(timeIds, reactions, e.quorum) !== null;
 
-    const memberRows = await db
-      .select()
-      .from(groupMembers)
-      .where(eq(groupMembers.groupId, e.groupId));
     const members: { id: string; name: string }[] = [];
     for (const row of memberRows) {
       if (row.userId === ctx.userId) continue;
-      const [u] = await db.select().from(users).where(eq(users.id, row.userId));
-      members.push({ id: row.userId, name: u?.name ?? FALLBACK_USER_NAME });
+      members.push({ id: row.userId, name: bundle.userCard(row.userId).name });
     }
 
     const showCrowd = revealed !== null && e.phase !== "fizzled";
-    const going = showCrowd ? await buildGoing(revealed) : [];
+    const going = showCrowd ? revealed.map((id) => bundle.userCard(id)) : [];
     const mine = resp.find((r) => r.userId === ctx.userId);
     const chosen = cands.find((c) => c.id === e.chosenCandidateId) ?? null;
 
     return {
       id: e.id,
-      groupName: await getGroupName(e.groupId),
+      groupName: bundle.groupName(e.groupId),
       // No real activity until lock; show the leading activity candidate (or blank, the client falls
       // back) so it stays meaningful while collecting.
       activity: displayActivity(

@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { db } from "./client.js";
 import { users } from "./schema.js";
 
@@ -25,6 +25,20 @@ export async function getUserCard(
     name: u?.name ?? FALLBACK_USER_NAME,
     color: u?.avatarColor ?? FALLBACK_AVATAR_COLOR,
   };
+}
+
+// Bulk version of getUserCard: resolve many avatar cards in ONE inArray query, returning a
+// Map<uid, {id,name,color}> for the rows that exist. Callers fill missing ids with the
+// FALLBACK_USER_NAME / FALLBACK_AVATAR_COLOR sentinels (getUserCard's per-row fallback). An empty
+// id list issues no query and returns an empty map.
+export async function getUserCards(
+  ids: string[],
+): Promise<Map<string, { id: string; name: string; color: string }>> {
+  const out = new Map<string, { id: string; name: string; color: string }>();
+  if (ids.length === 0) return out;
+  const rows = await db.select().from(users).where(inArray(users.id, ids));
+  for (const u of rows) out.set(u.id, { id: u.id, name: u.name, color: u.avatarColor });
+  return out;
 }
 
 // Project an existing users row to the avatar card shape. No fallback - these rows always exist
