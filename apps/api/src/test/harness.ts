@@ -18,12 +18,11 @@
 //   test("...", async () => { const u = await makeUser(); ... });
 
 import { randomUUID } from "node:crypto";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { sql } from "drizzle-orm";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Client } from "pg";
 import { db } from "../db/client.js";
+import { migrationsFolder } from "../db/paths.js";
 import {
   candidateReactions,
   eventCandidates,
@@ -40,7 +39,6 @@ import { appRouter } from "../router.js";
 const testDbName = process.env.TEST_DB_NAME ?? `bethere_test_${process.pid}`;
 const maintenanceUrl =
   process.env.TEST_PG_MAINTENANCE_URL ?? "postgres://drp:drp@localhost:5433/drp";
-const migrationsFolder = join(dirname(fileURLToPath(import.meta.url)), "../db/migrations");
 
 // 42P04 = duplicate_database; 3D000 = invalid_catalog_name (DB does not exist).
 const DUPLICATE_DATABASE = "42P04";

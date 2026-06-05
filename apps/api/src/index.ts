@@ -1,6 +1,4 @@
 import "dotenv/config";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
 import { fastifyTRPCPlugin } from "@trpc/server/adapters/fastify";
@@ -9,6 +7,7 @@ import { migrate } from "drizzle-orm/node-postgres/migrator";
 import Fastify from "fastify";
 import { isAuthorizedReset } from "./admin/reset-auth.js";
 import { db } from "./db/client.js";
+import { migrationsFolder } from "./db/paths.js";
 import { reseedDemo, seedDemoIfEmpty } from "./db/seed.js";
 import { logger, scoped } from "./logger.js";
 import { appRouter } from "./router.js";
@@ -106,9 +105,7 @@ if (process.env.DB_RESET_ON_BOOT === "true") {
 
 // Apply schema migrations on boot so a fresh (e.g. RDS) database is ready without a
 // separate step. The committed Drizzle migrations live next to this file.
-await migrate(db, {
-  migrationsFolder: join(dirname(fileURLToPath(import.meta.url)), "db/migrations"),
-});
+await migrate(db, { migrationsFolder });
 server.log.info(scoped("boot"), "migrations applied");
 
 // SEED_ON_BOOT: "reset" (default, local dev) wipes + reseeds a clean demo each boot;
