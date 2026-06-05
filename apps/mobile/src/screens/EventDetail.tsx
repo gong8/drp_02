@@ -315,6 +315,7 @@ export function EventDetail({ route, navigation }: Props) {
   const heroIso = data.chosenStartsAt && data.phase !== "collecting" ? data.chosenStartsAt : null;
   const heroClock = heroIso ? clock12(heroIso) : null;
   const editable = isLive(data);
+  const activityEditable = data.phase === "moment" || data.phase === "cleared";
 
   const sheets = (
     <>
@@ -369,7 +370,7 @@ export function EventDetail({ route, navigation }: Props) {
 
       <BottomSheet visible={editSheet} onClose={() => setEditSheet(false)}>
         <Section title="Edit details" size="lg" />
-        {(data.phase === "moment" || data.phase === "cleared") && (
+        {activityEditable && (
           <Field
             label="Activity"
             optional
@@ -384,7 +385,7 @@ export function EventDetail({ route, navigation }: Props) {
           value={editLocation}
           onChangeText={setEditLocation}
           placeholder="TenPin Bexleyheath"
-          style={{ marginTop: data.phase === "moment" || data.phase === "cleared" ? 12 : 0 }}
+          style={{ marginTop: activityEditable ? 12 : 0 }}
         />
         <Field
           label="Notes"
