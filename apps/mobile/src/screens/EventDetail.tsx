@@ -82,15 +82,17 @@ export function EventDetail({ route, navigation }: Props) {
   const [editStatus, setEditStatus] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
   const phaseRef = useRef<string>("");
-  // Suggestion ids with an in-flight toggleReaction: while pending we skip applying poll data so the
-  // optimistic chip never flickers (the next clean poll reconciles the true public count).
-  const pendingReact = useRef<Set<string>>(new Set());
+  // Keys that freeze poll-driven setData while an optimistic mutation is in flight: candidate ids for
+  // in-flight toggleReaction calls, plus the OPTOUT_PENDING sentinel for the opt-out toggle (which is
+  // not tied to a single candidate). While the set is non-empty, load() skips applying poll data so
+  // optimistic chips/checkbox never flicker; the next clean poll reconciles the true public counts.
+  const pollFreezeKeys = useRef<Set<string>>(new Set());
 
   const load = useCallback(() => {
     return trpc.events.get
       .query({ id: eventId })
       .then((d) => {
-        if (d && pendingReact.current.size === 0) setData(d);
+        if (d && pollFreezeKeys.current.size === 0) setData(d);
         setError(false);
       })
       .catch(() => setError(true))
@@ -100,7 +102,8 @@ export function EventDetail({ route, navigation }: Props) {
   // Busy-guarded mutate-then-reload runner shared by lock/addCandidate/answer/changeAnswer.
   const runAction = useBusyAction({ busy, setBusy, setError, load });
 
-  // The 1s ticker only drives the live moment countdown, so only run it during the moment.
+  // The 1s ticker drives both live countdowns - the moment reveal countdown and the collecting
+  // decidesBy countdown - so run it during either timed phase (predicate below: moment OR collecting).
   const now = useLiveClock(
     TICK_MS,
     useCallback(() => phaseRef.current === "moment" || phaseRef.current === "collecting", []),
@@ -146,11 +149,11 @@ export function EventDetail({ route, navigation }: Props) {
           : d;
     const prevOptedOut = data?.iOptedOut ?? false;
     setData(flip(false));
-    pendingReact.current.add(candidateId);
+    pollFreezeKeys.current.add(candidateId);
     trpc.events.toggleReaction
       .mutate({ eventId, candidateId })
       .catch(() => setData(flip(prevOptedOut)))
-      .finally(() => pendingReact.current.delete(candidateId));
+      .finally(() => pollFreezeKeys.current.delete(candidateId));
   }
 
   // "Can't make it" - a reversible, private exit. Optimistic; tapping any candidate above rejoins
@@ -172,11 +175,11 @@ export function EventDetail({ route, navigation }: Props) {
           }
         : d,
     );
-    pendingReact.current.add(OPTOUT_PENDING);
+    pollFreezeKeys.current.add(OPTOUT_PENDING);
     trpc.events.setOptOut
       .mutate({ eventId, out: next })
       .catch(() => setData(prev))
-      .finally(() => pendingReact.current.delete(OPTOUT_PENDING));
+      .finally(() => pollFreezeKeys.current.delete(OPTOUT_PENDING));
   }
 
   function lock(candidateId?: string) {
