@@ -79,7 +79,7 @@ export function EventDetail({ route, navigation }: Props) {
   const [editActivity, setEditActivity] = useState("");
   const [editLocation, setEditLocation] = useState("");
   const [editNotes, setEditNotes] = useState("");
-  const [editNote, setEditNote] = useState("");
+  const [editStatus, setEditStatus] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
   const phaseRef = useRef<string>("");
   // Suggestion ids with an in-flight toggleReaction: while pending we skip applying poll data so the
@@ -228,7 +228,7 @@ export function EventDetail({ route, navigation }: Props) {
     setEditActivity(data.activityRaw);
     setEditLocation(data.location);
     setEditNotes(data.description ?? "");
-    setEditNote("");
+    setEditStatus("");
     setEditSheet(true);
   }
 
@@ -274,7 +274,7 @@ export function EventDetail({ route, navigation }: Props) {
       return;
     }
     setSavingEdit(true);
-    setEditNote("");
+    setEditStatus("");
     trpc.events.update
       .mutate({ eventId: data.id, ...patch })
       .then((res) => {
@@ -296,13 +296,13 @@ export function EventDetail({ route, navigation }: Props) {
           }
           return next;
         });
-        setEditNote("Updated by someone else - review and save again.");
+        setEditStatus("Updated by someone else - review and save again.");
         // A partial save (some fields applied, the rest conflicted) leaves the applied fields stale
         // in `data` until the next poll, so reload to surface them now while the sheet stays open.
         if (res.applied.length > 0) return load();
       })
       .catch(() => {
-        setEditNote(`${ERR_SAVE} This meetup may have closed.`);
+        setEditStatus(`${ERR_SAVE} This meetup may have closed.`);
         return load();
       })
       .finally(() => setSavingEdit(false));
@@ -324,7 +324,7 @@ export function EventDetail({ route, navigation }: Props) {
   // no single time yet.
   const heroIso = data.chosenStartsAt && data.phase !== "collecting" ? data.chosenStartsAt : null;
   const heroClock = heroIso ? clock12(heroIso) : null;
-  const editable = isLive(data);
+  const canEditDetails = isLive(data);
   const activityEditable = data.phase === "moment" || data.phase === "cleared";
 
   const sheets = (
@@ -406,9 +406,9 @@ export function EventDetail({ route, navigation }: Props) {
           multiline
           style={{ marginTop: 12 }}
         />
-        {editNote ? (
+        {editStatus ? (
           <AppText variant="caption" style={{ color: ui.brand, marginTop: 12, lineHeight: 16 }}>
-            {editNote}
+            {editStatus}
           </AppText>
         ) : null}
         <Button
@@ -488,7 +488,7 @@ export function EventDetail({ route, navigation }: Props) {
             >
               {planLabel(data)}
             </Text>
-            {editable && (
+            {canEditDetails && (
               <TextButton
                 label="Edit"
                 onPress={openEditSheet}
