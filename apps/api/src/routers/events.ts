@@ -285,6 +285,31 @@ function computeMyStatus(
     : computeBaseStatus(userId, resp, revealed);
 }
 
+// The caller-scoped derivation shared by mine (dashboard) and get (detail): from a SETTLED row and
+// its already-loaded bundle, derive the caller's responses view, the going reveal, the anonymous
+// creator self-check, the opt-out flag, and the resulting status. Settle and the batched reads live
+// outside (mine settles + bundles all rows at once; get does the single row), so this is pure
+// in-memory derivation off the bundle - no extra queries.
+function derivePlanView(
+  e: EventRow,
+  userId: string,
+  bundle: Awaited<ReturnType<typeof loadEventBundle>>,
+): {
+  resp: MomentResponse[];
+  revealed: string[] | null;
+  isCreator: boolean;
+  iOptedOut: boolean;
+  myStatus: MyStatus;
+} {
+  const resp = bundle.responses(e.id);
+  const revealed = goingFromRow(e, resp);
+  // A private self-check: returned as a boolean only, never the id - the creator stays anonymous.
+  const isCreator = e.createdByUserId === userId;
+  const iOptedOut = bundle.optOuts(e.id).has(userId);
+  const myStatus = computeMyStatus(e.phase, userId, resp, revealed, iOptedOut);
+  return { resp, revealed, isCreator, iOptedOut, myStatus };
+}
+
 // A read-only bulk loader: for a set of SETTLED event rows, issue ONE inArray query each for
 // responses, candidates, reactions, and opt-outs (instead of per-event SELECTs), then resolve group
 // names and user cards in one batched query each. This collapses mine/get's N+1 per-plan read chain
@@ -844,8 +869,7 @@ export const eventsRouter = router({
     const bundle = await loadEventBundle(live);
 
     return live.map((e) => {
-      const resp = bundle.responses(e.id);
-      const revealed = goingFromRow(e, resp);
+      const { resp, revealed, isCreator, myStatus } = derivePlanView(e, ctx.userId, bundle);
       // Going preview: the first 4 revealed cards (count is the full revealed length, or null blind).
       const goingCount = revealed ? revealed.length : null;
       const preview = (revealed ?? []).slice(0, 4).map((uid) => {
@@ -854,10 +878,6 @@ export const eventsRouter = router({
         const initial = (bundle.hasUser(uid) ? card.name : "?").charAt(0).toUpperCase();
         return { uid, color: card.color, initial };
       });
-      // A private self-check: returned as a boolean only, never the id - the creator stays anonymous.
-      const isCreator = e.createdByUserId === ctx.userId;
-      const iOptedOut = bundle.optOuts(e.id).has(ctx.userId);
-      const myStatus = computeMyStatus(e.phase, ctx.userId, resp, revealed, iOptedOut);
 
       let iReacted = false;
       let candidateCount = 0;
@@ -949,11 +969,11 @@ export const eventsRouter = router({
       memberRows.map((m) => m.userId),
     );
 
-    const resp = bundle.responses(e.id);
-    const revealed = goingFromRow(e, resp);
-    // A private self-check: returned as a boolean only, never the id - the creator stays anonymous.
-    const isCreator = e.createdByUserId === ctx.userId;
-    const iOptedOut = bundle.optOuts(e.id).has(ctx.userId);
+    const { resp, revealed, isCreator, iOptedOut, myStatus } = derivePlanView(
+      e,
+      ctx.userId,
+      bundle,
+    );
 
     const cands = bundle.candidates(e.id);
     const reactions = bundle.reactions(e.id);
@@ -1038,7 +1058,7 @@ export const eventsRouter = router({
       timeCandidates,
       activityCandidates,
       myResponse: mine ? { kind: mine.kind, cond: mine.cond ?? null } : null,
-      myStatus: computeMyStatus(e.phase, ctx.userId, resp, revealed, iOptedOut),
+      myStatus,
       members,
       going,
     };
