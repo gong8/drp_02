@@ -2,9 +2,9 @@ import { Text, type TextProps, type TextStyle } from "react-native";
 import { font, ui } from "../theme";
 
 // The single typographic vocabulary. Every recurring font+size+color recipe lives here as a named
-// variant so the same "muted 11 caption" / "display 16 title" / "uppercase 9 overline" is never
+// variant so the same "muted 11 caption" / "display 16 title" is never
 // re-typed inline. Pass `style` to tweak (e.g. colour, margins); pass `mono` for tabular figures.
-type Variant = "screenTitle" | "title" | "rowLabel" | "body" | "caption" | "overline";
+type Variant = "screenTitle" | "title" | "rowLabel" | "body" | "caption";
 
 const V: Record<Variant, TextStyle> = {
   screenTitle: { fontFamily: font.black, fontSize: 27, letterSpacing: -1, color: ui.ink },
@@ -13,13 +13,6 @@ const V: Record<Variant, TextStyle> = {
   rowLabel: { fontFamily: font.bold, fontSize: 14, color: ui.ink },
   body: { fontFamily: font.medium, fontSize: 13, color: ui.ink, lineHeight: 19 },
   caption: { fontFamily: font.medium, fontSize: 11, color: ui.muted, lineHeight: 16 },
-  overline: {
-    fontFamily: font.bold,
-    fontSize: 9,
-    letterSpacing: 1,
-    textTransform: "uppercase",
-    color: ui.ink,
-  },
 };
 
 export function AppText({
