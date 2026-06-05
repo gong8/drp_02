@@ -20,6 +20,7 @@ import {
   compareActions,
   compareForDisplay,
   compareForDisplayAll,
+  deadlineMs,
   isActionRequired,
   planBucket,
 } from "../lib/status";
@@ -55,12 +56,6 @@ const TAB_COLOR: Record<Tab, string> = {
   open: ui.open,
   done: ui.muted,
 };
-
-// One ms-to-deadline read, from the phase's active deadline.
-function deadlineMs(e: Ev, now: number): number {
-  const iso = activeDeadline(e).iso;
-  return iso ? Math.max(0, new Date(iso).getTime() - now) : 0;
-}
 
 // A card in the pink ACTION REQUIRED band: each meetup gets its own isolated white box (so it reads
 // as a distinct tappable thing against the loud band), with a brand countdown to its deadline.

@@ -17,6 +17,7 @@ import {
 } from "../lib/copy";
 import { clock12, dayUpper, formatSlot, isoFrom, partOfDayLabel } from "../lib/format";
 import { addCandidateHorizon } from "../lib/lock";
+import { deadlineMs } from "../lib/status";
 import { trpc } from "../lib/trpc";
 import { useBusyAction } from "../lib/useBusyAction";
 import { TICK_MS, useLiveClock } from "../lib/useLiveClock";
@@ -305,8 +306,8 @@ export function EventDetail({ route, navigation }: Props) {
       />
     );
 
-  const liveMsLeft = data.momentEndsAt ? new Date(data.momentEndsAt).getTime() - now : 0;
-  const liveMsToDecide = data.decidesBy ? new Date(data.decidesBy).getTime() - now : 0;
+  // The live phase's ms-to-deadline; the two CountdownBanners below are mutually exclusive by phase.
+  const ms = deadlineMs(data, now);
   // The chosen time, shown as a hero banner once a slot is locked (moment/cleared); collecting has
   // no single time yet.
   const heroIso = data.chosenStartsAt && data.phase !== "collecting" ? data.chosenStartsAt : null;
@@ -415,10 +416,10 @@ export function EventDetail({ route, navigation }: Props) {
       footer={sheets}
     >
       {data.phase === "collecting" && data.decidesBy && (
-        <CountdownBanner label={DEADLINE_VOTING} ms={liveMsToDecide} note={NOTE_TOP_PICK} />
+        <CountdownBanner label={DEADLINE_VOTING} ms={ms} note={NOTE_TOP_PICK} />
       )}
       {data.phase === "moment" && (
-        <CountdownBanner label={DEADLINE_RSVP} ms={liveMsLeft} note={NOTE_BLIND} />
+        <CountdownBanner label={DEADLINE_RSVP} ms={ms} note={NOTE_BLIND} />
       )}
 
       <Card padding={0}>

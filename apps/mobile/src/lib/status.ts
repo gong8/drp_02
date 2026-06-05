@@ -74,6 +74,13 @@ export function activeDeadline(e: Timed): { iso: string | null; label: string } 
   return { iso: null, label: "" };
 }
 
+// One ms-to-deadline read, from the phase's active deadline. Clamped at 0 so a passed deadline never
+// reads negative. Both the dashboard cards and the detail countdown banner share this.
+export function deadlineMs(e: Timed, now: number): number {
+  const iso = activeDeadline(e).iso;
+  return iso ? Math.max(0, new Date(iso).getTime() - now) : 0;
+}
+
 // Parse an ISO timestamp, falling back to a second ISO when the first is null.
 const msOr = (iso: string | null, fallback: string) => new Date(iso ?? fallback).getTime();
 
