@@ -72,12 +72,11 @@ async function candidatesFor(eventId: string): Promise<(typeof eventCandidates.$
   });
 }
 
-// The crowd is hidden until the moment ends (or the plan is cleared/fizzled), so a live moment
-// shows its countdown instead of biasing people with who is already in. null while still blind.
+// Maps an EventRow into revealGoing's opts; see revealGoing for the blind-until-end rule.
 function goingFromRow(e: EventRow, resp: MomentResponse[]): string[] | null {
   return revealGoing(resp, {
     momentEndsAtMs: e.momentEndsAt ? e.momentEndsAt.getTime() : Number.POSITIVE_INFINITY,
-    resolved: e.phase === "cleared" || e.phase === "fizzled",
+    terminal: e.phase === "cleared" || e.phase === "fizzled",
     nowMs: Date.now(),
   });
 }

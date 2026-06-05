@@ -238,7 +238,7 @@ describe("revealGoing (blind/revealed boundary at momentEndsAt)", () => {
   it("stays blind at exactly momentEndsAt (reveal is strictly after the end)", () => {
     // Spec gate: nowMs > momentEndsAtMs. Equality is still inside the blind moment -> null.
     expect(
-      revealGoing([yes("a")], { momentEndsAtMs: 1000, resolved: false, nowMs: 1000 }),
+      revealGoing([yes("a")], { momentEndsAtMs: 1000, terminal: false, nowMs: 1000 }),
     ).toBeNull();
   });
 
@@ -246,7 +246,7 @@ describe("revealGoing (blind/revealed boundary at momentEndsAt)", () => {
     expect(
       revealGoing([yes("a"), yes("b")], {
         momentEndsAtMs: 1000,
-        resolved: false,
+        terminal: false,
         nowMs: 1001,
       })?.sort(),
     ).toEqual(["a", "b"]);
@@ -257,7 +257,7 @@ describe("revealGoing (blind/revealed boundary at momentEndsAt)", () => {
     expect(
       revealGoing([yes("a"), ifAll("b", "a")], {
         momentEndsAtMs: 100,
-        resolved: false,
+        terminal: false,
         nowMs: 200,
       })?.sort(),
     ).toEqual(["a", "b"]);
@@ -268,7 +268,7 @@ describe("revealGoing (blind/revealed boundary at momentEndsAt)", () => {
     // which is distinct from the still-blind null.
     const revealed = revealGoing([ifAny("a", "b"), ifAny("b", "a")], {
       momentEndsAtMs: 9999,
-      resolved: true,
+      terminal: true,
       nowMs: 0,
     });
     expect(revealed).toEqual([]);

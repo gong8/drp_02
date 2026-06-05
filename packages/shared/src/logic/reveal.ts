@@ -5,9 +5,9 @@ import { type MomentResponse, resolveIn } from "./resolve.js";
 // IN userIds once revealed, or null while still blind.
 export function revealGoing(
   responses: MomentResponse[],
-  opts: { momentEndsAtMs: number; resolved: boolean; nowMs: number },
+  opts: { momentEndsAtMs: number; terminal: boolean; nowMs: number },
 ): string[] | null {
-  const isResolved = opts.nowMs > opts.momentEndsAtMs || opts.resolved;
-  if (!isResolved) return null;
+  const revealed = opts.nowMs > opts.momentEndsAtMs || opts.terminal;
+  if (!revealed) return null;
   return [...resolveIn(responses)];
 }
