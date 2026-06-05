@@ -6,6 +6,7 @@ import { Pressable, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
 import { AccountAvatar } from "../components/AccountAvatar";
 import {
+  actionsRequiredLabel,
   candidateCountLabel,
   DIDNT_COME_TOGETHER,
   ERR_NETWORK,
@@ -310,7 +311,7 @@ export function Dashboard({ navigation }: Props) {
                   color: ui.onInk,
                 }}
               >
-                {`${n} action${n === 1 ? "" : "s"} required`}
+                {actionsRequiredLabel(n)}
               </Text>
               {actionItems.map((e) => (
                 <ActionRow

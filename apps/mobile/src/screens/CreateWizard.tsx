@@ -2,7 +2,14 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, Text, View, type ViewStyle } from "react-native";
 import type { MeetupsStackParams } from "../../App";
-import { ANON_SEND_BODY, ANON_SEND_TITLE, ERR_SAVE, NOTE_TOP_PICK, STEP_COPY } from "../lib/copy";
+import {
+  ANON_SEND_BODY,
+  ANON_SEND_TITLE,
+  ERR_SAVE,
+  NOTE_TOP_PICK,
+  plural,
+  STEP_COPY,
+} from "../lib/copy";
 import { formatSlot, isoFrom, splitIso } from "../lib/format";
 import { defaultDecidesByForCandidates, defaultReplyByMs, MOMENT_MS } from "../lib/lock";
 import { EMPTY_PREFILL, type Prefill, prefillFromMeetup, wizardSteps } from "../lib/redo";
@@ -799,14 +806,14 @@ function confirmMirror({
 
   const timePart =
     timeCount >= 1
-      ? `Vote on ${timeCount} time${timeCount === 1 ? "" : "s"}`
+      ? `Vote on ${timeCount} ${plural(timeCount, "time")}`
       : "The group suggests times";
   const activityPart = activityFixed
     ? activityCount === 1
       ? " (activity set)"
       : ""
     : activityCount >= 1
-      ? ` and ${activityCount} ${activityCount === 1 ? "activity" : "activities"}`
+      ? ` and ${activityCount} ${plural(activityCount, "activity", "activities")}`
       : " and what to do";
   return `${timePart}${activityPart}, then who's in.`;
 }

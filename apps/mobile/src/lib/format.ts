@@ -1,4 +1,5 @@
 import type { PartOfDay } from "@bethere/shared";
+import { plural } from "./copy";
 
 // Zero-pad a small number to two digits ("3" -> "03"); shared by every time/date string builder.
 const pad2 = (n: number) => String(n).padStart(2, "0");
@@ -122,15 +123,15 @@ export function formatTimeLeft(ms: number): string {
   if (ms <= 0) return "now";
   if (ms >= DAY_MS) {
     const n = Math.floor(ms / DAY_MS);
-    return `${n} day${n !== 1 ? "s" : ""}`;
+    return `${n} ${plural(n, "day")}`;
   }
   if (ms >= HOUR_MS) {
     const n = Math.floor(ms / HOUR_MS);
-    return `${n} hour${n !== 1 ? "s" : ""}`;
+    return `${n} ${plural(n, "hour")}`;
   }
   if (ms >= MIN_MS) {
     const n = Math.floor(ms / MIN_MS);
-    return `${n} minute${n !== 1 ? "s" : ""}`;
+    return `${n} ${plural(n, "minute")}`;
   }
   return "under a minute";
 }

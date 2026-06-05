@@ -36,9 +36,20 @@ export const ERR_SAVE = "Couldn't save. Try again.";
 // "didn't come together" used by both the dashboard footer and the fizzled card title.
 export const DIDNT_COME_TOGETHER = "Didn't come together";
 
+// The one count-suffix primitive: "1 option" -> singular, anything else -> pluralForm (default +"s").
+// Every counted label in the app routes through this so the suffix rule lives in one place.
+export function plural(n: number, singular: string, pluralForm?: string): string {
+  return n === 1 ? singular : (pluralForm ?? `${singular}s`);
+}
+
 // "3 options" - the terse candidate count (replaces "3 on the table").
 export function candidateCountLabel(n: number): string {
-  return `${n} option${n === 1 ? "" : "s"}`;
+  return `${n} ${plural(n, "option")}`;
+}
+
+// "2 actions required" - the dashboard's action-section header count.
+export function actionsRequiredLabel(n: number): string {
+  return `${n} ${plural(n, "action")} required`;
 }
 
 // "3 going".
