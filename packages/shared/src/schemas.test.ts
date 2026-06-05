@@ -90,6 +90,25 @@ describe("CreateEventInput", () => {
     expect(r.success).toBe(true);
   });
 
+  it("rejects a whitespace-only activity candidate (trim then min(1))", () => {
+    const r = CreateEventInput.safeParse({
+      groupId: "g_1",
+      activityCandidates: ["   "],
+    });
+    expect(r.success).toBe(false);
+  });
+
+  it("trims surrounding whitespace off an activity candidate at the boundary", () => {
+    const r = CreateEventInput.safeParse({
+      groupId: "g_1",
+      activityCandidates: ["  Bowling  "],
+    });
+    expect(r.success).toBe(true);
+    if (r.success) {
+      expect(r.data.activityCandidates).toEqual(["Bowling"]);
+    }
+  });
+
   it("rejects more than 10 time candidates", () => {
     const r = CreateEventInput.safeParse({
       groupId: "g_1",
@@ -159,6 +178,34 @@ describe("CreateEventInput", () => {
       timeCandidates: [{ startsAt: "2026-07-01T19:00:00.000Z", partOfDay: "noon" }],
     };
     expect(CreateEventInput.safeParse(bad).success).toBe(false);
+  });
+
+  it("rejects a malformed startsAt on a time candidate (not a parseable datetime)", () => {
+    const r = CreateEventInput.safeParse({
+      groupId: "g_1",
+      timeCandidates: [{ startsAt: "not-a-date" }],
+    });
+    expect(r.success).toBe(false);
+  });
+
+  it("rejects a malformed decidesBy (not a parseable datetime)", () => {
+    const r = CreateEventInput.safeParse({ groupId: "g_1", decidesBy: "soon-ish" });
+    expect(r.success).toBe(false);
+  });
+
+  it("rejects a malformed replyBy (not a parseable datetime)", () => {
+    const r = CreateEventInput.safeParse({ groupId: "g_1", replyBy: "" });
+    expect(r.success).toBe(false);
+  });
+
+  it("accepts valid ISO instants for startsAt / decidesBy / replyBy", () => {
+    const r = CreateEventInput.safeParse({
+      groupId: "g_1",
+      timeCandidates: [{ startsAt: "2026-07-01T19:00:00.000Z" }],
+      decidesBy: "2026-06-30T12:00:00.000Z",
+      replyBy: "2026-07-01T12:00:00.000Z",
+    });
+    expect(r.success).toBe(true);
   });
 
   it("does NOT carry a separate title (title was unified into activity)", () => {
@@ -375,6 +422,15 @@ describe("AddCandidateInput", () => {
       startsAt: "2026-07-01T19:00:00.000Z",
     });
     expect(r.success).toBe(true);
+  });
+
+  it("rejects a malformed startsAt (not a parseable datetime)", () => {
+    const r = AddCandidateInput.safeParse({
+      eventId: "e_1",
+      kind: "time",
+      startsAt: "yesterday",
+    });
+    expect(r.success).toBe(false);
   });
 
   it("accepts an activity candidate (kind=activity, text set)", () => {
