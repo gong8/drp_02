@@ -84,16 +84,18 @@ export async function syncReminders(events: ReminderEvent[]): Promise<void> {
       if (e.myStatus === "declined") continue; // opted out / not coming - no pings
 
       if (e.phase === "collecting" && e.decidesBy) {
-        const decideMs = new Date(e.decidesBy).getTime();
-        if (!e.iReacted && decideMs - DECIDE_LEAD_MS > now) {
-          await schedule(
-            new Date(decideMs - DECIDE_LEAD_MS),
+        if (!e.iReacted) {
+          await scheduleLead(
+            e.decidesBy,
+            DECIDE_LEAD_MS,
+            now,
             "Decides soon",
             `"${planLabel(e)}" decides ${formatSlot(e.decidesBy)} - tap what you're keen on.`,
           );
         }
+        const decideMs = new Date(e.decidesBy).getTime();
         if (decideMs > now) {
-          await schedule(
+          await scheduleAt(
             new Date(decideMs),
             "Who's in?",
             `"${planLabel(e)}" just opened for the moment - say if you're in.`,
@@ -109,7 +111,7 @@ export async function syncReminders(events: ReminderEvent[]): Promise<void> {
         if (!e.iResponded && e.momentStartsAt) {
           const startedMs = new Date(e.momentStartsAt).getTime();
           if (now - startedMs >= 0 && now - startedMs <= MOMENT_OPEN_WINDOW_MS) {
-            await schedule(
+            await scheduleAt(
               new Date(now),
               "Who's in?",
               `"${planLabel(e)}" just opened for the moment - say if you're in.`,
@@ -142,10 +144,10 @@ async function scheduleLead(
   body: string,
 ): Promise<void> {
   const at = new Date(iso).getTime() - leadMs;
-  if (at > now) await schedule(new Date(at), title, body);
+  if (at > now) await scheduleAt(new Date(at), title, body);
 }
 
-async function schedule(date: Date, title: string, body: string): Promise<void> {
+async function scheduleAt(date: Date, title: string, body: string): Promise<void> {
   await Notifications.scheduleNotificationAsync({
     content: { title, body },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date },
