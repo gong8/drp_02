@@ -33,9 +33,10 @@ export type PastMeetupShell = {
 // by default - the creator just picks a new time (and can untick the lock to reopen it to a vote). A
 // time-only past plan (no named activity) preloads nothing and leaves the lock off.
 export function prefillFromMeetup(m: PastMeetupShell): Prefill {
-  const hasActivity = m.activity.trim() !== "";
+  const activity = m.activity.trim();
+  const hasActivity = activity !== "";
   return {
-    activityChips: hasActivity ? [m.activity.trim()] : [],
+    activityChips: hasActivity ? [activity] : [],
     lockTimes: m.lockTimes,
     lockActivity: hasActivity,
     location: m.location,
