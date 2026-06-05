@@ -28,6 +28,25 @@ export function dateStringFrom(d: Date): string {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
+// Parse the picker's local "YYYY-MM-DD" -> noon-anchored Date (the inverse of dateStringFrom).
+// Numeric constructor, never `new Date(string)`: a string with no offset parses as UTC in Hermes.
+// Noon-anchored to dodge DST midnight edges. null when any component is missing or non-numeric.
+export function parseLocalDate(value: string): Date | null {
+  const [y, mo, d] = value.split("-").map(Number);
+  if ([y, mo, d].some((n) => Number.isNaN(n))) return null;
+  return new Date(y, mo - 1, d, 12, 0, 0, 0);
+}
+
+// Parse the picker's local "HH:mm" -> today-anchored Date (the inverse of timeStringFrom).
+// Numeric components only (always local), never `new Date(string)`. null when invalid.
+export function parseLocalTime(value: string): Date | null {
+  const [h, mi] = value.split(":").map(Number);
+  if ([h, mi].some((n) => Number.isNaN(n))) return null;
+  const t = new Date();
+  t.setHours(h, mi, 0, 0);
+  return t;
+}
+
 // Date -> the picker's local "HH:mm" string (the forward of isoFrom's time half).
 export function timeStringFrom(d: Date): string {
   return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;

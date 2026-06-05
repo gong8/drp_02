@@ -3,6 +3,9 @@ import type { ViewStyle } from "react-native";
 // Mirrors the union the native picker accepts (@react-native-community/datetimepicker).
 export type MinuteInterval = 1 | 2 | 3 | 4 | 5 | 6 | 10 | 12 | 15 | 20 | 30;
 
+// Default time-mode snap, single-sourced so the native/web fields and DateTimePill agree.
+export const DEFAULT_MINUTE_INTERVAL: MinuteInterval = 15;
+
 // Shared prop shape for the native (DateTimeField.tsx) and web (DateTimeField.web.tsx)
 // implementations. `value` stays a plain string so it drops straight into the existing
 // `date` / `time` state and `isoFrom` in lib/format - "YYYY-MM-DD" for date mode,

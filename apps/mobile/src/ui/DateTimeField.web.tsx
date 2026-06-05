@@ -2,7 +2,7 @@ import type { ChangeEvent } from "react";
 import { View } from "react-native";
 import { dateStringFrom } from "../lib/format";
 import { font, ui } from "../theme";
-import type { DateTimeFieldProps } from "./DateTimeField.types";
+import { type DateTimeFieldProps, DEFAULT_MINUTE_INTERVAL } from "./DateTimeField.types";
 
 // Web fallback. @react-native-community/datetimepicker has no web build, so on web we use the
 // browser's built-in <input type="date"> / <input type="time"> controls - real calendar and
@@ -15,7 +15,7 @@ export function DateTimeField({
   mode,
   value,
   onChange,
-  minuteInterval = 15,
+  minuteInterval = DEFAULT_MINUTE_INTERVAL,
   minimumDate,
   maximumDate,
   bare = false,

@@ -1,7 +1,7 @@
 import { View, type ViewStyle } from "react-native";
 import { ui } from "../theme";
 import { DateTimeField } from "./DateTimeField";
-import type { MinuteInterval } from "./DateTimeField.types";
+import { DEFAULT_MINUTE_INTERVAL, type MinuteInterval } from "./DateTimeField.types";
 import { HardShadow } from "./HardShadow";
 
 // One date + time as a single split pill: a single bordered, hard-shadow box divided by an ink
@@ -14,7 +14,7 @@ export function DateTimePill({
   onTime,
   minimumDate,
   maximumDate,
-  minuteInterval = 15,
+  minuteInterval = DEFAULT_MINUTE_INTERVAL,
   style,
 }: {
   dateValue: string;
