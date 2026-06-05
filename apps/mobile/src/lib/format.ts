@@ -3,11 +3,11 @@ import type { PartOfDay } from "@bethere/shared";
 // Zero-pad a small number to two digits ("3" -> "03"); shared by every time/date string builder.
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
-// "...T16:00..." -> "16:00"
-function formatTime(iso: string): string {
-  const d = new Date(iso);
-  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
-}
+// Millisecond magnitudes, single-sourced so every countdown/duration surface shares one set.
+const SEC_MS = 1000;
+const MIN_MS = 60_000;
+const HOUR_MS = 3_600_000;
+const DAY_MS = 24 * HOUR_MS;
 
 // Build a UTC ISO instant from the picker's local "YYYY-MM-DD" + "HH:mm" strings. Uses the numeric
 // Date constructor (always local time, in every engine) rather than `new Date("YYYY-MM-DDTHH:mm")`:
@@ -76,7 +76,7 @@ const MONTHS_SHORT = [
 // "2026-06-03T19:00..." -> "Wed 3 Jun, 19:00" - the compact label for a candidate slot.
 export function formatSlot(iso: string): string {
   const d = new Date(iso);
-  return `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}, ${formatTime(iso)}`;
+  return `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}, ${timeStringFrom(d)}`;
 }
 
 // "2026-06-06T19:00..." -> "SAT 6 JUN" - the uppercase day line for the plan-detail time hero.
@@ -104,9 +104,9 @@ export function partOfDayLabel(part: PartOfDay | null | undefined): string {
 // A live moment countdown: "12:34" under an hour, "3h 04m" / "2d 3h" beyond. Empty once passed.
 export function formatCountdown(ms: number): string {
   if (ms <= 0) return "0:00";
-  const totalMins = Math.floor(ms / 60000);
+  const totalMins = Math.floor(ms / MIN_MS);
   if (totalMins < 60) {
-    const secs = Math.floor((ms % 60000) / 1000);
+    const secs = Math.floor((ms % MIN_MS) / SEC_MS);
     return `${totalMins}:${pad2(secs)}`;
   }
   const hours = Math.floor(totalMins / 60);
@@ -120,23 +120,23 @@ export function formatCountdown(ms: number): string {
 // passed `ms <= 0` themselves to render "Closing now" (this returns the bare "now").
 export function formatTimeLeft(ms: number): string {
   if (ms <= 0) return "now";
-  if (ms >= 86400000) {
-    const n = Math.floor(ms / 86400000);
+  if (ms >= DAY_MS) {
+    const n = Math.floor(ms / DAY_MS);
     return `${n} day${n !== 1 ? "s" : ""}`;
   }
-  if (ms >= 3600000) {
-    const n = Math.floor(ms / 3600000);
+  if (ms >= HOUR_MS) {
+    const n = Math.floor(ms / HOUR_MS);
     return `${n} hour${n !== 1 ? "s" : ""}`;
   }
-  if (ms >= 60000) {
-    const n = Math.floor(ms / 60000);
+  if (ms >= MIN_MS) {
+    const n = Math.floor(ms / MIN_MS);
     return `${n} minute${n !== 1 ? "s" : ""}`;
   }
   return "under a minute";
 }
 
 // The "under an hour is hot" threshold, shared by every countdown surface.
-export const HOT_MS = 3_600_000;
+export const HOT_MS = HOUR_MS;
 
 // The standalone time-left phrase shared by the Countdown primitive and the dashboard card footer:
 // "Closing now" once passed, else "<duration> left". One home for the terminal string + wording.
