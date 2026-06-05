@@ -1,14 +1,13 @@
 import { ClerkProvider } from "@clerk/clerk-expo";
 import { Archivo_800ExtraBold, Archivo_900Black } from "@expo-google-fonts/archivo";
 import { Inter_400Regular, Inter_500Medium, Inter_700Bold } from "@expo-google-fonts/inter";
-import { SpaceMono_700Bold } from "@expo-google-fonts/space-mono";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { type BottomTabBarProps, createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useFonts } from "expo-font";
 import { StatusBar } from "expo-status-bar";
 import type { ReactNode } from "react";
-import { Platform, View } from "react-native";
+import { Platform, Pressable, Text, View } from "react-native";
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import { DevAuthProvider, useAuthBridge } from "./src/lib/auth";
 import { publishableKey, tokenCache } from "./src/lib/clerk";
@@ -22,15 +21,19 @@ import { GroupsList } from "./src/screens/GroupsList";
 import { SignIn } from "./src/screens/SignIn";
 import { font, ui } from "./src/theme";
 
+// Account is reachable from either tab (via the top-right avatar), so it is registered in both stacks
+// and gets a real back button - there is no Account tab anymore.
 export type MeetupsStackParams = {
   Dashboard: undefined;
   EventDetail: { eventId: string };
   CreateWizard: undefined;
+  Account: undefined;
 };
 export type GroupsStackParams = {
   GroupsList: undefined;
   GroupDetail: { groupId: string };
   CreateGroup: undefined;
+  Account: undefined;
 };
 
 const stackHeader = {
@@ -45,6 +48,7 @@ function MeetupsStackScreen() {
       <MeetupsStack.Screen name="Dashboard" component={Dashboard} />
       <MeetupsStack.Screen name="EventDetail" component={EventDetail} />
       <MeetupsStack.Screen name="CreateWizard" component={CreateWizard} />
+      <MeetupsStack.Screen name="Account" component={Account} />
     </MeetupsStack.Navigator>
   );
 }
@@ -56,41 +60,71 @@ function GroupsStackScreen() {
       <GroupsStack.Screen name="GroupsList" component={GroupsList} />
       <GroupsStack.Screen name="GroupDetail" component={GroupDetail} />
       <GroupsStack.Screen name="CreateGroup" component={CreateGroup} />
+      <GroupsStack.Screen name="Account" component={Account} />
     </GroupsStack.Navigator>
+  );
+}
+
+// A split tab bar: the bar is halved down the middle by an ink seam, each half a full-bleed colour
+// block (the active half brand pink, the inactive a soft lavender). Both labels use the SAME big
+// uppercase display face; only the colour changes (white when active, muted when not). No pills.
+function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  const insets = useSafeAreaInsets();
+  const bottomGap = Math.max(Math.round(insets.bottom * 0.75), 12);
+  return (
+    <View style={{ flexDirection: "row", borderTopWidth: ui.border, borderTopColor: ui.ink }}>
+      {state.routes.map((route, i) => {
+        const focused = state.index === i;
+        const label = descriptors[route.key].options.title ?? route.name;
+        const onPress = () => {
+          const event = navigation.emit({
+            type: "tabPress",
+            target: route.key,
+            canPreventDefault: true,
+          });
+          if (!focused && !event.defaultPrevented) navigation.navigate(route.name);
+        };
+        return (
+          <Pressable
+            key={route.key}
+            onPress={onPress}
+            style={{
+              flex: 1,
+              alignItems: "center",
+              paddingTop: 14,
+              paddingBottom: bottomGap,
+              backgroundColor: focused ? ui.brand : ui.tint,
+              borderLeftWidth: i === 0 ? 0 : ui.border,
+              borderLeftColor: ui.ink,
+            }}
+          >
+            <Text
+              style={{
+                fontFamily: font.black,
+                fontSize: 15,
+                letterSpacing: 0.5,
+                textTransform: "uppercase",
+                color: focused ? ui.onInk : ui.muted,
+              }}
+            >
+              {label}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
   );
 }
 
 const Tab = createBottomTabNavigator();
 function MainTabs() {
-  // We render labels only (no icons), so size the bar to a compact label row plus a small
-  // bottom gap - otherwise RN centers the label in a tall default content area and stacks
-  // the full home-indicator inset below it, leaving a big white "chin" under the tabs. We
-  // only keep a fraction of the inset so the labels sit close to the bottom edge.
-  const insets = useSafeAreaInsets();
-  const bottomGap = Math.max(Math.round(insets.bottom * 0.75), 12);
   return (
     <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        sceneStyle: { backgroundColor: "transparent" },
-        tabBarActiveTintColor: ui.brand,
-        tabBarInactiveTintColor: ui.muted,
-        tabBarStyle: {
-          backgroundColor: ui.surface,
-          borderTopWidth: 2,
-          borderTopColor: ui.ink,
-          height: 40 + bottomGap,
-          paddingTop: 8,
-          paddingBottom: bottomGap,
-        },
-        tabBarItemStyle: { justifyContent: "center" },
-        tabBarLabelStyle: { fontFamily: font.display, fontSize: 12 },
-        tabBarIconStyle: { display: "none", height: 0, width: 0 },
-      }}
+      screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: "transparent" } }}
+      tabBar={(props) => <TabBar {...props} />}
     >
-      <Tab.Screen name="Meetups" component={MeetupsStackScreen} />
-      <Tab.Screen name="Groups" component={GroupsStackScreen} />
-      <Tab.Screen name="Account" component={Account} />
+      <Tab.Screen name="Meetups" component={MeetupsStackScreen} options={{ title: "My meetups" }} />
+      <Tab.Screen name="Groups" component={GroupsStackScreen} options={{ title: "My groups" }} />
     </Tab.Navigator>
   );
 }
@@ -124,7 +158,6 @@ export default function App() {
     Inter_400Regular,
     Inter_500Medium,
     Inter_700Bold,
-    SpaceMono_700Bold,
   });
   if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: "#FCEFE8" }} />;
   return (

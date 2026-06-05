@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { displayTitle, FALLBACK_TITLE, planOpensMoment, resolveTitle } from "./create-plan.js";
+import { displayActivity, planOpensMoment, resolveActivity } from "./create-plan.js";
 
 test("both axes pinned (1 locked time, <=1 locked activity) opens the moment", () => {
   assert.equal(planOpensMoment(1, true, 0, true), true);
@@ -25,14 +25,18 @@ test("multiple or zero time candidates never short-cut", () => {
   assert.equal(planOpensMoment(0, true, 0, true), false);
 });
 
-test("resolveTitle keeps a non-empty title and ignores activities", () => {
+test("resolveActivity keeps a non-empty activity and ignores candidates", () => {
   assert.equal(
-    resolveTitle("Dinner", [{ id: "a1", label: "Pizza" }], [{ candidateId: "a1", userId: "u1" }]),
+    resolveActivity(
+      "Dinner",
+      [{ id: "a1", label: "Pizza" }],
+      [{ candidateId: "a1", userId: "u1" }],
+    ),
     "Dinner",
   );
 });
 
-test("resolveTitle picks the most-voted activity when title is empty", () => {
+test("resolveActivity picks the most-voted activity when empty", () => {
   const acts = [
     { id: "a1", label: "Pizza" },
     { id: "a2", label: "Sushi" },
@@ -42,14 +46,14 @@ test("resolveTitle picks the most-voted activity when title is empty", () => {
     { candidateId: "a2", userId: "u1" },
     { candidateId: "a2", userId: "u2" },
   ];
-  assert.equal(resolveTitle("", acts, reactions), "Sushi");
+  assert.equal(resolveActivity("", acts, reactions), "Sushi");
 });
 
-test("resolveTitle falls back to empty when there are no activities", () => {
-  assert.equal(resolveTitle("", [], []), "");
+test("resolveActivity falls back to empty when there are no activities", () => {
+  assert.equal(resolveActivity("", [], []), "");
 });
 
-test("displayTitle shows the leading activity when the title is empty", () => {
+test("displayActivity shows the leading activity when empty", () => {
   const acts = [
     { id: "a1", label: "Pizza" },
     { id: "a2", label: "Sushi" },
@@ -59,13 +63,13 @@ test("displayTitle shows the leading activity when the title is empty", () => {
     { candidateId: "a2", userId: "u2" },
     { candidateId: "a1", userId: "u1" },
   ];
-  assert.equal(displayTitle("", acts, reactions), "Sushi");
+  assert.equal(displayActivity("", acts, reactions), "Sushi");
 });
 
-test("displayTitle falls back to the placeholder with no title and no activities", () => {
-  assert.equal(displayTitle("", [], []), FALLBACK_TITLE);
+test("displayActivity is empty with no activity and no candidates (client falls back to the group)", () => {
+  assert.equal(displayActivity("", [], []), "");
 });
 
-test("displayTitle keeps a real title as-is", () => {
-  assert.equal(displayTitle("Bowling", [{ id: "a1", label: "Pizza" }], []), "Bowling");
+test("displayActivity keeps a real activity as-is", () => {
+  assert.equal(displayActivity("Bowling", [{ id: "a1", label: "Pizza" }], []), "Bowling");
 });

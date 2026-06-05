@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
-import { Text, View, type ViewStyle } from "react-native";
+import { Pressable, Text, View, type ViewStyle } from "react-native";
 import { font, ui } from "../theme";
 import { Avatar } from "./Avatar";
 
-// A hairline-divided avatar + bold-name list row, shared by the group roster (GroupDetail) and the
-// "who's in" reveal (EventDetail). `index` drives the top divider (the first row has none); `right`
-// is an optional trailing slot (a remove button, a check, etc). `padding` and `avatarSize` stay
-// parameters because the call sites differ on them.
+// An avatar + bold-name list row, shared by the group roster, the "who's in" reveal, and the two
+// member pickers. `index` drives the top divider (the first row has none) when `divided`; pass
+// `divided={false}` for the borderless picker rows in sheets. `onPress` makes it tappable; `right` is
+// an optional trailing slot (a remove button, a check, a +).
 export function PersonRow({
   name,
   color,
@@ -14,6 +14,8 @@ export function PersonRow({
   right,
   padding = 11,
   avatarSize = 26,
+  divided = true,
+  onPress,
   style,
 }: {
   name: string;
@@ -22,25 +24,30 @@ export function PersonRow({
   right?: ReactNode;
   padding?: number;
   avatarSize?: number;
+  divided?: boolean;
+  onPress?: () => void;
   style?: ViewStyle;
 }) {
-  return (
-    <View
-      style={[
-        {
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 10,
-          padding,
-          borderTopWidth: index === 0 ? 0 : 1,
-          borderTopColor: ui.hairline,
-        },
-        style,
-      ]}
-    >
+  const rowStyle: ViewStyle = {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    padding,
+    borderTopWidth: divided && index > 0 ? 1 : 0,
+    borderTopColor: ui.hairline,
+  };
+  const inner = (
+    <>
       <Avatar initial={name.charAt(0).toUpperCase()} color={color} size={avatarSize} />
       <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>{name}</Text>
       {right}
-    </View>
+    </>
+  );
+  return onPress ? (
+    <Pressable onPress={onPress} style={[rowStyle, style]}>
+      {inner}
+    </Pressable>
+  ) : (
+    <View style={[rowStyle, style]}>{inner}</View>
   );
 }

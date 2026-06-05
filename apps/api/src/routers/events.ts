@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import {
   AddCandidateInput,
   addCandidateHorizon,
+  ByGroupInput,
   ByIdInput,
   type CandidateKind,
   CreateEventInput,
@@ -20,6 +21,7 @@ import {
   revealGoing,
   SetOptOutInput,
   ToggleReactionInput,
+  UpdateEventInput,
 } from "@bethere/shared";
 import { TRPCError } from "@trpc/server";
 import { and, eq, inArray } from "drizzle-orm";
@@ -37,7 +39,8 @@ import {
 import { FALLBACK_AVATAR_COLOR, FALLBACK_USER_NAME, getUserCard } from "../db/users.js";
 import { msLeft } from "../format.js";
 import { protectedProcedure, router } from "../trpc.js";
-import { displayTitle, planOpensMoment, resolveTitle } from "./create-plan.js";
+import { displayActivity, planOpensMoment, resolveActivity } from "./create-plan.js";
+import { shapePastMeetups } from "./past-meetups.js";
 
 export type EventRow = typeof events.$inferSelect;
 type MyStatus = "reacting" | "awaiting" | "going" | "declined";
@@ -150,7 +153,7 @@ async function settlePhase(e: EventRow): Promise<void> {
 
 // Lazily auto-lock a collecting plan whose "Decides by" deadline has passed (no scheduler): pick the
 // best-supported TIME candidate (quorum, else most-reacted), resolve the winning activity into the
-// title if empty, and open the blind moment. Opted-out members have no reactions so they drop for
+// plan's name if empty, and open the blind moment. Opted-out members have no reactions so they drop for
 // free; with no time candidates, or no reactions of any kind, the plan fizzles silently (any +1 -
 // even on an activity - keeps it alive, and it locks the best-supported or first time). Mutates + persists.
 async function settleCollecting(e: EventRow): Promise<void> {
@@ -166,8 +169,8 @@ async function settleCollecting(e: EventRow): Promise<void> {
   const chosenId = pickWinnerOrBestId(timeIds, reactions, e.quorum);
   const chosen = timeCands.find((c) => c.id === chosenId) as (typeof timeCands)[number];
   const startsAt = chosen.startsAt as Date;
-  const title = resolveTitle(
-    e.title,
+  const activity = resolveActivity(
+    e.activity,
     cands.filter((c) => c.kind === "activity").map((c) => ({ id: c.id, label: c.label })),
     reactions,
   );
@@ -177,7 +180,6 @@ async function settleCollecting(e: EventRow): Promise<void> {
     .update(events)
     .set({
       phase: "moment",
-      title,
       chosenCandidateId: chosenId,
       momentStartsAt: now,
       momentEndsAt: endsAt,
@@ -185,8 +187,18 @@ async function settleCollecting(e: EventRow): Promise<void> {
       respondByAt: endsAt,
     })
     .where(eq(events.id, e.id));
+  // Fill the derived activity only if the row still has none. A member may have edited the activity
+  // concurrently (events.update); guarding the write on activity still being "" means an auto-lock can
+  // never clobber an explicit activity. resolveActivity already returns e.activity unchanged when
+  // non-empty, so this writes the activity-derived name solely for the never-named case.
+  if (activity) {
+    await db
+      .update(events)
+      .set({ activity })
+      .where(and(eq(events.id, e.id), eq(events.activity, "")));
+  }
   e.phase = "moment";
-  e.title = title;
+  e.activity = activity;
   e.chosenCandidateId = chosenId;
   e.momentStartsAt = now;
   e.momentEndsAt = endsAt;
@@ -293,7 +305,7 @@ export const eventsRouter = router({
     const timeInputs = input.timeCandidates ?? [];
     const activityInputs = input.activityCandidates ?? [];
 
-    const timeCands = timeInputs
+    const sortedTimeInputs = timeInputs
       .map((t, i) => ({
         id: `${id}_t${i + 1}`,
         kind: "time" as const,
@@ -303,6 +315,17 @@ export const eventsRouter = router({
       }))
       .filter((c) => !Number.isNaN(c.startsAt.getTime()))
       .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
+    // Collapse candidates that land in the same minute (the wizard's granularity), keeping the
+    // earliest. A single intended slot sent twice must stay one row - otherwise it splits +1
+    // momentum and defeats the concrete-moment shortcut (planOpensMoment needs exactly one time).
+    // This mirrors addCandidate's minute dedupe so create and add agree.
+    const seenMinutes = new Set<number>();
+    const timeCands = sortedTimeInputs.filter((c) => {
+      const minute = Math.floor(c.startsAt.getTime() / 60_000);
+      if (seenMinutes.has(minute)) return false;
+      seenMinutes.add(minute);
+      return true;
+    });
 
     const activityCands = activityInputs.map((text, i) => ({
       id: `${id}_a${i + 1}`,
@@ -317,7 +340,7 @@ export const eventsRouter = router({
     if (input.lockTimes && timeCands.length === 0) {
       throw new TRPCError({ code: "BAD_REQUEST", message: "cannot lock the times with no time" });
     }
-    if (input.lockThings && activityCands.length === 0) {
+    if (input.lockActivity && activityCands.length === 0) {
       throw new TRPCError({
         code: "BAD_REQUEST",
         message: "cannot lock the activity with no activity",
@@ -328,19 +351,19 @@ export const eventsRouter = router({
       timeCands.length,
       input.lockTimes,
       activityCands.length,
-      input.lockThings,
+      input.lockActivity,
     );
     const quorum = input.quorum ?? (opensMoment ? 1 : DEFAULT_QUORUM);
 
-    // Concrete plans skip lock()/settleCollecting (where the collecting path resolves the title), so
-    // resolve the single activity into the stored title now; collecting plans resolve it at lock.
-    const resolvedTitle = opensMoment
-      ? resolveTitle(
-          input.title ?? "",
+    // Concrete plans skip lock()/settleCollecting (where the collecting path resolves the activity),
+    // so resolve the single activity into the stored name now; collecting plans resolve it at lock.
+    const resolvedActivity = opensMoment
+      ? resolveActivity(
+          "",
           activityCands.map((c) => ({ id: c.id, label: c.label })),
           [],
         )
-      : (input.title ?? "");
+      : "";
 
     // Time anchors. With no time candidates a plan still collects (on activities), so anchor the
     // placeholder start + the default decides-by to a sensible horizon instead of a candidate.
@@ -401,7 +424,7 @@ export const eventsRouter = router({
       id,
       groupId: input.groupId,
       createdByUserId: ctx.userId,
-      title: resolvedTitle,
+      activity: resolvedActivity,
       description: input.description ?? null,
       location: input.location ?? "",
       startsAt,
@@ -411,7 +434,7 @@ export const eventsRouter = router({
       quorum,
       isAnonymous: true,
       lockTimes: input.lockTimes,
-      lockThings: input.lockThings,
+      lockActivity: input.lockActivity,
       phase: opensMoment ? "moment" : "collecting",
       decidesBy,
       replyBy,
@@ -509,7 +532,7 @@ export const eventsRouter = router({
     if (input.kind === "time" && e.lockTimes) {
       throw new TRPCError({ code: "FORBIDDEN", message: "times are locked on this plan" });
     }
-    if (input.kind === "activity" && e.lockThings) {
+    if (input.kind === "activity" && e.lockActivity) {
       throw new TRPCError({ code: "FORBIDDEN", message: "activities are locked on this plan" });
     }
     const existing = await candidatesFor(input.eventId);
@@ -546,8 +569,14 @@ export const eventsRouter = router({
           });
         }
       }
+      // Dedupe by minute (the comment above and the wizard's granularity): a candidate at HH:MM:00
+      // and a new add at HH:MM:30 are the same slot, so the add +1s the existing row.
+      const startMinute = Math.floor(startsAt.getTime() / 60_000);
       const dup = existing.find(
-        (c) => c.kind === "time" && c.startsAt?.getTime() === startsAt.getTime(),
+        (c) =>
+          c.kind === "time" &&
+          c.startsAt != null &&
+          Math.floor(c.startsAt.getTime() / 60_000) === startMinute,
       );
       if (dup) {
         await reactFor(input.eventId, dup.id, ctx.userId);
@@ -592,8 +621,8 @@ export const eventsRouter = router({
 
   // The creator locks the winning TIME, opening the blind moment. The creator is anonymous to others
   // but we still authorize via the stored createdByUserId (a self-check, never surfaced). With no
-  // candidateId we pick the best-supported time (most public +1s). If the plan has no title yet, the
-  // winning ACTIVITY becomes the title at lock.
+  // candidateId we pick the best-supported time (most public +1s). If the plan has no activity yet,
+  // the winning ACTIVITY becomes the plan's name at lock.
   lock: protectedProcedure.input(LockInput).mutation(async ({ ctx, input }) => {
     const e = await loadEvent(input.eventId, ctx.userId);
     if (e.createdByUserId !== ctx.userId) {
@@ -617,8 +646,8 @@ export const eventsRouter = router({
     if (!chosen?.startsAt)
       throw new TRPCError({ code: "BAD_REQUEST", message: "unknown candidate" });
 
-    const title = resolveTitle(
-      e.title,
+    const activity = resolveActivity(
+      e.activity,
       cands.filter((c) => c.kind === "activity").map((c) => ({ id: c.id, label: c.label })),
       reactions,
     );
@@ -633,7 +662,6 @@ export const eventsRouter = router({
       .update(events)
       .set({
         phase: "moment",
-        title,
         chosenCandidateId: chosenId,
         momentStartsAt: now,
         momentEndsAt,
@@ -641,7 +669,67 @@ export const eventsRouter = router({
         respondByAt: momentEndsAt,
       })
       .where(eq(events.id, input.eventId));
+    // Fill the derived activity only if the row still has none, so a member's concurrent edit (events
+    // .update) is never clobbered at lock. resolveActivity keeps a non-empty activity as-is, so this
+    // only names the never-named case (guarded on the stored activity still being "").
+    if (activity) {
+      await db
+        .update(events)
+        .set({ activity })
+        .where(and(eq(events.id, input.eventId), eq(events.activity, "")));
+    }
     return { ok: true as const, chosenCandidateId: chosenId };
+  }),
+
+  // Any member edits a plan's text metadata - activity, location, notes - while it is not yet
+  // cleared/fizzled. Anonymous, like every other write (no creator check, no attribution). Each field
+  // is an optimistic compare-and-set: the client sends the value it loaded (`from`) and the new value
+  // (`to`); we apply `to` only if the row's current value still equals `from`, else we report the
+  // field in `conflicts` carrying the now-current value and leave it untouched. A SELECT ... FOR UPDATE
+  // serializes concurrent updates, so same-field edits never clobber (first wins, second conflicts)
+  // and different-field edits both apply. An empty activity reverts to auto-derive (stored ""); an
+  // empty location stays "" (the column is notNull); empty notes clear to null.
+  update: protectedProcedure.input(UpdateEventInput).mutation(async ({ ctx, input }) => {
+    return db.transaction(async (tx) => {
+      const [e] = await tx.select().from(events).where(eq(events.id, input.eventId)).for("update");
+      if (!e) throw new TRPCError({ code: "NOT_FOUND" });
+      await requireMember(e.groupId, ctx.userId);
+      if (e.phase === "cleared" || e.phase === "fizzled") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "this plan is final" });
+      }
+      // While collecting, the activity is whatever ACTIVITY candidate wins the vote - it is not a
+      // free-text field yet, so reject an edit until the plan locks.
+      if (input.activity && e.phase === "collecting") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "the activity is decided by the vote while collecting",
+        });
+      }
+
+      const set: Partial<typeof events.$inferInsert> = {};
+      const conflicts: { field: string; current: string }[] = [];
+      // activity/location are non-null strings; description is nullable, so treat its current as "".
+      if (input.activity) {
+        if (e.activity === input.activity.from) set.activity = input.activity.to;
+        else conflicts.push({ field: "activity", current: e.activity });
+      }
+      if (input.location) {
+        if (e.location === input.location.from) set.location = input.location.to;
+        else conflicts.push({ field: "location", current: e.location });
+      }
+      if (input.description) {
+        const current = e.description ?? "";
+        if (current === input.description.from) {
+          set.description = input.description.to === "" ? null : input.description.to;
+        } else conflicts.push({ field: "description", current });
+      }
+
+      const applied = Object.keys(set);
+      if (applied.length > 0) {
+        await tx.update(events).set(set).where(eq(events.id, input.eventId));
+      }
+      return { applied, conflicts };
+    });
   }),
 
   // The dashboard: every (non-fizzled) plan in the user's groups, phase-aware.
@@ -669,16 +757,17 @@ export const eventsRouter = router({
         let iReacted = false;
         let candidateCount = 0;
         let readyToLock = false;
-        // Collecting plans have no real title yet (it is fixed at lock); show the leading activity or
-        // a placeholder so a card never renders blank. Locked plans already carry a real title.
-        let title = e.title;
+        // Collecting plans have no real activity yet (it is fixed at lock); show the leading activity
+        // candidate (or blank, the client falls back) so a card stays meaningful. Locked plans already
+        // carry a real activity name.
+        let activity = e.activity;
         if (e.phase === "collecting") {
           const cands = await candidatesFor(e.id);
           candidateCount = cands.length;
           const reactions = await reactionsFor(e.id);
           iReacted = reactions.some((r) => r.userId === ctx.userId);
-          title = displayTitle(
-            e.title,
+          activity = displayActivity(
+            e.activity,
             cands.filter((c) => c.kind === "activity").map((c) => ({ id: c.id, label: c.label })),
             reactions,
           );
@@ -691,7 +780,7 @@ export const eventsRouter = router({
         return {
           id: e.id,
           groupName: await getGroupName(e.groupId),
-          title,
+          activity,
           location: e.location,
           phase: e.phase,
           startsAt: e.startsAt.toISOString(),
@@ -713,6 +802,29 @@ export const eventsRouter = router({
       }),
     );
     return out.filter((x): x is NonNullable<typeof x> => x !== null);
+  }),
+
+  // The redo picker: a group's past (cleared) meetups, each reduced to a clonable shell - the won
+  // activity (the plan's name), lock-times flag, location, notes - so the wizard can pre-fill a fresh
+  // plan from one (the activity preloaded + locked; the creator just picks a new time). The name is the
+  // `events.activity` scalar, so it is carried directly (not re-derived from candidate rows). Carries
+  // no time (always stale) and no RSVP data; the creator stays anonymous (no creator identity).
+  pastForGroup: protectedProcedure.input(ByGroupInput).query(async ({ ctx, input }) => {
+    await requireMember(input.groupId, ctx.userId);
+    const rows = await db
+      .select()
+      .from(events)
+      .where(and(eq(events.groupId, input.groupId), eq(events.phase, "cleared")));
+    return shapePastMeetups(
+      rows.map((e) => ({
+        id: e.id,
+        activity: e.activity,
+        location: e.location,
+        description: e.description,
+        startsAt: e.startsAt,
+        lockTimes: e.lockTimes,
+      })),
+    );
   }),
 
   // One plan in full, phase-aware: time + activity candidates with public +1 counts (collecting),
@@ -783,19 +895,23 @@ export const eventsRouter = router({
     return {
       id: e.id,
       groupName: await getGroupName(e.groupId),
-      // No real title until lock; show the leading activity (or a placeholder) so it never renders blank.
-      title: displayTitle(
-        e.title,
+      // No real activity until lock; show the leading activity candidate (or blank, the client falls
+      // back) so it stays meaningful while collecting.
+      activity: displayActivity(
+        e.activity,
         cands.filter((c) => c.kind === "activity").map((c) => ({ id: c.id, label: c.label })),
         reactions,
       ),
+      // The RAW stored activity (often "" while collecting); the edit sheet needs it so an empty
+      // activity keeps auto-deriving rather than locking in the derived value.
+      activityRaw: e.activity,
       description: e.description,
       location: e.location,
       phase: e.phase,
       contingent: e.contingent,
       quorum: e.quorum,
       lockTimes: e.lockTimes,
-      lockThings: e.lockThings,
+      lockActivity: e.lockActivity,
       startsAt: e.startsAt.toISOString(),
       decidesBy: e.decidesBy?.toISOString() ?? null,
       msLeftToDecide: msLeft(e.decidesBy),

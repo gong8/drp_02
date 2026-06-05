@@ -65,7 +65,7 @@ export interface Plan {
   id: string;
   groupId: string;
   createdBy: string;
-  title: string;
+  activity: string;
   location?: string;
   contingent: boolean;
   quorum: number;
@@ -74,7 +74,7 @@ export interface Plan {
   candidates: Cand[];
   // Creator flags, default false=open. When true, members cannot add that kind of candidate.
   lockTimes?: boolean;
-  lockThings?: boolean;
+  lockActivity?: boolean;
   // When a collecting plan auto-decides the winning slot and opens the moment. Must sit before the
   // earliest TIME candidate. Null/absent for the concrete shortcut (straight to moment).
   decidesBy?: Date;
@@ -91,7 +91,7 @@ export const PLANS: Plan[] = [
     id: "e_movie",
     groupId: "g_boys",
     createdBy: "u_dev",
-    title: "Dune: Part Two",
+    activity: "Dune: Part Two",
     location: "Cineworld Bexleyheath",
     contingent: true,
     quorum: 3,
@@ -117,7 +117,7 @@ export const PLANS: Plan[] = [
     id: "e_pub",
     groupId: "g_climb",
     createdBy: "u_adi",
-    title: "Pub night",
+    activity: "Pub night",
     location: "The Lighthouse",
     contingent: true,
     quorum: 2,
@@ -133,7 +133,7 @@ export const PLANS: Plan[] = [
     id: "e_bowling",
     groupId: "g_boys",
     createdBy: "u_adi",
-    title: "Bowling",
+    activity: "Bowling",
     location: "TenPin Bowling, Bexleyheath",
     contingent: false,
     quorum: 1,
@@ -154,7 +154,7 @@ export const PLANS: Plan[] = [
     id: "e_dinner",
     groupId: "g_hs",
     createdBy: "u_vasanth",
-    title: "Dinner",
+    activity: "Dinner",
     location: "La Palombe",
     contingent: true,
     quorum: 2,
@@ -176,7 +176,7 @@ export const PLANS: Plan[] = [
     id: "e_football",
     groupId: "g_boys",
     createdBy: "u_joe",
-    title: "Football",
+    activity: "Football",
     location: "Goals Wembley",
     contingent: false,
     quorum: 1,
@@ -191,13 +191,13 @@ export const PLANS: Plan[] = [
     ],
   },
   {
-    // A still-collecting plan in the climbing group, left untitled so its winning ACTIVITY resolves
-    // into the title at lock. Anonymous (no names), with PUBLIC +1 counts on both lists: among
+    // A still-collecting plan in the climbing group, left unnamed so its winning ACTIVITY resolves
+    // into the plan's name at lock. Anonymous (no names), with PUBLIC +1 counts on both lists: among
     // activities "bowling" leads (2 backers), and among times the day-2 evening slot leads (2).
     id: "e_float_climb",
     groupId: "g_climb",
     createdBy: "u_adi",
-    title: "",
+    activity: "",
     contingent: true,
     quorum: 2,
     phase: "collecting",

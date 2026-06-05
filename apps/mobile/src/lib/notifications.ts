@@ -8,7 +8,7 @@ import type { trpc } from "./trpc"; // type-only: server code is never bundled
 // phase/myStatus their real pgEnum / MyStatus unions, so a literal typo fails typecheck.
 export type ReminderEvent = Pick<
   Awaited<ReturnType<typeof trpc.events.mine.query>>[number],
-  "id" | "title" | "phase" | "myStatus" | "iReacted" | "decidesBy" | "momentEndsAt"
+  "id" | "activity" | "groupName" | "phase" | "myStatus" | "iReacted" | "decidesBy" | "momentEndsAt"
 >;
 
 // Show a banner even when the app is foregrounded, so a co-located demo still "dings".
@@ -74,14 +74,14 @@ export async function syncReminders(events: ReminderEvent[]): Promise<void> {
           await schedule(
             new Date(decideMs - DECIDE_LEAD_MS),
             "Decides soon",
-            `"${e.title}" decides ${formatSlot(e.decidesBy)} - tap what you're keen on.`,
+            `"${e.activity || e.groupName}" decides ${formatSlot(e.decidesBy)} - tap what you're keen on.`,
           );
         }
         if (decideMs > now) {
           await schedule(
             new Date(decideMs),
             "Who's in?",
-            `"${e.title}" just opened for the moment - say if you're in.`,
+            `"${e.activity || e.groupName}" just opened for the moment - say if you're in.`,
           );
         }
       }
@@ -92,7 +92,7 @@ export async function syncReminders(events: ReminderEvent[]): Promise<void> {
           RSVP_LEAD_MS,
           now,
           "RSVP closing",
-          `"${e.title}" - are you in? Closing soon.`,
+          `"${e.activity || e.groupName}" - are you in? Closing soon.`,
         );
       }
     }

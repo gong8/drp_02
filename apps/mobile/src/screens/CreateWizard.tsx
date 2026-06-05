@@ -1,39 +1,52 @@
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { type ReactNode, useEffect, useRef, useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Pressable, Text, View, type ViewStyle } from "react-native";
 import type { MeetupsStackParams } from "../../App";
+import { ERR_SAVE, NO_NAMES, NOTE_TOP_PICK, STEP_COPY } from "../lib/copy";
 import { formatSlot, isoFrom, splitIso } from "../lib/format";
 import { defaultDecidesByForCandidates, defaultReplyByMs, MOMENT_MS } from "../lib/lock";
+import { EMPTY_PREFILL, type Prefill, prefillFromMeetup, wizardSteps } from "../lib/redo";
 import { trpc } from "../lib/trpc";
 import { font, ui } from "../theme";
 import {
-  BackBar,
+  AppText,
   Button,
   Card,
+  CheckOption,
   Chip,
   DateTimePill,
   Field,
+  FormError,
   Row,
-  ScreenBackground,
+  ScreenHeader,
   ScreenLoading,
+  ScreenScroll,
+  Section,
+  SelectCheck,
+  TextButton,
 } from "../ui";
 
 type Group = Awaited<ReturnType<typeof trpc.groups.mine.query>>[number];
+type PastMeetup = Awaited<ReturnType<typeof trpc.events.pastForGroup.query>>[number];
 type TimeRow = { id: string; date: string; time: string };
 type Props = NativeStackScreenProps<MeetupsStackParams, "CreateWizard">;
 
-const STEPS = ["group", "activities", "times", "options", "confirm"] as const;
-
 export function CreateWizard({ navigation }: Props) {
   const [step, setStep] = useState(0);
-  const stepKey = STEPS[step];
-  const isLastStep = step === STEPS.length - 1;
 
   const [groups, setGroups] = useState<Group[]>([]);
   const [groupId, setGroupId] = useState<string | null>(null);
-  // Title is never set in the wizard - the server resolves the winning activity into it at lock, so
-  // we always send it blank (omitted). Kept here as the single source for the create call's `title`.
-  const title = "";
+  const [pastMeetups, setPastMeetups] = useState<PastMeetup[]>([]);
+  // Whether the past-meetups query for the current group has settled. The "source" step is inserted
+  // only once it has, so the group step gates Next on this - otherwise a late insert would shift the
+  // step list under the user (stepKey is an index) and silently change the visible step.
+  const [pastLoaded, setPastLoaded] = useState(false);
+  // The source-step choice: null = not chosen yet, "fresh" = start blank, otherwise a past-meetup id.
+  const [source, setSource] = useState<"fresh" | string | null>(null);
+
+  const STEPS = wizardSteps(pastMeetups.length > 0);
+  const stepKey = STEPS[step];
+  const isLastStep = step === STEPS.length - 1;
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
   // Activity ("what") candidates - ideas, optional, no names ever shown.
@@ -44,7 +57,7 @@ export function CreateWizard({ navigation }: Props) {
   const nextRowId = useRef(1);
   // Creator locks - both default OFF (open). Decides-by is editable.
   const [lockTimes, setLockTimes] = useState(false);
-  const [lockThings, setLockThings] = useState(false);
+  const [lockActivity, setLockActivity] = useState(false);
   const [decidesEdit, setDecidesEdit] = useState(false);
   const [decidesDate, setDecidesDate] = useState("");
   const [decidesTime, setDecidesTime] = useState("");
@@ -71,6 +84,26 @@ export function CreateWizard({ navigation }: Props) {
       .finally(() => setLoading(false));
   }, []);
 
+  // When the chosen group changes, refresh its redo list and drop any clone/source from the previous
+  // group (the source step is only meaningful for the currently selected group). Intentionally keyed on
+  // groupId alone - applyPrefill is a stable helper and re-running on its identity is not wanted.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: groupId is the only intended trigger.
+  useEffect(() => {
+    if (!groupId) return;
+    let active = true;
+    setSource(null);
+    setPastLoaded(false);
+    applyPrefill(EMPTY_PREFILL);
+    trpc.events.pastForGroup
+      .query({ groupId })
+      .then((m) => active && setPastMeetups(m))
+      .catch(() => active && setPastMeetups([]))
+      .finally(() => active && setPastLoaded(true));
+    return () => {
+      active = false;
+    };
+  }, [groupId]);
+
   const timeIsos = rows.map((r) => isoFrom(r.date, r.time)).filter((x): x is string => x !== null);
   const earliestMs = timeIsos.length
     ? Math.min(...timeIsos.map((iso) => new Date(iso).getTime()))
@@ -94,10 +127,10 @@ export function CreateWizard({ navigation }: Props) {
   const canLockTimes = timeIsos.length > 0;
   const canLockActivity = activityCount > 0;
   const lockTimesEff = lockTimes && canLockTimes;
-  const lockThingsEff = lockThings && canLockActivity;
+  const lockActivityEff = lockActivity && canLockActivity;
   // Concrete shortcut: skip voting only when BOTH axes are pinned - one locked time AND a locked
   // activity. Must match the server's planOpensMoment so the preview never diverges.
-  const isConcrete = timeIsos.length === 1 && lockTimesEff && lockThingsEff && activityCount <= 1;
+  const isConcrete = timeIsos.length === 1 && lockTimesEff && lockActivityEff && activityCount <= 1;
 
   // Reply-by: the blind RSVP window opens at the vote-close (or now, for a concrete plan) and must sit
   // after it and no later than the earliest time. Default + cap mirror the server (defaultReplyByMs).
@@ -129,12 +162,29 @@ export function CreateWizard({ navigation }: Props) {
   function valid(key: string): boolean {
     switch (key) {
       case "group":
-        return !!groupId;
-      case "options":
+        // Wait for the past-meetups query so the step list is final before leaving this step.
+        return !!groupId && pastLoaded;
+      case "source":
+        return source !== null;
+      case "deadlines":
         return !decidesInvalid && !replyInvalid;
       default:
-        return true; // activities, times, confirm - all optional
+        return true; // activities, times, details, confirm - all optional
     }
+  }
+
+  function applyPrefill(p: Prefill) {
+    setActivityChips(p.activityChips);
+    setActivityDraft("");
+    setLockTimes(p.lockTimes);
+    setLockActivity(p.lockActivity);
+    setLocation(p.location);
+    setDescription(p.description);
+    // Time is never carried - reset to a single blank row so the creator sets it fresh.
+    setRows([{ id: "t0", date: "", time: "" }]);
+    nextRowId.current = 1;
+    setDecidesEdit(false);
+    setReplyEdit(false);
   }
 
   // Fold the typed-but-not-added activity into the chip list (case-insensitive de-dup), returning
@@ -174,13 +224,12 @@ export function CreateWizard({ navigation }: Props) {
     try {
       await trpc.events.create.mutate({
         groupId,
-        title: title.trim() || undefined,
         description: description.trim() || undefined,
         location: location.trim() || undefined,
         timeCandidates: timeIsos.map((startsAt) => ({ startsAt })),
         activityCandidates: activities.length ? activities : undefined,
         lockTimes: lockTimesEff,
-        lockThings: lockThingsEff,
+        lockActivity: lockActivityEff,
         decidesBy: decidesToSend,
         replyBy: replyToSend,
       });
@@ -205,332 +254,235 @@ export function CreateWizard({ navigation }: Props) {
   if (loading) return <ScreenLoading />;
 
   const nextLabel = isLastStep ? "Send to the group" : "Next";
+  const copy = STEP_COPY[stepKey];
 
   return (
-    <ScreenBackground header={<BackBar title="New meetup" onBack={goBack} />}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 2, paddingBottom: 24 }}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
-        >
-          <ProgressDots steps={STEPS} index={step} />
-          {error && (
-            <Text style={{ fontFamily: font.medium, color: ui.brand, marginBottom: 10 }}>
-              Something went wrong. Try again.
-            </Text>
-          )}
+    <ScreenScroll header={<ScreenHeader title="New meetup" onBack={goBack} />} avoidKeyboard>
+      <ProgressDots steps={STEPS} index={step} />
+      {error && <FormError>{ERR_SAVE}</FormError>}
 
-          {stepKey === "group" && (
-            <Step title="Who's it for?">
-              <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
-                {groups.map((g) => (
-                  <Chip
-                    key={g.id}
-                    label={g.name}
-                    selected={groupId === g.id}
-                    onPress={() => setGroupId(g.id)}
-                  />
-                ))}
-                {groups.length === 0 && (
-                  <Text style={{ fontFamily: font.medium, fontSize: 13, color: ui.muted }}>
-                    You're not in any groups yet.
-                  </Text>
+      <Section title={copy.title} sub={copy.sub} size="lg">
+        {stepKey === "group" && (
+          <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
+            {groups.map((g) => (
+              <Chip
+                key={g.id}
+                label={g.name}
+                selected={groupId === g.id}
+                onPress={() => setGroupId(g.id)}
+              />
+            ))}
+            {groups.length === 0 && (
+              <AppText variant="caption">You're not in any groups yet.</AppText>
+            )}
+          </View>
+        )}
+
+        {stepKey === "source" && (
+          <>
+            <SourceCard
+              title="Start fresh"
+              sub="A blank meetup"
+              selected={source === "fresh"}
+              onPress={() => {
+                setSource("fresh");
+                applyPrefill(EMPTY_PREFILL);
+              }}
+            />
+            {pastMeetups.map((m) => (
+              <SourceCard
+                key={m.id}
+                title={m.activity || "Untitled meetup"}
+                sub={`${m.location ? `${m.location} · ` : ""}last on ${formatSlot(m.lastStartsAt)}`}
+                selected={source === m.id}
+                onPress={() => {
+                  setSource(m.id);
+                  applyPrefill(prefillFromMeetup(m));
+                }}
+              />
+            ))}
+          </>
+        )}
+
+        {stepKey === "activities" && (
+          <>
+            {activityChips.map((c) => (
+              <Row key={c}>
+                <AppText variant="rowLabel" style={{ flex: 1 }}>
+                  {c}
+                </AppText>
+                <TextButton
+                  label="×"
+                  tone="muted"
+                  onPress={() => setActivityChips((cs) => cs.filter((x) => x !== c))}
+                />
+              </Row>
+            ))}
+            <Field
+              label="Add an activity"
+              optional
+              value={activityDraft}
+              onChangeText={setActivityDraft}
+              placeholder="bowling, the pub..."
+              right={
+                <TextButton
+                  label="Add"
+                  disabled={!activityDraft.trim()}
+                  onPress={commitDraftActivity}
+                />
+              }
+            />
+            <CheckOption
+              label="Lock the activity"
+              sub={
+                canLockActivity ? "The group can't add more activities" : "Add an activity first"
+              }
+              on={lockActivityEff}
+              disabled={!canLockActivity}
+              onToggle={() => setLockActivity((v) => !v)}
+              style={{ marginTop: 16 }}
+            />
+          </>
+        )}
+
+        {stepKey === "times" && (
+          <>
+            {rows.map((r) => (
+              <View key={r.id} style={{ position: "relative", marginBottom: 10 }}>
+                <DateTimePill
+                  dateValue={r.date}
+                  timeValue={r.time}
+                  onDate={(t) => updateRow(r.id, { date: t })}
+                  onTime={(t) => updateRow(r.id, { time: t })}
+                  minimumDate={new Date()}
+                />
+                {rows.length > 1 && (
+                  <RemoveDot onPress={() => setRows((rs) => rs.filter((x) => x.id !== r.id))} />
                 )}
               </View>
-            </Step>
-          )}
-
-          {stepKey === "activities" && (
-            <Step
-              title="What do you fancy?"
-              sub="Drop a few activities - optional, and the group can add more. No names - it's the group's."
-            >
-              {activityChips.map((c) => (
-                <Row key={c}>
-                  <Text style={{ flex: 1, fontFamily: font.bold, fontSize: 14, color: ui.ink }}>
-                    {c}
-                  </Text>
-                  <Pressable
-                    onPress={() => setActivityChips((cs) => cs.filter((x) => x !== c))}
-                    hitSlop={10}
-                  >
-                    <Text style={{ fontFamily: font.bold, fontSize: 16, color: ui.muted }}>×</Text>
-                  </Pressable>
-                </Row>
-              ))}
-              <Field
-                label="Add an activity"
-                optional
-                value={activityDraft}
-                onChangeText={setActivityDraft}
-                placeholder="bowling, the pub..."
-                right={
-                  <Pressable
-                    onPress={commitDraftActivity}
-                    hitSlop={8}
-                    disabled={!activityDraft.trim()}
-                  >
-                    <Text
-                      style={{
-                        fontFamily: font.bold,
-                        fontSize: 13,
-                        color: activityDraft.trim() ? ui.brand : ui.muted,
-                      }}
-                    >
-                      Add
-                    </Text>
-                  </Pressable>
+            ))}
+            {rows.length < 10 && (
+              <Chip
+                label="+ Add a time"
+                onPress={() =>
+                  setRows((rs) => [...rs, { id: `t${nextRowId.current++}`, date: "", time: "" }])
                 }
               />
-            </Step>
-          )}
+            )}
+            <CheckOption
+              label="Lock the times"
+              sub={canLockTimes ? "The group can't add more times" : "Add a time first"}
+              on={lockTimesEff}
+              disabled={!canLockTimes}
+              onToggle={() => setLockTimes((v) => !v)}
+              style={{ marginTop: 16 }}
+            />
+          </>
+        )}
 
-          {stepKey === "times" && (
-            <Step
-              title="When could it be?"
-              sub="Offer a time or two, or skip - people react and the best-supported wins. Optional."
-            >
-              {rows.map((r) => (
-                <View key={r.id} style={{ position: "relative", marginBottom: 10 }}>
-                  <DateTimePill
-                    dateValue={r.date}
-                    timeValue={r.time}
-                    onDate={(t) => updateRow(r.id, { date: t })}
-                    onTime={(t) => updateRow(r.id, { time: t })}
-                    minimumDate={new Date()}
-                  />
-                  {rows.length > 1 && (
-                    <RemoveDot onPress={() => setRows((rs) => rs.filter((x) => x.id !== r.id))} />
-                  )}
-                </View>
-              ))}
-              {rows.length < 10 && (
-                <Chip
-                  label="+ Add a time"
-                  onPress={() =>
-                    setRows((rs) => [...rs, { id: `t${nextRowId.current++}`, date: "", time: "" }])
-                  }
-                />
-              )}
-            </Step>
-          )}
+        {stepKey === "details" && (
+          <>
+            <Field
+              label="Location"
+              optional
+              value={location}
+              onChangeText={setLocation}
+              placeholder="TenPin Bexleyheath"
+            />
+            <Field
+              label="Notes"
+              optional
+              value={description}
+              onChangeText={setDescription}
+              placeholder="Come at 6, we'll eat around 8"
+              multiline
+              style={{ marginTop: 12 }}
+            />
+          </>
+        )}
 
-          {stepKey === "options" && (
-            <Step title="A few options" sub="All optional - skip if you like.">
-              <Field
-                label="Location"
-                optional
-                value={location}
-                onChangeText={setLocation}
-                placeholder="TenPin Bexleyheath"
-              />
-              <Field
-                label="Notes"
-                optional
-                value={description}
-                onChangeText={setDescription}
-                placeholder="Come at 6, we'll eat around 8"
-                multiline
-                style={{ marginTop: 12 }}
-              />
-              <CheckRow
-                label="Lock the times"
-                sub={canLockTimes ? "The group can't add more times" : "Add a time first"}
-                on={lockTimesEff}
-                disabled={!canLockTimes}
-                onToggle={() => setLockTimes((v) => !v)}
-              />
-              <CheckRow
-                label="Lock the activity"
-                sub={
-                  canLockActivity ? "The group can't add more activities" : "Add an activity first"
+        {stepKey === "deadlines" && (
+          <>
+            {!isConcrete && (
+              <DeadlineField
+                heading="Decides by"
+                editing={decidesEdit}
+                date={decidesDate}
+                time={decidesTime}
+                onDate={setDecidesDate}
+                onTime={setDecidesTime}
+                minimumDate={new Date()}
+                invalid={decidesInvalid}
+                invalidNote="It has to decide at least an hour before your earliest time."
+                defaultLine={
+                  autoDecidesIso ? `Decides ${formatSlot(autoDecidesIso)}` : "A sensible deadline"
                 }
-                on={lockThingsEff}
-                disabled={!canLockActivity}
-                onToggle={() => setLockThings((v) => !v)}
+                defaultSub={
+                  autoDecidesIso ? NOTE_TOP_PICK : "Add times to set this, or we'll pick a horizon"
+                }
+                onEdit={autoDecidesIso ? startEditDecides : undefined}
+                onUseDefault={() => {
+                  setDecidesEdit(false);
+                  setDecidesDate("");
+                  setDecidesTime("");
+                }}
               />
-              {!isConcrete && (
-                <>
-                  <Text
-                    style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink, marginTop: 18 }}
-                  >
-                    Decides by
-                  </Text>
-                  {decidesEdit ? (
-                    <Card style={{ marginTop: 8 }}>
-                      <DateTimePill
-                        dateValue={decidesDate}
-                        timeValue={decidesTime}
-                        onDate={setDecidesDate}
-                        onTime={setDecidesTime}
-                        minimumDate={new Date()}
-                      />
-                      {decidesInvalid && (
-                        <Text
-                          style={{
-                            fontFamily: font.medium,
-                            fontSize: 11,
-                            color: ui.brand,
-                            marginTop: 8,
-                          }}
-                        >
-                          It has to decide at least an hour before your earliest time.
-                        </Text>
-                      )}
-                      <View style={{ flexDirection: "row", marginTop: 12 }}>
-                        <Chip
-                          label="Use default"
-                          onPress={() => {
-                            setDecidesEdit(false);
-                            setDecidesDate("");
-                            setDecidesTime("");
-                          }}
-                        />
-                      </View>
-                    </Card>
-                  ) : (
-                    <Card style={{ marginTop: 8 }}>
-                      <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>
-                        {autoDecidesIso
-                          ? `Decides ${formatSlot(autoDecidesIso)}`
-                          : "A sensible deadline"}
-                      </Text>
-                      <Text
-                        style={{
-                          fontFamily: font.medium,
-                          fontSize: 11,
-                          color: ui.muted,
-                          marginTop: 3,
-                        }}
-                      >
-                        {autoDecidesIso
-                          ? "before your earliest time - best-supported wins"
-                          : "add times to set this, or we'll pick a horizon"}
-                      </Text>
-                      {autoDecidesIso && (
-                        <View style={{ flexDirection: "row", marginTop: 10 }}>
-                          <Chip label="Change" onPress={startEditDecides} />
-                        </View>
-                      )}
-                    </Card>
-                  )}
-                </>
-              )}
+            )}
 
-              {earliestMs != null && (
-                <>
-                  <Text
-                    style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink, marginTop: 18 }}
-                  >
-                    Reply by
-                  </Text>
-                  {replyEdit ? (
-                    <Card style={{ marginTop: 8 }}>
-                      <DateTimePill
-                        dateValue={replyDate}
-                        timeValue={replyTime}
-                        onDate={setReplyDate}
-                        onTime={setReplyTime}
-                        minimumDate={new Date(replyFloorMs)}
-                        maximumDate={new Date(earliestMs)}
-                      />
-                      {replyInvalid && (
-                        <Text
-                          style={{
-                            fontFamily: font.medium,
-                            fontSize: 11,
-                            color: ui.brand,
-                            marginTop: 8,
-                          }}
-                        >
-                          Replies close after voting ends and no later than your earliest time.
-                        </Text>
-                      )}
-                      <View style={{ flexDirection: "row", marginTop: 12 }}>
-                        <Chip
-                          label="Use default"
-                          onPress={() => {
-                            setReplyEdit(false);
-                            setReplyDate("");
-                            setReplyTime("");
-                          }}
-                        />
-                      </View>
-                    </Card>
-                  ) : (
-                    <Card style={{ marginTop: 8 }}>
-                      <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>
-                        {autoReplyIso
-                          ? `Replies close ${formatSlot(autoReplyIso)}`
-                          : "A sensible deadline"}
-                      </Text>
-                      <Text
-                        style={{
-                          fontFamily: font.medium,
-                          fontSize: 11,
-                          color: ui.muted,
-                          marginTop: 3,
-                        }}
-                      >
-                        blind until then - then it reveals who's in
-                      </Text>
-                      {autoReplyIso && (
-                        <View style={{ flexDirection: "row", marginTop: 10 }}>
-                          <Chip label="Change" onPress={startEditReply} />
-                        </View>
-                      )}
-                    </Card>
-                  )}
-                </>
-              )}
-            </Step>
-          )}
+            {earliestMs != null && (
+              <DeadlineField
+                style={{ marginTop: isConcrete ? 0 : 18 }}
+                heading="Reply by"
+                editing={replyEdit}
+                date={replyDate}
+                time={replyTime}
+                onDate={setReplyDate}
+                onTime={setReplyTime}
+                minimumDate={new Date(replyFloorMs)}
+                maximumDate={new Date(earliestMs)}
+                invalid={replyInvalid}
+                invalidNote="Replies close after voting ends and no later than your earliest time."
+                defaultLine={
+                  autoReplyIso ? `Replies close ${formatSlot(autoReplyIso)}` : "A sensible deadline"
+                }
+                defaultSub="Blind until then, then it reveals who's in"
+                onEdit={autoReplyIso ? startEditReply : undefined}
+                onUseDefault={() => {
+                  setReplyEdit(false);
+                  setReplyDate("");
+                  setReplyTime("");
+                }}
+              />
+            )}
+          </>
+        )}
 
-          {stepKey === "confirm" && (
-            <Step title="Ready to send?">
-              <Card>
-                <Text
-                  style={{ fontFamily: font.bold, fontSize: 14, color: ui.ink, lineHeight: 21 }}
-                >
-                  {confirmMirror({
-                    timeCount: timeIsos.length,
-                    activityCount,
-                    timeFixed: timeIsos.length === 1 && lockTimesEff,
-                    activityFixed: lockThingsEff && activityCount <= 1,
-                    firstTimeIso: timeIsos[0] ?? null,
-                  })}
-                </Text>
-                <Text
-                  style={{
-                    fontFamily: font.medium,
-                    fontSize: 12,
-                    color: ui.muted,
-                    marginTop: 12,
-                    lineHeight: 18,
-                  }}
-                >
-                  No names - it's the group's.
-                </Text>
-              </Card>
-            </Step>
-          )}
+        {stepKey === "confirm" && (
+          <Card>
+            <Text style={{ fontFamily: font.bold, fontSize: 14, color: ui.ink, lineHeight: 21 }}>
+              {confirmMirror({
+                timeCount: timeIsos.length,
+                activityCount,
+                timeFixed: timeIsos.length === 1 && lockTimesEff,
+                activityFixed: lockActivityEff && activityCount <= 1,
+                firstTimeIso: timeIsos[0] ?? null,
+              })}
+            </Text>
+            <AppText variant="caption" style={{ marginTop: 12, lineHeight: 18 }}>
+              {NO_NAMES}
+            </AppText>
+          </Card>
+        )}
+      </Section>
 
-          <Button
-            label={nextLabel}
-            variant="primary"
-            disabled={!valid(stepKey) || busy}
-            onPress={goNext}
-            style={{ marginTop: 24 }}
-          />
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </ScreenBackground>
+      <Button
+        label={nextLabel}
+        variant="primary"
+        disabled={!valid(stepKey) || busy}
+        onPress={goNext}
+        style={{ marginTop: 24 }}
+      />
+    </ScreenScroll>
   );
 }
 
@@ -543,7 +495,7 @@ function ProgressDots({ steps, index }: { steps: readonly string[]; index: numbe
           style={{
             width: i === index ? 22 : 8,
             height: 8,
-            borderRadius: 999,
+            borderRadius: ui.rPill,
             borderWidth: 1.5,
             borderColor: ui.ink,
             backgroundColor: i <= index ? ui.ink : "transparent",
@@ -554,30 +506,30 @@ function ProgressDots({ steps, index }: { steps: readonly string[]; index: numbe
   );
 }
 
-function Step({ title, sub, children }: { title: string; sub?: string; children: ReactNode }) {
+// A pickable card on the source step (start fresh, or a past meetup). Selection shows via SelectCheck.
+function SourceCard({
+  title,
+  sub,
+  selected,
+  onPress,
+}: {
+  title: string;
+  sub: string;
+  selected: boolean;
+  onPress: () => void;
+}) {
   return (
-    <View>
-      <Text style={{ fontFamily: font.display, fontSize: 22, letterSpacing: -0.5, color: ui.ink }}>
-        {title}
-      </Text>
-      {sub ? (
-        <Text
-          style={{
-            fontFamily: font.medium,
-            fontSize: 12,
-            color: ui.muted,
-            marginTop: 6,
-            marginBottom: 14,
-            lineHeight: 18,
-          }}
-        >
-          {sub}
-        </Text>
-      ) : (
-        <View style={{ height: 14 }} />
-      )}
-      {children}
-    </View>
+    <Card padding={14} onPress={onPress} style={{ marginBottom: 11 }}>
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <View style={{ flex: 1, marginRight: 12 }}>
+          <AppText variant="title">{title}</AppText>
+          <AppText variant="caption" style={{ marginTop: 2 }}>
+            {sub}
+          </AppText>
+        </View>
+        <SelectCheck selected={selected} />
+      </View>
+    </Card>
   );
 }
 
@@ -592,7 +544,7 @@ function RemoveDot({ onPress }: { onPress: () => void }) {
         right: -8,
         width: 22,
         height: 22,
-        borderRadius: 11,
+        borderRadius: ui.rPill,
         backgroundColor: ui.surface,
         borderWidth: ui.border,
         borderColor: ui.ink,
@@ -605,62 +557,84 @@ function RemoveDot({ onPress }: { onPress: () => void }) {
   );
 }
 
-function CheckRow({
-  label,
-  sub,
-  on,
-  onToggle,
-  disabled = false,
+// One deadline editor (decides-by / reply-by): a heading over a default-mode Card (the chosen line +
+// a sub + an optional "Change") or an edit-mode Card (a date/time pill + an optional invalid note + a
+// "Use default"). The two deadlines on the deadlines step are the same shape, so they share this.
+function DeadlineField({
+  heading,
+  editing,
+  date,
+  time,
+  onDate,
+  onTime,
+  minimumDate,
+  maximumDate,
+  invalid,
+  invalidNote,
+  defaultLine,
+  defaultSub,
+  onEdit,
+  onUseDefault,
+  style,
 }: {
-  label: string;
-  sub: string;
-  on: boolean;
-  onToggle: () => void;
-  disabled?: boolean;
+  heading: string;
+  editing: boolean;
+  date: string;
+  time: string;
+  onDate: (t: string) => void;
+  onTime: (t: string) => void;
+  minimumDate: Date;
+  maximumDate?: Date;
+  invalid: boolean;
+  invalidNote: string;
+  defaultLine: string;
+  defaultSub: string;
+  onEdit?: () => void;
+  onUseDefault: () => void;
+  style?: ViewStyle;
 }) {
   return (
-    <Pressable
-      onPress={disabled ? undefined : onToggle}
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        marginTop: 16,
-        opacity: disabled ? 0.4 : 1,
-      }}
-    >
-      <View
-        style={{
-          width: 22,
-          height: 22,
-          borderRadius: 6,
-          borderWidth: ui.border,
-          borderColor: ui.ink,
-          backgroundColor: on ? ui.ink : "transparent",
-          alignItems: "center",
-          justifyContent: "center",
-          marginRight: 12,
-        }}
-      >
-        {on && (
-          <Text style={{ fontFamily: font.bold, fontSize: 13, lineHeight: 13, color: "#fff" }}>
-            ✓
-          </Text>
-        )}
-      </View>
-      <View style={{ flexShrink: 1 }}>
-        <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>{label}</Text>
-        <Text style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted, marginTop: 1 }}>
-          {sub}
-        </Text>
-      </View>
-    </Pressable>
+    <View style={style}>
+      <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>{heading}</Text>
+      {editing ? (
+        <Card style={{ marginTop: 8 }}>
+          <DateTimePill
+            dateValue={date}
+            timeValue={time}
+            onDate={onDate}
+            onTime={onTime}
+            minimumDate={minimumDate}
+            maximumDate={maximumDate}
+          />
+          {invalid && (
+            <AppText variant="caption" style={{ color: ui.brand, marginTop: 8 }}>
+              {invalidNote}
+            </AppText>
+          )}
+          <View style={{ flexDirection: "row", marginTop: 12 }}>
+            <Button size="sm" variant="outline" label="Use default" onPress={onUseDefault} />
+          </View>
+        </Card>
+      ) : (
+        <Card style={{ marginTop: 8 }}>
+          <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>{defaultLine}</Text>
+          <AppText variant="caption" style={{ marginTop: 3 }}>
+            {defaultSub}
+          </AppText>
+          {onEdit && (
+            <View style={{ flexDirection: "row", marginTop: 10 }}>
+              <Button size="sm" variant="outline" label="Change" onPress={onEdit} />
+            </View>
+          )}
+        </Card>
+      )}
+    </View>
   );
 }
 
-// The plain-English outcome mirror. It describes each axis by whether it is FIXED (locked to its
+// The plain-English outcome mirror. Describes each axis by whether it is FIXED (locked to its
 // candidates so there is nothing to vote on) or still being decided, so the preview matches what the
-// server actually does. Both fixed => concrete (skip voting); otherwise the open/contested axis is
-// what the group votes on.
+// server actually does. Both fixed => concrete (skip voting); otherwise the open axis is voted on.
 function confirmMirror({
   timeCount,
   activityCount,
@@ -674,30 +648,27 @@ function confirmMirror({
   activityFixed: boolean;
   firstTimeIso: string | null;
 }): string {
-  // The WHEN clause.
   const when = timeFixed && firstTimeIso ? `It's on for ${formatSlot(firstTimeIso)}` : null;
 
   if (when) {
-    // Time is set; only the activity (maybe) and the who's-in remain.
     if (activityFixed) {
       return activityCount === 1
-        ? `${when} - the activity's set too, so the group just says who's in.`
-        : `${when} - the group just says who's in.`;
+        ? `${when}. Activity set - just say who's in.`
+        : `${when}. Just say who's in.`;
     }
-    return `${when} - the group decides what to do, then says who's in.`;
+    return `${when}. The group picks what to do, then who's in.`;
   }
 
-  // Time is not fixed: the group converges on the time.
   const timePart =
     timeCount >= 1
-      ? `the group votes on your ${timeCount} time${timeCount === 1 ? "" : "s"}`
-      : "the group suggests the times";
+      ? `Vote on ${timeCount} time${timeCount === 1 ? "" : "s"}`
+      : "The group suggests times";
   const activityPart = activityFixed
     ? activityCount === 1
-      ? " (activity already set)"
+      ? " (activity set)"
       : ""
     : activityCount >= 1
-      ? ` and picks from ${activityCount} ${activityCount === 1 ? "activity" : "activities"}`
+      ? ` and ${activityCount} ${activityCount === 1 ? "activity" : "activities"}`
       : " and what to do";
-  return `No fixed time yet - ${timePart}${activityPart}, best-supported wins, then who's in.`;
+  return `${timePart}${activityPart}, then who's in.`;
 }

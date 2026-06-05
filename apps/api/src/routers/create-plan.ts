@@ -9,22 +9,22 @@ export function planOpensMoment(
   timeCandidateCount: number,
   lockTimes: boolean,
   activityCandidateCount: number,
-  lockThings: boolean,
+  lockActivity: boolean,
 ): boolean {
   const timePinned = timeCandidateCount === 1 && lockTimes;
-  const activityPinned = activityCandidateCount <= 1 && lockThings;
+  const activityPinned = activityCandidateCount <= 1 && lockActivity;
   return timePinned && activityPinned;
 }
 
-// When a plan locks with no explicit title, the winning ACTIVITY candidate (most public +1s, ties
-// broken by pickWinnerOrBestId's stable order) becomes the title. A non-empty title is kept as-is;
-// with no activity candidates the title stays empty.
-export function resolveTitle(
-  title: string,
+// When a plan locks with no explicit activity, the winning ACTIVITY candidate (most public +1s, ties
+// broken by pickWinnerOrBestId's stable order) becomes the plan's name. A non-empty activity is kept
+// as-is; with no activity candidates it stays empty.
+export function resolveActivity(
+  activity: string,
   activityCandidates: { id: string; label: string | null }[],
   reactions: { candidateId: string; userId: string }[],
 ): string {
-  if (title.trim() !== "") return title;
+  if (activity.trim() !== "") return activity;
   if (activityCandidates.length === 0) return "";
   const winnerId = pickWinnerOrBestId(
     activityCandidates.map((c) => c.id),
@@ -34,16 +34,10 @@ export function resolveTitle(
   return activityCandidates.find((c) => c.id === winnerId)?.label ?? "";
 }
 
-// Shown while a collecting plan still has no real title (the title is only fixed at lock, via
-// resolveTitle). Prefer the leading ACTIVITY candidate so a suggested activity names the plan live;
-// otherwise a friendly placeholder so a nameless plan never renders blank on a card or header.
-export const FALLBACK_TITLE = "An activity";
-
-export function displayTitle(
-  title: string,
+export function displayActivity(
+  activity: string,
   activityCandidates: { id: string; label: string | null }[],
   reactions: { candidateId: string; userId: string }[],
 ): string {
-  const resolved = resolveTitle(title, activityCandidates, reactions).trim();
-  return resolved || FALLBACK_TITLE;
+  return resolveActivity(activity, activityCandidates, reactions).trim();
 }
