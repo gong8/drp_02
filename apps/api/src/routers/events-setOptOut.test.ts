@@ -363,3 +363,28 @@ test("the opted-out member sees their own status reflected as declined (their ow
   assert.equal(own.iOptedOut, true, "the opted-out member sees their own iOptedOut as true");
   assert.equal(own.myStatus, "declined", "an opted-out member reads as declined in their own view");
 });
+
+// ----- a late opt-out settles first: collecting is over once decidesBy has passed (A1) -----
+
+test("opting out after decidesBy has passed is rejected (the write path settles the stale plan)", async () => {
+  // The stored phase is still `collecting`, but its decides-by deadline has passed and no read has
+  // settled it yet. The write must settle lazily like a read does, so the late opt-out is rejected.
+  const [creator, member] = await makeUsers(2);
+  const groupId = await makeGroup([creator, member]);
+  const eventId = await insertEvent({
+    groupId,
+    createdByUserId: creator,
+    phase: "collecting",
+    quorum: 1,
+    decidesBy: new Date(Date.now() - 60_000), // deadline passed, never read since
+  });
+  const c = await insertTimeCandidate(eventId, FUTURE());
+  await insertReaction(eventId, c, member); // a +1 so the plan auto-locks (not fizzle) on settle
+
+  await assert.rejects(
+    () => caller(member).events.setOptOut({ eventId, out: true }),
+    (e) => e instanceof TRPCError && e.code === "BAD_REQUEST",
+  );
+  const rows = await optOutRowsFor(eventId, member);
+  assert.equal(rows.length, 0, "no opt-out is recorded once the plan has stopped collecting");
+});

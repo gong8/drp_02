@@ -24,7 +24,7 @@ import {
   UpdateEventInput,
 } from "@bethere/shared";
 import { TRPCError } from "@trpc/server";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { getGroupName } from "../db/groups.js";
 import {
@@ -176,7 +176,10 @@ async function settleCollecting(e: EventRow): Promise<void> {
   );
   const now = new Date();
   const endsAt = resolveMomentEnd(now.getTime(), startsAt.getTime(), e.replyBy?.getTime() ?? null);
-  await db
+  // Guard the transition on the row STILL being a collecting plan with no chosen time, so a
+  // concurrent lock/auto-lock cannot be clobbered (its moment window reset). .returning() tells us
+  // whether THIS call did the transition; if it lost the race, reload the winner's state instead.
+  const locked = await db
     .update(events)
     .set({
       phase: "moment",
@@ -186,7 +189,15 @@ async function settleCollecting(e: EventRow): Promise<void> {
       startsAt,
       respondByAt: endsAt,
     })
-    .where(eq(events.id, e.id));
+    .where(
+      and(eq(events.id, e.id), eq(events.phase, "collecting"), isNull(events.chosenCandidateId)),
+    )
+    .returning();
+  if (locked.length === 0) {
+    const [fresh] = await db.select().from(events).where(eq(events.id, e.id));
+    if (fresh) Object.assign(e, fresh);
+    return;
+  }
   // Fill the derived activity only if the row still has none. A member may have edited the activity
   // concurrently (events.update); guarding the write on activity still being "" means an auto-lock can
   // never clobber an explicit activity. resolveActivity already returns e.activity unchanged when
@@ -305,6 +316,7 @@ export const eventsRouter = router({
     const timeInputs = input.timeCandidates ?? [];
     const activityInputs = input.activityCandidates ?? [];
 
+    const nowMs = Date.now();
     const sortedTimeInputs = timeInputs
       .map((t, i) => ({
         id: `${id}_t${i + 1}`,
@@ -313,8 +325,17 @@ export const eventsRouter = router({
         partOfDay: t.partOfDay ?? null,
         label: null,
       }))
+      // Drop genuinely invalid date strings, but a valid time in the past is a hard error: it would
+      // give a collecting plan an already-expired default decides-by (an immediate silent self-fizzle).
+      // Mirrors addCandidate's future check + the explicit decides-by guard.
       .filter((c) => !Number.isNaN(c.startsAt.getTime()))
       .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
+    if (sortedTimeInputs.some((c) => c.startsAt.getTime() <= nowMs)) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "a time candidate must be in the future",
+      });
+    }
     // Collapse candidates that land in the same minute (the wizard's granularity), keeping the
     // earliest. A single intended slot sent twice must stay one row - otherwise it splits +1
     // momentum and defeats the concrete-moment shortcut (planOpensMoment needs exactly one time).
@@ -327,13 +348,26 @@ export const eventsRouter = router({
       return true;
     });
 
-    const activityCands = activityInputs.map((text, i) => ({
-      id: `${id}_a${i + 1}`,
-      kind: "activity" as const,
-      startsAt: null,
-      partOfDay: null,
-      label: text,
-    }));
+    // Trim each label, drop any empty-after-trim (no whitespace-only plan names), and dedupe
+    // case-insensitively keeping the first occurrence - mirroring addCandidate's key. Two labels that
+    // collapse to one row keep the both-axes-pinned moment shortcut intact for duplicate activities.
+    const seenActivityKeys = new Set<string>();
+    const activityCands = activityInputs
+      .map((text) => text.trim())
+      .filter((text) => {
+        if (text === "") return false;
+        const key = text.toLowerCase();
+        if (seenActivityKeys.has(key)) return false;
+        seenActivityKeys.add(key);
+        return true;
+      })
+      .map((text, i) => ({
+        id: `${id}_a${i + 1}`,
+        kind: "activity" as const,
+        startsAt: null,
+        partOfDay: null,
+        label: text,
+      }));
 
     // You can only lock an axis that has at least one candidate - locking nothing would just leave a
     // plan that can never converge (a locked, empty time axis can never get a time and silently fizzles).
@@ -367,7 +401,7 @@ export const eventsRouter = router({
 
     // Time anchors. With no time candidates a plan still collects (on activities), so anchor the
     // placeholder start + the default decides-by to a sensible horizon instead of a candidate.
-    const now = Date.now();
+    const now = nowMs;
     const earliestMs =
       timeCands.length > 0 ? timeCands[0].startsAt.getTime() : now + DEFAULT_HORIZON_MS;
     const lastMs =
@@ -451,6 +485,9 @@ export const eventsRouter = router({
   // PUBLIC (momentum), but who reacted is never shown. Adding a +1 rejoins anyone who had opted out.
   toggleReaction: protectedProcedure.input(ToggleReactionInput).mutation(async ({ ctx, input }) => {
     const e = await loadEvent(input.eventId, ctx.userId);
+    // Settle first (loadEvent never settles): a collecting plan past its decides-by deadline has
+    // already auto-locked/fizzled, so a late +1 must be rejected against the SETTLED phase.
+    await settleLifecycle(e);
     if (e.phase !== "collecting") {
       throw new TRPCError({ code: "BAD_REQUEST", message: "plan is not collecting reactions" });
     }
@@ -482,13 +519,18 @@ export const eventsRouter = router({
         );
       return { reacted: false as const };
     }
-    await db
-      .insert(candidateReactions)
-      .values({ eventId: input.eventId, candidateId: input.candidateId, userId: ctx.userId });
-    // A +1 rejoins anyone who had opted out (mutual exclusion with "I can't make it").
-    await db
-      .delete(eventOptOuts)
-      .where(and(eq(eventOptOuts.eventId, input.eventId), eq(eventOptOuts.userId, ctx.userId)));
+    // The +1 and the opt-out clear are one unit (a +1 rejoins anyone who had opted out - mutual
+    // exclusion with "I can't make it"), so wrap both in a transaction. onConflictDoNothing makes a
+    // concurrent/double +1 a clean no-op (the (candidateId,userId) PK) instead of a 500.
+    await db.transaction(async (tx) => {
+      await tx
+        .insert(candidateReactions)
+        .values({ eventId: input.eventId, candidateId: input.candidateId, userId: ctx.userId })
+        .onConflictDoNothing();
+      await tx
+        .delete(eventOptOuts)
+        .where(and(eq(eventOptOuts.eventId, input.eventId), eq(eventOptOuts.userId, ctx.userId)));
+    });
     return { reacted: true as const };
   }),
 
@@ -497,6 +539,9 @@ export const eventsRouter = router({
   // Private: no one else, not even the creator, sees it. Reversible via out:false or by reacting.
   setOptOut: protectedProcedure.input(SetOptOutInput).mutation(async ({ ctx, input }) => {
     const e = await loadEvent(input.eventId, ctx.userId);
+    // Settle first (loadEvent never settles): once the decides-by deadline has passed the plan has
+    // auto-locked/fizzled, so opting in/out is rejected against the SETTLED phase.
+    await settleLifecycle(e);
     if (e.phase !== "collecting") {
       throw new TRPCError({ code: "BAD_REQUEST", message: "plan is not collecting" });
     }
@@ -526,6 +571,9 @@ export const eventsRouter = router({
   // Time candidates dedupe by minute; activity candidates dedupe case-insensitively. Adding +1s it.
   addCandidate: protectedProcedure.input(AddCandidateInput).mutation(async ({ ctx, input }) => {
     const e = await loadEvent(input.eventId, ctx.userId);
+    // Settle first (loadEvent never settles): a collecting plan past its decides-by deadline has
+    // already auto-locked/fizzled, so a late candidate must be rejected against the SETTLED phase.
+    await settleLifecycle(e);
     if (e.phase !== "collecting") {
       throw new TRPCError({ code: "BAD_REQUEST", message: "plan is not collecting" });
     }
@@ -628,6 +676,9 @@ export const eventsRouter = router({
     if (e.createdByUserId !== ctx.userId) {
       throw new TRPCError({ code: "FORBIDDEN", message: "only the creator can lock the moment" });
     }
+    // Settle first (loadEvent never settles): a collecting plan past its decides-by deadline has
+    // already auto-locked/fizzled, so a manual lock is rejected against the SETTLED phase.
+    await settleLifecycle(e);
     if (e.phase !== "collecting") {
       throw new TRPCError({ code: "BAD_REQUEST", message: "plan is not collecting" });
     }
@@ -658,7 +709,10 @@ export const eventsRouter = router({
       chosen.startsAt.getTime(),
       e.replyBy?.getTime() ?? null,
     );
-    await db
+    // Guard the transition on the row STILL being a collecting plan with no chosen time, so a
+    // concurrent lock/auto-lock cannot be double-locked (its moment window reset). .returning() tells
+    // us whether THIS call did the transition; if it lost the race, serve the winner's chosen slot.
+    const locked = await db
       .update(events)
       .set({
         phase: "moment",
@@ -668,7 +722,18 @@ export const eventsRouter = router({
         startsAt: chosen.startsAt,
         respondByAt: momentEndsAt,
       })
-      .where(eq(events.id, input.eventId));
+      .where(
+        and(
+          eq(events.id, input.eventId),
+          eq(events.phase, "collecting"),
+          isNull(events.chosenCandidateId),
+        ),
+      )
+      .returning();
+    if (locked.length === 0) {
+      const [fresh] = await db.select().from(events).where(eq(events.id, input.eventId));
+      return { ok: true as const, chosenCandidateId: fresh?.chosenCandidateId ?? chosenId };
+    }
     // Fill the derived activity only if the row still has none, so a member's concurrent edit (events
     // .update) is never clobbered at lock. resolveActivity keeps a non-empty activity as-is, so this
     // only names the never-named case (guarded on the stored activity still being "").
@@ -938,6 +1003,10 @@ export const eventsRouter = router({
   // Record (or replace) this user's commitment during the moment.
   respond: protectedProcedure.input(RespondInput).mutation(async ({ ctx, input }) => {
     const e = await loadEvent(input.eventId, ctx.userId);
+    // Settle on the write path too (loadEvent never settles): a moment whose countdown has passed is
+    // already cleared/fizzled, so a late RSVP must be rejected against the SETTLED phase, not the
+    // stale stored one.
+    await settleLifecycle(e);
     if (e.phase !== "moment") {
       throw new TRPCError({ code: "BAD_REQUEST", message: "the moment is not open" });
     }
@@ -962,6 +1031,9 @@ export const eventsRouter = router({
   // goes back to Action Required until they answer again.
   unrespond: protectedProcedure.input(ResolveInput).mutation(async ({ ctx, input }) => {
     const e = await loadEvent(input.eventId, ctx.userId);
+    // Settle first: once the moment has ended (settled to cleared/fizzled) the answer is final and
+    // can no longer be cleared, so gate against the settled phase rather than the stale stored one.
+    await settleLifecycle(e);
     if (e.phase !== "moment") {
       throw new TRPCError({ code: "BAD_REQUEST", message: "the moment is not open" });
     }
