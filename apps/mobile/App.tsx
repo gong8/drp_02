@@ -66,9 +66,8 @@ function GroupsStackScreen() {
 }
 
 // A split tab bar: the bar is halved down the middle by an ink seam, each half a full-bleed colour
-// block (the active half brand pink, the inactive a soft lavender). The selected tab is carried by
-// the text treatment - the active label is the loud uppercase display face in white, the inactive a
-// quiet muted label. No pills.
+// block (the active half brand pink, the inactive a soft lavender). Both labels use the SAME big
+// uppercase display face; only the colour changes (white when active, muted when not). No pills.
 function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const bottomGap = Math.max(Math.round(insets.bottom * 0.75), 12);
@@ -100,17 +99,13 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             }}
           >
             <Text
-              style={
-                focused
-                  ? {
-                      fontFamily: font.black,
-                      fontSize: 15,
-                      letterSpacing: 0.5,
-                      textTransform: "uppercase",
-                      color: ui.onInk,
-                    }
-                  : { fontFamily: font.bold, fontSize: 13, color: ui.muted }
-              }
+              style={{
+                fontFamily: font.black,
+                fontSize: 15,
+                letterSpacing: 0.5,
+                textTransform: "uppercase",
+                color: focused ? ui.onInk : ui.muted,
+              }}
             >
               {label}
             </Text>
@@ -128,8 +123,8 @@ function MainTabs() {
       screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: "transparent" } }}
       tabBar={(props) => <TabBar {...props} />}
     >
-      <Tab.Screen name="Meetups" component={MeetupsStackScreen} options={{ title: "Meetups" }} />
-      <Tab.Screen name="Groups" component={GroupsStackScreen} options={{ title: "Groups" }} />
+      <Tab.Screen name="Meetups" component={MeetupsStackScreen} options={{ title: "My meetups" }} />
+      <Tab.Screen name="Groups" component={GroupsStackScreen} options={{ title: "My groups" }} />
     </Tab.Navigator>
   );
 }
