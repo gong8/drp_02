@@ -59,7 +59,7 @@ export function planBucket(e: Bucketable, now: number = Date.now()): Bucket {
 // input - an unanswered moment, or a collecting plan you have not voted in and have not opted out of.
 export function isActionRequired(e: Actionable): boolean {
   return (
-    (e.phase === "moment" && !e.iResponded) ||
+    (e.phase === "moment" && !e.iResponded && e.myStatus !== "declined") ||
     (e.phase === "collecting" && !e.iReacted && e.myStatus !== "declined")
   );
 }

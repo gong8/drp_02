@@ -71,6 +71,10 @@ test("isActionRequired: only live plans still wanting you", () => {
   expect(
     isActionRequired(plan({ phase: "collecting", iReacted: false, myStatus: "declined" })),
   ).toBe(false);
+  // A declined/opted-out member is not nagged during a moment either, even with no response logged.
+  expect(isActionRequired(plan({ phase: "moment", iResponded: false, myStatus: "declined" }))).toBe(
+    false,
+  );
   expect(isActionRequired(plan({ phase: "cleared", iResponded: false }))).toBe(false);
 });
 
