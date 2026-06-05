@@ -16,6 +16,7 @@ export const ui = {
   rButton: 14,
   rInput: 12,
   rTab: 8,
+  rIcon: 9, // back-button / small-icon chrome radius; couples the header shadow and pressable
   rSmall: 6,
   rPill: 999, // fully rounded (circular chrome, pills)
   border: 2,
