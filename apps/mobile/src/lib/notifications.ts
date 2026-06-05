@@ -8,7 +8,16 @@ import type { trpc } from "./trpc"; // type-only: server code is never bundled
 // phase/myStatus their real pgEnum / MyStatus unions, so a literal typo fails typecheck.
 export type ReminderEvent = Pick<
   Awaited<ReturnType<typeof trpc.events.mine.query>>[number],
-  "id" | "activity" | "groupName" | "phase" | "myStatus" | "iReacted" | "decidesBy" | "momentEndsAt"
+  | "id"
+  | "activity"
+  | "groupName"
+  | "phase"
+  | "myStatus"
+  | "iReacted"
+  | "iResponded"
+  | "decidesBy"
+  | "momentStartsAt"
+  | "momentEndsAt"
 >;
 
 // Show a banner even when the app is foregrounded, so a co-located demo still "dings".
@@ -23,6 +32,11 @@ Notifications.setNotificationHandler({
 
 const DECIDE_LEAD_MS = 60 * 60 * 1000; // "decides soon" reminder this far before the deadline
 const RSVP_LEAD_MS = 15 * 60 * 1000; // "RSVP closing" reminder this far before the moment ends
+// How recently a moment must have opened for us to (re)fire the "just opened" ping. The collecting
+// branch schedules that ping for the decides-by instant, but the collecting->moment flip changes the
+// sync signature and cancels every pending notification (cancelAllScheduledNotificationsAsync), so the
+// moment branch re-arms it here. A small window keeps us from re-pinging a moment that opened long ago.
+const MOMENT_OPEN_WINDOW_MS = 10 * 60 * 1000;
 
 let permissionAsked = false;
 let lastSignature = "";
@@ -87,6 +101,20 @@ export async function syncReminders(events: ReminderEvent[]): Promise<void> {
       }
 
       if (e.phase === "moment" && e.myStatus === "awaiting" && e.momentEndsAt) {
+        // Re-arm the "just opened for the moment" ping the collecting branch lost when this plan
+        // flipped collecting->moment (the phase change cancelled the pending notification above). Only
+        // when the moment opened within the last few minutes and the user has not responded yet, so we
+        // fire it once near the transition and never re-ping a long-open moment on a later sync.
+        if (!e.iResponded && e.momentStartsAt) {
+          const startedMs = new Date(e.momentStartsAt).getTime();
+          if (now - startedMs >= 0 && now - startedMs <= MOMENT_OPEN_WINDOW_MS) {
+            await schedule(
+              new Date(now),
+              "Who's in?",
+              `"${e.activity || e.groupName}" just opened for the moment - say if you're in.`,
+            );
+          }
+        }
         await scheduleLead(
           e.momentEndsAt,
           RSVP_LEAD_MS,
