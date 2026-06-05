@@ -24,16 +24,36 @@ function roundUpToInterval(d: Date, interval: number): Date {
   return out;
 }
 
+// Clamp a Date into [min, max] on epoch milliseconds (either bound optional). The native picker
+// rejects values outside its own minimumDate/maximumDate, but dismissing it without scrolling
+// commits the seeded default verbatim - so a "now" seed must be pulled inside the bounds first,
+// or it becomes an out-of-range date the server then rejects.
+export function clampDate(d: Date, min?: Date, max?: Date): Date {
+  let ms = d.getTime();
+  if (min) ms = Math.max(ms, min.getTime());
+  if (max) ms = Math.min(ms, max.getTime());
+  return ms === d.getTime() ? d : new Date(ms);
+}
+
 // Seed the picker from the current value, falling back to a sensible "now". Parse via numeric
-// components (always local) - never `new Date("...T...")`, which Hermes interprets as UTC.
-function seed(mode: "date" | "time", value: string, interval: number): Date {
+// components (always local) - never `new Date("...T...")`, which Hermes interprets as UTC. In date
+// mode the result is clamped to [min, max] so the dismiss-commit default always satisfies the
+// picker's own constraints (time mode has no date bounds, so they are not applied there).
+function seed(
+  mode: "date" | "time",
+  value: string,
+  interval: number,
+  min?: Date,
+  max?: Date,
+): Date {
   const now = new Date();
   if (mode === "date") {
     if (value) {
       const [y, mo, d] = value.split("-").map(Number);
-      if (![y, mo, d].some((n) => Number.isNaN(n))) return new Date(y, mo - 1, d, 12, 0, 0, 0);
+      if (![y, mo, d].some((n) => Number.isNaN(n)))
+        return clampDate(new Date(y, mo - 1, d, 12, 0, 0, 0), min, max);
     }
-    return now;
+    return clampDate(now, min, max);
   }
   if (value) {
     const [h, mi] = value.split(":").map(Number);
@@ -73,7 +93,9 @@ export function DateTimeField({
   style,
 }: DateTimeFieldProps) {
   const [open, setOpen] = useState(false);
-  const [temp, setTemp] = useState<Date>(() => seed(mode, value, minuteInterval));
+  const [temp, setTemp] = useState<Date>(() =>
+    seed(mode, value, minuteInterval, minimumDate, maximumDate),
+  );
 
   const shown = displayValue(mode, value);
   // Shown only on the empty trigger; the picker sheet itself has no redundant title.
@@ -84,7 +106,7 @@ export function DateTimeField({
   }
 
   function openPicker() {
-    const initial = seed(mode, value, minuteInterval);
+    const initial = seed(mode, value, minuteInterval, minimumDate, maximumDate);
     setTemp(initial);
     if (Platform.OS === "android") {
       DateTimePickerAndroid.open({

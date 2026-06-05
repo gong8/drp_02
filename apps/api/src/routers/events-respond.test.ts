@@ -249,6 +249,54 @@ test("respond rejects with BAD_REQUEST once the plan has fizzled", async () => {
   );
 });
 
+// ----- a late write settles first: the moment is gone once momentEndsAt has passed (A1) -----
+
+test("respond after momentEndsAt has passed is rejected (the write path settles the stale moment)", async () => {
+  // The stored phase is still `moment` (no read has settled it yet), but the countdown has ended.
+  // A write must settle lazily like a read does, so this late RSVP is rejected, not silently kept.
+  const creator = await makeUser();
+  const groupId = await makeGroup([creator]);
+  const eventId = await insertEvent({
+    groupId,
+    createdByUserId: creator,
+    phase: "moment",
+    contingent: true,
+    quorum: 2,
+    momentStartsAt: new Date(Date.now() - 2 * FUTURE_MS),
+    momentEndsAt: new Date(Date.now() - 60_000), // ended a minute ago, never read since
+  });
+
+  await assert.rejects(
+    () => caller(creator).events.respond({ eventId, kind: "yes" }),
+    (e) => e instanceof TRPCError && e.code === "BAD_REQUEST",
+  );
+  const rows = await responseRows(eventId, creator);
+  assert.equal(rows.length, 0, "no answer is recorded after the moment has closed");
+});
+
+test("unrespond after momentEndsAt has passed is rejected (the write path settles the stale moment)", async () => {
+  const creator = await makeUser();
+  const groupId = await makeGroup([creator]);
+  const eventId = await insertEvent({
+    groupId,
+    createdByUserId: creator,
+    phase: "moment",
+    contingent: true,
+    quorum: 2,
+    momentStartsAt: new Date(Date.now() - 2 * FUTURE_MS),
+    momentEndsAt: new Date(Date.now() - 60_000),
+  });
+  // An answer recorded while the moment was live must NOT be clearable after it has closed.
+  await insertResponse(eventId, creator, "yes");
+
+  await assert.rejects(
+    () => caller(creator).events.unrespond({ eventId }),
+    (e) => e instanceof TRPCError && e.code === "BAD_REQUEST",
+  );
+  const rows = await responseRows(eventId, creator);
+  assert.equal(rows.length, 1, "the final answer is left intact after the moment closes");
+});
+
 // ----- unrespond deletes the caller's response (back to unanswered) -----
 
 test("unrespond deletes the caller's response during the moment", async () => {

@@ -27,6 +27,7 @@ import { useLiveClock } from "../lib/useLiveClock";
 import { font, ui } from "../theme";
 import {
   AppText,
+  Band,
   Button,
   Card,
   Countdown,
@@ -60,50 +61,30 @@ function deadlineMs(e: Ev, now: number): number {
   return iso ? Math.max(0, new Date(iso).getTime() - now) : 0;
 }
 
-// A row in the pink ACTION REQUIRED panel: the meetup + a big, loud countdown to its deadline.
-function ActionRow({
-  e,
-  now,
-  first,
-  onPress,
-}: {
-  e: Ev;
-  now: number;
-  first: boolean;
-  onPress: () => void;
-}) {
+// A card in the pink ACTION REQUIRED band: each meetup gets its own isolated white box (so it reads
+// as a distinct tappable thing against the loud band), with a brand countdown to its deadline.
+function ActionRow({ e, now, onPress }: { e: Ev; now: number; onPress: () => void }) {
   return (
-    <Pressable
-      onPress={onPress}
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 12,
-        paddingHorizontal: 14,
-        paddingVertical: 12,
-        borderTopWidth: first ? 0 : 1,
-        borderTopColor: "rgba(255,255,255,0.28)",
-      }}
-    >
-      <View style={{ flex: 1 }}>
-        <Text style={{ fontFamily: font.display, fontSize: 15, color: ui.onInk }}>
-          {e.activity || e.groupName}
-        </Text>
-        <Text
-          style={{
-            fontFamily: font.medium,
-            fontSize: 10,
-            color: ui.onInk,
-            opacity: 0.85,
-            marginTop: 1,
-          }}
-        >
-          {e.activity ? e.groupName : ""}
-        </Text>
+    <Card padding={13} onPress={onPress} style={{ marginTop: 11 }}>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+        }}
+      >
+        <View style={{ flex: 1 }}>
+          <AppText variant="title">{e.activity || e.groupName}</AppText>
+          {e.activity ? (
+            <AppText variant="caption" style={{ marginTop: 2 }}>
+              {e.groupName}
+            </AppText>
+          ) : null}
+        </View>
+        <Countdown ms={deadlineMs(e, now)} label={activeDeadline(e).label} />
       </View>
-      <Countdown ms={deadlineMs(e, now)} label={activeDeadline(e).label} color={ui.onInk} />
-    </Pressable>
+    </Card>
   );
 }
 
@@ -319,30 +300,27 @@ export function Dashboard({ navigation }: Props) {
       {!error && hasGroups && (
         <>
           {n > 0 && (
-            <Card tone={ui.brand} padding={0} style={{ marginBottom: 22 }}>
-              <View style={{ paddingHorizontal: 14, paddingTop: 12, paddingBottom: 4 }}>
-                <Text
-                  style={{
-                    fontFamily: font.black,
-                    fontSize: 13,
-                    letterSpacing: 1,
-                    textTransform: "uppercase",
-                    color: ui.onInk,
-                  }}
-                >
-                  {`${n} action${n === 1 ? "" : "s"} required`}
-                </Text>
-              </View>
-              {actionItems.map((e, i) => (
+            <Band style={{ marginBottom: 22, paddingTop: 13, paddingBottom: 16 }}>
+              <Text
+                style={{
+                  fontFamily: font.black,
+                  fontSize: 13,
+                  letterSpacing: 1,
+                  textTransform: "uppercase",
+                  color: ui.onInk,
+                }}
+              >
+                {`${n} action${n === 1 ? "" : "s"} required`}
+              </Text>
+              {actionItems.map((e) => (
                 <ActionRow
                   key={e.id}
                   e={e}
                   now={now}
-                  first={i === 0}
                   onPress={() => navigation.navigate("EventDetail", { eventId: e.id })}
                 />
               ))}
-            </Card>
+            </Band>
           )}
 
           <Segmented

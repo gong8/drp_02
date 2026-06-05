@@ -416,6 +416,64 @@ test("the chosen TIME slot, not the earliest candidate, anchors startsAt and the
   assert.ok((row.momentEndsAt as Date).getTime() > t1.getTime());
 });
 
+// ----- a late lock settles first; a double lock never resets the moment window (A1 + A2) -----
+
+test("locking after decidesBy has passed is rejected (the write path settles the stale plan)", async () => {
+  // The stored phase is still `collecting` (no read has settled it), but its decides-by deadline has
+  // passed. A manual lock must settle lazily like a read does: the plan has already auto-locked into
+  // a moment, so a second (manual) lock is rejected with BAD_REQUEST.
+  const creator = await makeUser();
+  const groupId = await makeGroup([creator]);
+  const eventId = await insertEvent({
+    groupId,
+    createdByUserId: creator,
+    phase: "collecting",
+    quorum: 1,
+    decidesBy: new Date(Date.now() - 60_000), // deadline passed, never read since
+  });
+  const t = await insertTimeCandidate(eventId, new Date(Date.now() + DAY));
+  await insertReaction(eventId, t, creator); // a +1 so settle auto-locks (does not fizzle)
+
+  await assert.rejects(() => caller(creator).events.lock({ eventId }), isTrpc("BAD_REQUEST"));
+  // The auto-lock already ran on the write path, so the plan is in the moment phase.
+  const row = await eventRow(eventId);
+  assert.equal(row.phase, "moment");
+});
+
+test("a second concurrent lock does not reset the moment window of the first (A2)", async () => {
+  // Two creators-cannot-happen, but two racing locks (or a lock racing an auto-lock) must not
+  // double-transition: the phase-guarded UPDATE means only the first lock writes the moment window;
+  // the loser serves the existing chosen slot instead of clobbering momentStartsAt/momentEndsAt.
+  const creator = await makeUser();
+  const groupId = await makeGroup([creator]);
+  const { eventId } = await collectingPlan({
+    creator,
+    groupId,
+    times: [new Date(Date.now() + 4 * DAY)],
+  });
+
+  const first = await caller(creator).events.lock({ eventId });
+  const firstRow = await eventRow(eventId);
+  const firstStart = (firstRow.momentStartsAt as Date).getTime();
+  const firstEnd = (firstRow.momentEndsAt as Date).getTime();
+
+  // A second lock attempt on the (now moment) plan is rejected outright (phase guard),
+  const second = await caller(creator)
+    .events.lock({ eventId })
+    .then(
+      () => "ok",
+      (err) => (err instanceof TRPCError ? err.code : "other"),
+    );
+  assert.equal(second, "BAD_REQUEST", "a lock on an already-locked plan is rejected");
+
+  // and the window the first lock set is untouched.
+  const afterRow = await eventRow(eventId);
+  assert.equal(first.ok, true);
+  assert.equal(afterRow.chosenCandidateId, firstRow.chosenCandidateId);
+  assert.equal((afterRow.momentStartsAt as Date).getTime(), firstStart);
+  assert.equal((afterRow.momentEndsAt as Date).getTime(), firstEnd);
+});
+
 // ----- a degenerate near-now event still gets a real (short) moment window -----
 
 test("an event time already in the past still opens a minimal MOMENT_MS window", async () => {

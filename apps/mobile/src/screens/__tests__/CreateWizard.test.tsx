@@ -322,6 +322,171 @@ describe("submit/continue validity gating", () => {
   });
 });
 
+// ---- time dedupe by minute (mirrors events.create) ----------------------------------------------
+
+describe("same-minute times are deduped like the server", () => {
+  test("two rows in the same minute collapse to one: the plan reads as concrete", async () => {
+    mockBaseline();
+    await landOnGroupStep();
+    const { date, time } = futureParts(7);
+    await advanceTo("confirm", {
+      onActivities: () => {
+        fireEvent.changeText(screen.getByPlaceholderText("bowling, the pub..."), "Bowling");
+        fireEvent.press(screen.getByText("Add"));
+        fireEvent.press(screen.getByText("Lock the activity"));
+      },
+      onTimes: () => {
+        // First row, then add a SECOND row and give it the exact same date/time (same minute). Clear
+        // the pill registry before adding the row so the two rows re-mount as index 0 (row 0) and index
+        // 1 (row 1) in render order (the mock pushes on every render, so it otherwise accumulates).
+        setPill(0, date, time);
+        mockPillInstances.length = 0;
+        fireEvent.press(screen.getByText("+ Add a time"));
+        setPill(1, date, time);
+        fireEvent.press(screen.getByText("Lock the times"));
+      },
+    });
+    // The server collapses same-minute candidates, so two identical rows are ONE time. With one locked
+    // time + one locked activity the plan is concrete (planOpensMoment), so the summary must read "It's
+    // on ...", not "Vote on 2 times" (which the un-deduped count would have produced).
+    expect(screen.getByText(/It's on for/)).toHaveTextContent(/Activity set - just say who's in\./);
+    expect(screen.queryByText(/Vote on 2 times/)).toBeNull();
+  });
+
+  test("the submit payload sends one time candidate when two rows share a minute", async () => {
+    mockBaseline();
+    await landOnGroupStep();
+    const { date, time } = futureParts(7);
+    await advanceTo("confirm", {
+      onTimes: () => {
+        setPill(0, date, time);
+        mockPillInstances.length = 0;
+        fireEvent.press(screen.getByText("+ Add a time"));
+        setPill(1, date, time);
+      },
+    });
+    await act(async () => {
+      fireEvent.press(screen.getByText("Send to the group"));
+    });
+    expect(trpc.events.create.mutate).toHaveBeenCalledTimes(1);
+    const arg = (trpc.events.create.mutate as jest.Mock).mock.calls[0][0];
+    // Deduped before the payload is built, so the wire carries one slot - matching what the server stores.
+    expect(arg.timeCandidates).toHaveLength(1);
+  });
+});
+
+// ---- stale decides-by must not block a concrete plan (H2) ---------------------------------------
+
+describe("a stale decides-by edit does not strand a concrete plan", () => {
+  test("an invalid decides-by left from a non-concrete state stops blocking once the plan is concrete", async () => {
+    mockBaseline();
+    await landOnGroupStep();
+    const earliest = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const earliestDate = `${earliest.getFullYear()}-${pad(earliest.getMonth() + 1)}-${pad(earliest.getDate())}`;
+
+    // Build a NON-concrete plan: two locked activities (contested) + one locked time. The decides-by
+    // editor shows because the plan is not concrete yet.
+    await advanceTo("deadlines", {
+      onActivities: () => {
+        fireEvent.changeText(screen.getByPlaceholderText("bowling, the pub..."), "Bowling");
+        fireEvent.press(screen.getByText("Add"));
+        fireEvent.changeText(screen.getByPlaceholderText("bowling, the pub..."), "Pub");
+        fireEvent.press(screen.getByText("Add"));
+        fireEvent.press(screen.getByText("Lock the activity"));
+      },
+      onTimes: () => {
+        setPill(0, earliestDate, "19:00");
+        fireEvent.press(screen.getByText("Lock the times"));
+      },
+    });
+
+    // Set an invalid decides-by (inside the MOMENT_MS headroom) so Next is blocked.
+    mockPillInstances.length = 0;
+    act(() => {
+      fireEvent.press(screen.getAllByText("Change")[0]);
+    });
+    setPill(0, earliestDate, "18:30");
+    await waitFor(() => expect(screen.getByText("Next")).toBeDisabled());
+
+    // Go back to the activities step (deadlines -> details -> times -> activities) and drop the second
+    // activity, leaving ONE locked activity. With one locked time that makes the plan concrete - the
+    // decides-by field disappears, but its stale edit must NOT keep Send disabled.
+    for (let i = 0; i < 3; i++) {
+      await act(async () => {
+        fireEvent.press(screen.getByText("‹"));
+      });
+    }
+    expect(await screen.findByText("What do you fancy?")).toBeOnTheScreen();
+    // The activity chips render in order; remove "Pub" (the second), keeping the lock on the lone "Bowling".
+    const removes = screen.getAllByText("×");
+    await act(async () => {
+      fireEvent.press(removes[1]);
+    });
+
+    // Walk forward to the deadlines step; the plan is now concrete (1 locked time + 1 locked activity).
+    await pressNext(); // activities -> times
+    expect(await screen.findByText("When could it be?")).toBeOnTheScreen();
+    await pressNext(); // times -> details
+    expect(await screen.findByText("Where & notes")).toBeOnTheScreen();
+    await pressNext(); // details -> deadlines
+    expect(await screen.findByText("Deadlines")).toBeOnTheScreen();
+    // Regression: before the fix the stale (invalid) decides-by still failed validity even though the
+    // field is hidden for a concrete plan, permanently disabling Next. It must be enabled now.
+    expect(screen.getByText("Next")).toBeEnabled();
+    await pressNext();
+    expect(await screen.findByText("Ready to send?")).toBeOnTheScreen();
+  });
+});
+
+// ---- a past decides-by is rejected client-side (H3) ---------------------------------------------
+
+describe("a decides-by in the past is invalid", () => {
+  test("a decides-by at or before now blocks continuing with a future-deadline note", async () => {
+    mockBaseline();
+    await landOnGroupStep();
+    const earliest = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000);
+    const past = new Date(Date.now() - 24 * 60 * 60 * 1000); // yesterday
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const fmt = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    await advanceTo("deadlines", { onTimes: () => setPill(0, fmt(earliest), "19:00") });
+
+    mockPillInstances.length = 0;
+    act(() => {
+      fireEvent.press(screen.getAllByText("Change")[0]);
+    });
+    setPill(0, fmt(past), "19:00");
+
+    // The server rejects a past decides-by (must be after now); the wizard must catch it client-side.
+    await waitFor(() => expect(screen.getByText("Next")).toBeDisabled());
+    expect(screen.getByText("The deadline has to be in the future.")).toBeOnTheScreen();
+    await pressNext(); // disabled -> no-op
+    expect(screen.getByText("Deadlines")).toBeOnTheScreen();
+    expect(screen.queryByText("Ready to send?")).toBeNull();
+  });
+});
+
+// ---- the activity list caps at 10 (matches the shared schema) (H4) ------------------------------
+
+describe("the activity list caps at 10", () => {
+  test("the Add button disables and an 11th activity is refused once ten exist", async () => {
+    mockBaseline();
+    await landOnGroupStep();
+    await advanceTo("activities");
+    const input = screen.getByPlaceholderText("bowling, the pub...");
+    for (let i = 0; i < 10; i++) {
+      fireEvent.changeText(input, `act_${i}`);
+      fireEvent.press(screen.getByText("Add"));
+    }
+    // Ten activities are on the list; the schema caps activityCandidates at 10, so Add is now disabled
+    // even with text typed (mirroring the times cap) and a further commit is a no-op.
+    fireEvent.changeText(input, "one too many");
+    expect(screen.getByText("Add")).toBeDisabled();
+    fireEvent.press(screen.getByText("Add"));
+    expect(screen.queryByText("one too many")).toBeNull();
+  });
+});
+
 // ---- redo / source step -------------------------------------------------------------------------
 
 describe("the redo source step", () => {

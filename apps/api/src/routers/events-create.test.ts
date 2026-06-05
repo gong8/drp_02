@@ -534,17 +534,87 @@ test("an invalid (NaN) time candidate is rejected", async () => {
   );
 });
 
-test("an invalid time candidate is never persisted alongside valid ones", async () => {
+// Regression (D1): a malformed time-instant string is rejected at the schema boundary (the shared
+// Instant refinement), so a request mixing a valid and a garbage time fails outright rather than
+// silently dropping the bad candidate and persisting a half-built plan.
+test("an invalid time candidate is rejected, never silently dropped alongside valid ones", async () => {
+  const u = await makeUser();
+  const g = await makeGroup([u]);
+  await assert.rejects(
+    () =>
+      caller(u).events.create({
+        groupId: g,
+        timeCandidates: [{ startsAt: futureTime(3) }, { startsAt: "garbage-date" }],
+        activityCandidates: ["Dinner"],
+      }),
+    isCode("BAD_REQUEST"),
+  );
+});
+
+// Regression (A5): a valid time in the PAST would give a collecting plan an already-expired default
+// decides-by, so it self-fizzles on first read. The server rejects a past time outright instead.
+test("a past time candidate is rejected with BAD_REQUEST", async () => {
+  const u = await makeUser();
+  const g = await makeGroup([u]);
+  await assert.rejects(
+    () =>
+      caller(u).events.create({
+        groupId: g,
+        timeCandidates: [{ startsAt: new Date(Date.now() - DAY).toISOString() }],
+        activityCandidates: ["Dinner"],
+      }),
+    isCode("BAD_REQUEST"),
+  );
+});
+
+test("a past time mixed with a future one is rejected (no plan is created)", async () => {
+  const u = await makeUser();
+  const g = await makeGroup([u]);
+  await assert.rejects(
+    () =>
+      caller(u).events.create({
+        groupId: g,
+        timeCandidates: [
+          { startsAt: futureTime(3) },
+          { startsAt: new Date(Date.now() - HOUR).toISOString() },
+        ],
+        activityCandidates: ["Dinner"],
+      }),
+    isCode("BAD_REQUEST"),
+  );
+});
+
+// Regression (A4): create dedupes activity candidates case-insensitively (keeping the first), so a
+// label sent twice stays one row instead of splitting the vote, and the both-axes-pinned moment
+// shortcut still fires for "duplicate" locked activities. Whitespace-only labels are dropped.
+test("duplicate activity candidates collapse case-insensitively to one row, keeping the first", async () => {
   const u = await makeUser();
   const g = await makeGroup([u]);
   const { id } = await caller(u).events.create({
     groupId: g,
-    timeCandidates: [{ startsAt: futureTime(3) }, { startsAt: "garbage-date" }],
-    activityCandidates: ["Dinner"],
+    timeCandidates: [{ startsAt: futureTime(3) }],
+    activityCandidates: ["Dinner", "dinner", "DINNER"],
   });
-  const times = (await candidatesOf(id)).filter((c) => c.kind === "time");
-  assert.equal(times.length, 1, "only the valid time is stored; NaN is dropped");
-  assert.ok(!Number.isNaN(times[0].startsAt?.getTime() ?? Number.NaN));
+  const acts = (await candidatesOf(id)).filter((c) => c.kind === "activity");
+  assert.equal(acts.length, 1, "the case-variant duplicates collapse to one activity row");
+  assert.equal(acts[0].label, "Dinner", "the first occurrence's casing is kept");
+});
+
+test("a single time + duplicate locked activities still opens the moment shortcut", async () => {
+  // After dedupe the activity axis has exactly one candidate, so a both-pinned plan opens a moment
+  // rather than wrongly collecting on two rows that are really the same activity.
+  const u = await makeUser();
+  const g = await makeGroup([u]);
+  const { id } = await caller(u).events.create({
+    groupId: g,
+    timeCandidates: [{ startsAt: futureTime(3) }],
+    activityCandidates: ["Dinner", "Dinner"],
+    lockTimes: true,
+    lockActivity: true,
+  });
+  const e = await row(id);
+  assert.equal(e.phase, "moment", "duplicate locked activities collapse to one, so a moment opens");
+  assert.equal(e.activity, "Dinner");
 });
 
 // ----- candidate persistence + flags round-trip -----

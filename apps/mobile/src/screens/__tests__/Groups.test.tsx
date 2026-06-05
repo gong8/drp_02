@@ -12,7 +12,7 @@
 
 jest.mock("../../lib/trpc");
 
-import { NavigationContainer } from "@react-navigation/native";
+import { createNavigationContainerRef, NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { cleanup, render } from "@testing-library/react-native";
 import type { ComponentType } from "react";
@@ -27,7 +27,7 @@ import {
 } from "../../lib/__mocks__/trpc";
 import { ERR_NETWORK } from "../../lib/copy";
 import { trpc } from "../../lib/trpc";
-import { fireEvent, screen, waitFor } from "../../test/render";
+import { act, fireEvent, screen, waitFor } from "../../test/render";
 import { CreateGroup } from "../CreateGroup";
 import { GroupDetail } from "../GroupDetail";
 import { GroupsList } from "../GroupsList";
@@ -115,6 +115,34 @@ function mountStack<P extends object>(
       </NavigationContainer>
     </SafeAreaProvider>,
   );
+}
+
+// Mount GroupDetail in a stack alongside a sibling stub and return a `refocus()` that pushes the stub
+// (blurring GroupDetail) then pops back (re-focusing it), so its on-focus load() fires again. This is
+// how a transient failure recovers in the real app: there is no in-screen retry on the error view,
+// the screen reloads when it regains focus. The refocus is wrapped in act() so the navigation state
+// updates and the re-fired load() resolve before assertions run.
+function mountGroupDetailWithRefocus(params: object) {
+  // Type the ref's param list so navigate("Sibling")/goBack() typecheck against this ad-hoc
+  // navigator's route names (GroupDetail carries params; Sibling is a paramless stub).
+  const ref = createNavigationContainerRef<{ GroupDetail: object; Sibling: undefined }>();
+  const Initial = GroupDetail as unknown as ComponentType;
+  render(
+    <SafeAreaProvider initialMetrics={metrics}>
+      <NavigationContainer ref={ref}>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="GroupDetail" component={Initial} initialParams={params} />
+          <Stack.Screen name="Sibling" component={makeStub("Sibling")} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </SafeAreaProvider>,
+  );
+  return {
+    async refocus() {
+      await act(async () => ref.navigate("Sibling"));
+      await act(async () => ref.goBack());
+    },
+  };
 }
 
 // =================================================================================================
@@ -421,6 +449,76 @@ describe("GroupDetail", () => {
 
     expect(await screen.findByText(ERR_NETWORK)).toBeOnTheScreen();
     expect(screen.queryByText("Group not found.")).not.toBeOnTheScreen();
+  });
+
+  test("a transient failure clears once a later reload succeeds (error is not sticky)", async () => {
+    // I1: the first focus fails (full-screen error view), but a subsequent focus that succeeds must
+    // drop the error and render the group. The old bug only ever set the error flag true, so the
+    // screen stayed stuck on the error view forever even after the server recovered.
+    const getQuery = trpc.groups.get.query as unknown as jest.Mock;
+    getQuery
+      .mockRejectedValueOnce(new Error("boom"))
+      .mockResolvedValue(makeDetail({ id: "g1", name: "Climbing Crew" }));
+
+    const { refocus } = mountGroupDetailWithRefocus({ groupId: "g1" });
+
+    expect(await screen.findByText(ERR_NETWORK)).toBeOnTheScreen();
+
+    await refocus();
+
+    expect(await screen.findByText("Members (1)")).toBeOnTheScreen();
+    expect(screen.queryByText(ERR_NETWORK)).not.toBeOnTheScreen();
+  });
+
+  test("an in-progress rename draft survives an unrelated reload", async () => {
+    // I2: a member add (or any reload) must not clobber a half-typed rename. The draft is seeded from
+    // the server only on the first load; later reloads leave the user's text alone.
+    mockQuery(trpc.groups.get, makeDetail({ id: "g1", name: "Climbing Crew" }));
+    mockQuery(trpc.groups.addableUsers, [{ id: "u2", name: "Grace", color: "#C9823F" }]);
+    mockMutation(trpc.groups.addMember, { ok: true });
+
+    mountStack(GroupDetail, {
+      initialName: "GroupDetail",
+      params: { groupId: "g1" },
+      destinations: [],
+    });
+
+    const field = await screen.findByDisplayValue("Climbing Crew");
+    fireEvent.changeText(field, "Boulder Buddies");
+
+    // Add a member, which triggers a reload of groups.get (still returning the old name).
+    fireEvent.press(screen.getByText("+ Add to group"));
+    fireEvent.press(await screen.findByText("Grace"));
+    await waitFor(() => expect(trpc.groups.addMember.mutate).toHaveBeenCalled());
+
+    // The unsaved draft is preserved (not reset to the server's "Climbing Crew"), so Save still shows.
+    expect(screen.getByDisplayValue("Boulder Buddies")).toBeOnTheScreen();
+    await waitFor(() => expect(screen.getByText("Save")).toBeOnTheScreen());
+  });
+
+  test("a failed add keeps the user in the picker for retry", async () => {
+    // I3: when addMember rejects, the row must NOT be optimistically removed from the picker - the
+    // old code filtered it out unconditionally, hiding a user that was never actually added.
+    mockQuery(
+      trpc.groups.get,
+      makeDetail({ id: "g1", members: [makeMember({ id: "u1", name: "Ada" })] }),
+    );
+    mockQuery(trpc.groups.addableUsers, [{ id: "u2", name: "Grace", color: "#C9823F" }]);
+    mockMutationError(trpc.groups.addMember, new Error("boom"));
+
+    mountStack(GroupDetail, {
+      initialName: "GroupDetail",
+      params: { groupId: "g1" },
+      destinations: [],
+    });
+
+    fireEvent.press(await screen.findByText("+ Add to group"));
+    fireEvent.press(await screen.findByText("Grace"));
+
+    await waitFor(() => expect(trpc.groups.addMember.mutate).toHaveBeenCalled());
+    // The failed add surfaces the error view, and Grace was never removed from the (now hidden) list.
+    expect(await screen.findByText(ERR_NETWORK)).toBeOnTheScreen();
+    expect(trpc.groups.addableUsers.query).toHaveBeenCalledTimes(1);
   });
 });
 

@@ -6,10 +6,19 @@ import {
   GroupMemberRef,
   RenameGroupInput,
 } from "@bethere/shared";
-import { and, eq, notInArray } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
+import { and, eq, inArray, notInArray } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { FALLBACK_GROUP_NAME } from "../db/groups.js";
-import { groupMembers, groups, users } from "../db/schema.js";
+import {
+  candidateReactions,
+  eventOptOuts,
+  events,
+  groupMembers,
+  groups,
+  responses,
+  users,
+} from "../db/schema.js";
 import { getUserCard } from "../db/users.js";
 import { protectedProcedure, router } from "../trpc.js";
 import { requireMember } from "./events.js";
@@ -82,6 +91,10 @@ export const groupsRouter = router({
 
   addMember: protectedProcedure.input(GroupMemberRef).mutation(async ({ ctx, input }) => {
     await requireMember(input.groupId, ctx.userId);
+    // Guard the FK: an unknown userId would otherwise surface as a 500. .onConflictDoNothing()
+    // still covers the already-a-member case below.
+    const [target] = await db.select().from(users).where(eq(users.id, input.userId)).limit(1);
+    if (!target) throw new TRPCError({ code: "NOT_FOUND", message: "user not found" });
     await db
       .insert(groupMembers)
       .values({ groupId: input.groupId, userId: input.userId })
@@ -91,9 +104,51 @@ export const groupsRouter = router({
 
   removeMember: protectedProcedure.input(GroupMemberRef).mutation(async ({ ctx, input }) => {
     await requireMember(input.groupId, ctx.userId);
-    await db
-      .delete(groupMembers)
-      .where(and(eq(groupMembers.groupId, input.groupId), eq(groupMembers.userId, input.userId)));
-    return { ok: true as const };
+    return db.transaction(async (tx) => {
+      // Count members inside the transaction so a concurrent removal cannot empty the group:
+      // every read/write is gated by requireMember, so the last member would orphan it forever.
+      const members = await tx
+        .select({ userId: groupMembers.userId })
+        .from(groupMembers)
+        .where(eq(groupMembers.groupId, input.groupId));
+      const isMember = members.some((m) => m.userId === input.userId);
+      if (isMember && members.length <= 1) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "a group must keep at least one member",
+        });
+      }
+
+      // The removed user's votes (reactions, RSVPs, opt-outs) on this group's plans must go too,
+      // otherwise they keep counting toward tallies/quorum/reveal after the user has left.
+      const eventRows = await tx
+        .select({ id: events.id })
+        .from(events)
+        .where(eq(events.groupId, input.groupId));
+      const eventIds = eventRows.map((e) => e.id);
+      if (eventIds.length > 0) {
+        await tx
+          .delete(candidateReactions)
+          .where(
+            and(
+              eq(candidateReactions.userId, input.userId),
+              inArray(candidateReactions.eventId, eventIds),
+            ),
+          );
+        await tx
+          .delete(responses)
+          .where(and(eq(responses.userId, input.userId), inArray(responses.eventId, eventIds)));
+        await tx
+          .delete(eventOptOuts)
+          .where(
+            and(eq(eventOptOuts.userId, input.userId), inArray(eventOptOuts.eventId, eventIds)),
+          );
+      }
+
+      await tx
+        .delete(groupMembers)
+        .where(and(eq(groupMembers.groupId, input.groupId), eq(groupMembers.userId, input.userId)));
+      return { ok: true as const };
+    });
   }),
 });

@@ -20,14 +20,23 @@ import { and, eq } from "drizzle-orm";
 import {
   addMember,
   caller,
+  candidateReactions,
   db,
   dropTestDb,
+  eventOptOuts,
   groupMembers,
   groups,
+  insertActivityCandidate,
+  insertEvent,
+  insertOptOut,
+  insertReaction,
+  insertResponse,
+  insertTimeCandidate,
   makeGroup,
   makeUser,
   makeUsers,
   resetTables,
+  responses,
   setupTestDb,
 } from "../test/harness.js";
 
@@ -44,6 +53,29 @@ async function membershipRowCount(groupId: string, userId: string): Promise<numb
     .select()
     .from(groupMembers)
     .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, userId)));
+  return rows.length;
+}
+
+// How many vote rows a user still has on a given event - used to prove removeMember clears them.
+async function reactionRowCount(eventId: string, userId: string): Promise<number> {
+  const rows = await db
+    .select()
+    .from(candidateReactions)
+    .where(and(eq(candidateReactions.eventId, eventId), eq(candidateReactions.userId, userId)));
+  return rows.length;
+}
+async function responseRowCount(eventId: string, userId: string): Promise<number> {
+  const rows = await db
+    .select()
+    .from(responses)
+    .where(and(eq(responses.eventId, eventId), eq(responses.userId, userId)));
+  return rows.length;
+}
+async function optOutRowCount(eventId: string, userId: string): Promise<number> {
+  const rows = await db
+    .select()
+    .from(eventOptOuts)
+    .where(and(eq(eventOptOuts.eventId, eventId), eq(eventOptOuts.userId, userId)));
   return rows.length;
 }
 
@@ -148,6 +180,19 @@ test("addMember is idempotent: adding an existing member is a no-op with no dupl
   assert.equal(await membershipRowCount(id, friend), 1);
 });
 
+test("addMember rejects an unknown userId with NOT_FOUND and adds no row", async () => {
+  const owner = await makeUser();
+  const id = await makeGroup([owner], "Crew");
+
+  // Spec / lane brief: a userId with no users row would otherwise be a raw FK 500; it must surface
+  // as NOT_FOUND and add nothing.
+  await assert.rejects(
+    () => caller(owner).groups.addMember({ groupId: id, userId: "u_ghost" }),
+    (e: unknown) => e instanceof TRPCError && e.code === "NOT_FOUND",
+  );
+  assert.equal(await membershipRowCount(id, "u_ghost"), 0);
+});
+
 test("addMember repeated does not inflate memberCount", async () => {
   const owner = await makeUser();
   const friend = await makeUser();
@@ -186,6 +231,81 @@ test("removeMember leaves other members intact", async () => {
   assert.equal(await membershipRowCount(id, a), 0);
   assert.equal(await membershipRowCount(id, b), 1);
   assert.equal(await membershipRowCount(id, owner), 1);
+});
+
+test("removeMember rejects removing the last member (a group must keep at least one)", async () => {
+  const owner = await makeUser();
+  const id = await makeGroup([owner], "Solo");
+
+  // Removing the only member would orphan the group forever (every read/write is member-gated).
+  await assert.rejects(
+    () => caller(owner).groups.removeMember({ groupId: id, userId: owner }),
+    (e: unknown) => e instanceof TRPCError && e.code === "BAD_REQUEST",
+  );
+
+  // The lone member must still be there.
+  assert.equal(await membershipRowCount(id, owner), 1);
+});
+
+test("removeMember allows removing down to one member, then blocks the last", async () => {
+  const owner = await makeUser();
+  const friend = await makeUser();
+  const id = await makeGroup([owner, friend], "Pair");
+
+  // Two members -> removing one is fine.
+  await caller(owner).groups.removeMember({ groupId: id, userId: friend });
+  assert.equal(await membershipRowCount(id, friend), 0);
+
+  // Now owner is the last member -> removing them is rejected.
+  await assert.rejects(
+    () => caller(owner).groups.removeMember({ groupId: id, userId: owner }),
+    (e: unknown) => e instanceof TRPCError && e.code === "BAD_REQUEST",
+  );
+  assert.equal(await membershipRowCount(id, owner), 1);
+});
+
+test("removeMember also clears the removed user's reactions, responses and opt-outs", async () => {
+  const owner = await makeUser();
+  const friend = await makeUser();
+  const id = await makeGroup([owner, friend], "Crew");
+
+  // friend has cast votes on a plan in this group: a candidate reaction, a moment RSVP, an opt-out.
+  const eventId = await insertEvent({ groupId: id, createdByUserId: owner });
+  const timeCandidate = await insertTimeCandidate(eventId, new Date());
+  await insertActivityCandidate(eventId, "Pizza");
+  await insertReaction(eventId, timeCandidate, friend);
+  await insertResponse(eventId, friend, "yes");
+  await insertOptOut(eventId, friend);
+
+  // Sanity: the votes exist before removal.
+  assert.equal(await reactionRowCount(eventId, friend), 1);
+  assert.equal(await responseRowCount(eventId, friend), 1);
+  assert.equal(await optOutRowCount(eventId, friend), 1);
+
+  await caller(owner).groups.removeMember({ groupId: id, userId: friend });
+
+  // Removal clears every vote so the departed user stops counting toward tallies/quorum/reveal.
+  assert.equal(await membershipRowCount(id, friend), 0);
+  assert.equal(await reactionRowCount(eventId, friend), 0);
+  assert.equal(await responseRowCount(eventId, friend), 0);
+  assert.equal(await optOutRowCount(eventId, friend), 0);
+});
+
+test("removeMember leaves other members' votes untouched", async () => {
+  const owner = await makeUser();
+  const friend = await makeUser();
+  const id = await makeGroup([owner, friend], "Crew");
+
+  const eventId = await insertEvent({ groupId: id, createdByUserId: owner });
+  const timeCandidate = await insertTimeCandidate(eventId, new Date());
+  // owner stays; their reaction must survive friend's removal.
+  await insertReaction(eventId, timeCandidate, owner);
+  await insertReaction(eventId, timeCandidate, friend);
+
+  await caller(owner).groups.removeMember({ groupId: id, userId: friend });
+
+  assert.equal(await reactionRowCount(eventId, friend), 0);
+  assert.equal(await reactionRowCount(eventId, owner), 1);
 });
 
 // ----- get -----

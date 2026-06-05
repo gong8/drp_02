@@ -344,3 +344,49 @@ test("each member's +1 is independent: one toggling off leaves the other's +1 (c
     "the public count reflects b's lone remaining +1",
   );
 });
+
+// ----- a +1 is idempotent: a duplicate add is a clean no-op, never a crash (A3) -----
+
+test("two concurrent +1s on the same candidate never crash and never leave a duplicate row", async () => {
+  // The A3 race: two adds that both read "no reaction yet" then both insert. Without
+  // onConflictDoNothing the second insert hits the (candidateId, userId) PK and 500s. With it the
+  // duplicate is a clean no-op, so neither call throws and at most one reaction row survives.
+  const u = await makeUser();
+  const g = await makeGroup([u]);
+  const e = await insertEvent({ groupId: g, createdByUserId: u, phase: "collecting" });
+  const c = await insertTimeCandidate(e, new Date(Date.now() + 86_400_000));
+
+  // A PK crash would surface here as a rejected promise (INTERNAL_SERVER_ERROR); this must resolve.
+  await Promise.all([
+    caller(u).events.toggleReaction({ eventId: e, candidateId: c }),
+    caller(u).events.toggleReaction({ eventId: e, candidateId: c }),
+  ]);
+
+  // Whatever the interleaving, the row count is 0 or 1 - never a crash and never a duplicate.
+  const rows = await reactionRows(c, u);
+  assert.ok(rows.length <= 1, "a concurrent double +1 never produces a duplicate reaction row");
+});
+
+// ----- a late +1 settles first: collecting is over once decidesBy has passed (A1) -----
+
+test("a +1 after decidesBy has passed is rejected (the write path settles the stale collecting plan)", async () => {
+  // The stored phase is still `collecting` (no read has settled it), but its decides-by deadline has
+  // passed. A write must settle lazily like a read does, so this late +1 is rejected with BAD_REQUEST.
+  const u = await makeUser();
+  const g = await makeGroup([u]);
+  const e = await insertEvent({
+    groupId: g,
+    createdByUserId: u,
+    phase: "collecting",
+    contingent: true,
+    quorum: 1,
+    decidesBy: new Date(Date.now() - 60_000), // deadline passed, never read since
+  });
+  const c = await insertTimeCandidate(e, new Date(Date.now() + 86_400_000));
+  await insertReaction(e, c, u); // a standing +1 so the plan auto-locks (does not fizzle) on settle
+
+  await assert.rejects(
+    () => caller(u).events.toggleReaction({ eventId: e, candidateId: c }),
+    isCode("BAD_REQUEST"),
+  );
+});

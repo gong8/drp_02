@@ -23,6 +23,12 @@ export const NOTE_BLIND = "Blind";
 // The privacy disclaimer, said once.
 export const NO_NAMES = "No names, just the group.";
 
+// The anonymity note on the create flow's "Ready to send?" screen - a small uppercase tag + a
+// plain-English reassurance that the suggestion never shows as coming from the creator.
+export const ANON_SEND_TITLE = "Sent anonymously";
+export const ANON_SEND_BODY =
+  "The group sees the meetup, never that it came from you. No names, ever.";
+
 // Two canonical error strings: a fetch failure vs a mutation failure.
 export const ERR_NETWORK = "Couldn't reach the server.";
 export const ERR_SAVE = "Couldn't save. Try again.";

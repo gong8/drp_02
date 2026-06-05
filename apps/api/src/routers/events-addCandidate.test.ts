@@ -24,6 +24,7 @@ import {
   eventCandidates,
   insertActivityCandidate,
   insertEvent,
+  insertReaction,
   insertTimeCandidate,
   makeGroup,
   makeUser,
@@ -386,5 +387,21 @@ test("an added candidate becomes the author's own +1 (adding implies reacting)",
     await reactionCount(eventId, id),
     1,
     "a newly added candidate must carry the author's +1",
+  );
+});
+
+// Regression (A1): a collecting plan past its decides-by deadline has already auto-locked/fizzled.
+// loadEvent never settles, so the write path must settle lazily and reject the late add.
+test("adding a candidate after decidesBy has passed is rejected (the write settles the stale plan)", async () => {
+  const { creator, member, eventId } = await collectingPlan({
+    decidesBy: new Date(Date.now() - 60_000), // deadline passed, never read since
+  });
+  // A future time + a standing +1 so the plan auto-locks into a moment (does not fizzle) on settle.
+  const t = await insertTimeCandidate(eventId, new Date(Date.now() + 3 * DAY_MS));
+  await insertReaction(eventId, t, creator);
+
+  await assert.rejects(
+    () => caller(member).events.addCandidate({ eventId, kind: "activity", text: "Karaoke" }),
+    isCode("BAD_REQUEST"),
   );
 });

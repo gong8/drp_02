@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+// A concrete time-instant string at the network boundary. We keep it a string (not z.coerce.date)
+// so the inferred type stays string-compatible for every consumer, but reject values Date.parse
+// cannot read so a malformed timestamp is caught here instead of silently dropped server-side.
+export const Instant = z.string().refine((s) => !Number.isNaN(Date.parse(s)), {
+  message: "invalid datetime",
+});
+
 // A person's answer during the moment. "conditional" carries a `cond` (see Conditional).
 export const ResponseKind = z.enum(["yes", "no", "conditional"]);
 export type ResponseKind = z.infer<typeof ResponseKind>;
@@ -38,7 +45,7 @@ export type PlanPhase = z.infer<typeof PlanPhase>;
 // One time candidate the wizard sends: a concrete instant plus an optional part-of-day hint (the
 // wizard resolves part-of-day chips to concrete days CLIENT-side, so the server only sees instants).
 export const TimeCandidateInput = z.object({
-  startsAt: z.string(),
+  startsAt: Instant,
   partOfDay: PartOfDay.optional(),
 });
 export type TimeCandidateInput = z.infer<typeof TimeCandidateInput>;
@@ -52,11 +59,11 @@ export const CreateEventInput = z.object({
   description: z.string().max(500).optional(),
   location: z.string().max(120).optional(),
   timeCandidates: z.array(TimeCandidateInput).max(10).optional(),
-  activityCandidates: z.array(z.string().min(1).max(80)).max(10).optional(),
+  activityCandidates: z.array(z.string().trim().min(1).max(80)).max(10).optional(),
   lockTimes: z.boolean().optional().default(false),
   lockActivity: z.boolean().optional().default(false),
-  decidesBy: z.string().optional(),
-  replyBy: z.string().optional(),
+  decidesBy: Instant.optional(),
+  replyBy: Instant.optional(),
   quorum: z.number().int().min(1).max(50).optional(),
 });
 export type CreateEventInput = z.infer<typeof CreateEventInput>;
@@ -77,7 +84,7 @@ export type ToggleReactionInput = z.infer<typeof ToggleReactionInput>;
 // hint); an "activity" candidate needs `text`. Adding a candidate +1s it for the author.
 export const AddCandidateInput = ByEvent.extend({
   kind: CandidateKind,
-  startsAt: z.string().optional(),
+  startsAt: Instant.optional(),
   partOfDay: PartOfDay.optional(),
   text: z.string().min(1).max(80).optional(),
 });
