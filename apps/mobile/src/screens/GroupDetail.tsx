@@ -1,5 +1,5 @@
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import type { GroupsStackParams } from "../../App";
 import { trpc } from "../lib/trpc";
@@ -34,13 +34,20 @@ export function GroupDetail({ route, navigation }: Props) {
   const [error, setError] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [addable, setAddable] = useState<Addable>([]);
+  // Whether the name field has been seeded from the server yet. We seed only on the first successful
+  // load so a later reload (e.g. after adding a member) cannot clobber an in-progress rename draft.
+  const seededName = useRef(false);
 
   const load = useCallback(() => {
     return trpc.groups.get
       .query({ id: groupId })
       .then((d) => {
         setData(d);
-        if (d) setNameDraft(d.name);
+        if (d && !seededName.current) {
+          setNameDraft(d.name);
+          seededName.current = true;
+        }
+        setError(false);
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
@@ -48,14 +55,17 @@ export function GroupDetail({ route, navigation }: Props) {
 
   useFetchOnFocus(load);
 
-  async function run(fn: () => Promise<unknown>) {
-    if (busy) return;
+  async function run(fn: () => Promise<unknown>): Promise<boolean> {
+    if (busy) return false;
     setBusy(true);
+    setError(false);
     try {
       await fn();
       await load();
+      return true;
     } catch {
       setError(true);
+      return false;
     } finally {
       setBusy(false);
     }
@@ -147,8 +157,11 @@ export function GroupDetail({ route, navigation }: Props) {
               divided={false}
               padding={9}
               onPress={async () => {
-                await run(() => trpc.groups.addMember.mutate({ groupId, userId: u.id }));
-                setAddable((prev) => prev.filter((x) => x.id !== u.id));
+                // Only drop the user from the picker once the add actually succeeded; on failure the
+                // row must stay so it can be retried. Re-derive the list from the server so the picker
+                // reflects post-add reality rather than an optimistic guess.
+                const ok = await run(() => trpc.groups.addMember.mutate({ groupId, userId: u.id }));
+                if (ok) setAddable(await trpc.groups.addableUsers.query({ groupId }));
               }}
               right={
                 <Text
