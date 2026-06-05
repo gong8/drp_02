@@ -1,6 +1,6 @@
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Pressable, Text, View, type ViewStyle } from "react-native";
+import { Pressable, View, type ViewStyle } from "react-native";
 import type { MeetupsStackParams } from "../../App";
 import {
   ANON_SEND_BODY,
@@ -21,7 +21,7 @@ import {
   wizardSteps,
 } from "../lib/redo";
 import { trpc } from "../lib/trpc";
-import { font, ui } from "../theme";
+import { ui } from "../theme";
 import {
   AppText,
   Button,
@@ -563,7 +563,7 @@ export function CreateWizard({ navigation }: Props) {
                 paddingVertical: 13,
               }}
             >
-              <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink, lineHeight: 19 }}>
+              <AppText variant="rowLabelSm" style={{ lineHeight: 19 }}>
                 {confirmMirror({
                   timeCount: timeIsos.length,
                   activityCount,
@@ -571,7 +571,7 @@ export function CreateWizard({ navigation }: Props) {
                   activityFixed: lockActivityEff && activityCount <= 1,
                   firstTimeIso: timeIsos[0] ?? null,
                 })}
-              </Text>
+              </AppText>
               <View
                 style={{ height: 1, backgroundColor: ui.hairline, marginTop: 12, marginBottom: 11 }}
               />
@@ -704,7 +704,9 @@ function RemoveDot({ onPress }: { onPress: () => void }) {
         justifyContent: "center",
       }}
     >
-      <Text style={{ fontFamily: font.bold, fontSize: 13, lineHeight: 13, color: ui.ink }}>×</Text>
+      <AppText variant="rowLabelSm" style={{ lineHeight: 13 }}>
+        ×
+      </AppText>
     </Pressable>
   );
 }
@@ -747,7 +749,7 @@ function DeadlineField({
 }) {
   return (
     <View style={style}>
-      <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>{heading}</Text>
+      <AppText variant="rowLabelSm">{heading}</AppText>
       {editing ? (
         <Card style={{ marginTop: 8 }}>
           <DateTimePill
@@ -769,7 +771,7 @@ function DeadlineField({
         </Card>
       ) : (
         <Card style={{ marginTop: 8 }}>
-          <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>{defaultLine}</Text>
+          <AppText variant="rowLabelSm">{defaultLine}</AppText>
           <AppText variant="caption" style={{ marginTop: 3 }}>
             {defaultSub}
           </AppText>

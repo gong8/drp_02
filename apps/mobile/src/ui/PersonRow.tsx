@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
-import { Pressable, Text, View, type ViewStyle } from "react-native";
-import { font, ui } from "../theme";
+import { Pressable, View, type ViewStyle } from "react-native";
+import { ui } from "../theme";
 import { Avatar } from "./Avatar";
+import { AppText } from "./Text";
 
 // An avatar + bold-name list row, shared by the group roster, the "who's in" reveal, and the two
 // member pickers. `index` drives the top divider (the first row has none) when `divided`; pass
@@ -39,7 +40,7 @@ export function PersonRow({
   const inner = (
     <>
       <Avatar initial={name.charAt(0).toUpperCase()} color={color} size={avatarSize} />
-      <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>{name}</Text>
+      <AppText variant="rowLabelSm">{name}</AppText>
       {right}
     </>
   );
