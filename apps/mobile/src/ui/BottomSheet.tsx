@@ -1,5 +1,13 @@
 import { type ReactNode, useEffect, useRef, useState } from "react";
-import { Animated, Easing, Modal, Pressable, View } from "react-native";
+import {
+  Animated,
+  Easing,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  View,
+} from "react-native";
 import { ui } from "../theme";
 
 // The scrim and the sheet are animated separately: the scrim fades in while only the sheet
@@ -49,7 +57,13 @@ export function BottomSheet({
 
   return (
     <Modal visible transparent animationType="none" onRequestClose={onClose}>
-      <View style={{ flex: 1, justifyContent: "flex-end" }}>
+      {/* Pin the sheet to the bottom AND lift it above the keyboard: with `flex-end`, padding
+          behaviour pushes the sheet up by the keyboard height so its lower fields (Notes) and the
+          Save button stay visible while typing. The scrim still fills the screen behind it. */}
+      <KeyboardAvoidingView
+        style={{ flex: 1, justifyContent: "flex-end" }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
         <Animated.View
           style={{
             position: "absolute",
@@ -91,7 +105,7 @@ export function BottomSheet({
           />
           {children}
         </Animated.View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
