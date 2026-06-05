@@ -45,7 +45,7 @@ import {
   StatusPill,
 } from "../ui";
 
-type Ev = RouterOutputs["events"]["mine"][number];
+type Meetup = RouterOutputs["events"]["mine"][number];
 type Props = NativeStackScreenProps<MeetupsStackParams, "Dashboard">;
 
 // "all" is an overview tab (the union of every bucket); it leads the row but is not the default
@@ -62,7 +62,7 @@ const TAB_COLOR: Record<Tab, string> = {
 
 // A card in the pink ACTION REQUIRED band: each meetup gets its own isolated white box (so it reads
 // as a distinct tappable thing against the loud band), with a brand countdown to its deadline.
-function ActionRow({ e, now, onPress }: { e: Ev; now: number; onPress: () => void }) {
+function ActionRow({ e, now, onPress }: { e: Meetup; now: number; onPress: () => void }) {
   return (
     <Card padding={13} onPress={onPress} style={{ marginTop: 11 }}>
       <View
@@ -89,7 +89,7 @@ function ActionRow({ e, now, onPress }: { e: Ev; now: number; onPress: () => voi
 
 // The terse footer datum(s) for a list card, by phase. Time-left lives small here (the loud countdown
 // is reserved for the action panel + detail); no "on the table", no face pile.
-function CardFooter({ e, now }: { e: Ev; now: number }) {
+function CardFooter({ e, now }: { e: Meetup; now: number }) {
   if (e.phase === "collecting") {
     const ms = deadlineMs(e, now);
     return (
@@ -120,7 +120,7 @@ function CardFooter({ e, now }: { e: Ev; now: number }) {
   );
 }
 
-function MeetCard({ e, now, onPress }: { e: Ev; now: number; onPress: () => void }) {
+function MeetupCard({ e, now, onPress }: { e: Meetup; now: number; onPress: () => void }) {
   const bucket = planBucket(e, now);
   const sub = e.activity
     ? `${e.groupName}${e.location ? ` · ${e.location}` : ""}`
@@ -187,11 +187,11 @@ function HistoryDivider() {
 }
 
 export function Dashboard({ navigation }: Props) {
-  const [events, setEvents] = useState<Ev[]>([]);
+  const [events, setEvents] = useState<Meetup[]>([]);
   const [hasGroups, setHasGroups] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [filter, setFilter] = useState<Tab>("going");
+  const [tab, setTab] = useState<Tab>("going");
   // Local clock so the Action Required countdowns tick live (the poll is only every 5s).
   const now = useLiveClock();
 
@@ -227,20 +227,20 @@ export function Dashboard({ navigation }: Props) {
 
   // Everything not in the action panel, in the selected tab. "All" shows every bucket (agenda first,
   // history below); a single bucket sorts live-then-history within itself.
-  const list = useMemo(() => {
+  const tabItems = useMemo(() => {
     const rest = events.filter((e) => !actionIds.has(e.id));
-    if (filter === "all") return rest.sort((a, b) => compareForDisplayAll(a, b, now));
+    if (tab === "all") return rest.sort((a, b) => compareForDisplayAll(a, b, now));
     return rest
-      .filter((e) => planBucket(e, now) === filter)
+      .filter((e) => planBucket(e, now) === tab)
       .sort((a, b) => compareForDisplay(a, b, now));
-  }, [events, actionIds, filter, now]);
+  }, [events, actionIds, tab, now]);
 
   // In "All" the first DONE card opens the history section; mark its index so we can rule it off.
   const historyStart = useMemo(() => {
-    if (filter !== "all") return -1;
-    const i = list.findIndex((e) => planBucket(e, now) === "done");
+    if (tab !== "all") return -1;
+    const i = tabItems.findIndex((e) => planBucket(e, now) === "done");
     return i > 0 ? i : -1;
-  }, [list, filter, now]);
+  }, [tabItems, tab, now]);
 
   const header = (
     <ScreenHeader
@@ -277,7 +277,7 @@ export function Dashboard({ navigation }: Props) {
 
   if (loading) return <ScreenLoading />;
 
-  const n = actionItems.length;
+  const actionCount = actionItems.length;
 
   return (
     <ScreenScroll header={header} bottomPad={hasGroups ? 104 : 24} footer={footer || undefined}>
@@ -300,7 +300,7 @@ export function Dashboard({ navigation }: Props) {
 
       {!error && hasGroups && (
         <>
-          {n > 0 && (
+          {actionCount > 0 && (
             <Band style={{ marginBottom: 22, paddingTop: 13, paddingBottom: 16 }}>
               <Text
                 style={{
@@ -311,7 +311,7 @@ export function Dashboard({ navigation }: Props) {
                   color: ui.onInk,
                 }}
               >
-                {actionsRequiredLabel(n)}
+                {actionsRequiredLabel(actionCount)}
               </Text>
               {actionItems.map((e) => (
                 <ActionRow
@@ -326,23 +326,23 @@ export function Dashboard({ navigation }: Props) {
 
           <Segmented
             options={TABS}
-            value={filter}
-            onChange={setFilter}
+            value={tab}
+            onChange={setTab}
             activeColor={(t) => TAB_COLOR[t]}
             label={(t) => TAB_LABEL[t]}
           />
 
-          {list.map((e, i) => (
+          {tabItems.map((e, i) => (
             <Fragment key={e.id}>
               {i === historyStart && <HistoryDivider />}
-              <MeetCard
+              <MeetupCard
                 e={e}
                 now={now}
                 onPress={() => navigation.navigate("EventDetail", { eventId: e.id })}
               />
             </Fragment>
           ))}
-          {list.length === 0 && <EmptyState inCard>Nothing here yet.</EmptyState>}
+          {tabItems.length === 0 && <EmptyState inCard>Nothing here yet.</EmptyState>}
         </>
       )}
     </ScreenScroll>
