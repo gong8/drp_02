@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import type { Logger as DrizzleLogger } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool, type PoolConfig } from "pg";
-import { logger } from "../logger.js";
+import { logger, scoped } from "../logger.js";
 import * as schema from "./schema.js";
 
 const connectionString = process.env.DATABASE_URL;
@@ -28,7 +28,7 @@ const pool = new Pool({ connectionString, ssl: resolveSsl() });
 
 // Emit each SQL statement at debug level. Quiet unless LOG_LEVEL=debug, so it never
 // drowns normal output. No reqId here - the pool is a module-level singleton.
-const dbLog = logger.child({ scope: "db" });
+const dbLog = logger.child(scoped("db"));
 const queryLogger: DrizzleLogger = {
   logQuery(query, params) {
     dbLog.debug({ params }, query);

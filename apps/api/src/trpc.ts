@@ -3,6 +3,7 @@ import type { CreateFastifyContextOptions } from "@trpc/server/adapters/fastify"
 import { verifyClerkToken } from "./auth/clerk.js";
 import { resolveAuth } from "./auth/resolve.js";
 import { upsertUser } from "./db/users.js";
+import { scoped } from "./logger.js";
 
 function headerString(v: string | string[] | undefined): string | undefined {
   return typeof v === "string" ? v : undefined;
@@ -31,7 +32,7 @@ export async function createContext({ req }: CreateFastifyContextOptions) {
   // misconfiguration is debuggable rather than looking like a plain client error. Skipped
   // when Clerk is not configured at all (local dev), since we never attempted verification.
   if (authHeader && clerkConfigured && !userId) {
-    req.log.warn({ scope: "auth" }, "bearer token present but did not verify");
+    req.log.warn(scoped("auth"), "bearer token present but did not verify");
   }
 
   // First-seen real users get a row so groups/RSVPs can reference them. Best-effort: a
@@ -40,7 +41,7 @@ export async function createContext({ req }: CreateFastifyContextOptions) {
     try {
       await upsertUser({ id: claims.sub, name: claims.name, email: claims.email });
     } catch (err) {
-      req.log.error({ scope: "auth", err }, "user upsert failed (continuing)");
+      req.log.error({ ...scoped("auth"), err }, "user upsert failed (continuing)");
     }
   }
 
@@ -70,7 +71,7 @@ const loggingMiddleware = t.middleware(async ({ path, type, ctx, next }) => {
   const result = await next();
   const ms = Date.now() - start;
   const who = ctx.userId ?? "anon";
-  const base = { scope: "trpc", path, type, userId: who, ms };
+  const base = { ...scoped("trpc"), path, type, userId: who, ms };
   const tail = `user=${who} ${ms}ms`;
 
   if (result.ok) {
