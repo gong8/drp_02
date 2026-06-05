@@ -41,7 +41,7 @@ import { protectedProcedure, router } from "../trpc.js";
 import { displayActivity, planOpensMoment, resolveActivity } from "./create-plan.js";
 import { shapePastMeetups } from "./past-meetups.js";
 
-export type EventRow = typeof events.$inferSelect;
+type EventRow = typeof events.$inferSelect;
 type MyStatus = "reacting" | "awaiting" | "going" | "declined";
 
 const DEFAULT_QUORUM = 2;
