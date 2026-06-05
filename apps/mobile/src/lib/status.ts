@@ -91,6 +91,22 @@ export function compareForDisplay(a: Timed, b: Timed, now: number = Date.now()):
   return ap ? bm - am : am - bm;
 }
 
+// "All" tab order: your agenda first, history below. Going + Open interleave purely by time so the
+// top of the list is the true running order of what's coming up; everything DONE sinks beneath it.
+// We key on the bucket, not isPast, because a done plan is not always past - a declined-but-upcoming
+// or fizzled plan is still future-dated and would otherwise float up among live commitments. Within
+// each section the normal display order applies.
+export function compareForDisplayAll(
+  a: Bucketable,
+  b: Bucketable,
+  now: number = Date.now(),
+): number {
+  const ad = planBucket(a, now) === "done";
+  const bd = planBucket(b, now) === "done";
+  if (ad !== bd) return ad ? 1 : -1;
+  return compareForDisplay(a, b, now);
+}
+
 // Action-panel order: ticking moments lead (soonest close first), then collecting plans by deadline.
 export function compareActions(
   a: Timed & { momentEndsAt: string | null },

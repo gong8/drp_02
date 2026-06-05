@@ -1,7 +1,7 @@
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
-import { useCallback, useMemo, useState } from "react";
+import { Fragment, useCallback, useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
 import { AccountAvatar } from "../components/AccountAvatar";
@@ -18,6 +18,7 @@ import {
   type Bucket,
   compareActions,
   compareForDisplay,
+  compareForDisplayAll,
   isActionRequired,
   planBucket,
 } from "../lib/status";
@@ -41,9 +42,17 @@ import {
 type Ev = Awaited<ReturnType<typeof trpc.events.mine.query>>[number];
 type Props = NativeStackScreenProps<MeetupsStackParams, "Dashboard">;
 
-const BUCKETS = ["going", "open", "done"] as const;
-const BUCKET_LABEL: Record<Bucket, string> = { going: "Going", open: "Open", done: "Done" };
-const BUCKET_COLOR: Record<Bucket, string> = { going: ui.going, open: ui.open, done: ui.muted };
+// "all" is an overview tab (the union of every bucket); it leads the row but is not the default
+// landing tab - the app still opens on "going" (your confirmed commitments).
+type Tab = "all" | Bucket;
+const TABS = ["all", "going", "open", "done"] as const;
+const TAB_LABEL: Record<Tab, string> = { all: "All", going: "Going", open: "Open", done: "Done" };
+const TAB_COLOR: Record<Tab, string> = {
+  all: ui.ink,
+  going: ui.going,
+  open: ui.open,
+  done: ui.muted,
+};
 
 // One ms-to-deadline read, from the phase's active deadline.
 function deadlineMs(e: Ev, now: number): number {
@@ -169,12 +178,42 @@ function MeetCard({ e, now, onPress }: { e: Ev; now: number; onPress: () => void
   );
 }
 
+// Rules off the history section in the "All" tab: a hairline with a small DONE label, so the agenda
+// above and the finished/declined plans below read as two distinct groups.
+function HistoryDivider() {
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+        marginTop: 3,
+        marginBottom: 14,
+      }}
+    >
+      <View style={{ flex: 1, height: ui.border, backgroundColor: ui.hairline }} />
+      <Text
+        style={{
+          fontFamily: font.black,
+          fontSize: 11,
+          letterSpacing: 1,
+          textTransform: "uppercase",
+          color: ui.muted,
+        }}
+      >
+        Done
+      </Text>
+      <View style={{ flex: 1, height: ui.border, backgroundColor: ui.hairline }} />
+    </View>
+  );
+}
+
 export function Dashboard({ navigation }: Props) {
   const [events, setEvents] = useState<Ev[]>([]);
   const [hasGroups, setHasGroups] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [filter, setFilter] = useState<Bucket>("going");
+  const [filter, setFilter] = useState<Tab>("going");
   // Local clock so the Action Required countdowns tick live (the poll is only every 5s).
   const now = useLiveClock();
 
@@ -208,14 +247,22 @@ export function Dashboard({ navigation }: Props) {
   );
   const actionIds = useMemo(() => new Set(actionItems.map((e) => e.id)), [actionItems]);
 
-  // Everything not in the action panel, in the selected bucket, sorted live-then-history.
-  const list = useMemo(
-    () =>
-      events
-        .filter((e) => !actionIds.has(e.id) && planBucket(e, now) === filter)
-        .sort((a, b) => compareForDisplay(a, b, now)),
-    [events, actionIds, filter, now],
-  );
+  // Everything not in the action panel, in the selected tab. "All" shows every bucket (agenda first,
+  // history below); a single bucket sorts live-then-history within itself.
+  const list = useMemo(() => {
+    const rest = events.filter((e) => !actionIds.has(e.id));
+    if (filter === "all") return rest.sort((a, b) => compareForDisplayAll(a, b, now));
+    return rest
+      .filter((e) => planBucket(e, now) === filter)
+      .sort((a, b) => compareForDisplay(a, b, now));
+  }, [events, actionIds, filter, now]);
+
+  // In "All" the first DONE card opens the history section; mark its index so we can rule it off.
+  const historyStart = useMemo(() => {
+    if (filter !== "all") return -1;
+    const i = list.findIndex((e) => planBucket(e, now) === "done");
+    return i > 0 ? i : -1;
+  }, [list, filter, now]);
 
   const header = (
     <ScreenHeader
@@ -299,20 +346,22 @@ export function Dashboard({ navigation }: Props) {
           )}
 
           <Segmented
-            options={BUCKETS}
+            options={TABS}
             value={filter}
             onChange={setFilter}
-            activeColor={(b) => BUCKET_COLOR[b]}
-            label={(b) => BUCKET_LABEL[b]}
+            activeColor={(t) => TAB_COLOR[t]}
+            label={(t) => TAB_LABEL[t]}
           />
 
-          {list.map((e) => (
-            <MeetCard
-              key={e.id}
-              e={e}
-              now={now}
-              onPress={() => navigation.navigate("EventDetail", { eventId: e.id })}
-            />
+          {list.map((e, i) => (
+            <Fragment key={e.id}>
+              {i === historyStart && <HistoryDivider />}
+              <MeetCard
+                e={e}
+                now={now}
+                onPress={() => navigation.navigate("EventDetail", { eventId: e.id })}
+              />
+            </Fragment>
           ))}
           {list.length === 0 && <EmptyState inCard>Nothing here yet.</EmptyState>}
         </>
