@@ -3,8 +3,7 @@ import { useState } from "react";
 import type { GroupsStackParams } from "../../App";
 import { ERR_SAVE, LABEL_GROUP_NAME, TITLE_NEW_GROUP } from "../lib/copy";
 import { trpc } from "../lib/trpc";
-import { ui } from "../theme";
-import { AppText, Button, Field, ScreenHeader, ScreenScroll } from "../ui";
+import { AppText, Button, Field, FormError, ScreenHeader, ScreenScroll } from "../ui";
 
 type Props = NativeStackScreenProps<GroupsStackParams, "CreateGroup">;
 
@@ -13,11 +12,14 @@ export function CreateGroup({ navigation }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
 
+  const trimmed = name.trim();
+  const canCreate = trimmed !== "" && !busy;
+
   async function create() {
-    if (name.trim() === "" || busy) return;
+    if (!canCreate) return;
     setBusy(true);
     try {
-      await trpc.groups.create.mutate({ name: name.trim() });
+      await trpc.groups.create.mutate({ name: trimmed });
       navigation.goBack();
     } catch {
       setError(true);
@@ -30,11 +32,7 @@ export function CreateGroup({ navigation }: Props) {
       header={<ScreenHeader title={TITLE_NEW_GROUP} onBack={() => navigation.goBack()} />}
       avoidKeyboard
     >
-      {error && (
-        <AppText variant="caption" style={{ color: ui.brand, marginBottom: 10 }}>
-          {ERR_SAVE}
-        </AppText>
-      )}
+      {error && <FormError>{ERR_SAVE}</FormError>}
       <Field label={LABEL_GROUP_NAME} value={name} onChangeText={setName} placeholder="The Boys" />
       <AppText variant="caption" style={{ marginTop: 8 }}>
         You can add members once it's created.
@@ -42,7 +40,7 @@ export function CreateGroup({ navigation }: Props) {
       <Button
         label="Create group"
         variant="primary"
-        disabled={name.trim() === "" || busy}
+        disabled={!canCreate}
         onPress={create}
         style={{ marginTop: 20 }}
       />
