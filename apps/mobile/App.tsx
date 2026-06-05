@@ -159,7 +159,7 @@ export default function App() {
     Inter_500Medium,
     Inter_700Bold,
   });
-  if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: "#FCEFE8" }} />;
+  if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: ui.gradient[0] }} />;
   return (
     <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
       <DevAuthProvider>
