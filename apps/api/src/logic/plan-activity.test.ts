@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { displayActivity, planOpensMoment, resolveActivity } from "./create-plan.js";
+import { displayActivity, planOpensMoment, resolveActivity } from "./plan-activity.js";
 
 test("both axes pinned (1 locked time, <=1 locked activity) opens the moment", () => {
   assert.equal(planOpensMoment(1, true, 0, true), true);

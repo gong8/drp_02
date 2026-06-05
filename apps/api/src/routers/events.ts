@@ -37,9 +37,9 @@ import {
 } from "../db/schema.js";
 import { FALLBACK_AVATAR_COLOR, FALLBACK_USER_NAME, getUserCards } from "../db/users.js";
 import { msLeft } from "../format.js";
+import { shapePastMeetups } from "../logic/past-meetups.js";
+import { displayActivity, planOpensMoment, resolveActivity } from "../logic/plan-activity.js";
 import { protectedProcedure, router } from "../trpc.js";
-import { displayActivity, planOpensMoment, resolveActivity } from "./create-plan.js";
-import { shapePastMeetups } from "./past-meetups.js";
 
 type EventRow = typeof events.$inferSelect;
 type MyStatus = "reacting" | "awaiting" | "going" | "declined";
