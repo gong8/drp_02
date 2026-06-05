@@ -20,7 +20,6 @@ import { GroupDetail } from "./src/screens/GroupDetail";
 import { GroupsList } from "./src/screens/GroupsList";
 import { SignIn } from "./src/screens/SignIn";
 import { font, ui } from "./src/theme";
-import { HardShadow } from "./src/ui";
 
 // Account is reachable from either tab (via the top-right avatar), so it is registered in both stacks
 // and gets a real back button - there is no Account tab anymore.
@@ -66,24 +65,15 @@ function GroupsStackScreen() {
   );
 }
 
-// A neobrutalist tab bar: each tab is a bordered pill, the active one filled brand with a hard shadow
-// so the selected tab has a clearly visible boundary (not just a coloured word).
+// A split tab bar: the bar is halved down the middle by an ink seam, each half a full-bleed colour
+// block (the active half brand pink, the inactive a soft lavender). The selected tab is carried by
+// the text treatment - the active label is the loud uppercase display face in white, the inactive a
+// quiet muted label. No pills.
 function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const bottomGap = Math.max(Math.round(insets.bottom * 0.75), 12);
   return (
-    <View
-      style={{
-        flexDirection: "row",
-        gap: 10,
-        backgroundColor: ui.surface,
-        borderTopWidth: ui.border,
-        borderTopColor: ui.ink,
-        paddingTop: 10,
-        paddingHorizontal: ui.gutter,
-        paddingBottom: bottomGap,
-      }}
-    >
+    <View style={{ flexDirection: "row", borderTopWidth: ui.border, borderTopColor: ui.ink }}>
       {state.routes.map((route, i) => {
         const focused = state.index === i;
         const label = descriptors[route.key].options.title ?? route.name;
@@ -95,39 +85,36 @@ function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           });
           if (!focused && !event.defaultPrevented) navigation.navigate(route.name);
         };
-        const pill = (
+        return (
           <Pressable
+            key={route.key}
             onPress={onPress}
             style={{
+              flex: 1,
               alignItems: "center",
-              backgroundColor: focused ? ui.brand : ui.surface,
-              borderWidth: ui.border,
-              borderColor: ui.ink,
-              borderRadius: ui.rPill,
-              paddingVertical: 12,
+              paddingTop: 14,
+              paddingBottom: bottomGap,
+              backgroundColor: focused ? ui.brand : ui.tint,
+              borderLeftWidth: i === 0 ? 0 : ui.border,
+              borderLeftColor: ui.ink,
             }}
           >
             <Text
-              style={{
-                fontFamily: font.display,
-                fontSize: 13,
-                color: focused ? ui.onInk : ui.muted,
-              }}
+              style={
+                focused
+                  ? {
+                      fontFamily: font.black,
+                      fontSize: 15,
+                      letterSpacing: 0.5,
+                      textTransform: "uppercase",
+                      color: ui.onInk,
+                    }
+                  : { fontFamily: font.bold, fontSize: 13, color: ui.muted }
+              }
             >
               {label}
             </Text>
           </Pressable>
-        );
-        return (
-          <View key={route.key} style={{ flex: 1 }}>
-            {focused ? (
-              <HardShadow radius={ui.rPill} offset={ui.shadowInput}>
-                {pill}
-              </HardShadow>
-            ) : (
-              pill
-            )}
-          </View>
         );
       })}
     </View>
