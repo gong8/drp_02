@@ -822,12 +822,10 @@ function confirmMirror({
 }): string {
   const when = timeFixed && firstTimeIso ? `It's on for ${formatSlot(firstTimeIso)}` : null;
 
+  // Caller wires activityFixed = lockActivityEff && activityCount <= 1, and
+  // lockActivityEff implies activityCount > 0, so activityFixed implies exactly one activity.
   if (when) {
-    if (activityFixed) {
-      return activityCount === 1
-        ? `${when}. Activity set - just say who's in.`
-        : `${when}. Just say who's in.`;
-    }
+    if (activityFixed) return `${when}. Activity set - just say who's in.`;
     return `${when}. The group picks what to do, then who's in.`;
   }
 
@@ -836,9 +834,7 @@ function confirmMirror({
       ? `Vote on ${timeCount} ${plural(timeCount, "time")}`
       : "The group suggests times";
   const activityPart = activityFixed
-    ? activityCount === 1
-      ? " (activity set)"
-      : ""
+    ? " (activity set)"
     : activityCount >= 1
       ? ` and ${activityCount} ${plural(activityCount, "activity", "activities")}`
       : " and what to do";
