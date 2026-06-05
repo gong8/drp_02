@@ -636,7 +636,7 @@ function CollectingView({
           {data.timeCandidates.map((c: TimeCand) => (
             <VoteRow
               key={c.id}
-              label={timeChipLabel(c)}
+              label={timeRowLabel(c)}
               count={c.count}
               mine={c.mine}
               onPress={() => onToggleReaction(c.id)}
@@ -676,7 +676,7 @@ function CollectingView({
 }
 
 // A time row label: the concrete slot, with the part-of-day hint appended when present.
-function timeChipLabel(c: TimeCand): string {
+function timeRowLabel(c: TimeCand): string {
   const slot = formatSlot(c.startsAt);
   return c.partOfDay ? `${slot} · ${partOfDayLabel(c.partOfDay)}` : slot;
 }
