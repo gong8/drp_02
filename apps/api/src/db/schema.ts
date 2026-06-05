@@ -7,6 +7,7 @@ import {
   primaryKey,
   text,
   timestamp,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 // Legacy M2 lifecycle, kept so the change stays additive (the new flow uses `phase`).
@@ -133,12 +134,20 @@ export const eventOptOuts = pgTable(
 );
 
 // A member's commitment during the moment. `cond` carries the "I will make it if…" target set.
-export const responses = pgTable("responses", {
-  id: text("id").primaryKey(),
-  eventId: text("event_id")
-    .notNull()
-    .references(() => events.id),
-  userId: text("user_id").notNull(),
-  kind: responseKindEnum("kind").notNull(),
-  cond: jsonb("cond").$type<{ mode: "all" | "any"; targetIds: string[] }>(),
-});
+// One commitment per (event, user): the respond handler replaces by delete-then-insert, so the
+// unique index keeps a surrogate-id row from ever doubling up under a race.
+export const responses = pgTable(
+  "responses",
+  {
+    id: text("id").primaryKey(),
+    eventId: text("event_id")
+      .notNull()
+      .references(() => events.id),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id),
+    kind: responseKindEnum("kind").notNull(),
+    cond: jsonb("cond").$type<{ mode: "all" | "any"; targetIds: string[] }>(),
+  },
+  (t) => ({ eventUser: uniqueIndex("responses_event_user_unique").on(t.eventId, t.userId) }),
+);
