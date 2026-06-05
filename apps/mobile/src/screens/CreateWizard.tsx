@@ -64,12 +64,12 @@ export function CreateWizard({ navigation }: Props) {
   const stepKey = STEPS[step];
   const isLastStep = step === STEPS.length - 1;
   const [location, setLocation] = useState("");
-  const [description, setDescription] = useState("");
+  const [notes, setNotes] = useState("");
   // Activity ("what") candidates - ideas, optional, no names ever shown.
   const [activityChips, setActivityChips] = useState<string[]>([]);
   const [activityDraft, setActivityDraft] = useState("");
   // Time candidates - concrete multi-row date/time rows, optional.
-  const [rows, setRows] = useState<TimeRow[]>([{ id: "t0", date: "", time: "" }]);
+  const [timeRows, setTimeRows] = useState<TimeRow[]>([{ id: "t0", date: "", time: "" }]);
   const nextRowId = useRef(1);
   // Creator locks - both default OFF (open). Decides-by is editable.
   const [lockTimes, setLockTimes] = useState(false);
@@ -86,8 +86,8 @@ export function CreateWizard({ navigation }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
 
-  const updateRow = (id: string, patch: Partial<TimeRow>) =>
-    setRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+  const updateTimeRow = (id: string, patch: Partial<TimeRow>) =>
+    setTimeRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
 
   // Stable across renders (only touches state setters and a ref), so the group-change effect can list
   // it as a dependency without re-running on every render.
@@ -97,9 +97,9 @@ export function CreateWizard({ navigation }: Props) {
     setLockTimes(p.lockTimes);
     setLockActivity(p.lockActivity);
     setLocation(p.location);
-    setDescription(p.description);
+    setNotes(p.description);
     // Time is never carried - reset to a single blank row so the creator sets it fresh.
-    setRows([{ id: "t0", date: "", time: "" }]);
+    setTimeRows([{ id: "t0", date: "", time: "" }]);
     nextRowId.current = 1;
     setDecidesEdit(false);
     setReplyEdit(false);
@@ -139,7 +139,7 @@ export function CreateWizard({ navigation }: Props) {
   // keeping the first), so the preview count / isConcrete / confirm mirror and the submit payload all
   // match what the server actually stores - a slot sent twice in one minute must count once.
   const seenTimeMinutes = new Set<number>();
-  const timeIsos = rows
+  const timeIsos = timeRows
     .map((r) => isoFrom(r.date, r.time))
     .filter((x): x is string => x !== null)
     .filter((iso) => {
@@ -233,7 +233,7 @@ export function CreateWizard({ navigation }: Props) {
           ...(replyShown ? [`Replies close ${formatSlot(replyShown)}`] : []),
         ];
 
-  function valid(key: StepKey): boolean {
+  function canAdvance(key: StepKey): boolean {
     switch (key) {
       case "group":
         // Wait for the past-meetups query so the step list is final before leaving this step.
@@ -285,7 +285,7 @@ export function CreateWizard({ navigation }: Props) {
     try {
       await trpc.events.create.mutate({
         groupId,
-        description: description.trim() || undefined,
+        description: notes.trim() || undefined,
         location: location.trim() || undefined,
         timeCandidates: timeIsos.map((startsAt) => ({ startsAt })),
         activityCandidates: activities.length ? activities : undefined,
@@ -302,7 +302,7 @@ export function CreateWizard({ navigation }: Props) {
   }
 
   function goNext() {
-    if (!valid(stepKey) || busy) return;
+    if (!canAdvance(stepKey) || busy) return;
     if (stepKey === "activities") commitDraftActivity();
     if (isLastStep) submit();
     else setStep(step + 1);
@@ -315,14 +315,14 @@ export function CreateWizard({ navigation }: Props) {
   if (loading) return <ScreenLoading />;
 
   const nextLabel = isLastStep ? "Send to the group" : "Next";
-  const copy = STEP_COPY[stepKey];
+  const stepCopy = STEP_COPY[stepKey];
 
   return (
     <ScreenScroll header={<ScreenHeader title={TITLE_NEW_MEETUP} onBack={goBack} />} avoidKeyboard>
       <ProgressDots steps={STEPS} index={step} />
       {error && <FormError>{ERR_SAVE}</FormError>}
 
-      <Section title={copy.title} sub={copy.sub} size="lg">
+      <Section title={stepCopy.title} sub={stepCopy.sub} size="lg">
         {stepKey === "group" && (
           <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
             {groups.map((g) => (
@@ -408,25 +408,28 @@ export function CreateWizard({ navigation }: Props) {
 
         {stepKey === "times" && (
           <>
-            {rows.map((r) => (
+            {timeRows.map((r) => (
               <View key={r.id} style={{ position: "relative", marginBottom: 10 }}>
                 <DateTimePill
                   dateValue={r.date}
                   timeValue={r.time}
-                  onDate={(t) => updateRow(r.id, { date: t })}
-                  onTime={(t) => updateRow(r.id, { time: t })}
+                  onDate={(t) => updateTimeRow(r.id, { date: t })}
+                  onTime={(t) => updateTimeRow(r.id, { time: t })}
                   minimumDate={new Date()}
                 />
-                {rows.length > 1 && (
-                  <RemoveDot onPress={() => setRows((rs) => rs.filter((x) => x.id !== r.id))} />
+                {timeRows.length > 1 && (
+                  <RemoveDot onPress={() => setTimeRows((rs) => rs.filter((x) => x.id !== r.id))} />
                 )}
               </View>
             ))}
-            {rows.length < 10 && (
+            {timeRows.length < 10 && (
               <Chip
                 label="+ Add a time"
                 onPress={() =>
-                  setRows((rs) => [...rs, { id: `t${nextRowId.current++}`, date: "", time: "" }])
+                  setTimeRows((rs) => [
+                    ...rs,
+                    { id: `t${nextRowId.current++}`, date: "", time: "" },
+                  ])
                 }
               />
             )}
@@ -453,8 +456,8 @@ export function CreateWizard({ navigation }: Props) {
             <Field
               label="Notes"
               optional
-              value={description}
-              onChangeText={setDescription}
+              value={notes}
+              onChangeText={setNotes}
               placeholder="Come at 6, we'll eat around 8"
               multiline
               style={{ marginTop: 12 }}
@@ -542,7 +545,7 @@ export function CreateWizard({ navigation }: Props) {
               }
             />
             {location.trim() ? <SummaryItem label="Where" lines={[location.trim()]} /> : null}
-            {description.trim() ? <SummaryItem label="Notes" lines={[description.trim()]} /> : null}
+            {notes.trim() ? <SummaryItem label="Notes" lines={[notes.trim()]} /> : null}
             <SummaryItem label="Deadlines" lines={deadlineLines} />
 
             <View
@@ -555,7 +558,7 @@ export function CreateWizard({ navigation }: Props) {
               }}
             >
               <AppText variant="rowLabelSm" style={{ lineHeight: 19 }}>
-                {confirmMirror({
+                {outcomeSummary({
                   timeCount: timeIsos.length,
                   activityCount,
                   timeFixed: timeIsos.length === 1 && lockTimesEff,
@@ -578,7 +581,7 @@ export function CreateWizard({ navigation }: Props) {
       <Button
         label={nextLabel}
         variant="primary"
-        disabled={!valid(stepKey) || busy}
+        disabled={!canAdvance(stepKey) || busy}
         onPress={goNext}
         style={{ marginTop: 24 }}
       />
@@ -807,7 +810,7 @@ function DeadlineField({
 // The plain-English outcome mirror. Describes each axis by whether it is FIXED (locked to its
 // candidates so there is nothing to vote on) or still being decided, so the preview matches what the
 // server actually does. Both fixed => concrete (skip voting); otherwise the open axis is voted on.
-function confirmMirror({
+function outcomeSummary({
   timeCount,
   activityCount,
   timeFixed,

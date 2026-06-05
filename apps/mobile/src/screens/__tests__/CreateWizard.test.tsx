@@ -8,7 +8,7 @@
 // The native date/time picker (DateTimePill -> DateTimeField -> @react-native-community/datetimepicker)
 // is replaced by a deterministic stand-in: each mounted pill registers its onDate/onTime callbacks in
 // `pillInstances`, so a test sets a concrete date/time by calling them inside act(). This keeps the
-// REAL wizard logic under test (isoFrom, defaultDecidesByForCandidates, MOMENT_MS, confirmMirror) while
+// REAL wizard logic under test (isoFrom, defaultDecidesByForCandidates, MOMENT_MS, outcomeSummary) while
 // removing the only nondeterministic, hard-to-drive native surface.
 
 jest.mock("../../lib/trpc");
@@ -161,7 +161,7 @@ async function advanceTo(
   expect(await screen.findByText("Ready to send?")).toBeOnTheScreen();
 }
 
-// ---- confirmMirror: agrees with the server's concrete-shortcut rule -----------------------------
+// ---- outcomeSummary: agrees with the server's concrete-shortcut rule ----------------------------
 
 describe("confirm summary matches the time x activity x lock matrix", () => {
   test("both axes open: the group votes on time and what to do", async () => {
