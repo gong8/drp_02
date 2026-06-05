@@ -1,27 +1,19 @@
 // Drop every leftover per-process test database (`bethere_test_*`). The harness drops its own DB
 // in an `after` hook, but crashed/killed runs leak them; run `pnpm --filter @bethere/api db:test:clean`
 // to sweep. Connects to the maintenance DB (`drp`), so it never touches the dev data itself.
+//
+// Launched WITHOUT preloading env.ts, so it relies on pg-config for the connection coordinates.
 
-import { Client } from "pg";
+import { dropDatabase, withMaintenanceClient } from "./maintenance-db.js";
+import { TEST_DB_PREFIX } from "./pg-config.js";
 
-const maintenanceUrl =
-  process.env.TEST_PG_MAINTENANCE_URL ?? "postgres://drp:drp@localhost:5433/drp";
-
-const client = new Client({ connectionString: maintenanceUrl, ssl: false });
-await client.connect();
-try {
+await withMaintenanceClient(async (client) => {
   const { rows } = await client.query<{ datname: string }>(
-    `SELECT datname FROM pg_database WHERE datname LIKE 'bethere_test_%'`,
+    `SELECT datname FROM pg_database WHERE datname LIKE '${TEST_DB_PREFIX}%'`,
   );
   for (const { datname } of rows) {
-    await client.query(
-      `SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = $1 AND pid <> pg_backend_pid()`,
-      [datname],
-    );
-    await client.query(`DROP DATABASE IF EXISTS "${datname}"`);
+    await dropDatabase(client, datname);
     console.log(`dropped ${datname}`);
   }
   console.log(`done: ${rows.length} test database(s) removed`);
-} finally {
-  await client.end();
-}
+});

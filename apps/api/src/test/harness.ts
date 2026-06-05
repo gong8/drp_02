@@ -20,7 +20,6 @@
 import { randomUUID } from "node:crypto";
 import { sql } from "drizzle-orm";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
-import { Client } from "pg";
 import { db } from "../db/client.js";
 import { migrationsFolder } from "../db/paths.js";
 import {
@@ -35,23 +34,13 @@ import {
 } from "../db/schema.js";
 import { logger } from "../logger.js";
 import { appRouter } from "../router.js";
+import { dropDatabase, withMaintenanceClient } from "./maintenance-db.js";
+import { testDbName as testDbNameFor } from "./pg-config.js";
 
-const testDbName = process.env.TEST_DB_NAME ?? `bethere_test_${process.pid}`;
-const maintenanceUrl =
-  process.env.TEST_PG_MAINTENANCE_URL ?? "postgres://drp:drp@localhost:5433/drp";
+const testDbName = process.env.TEST_DB_NAME ?? testDbNameFor();
 
 // 42P04 = duplicate_database; 3D000 = invalid_catalog_name (DB does not exist).
 const DUPLICATE_DATABASE = "42P04";
-
-async function withMaintenanceClient<T>(fn: (c: Client) => Promise<T>): Promise<T> {
-  const client = new Client({ connectionString: maintenanceUrl, ssl: false });
-  await client.connect();
-  try {
-    return await fn(client);
-  } finally {
-    await client.end();
-  }
-}
 
 let prepared: Promise<void> | null = null;
 
@@ -86,13 +75,7 @@ export async function resetTables(): Promise<void> {
 // (`pnpm db:test:clean` is the bulk fallback.) Ends the app pool so the DROP is not blocked.
 export async function dropTestDb(): Promise<void> {
   await db.$client.end();
-  await withMaintenanceClient(async (c) => {
-    await c.query(
-      `SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = $1 AND pid <> pg_backend_pid()`,
-      [testDbName],
-    );
-    await c.query(`DROP DATABASE IF EXISTS "${testDbName}"`);
-  });
+  await withMaintenanceClient((c) => dropDatabase(c, testDbName));
 }
 
 // The real router, called as a given user (null = unauthenticated, to test the auth boundary).
