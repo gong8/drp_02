@@ -18,7 +18,7 @@ import {
 } from "../lib/copy";
 import { clock12, dayUpper, formatSlot, isoFrom, partOfDayLabel } from "../lib/format";
 import { addCandidateHorizon } from "../lib/lock";
-import { deadlineMs } from "../lib/status";
+import { deadlineMs, isLive, isTerminal, type Phase } from "../lib/status";
 import type { RouterOutputs } from "../lib/trpc";
 import { trpc } from "../lib/trpc";
 import { useBusyAction } from "../lib/useBusyAction";
@@ -111,7 +111,7 @@ export function EventDetail({ route, navigation }: Props) {
       load();
       // Poll while the plan is live so the tally, countdown and reveal converge without a refresh.
       const poll = setInterval(() => {
-        if (active && phaseRef.current !== "cleared" && phaseRef.current !== "fizzled") load();
+        if (active && !isTerminal({ phase: phaseRef.current as Phase })) load();
       }, 5000);
       return () => {
         active = false;
@@ -314,7 +314,7 @@ export function EventDetail({ route, navigation }: Props) {
   // no single time yet.
   const heroIso = data.chosenStartsAt && data.phase !== "collecting" ? data.chosenStartsAt : null;
   const heroClock = heroIso ? clock12(heroIso) : null;
-  const editable = data.phase !== "cleared" && data.phase !== "fizzled";
+  const editable = isLive(data);
 
   const sheets = (
     <>
