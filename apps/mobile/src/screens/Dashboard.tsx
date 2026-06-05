@@ -11,6 +11,7 @@ import {
   DIDNT_COME_TOGETHER,
   ERR_NETWORK,
   goingCountLabel,
+  planLabel,
 } from "../lib/copy";
 import { countdownLabel, formatSlot, HOT_MS } from "../lib/format";
 import { syncReminders } from "../lib/notifications";
@@ -71,7 +72,7 @@ function ActionRow({ e, now, onPress }: { e: Ev; now: number; onPress: () => voi
         }}
       >
         <View style={{ flex: 1 }}>
-          <AppText variant="title">{e.activity || e.groupName}</AppText>
+          <AppText variant="title">{planLabel(e)}</AppText>
           {e.activity ? (
             <AppText variant="caption" style={{ marginTop: 2 }}>
               {e.groupName}
@@ -130,7 +131,7 @@ function MeetCard({ e, now, onPress }: { e: Ev; now: number; onPress: () => void
     >
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
         <AppText variant="title" style={{ flexShrink: 1, marginRight: 8 }}>
-          {e.activity || e.groupName}
+          {planLabel(e)}
         </AppText>
         {bucket === "going" ? (
           <StatusPill label="In" color={ui.going} />

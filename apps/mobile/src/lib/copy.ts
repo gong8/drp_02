@@ -52,6 +52,12 @@ export function actionsRequiredLabel(n: number): string {
   return `${n} ${plural(n, "action")} required`;
 }
 
+// A plan's display name: its activity, else just the group name (stays consistent with the NO_NAMES
+// privacy wording - no creator, no title, just the meetup or the group).
+export function planLabel(e: { activity: string | null; groupName: string }): string {
+  return e.activity || e.groupName;
+}
+
 // "3 going".
 export function goingCountLabel(n: number): string {
   return `${n} going`;

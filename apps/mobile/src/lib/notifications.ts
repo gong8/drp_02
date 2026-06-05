@@ -1,5 +1,6 @@
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
+import { planLabel } from "./copy";
 import { formatSlot } from "./format";
 import type { trpc } from "./trpc"; // type-only: server code is never bundled
 
@@ -88,14 +89,14 @@ export async function syncReminders(events: ReminderEvent[]): Promise<void> {
           await schedule(
             new Date(decideMs - DECIDE_LEAD_MS),
             "Decides soon",
-            `"${e.activity || e.groupName}" decides ${formatSlot(e.decidesBy)} - tap what you're keen on.`,
+            `"${planLabel(e)}" decides ${formatSlot(e.decidesBy)} - tap what you're keen on.`,
           );
         }
         if (decideMs > now) {
           await schedule(
             new Date(decideMs),
             "Who's in?",
-            `"${e.activity || e.groupName}" just opened for the moment - say if you're in.`,
+            `"${planLabel(e)}" just opened for the moment - say if you're in.`,
           );
         }
       }
@@ -111,7 +112,7 @@ export async function syncReminders(events: ReminderEvent[]): Promise<void> {
             await schedule(
               new Date(now),
               "Who's in?",
-              `"${e.activity || e.groupName}" just opened for the moment - say if you're in.`,
+              `"${planLabel(e)}" just opened for the moment - say if you're in.`,
             );
           }
         }
@@ -120,7 +121,7 @@ export async function syncReminders(events: ReminderEvent[]): Promise<void> {
           RSVP_LEAD_MS,
           now,
           "RSVP closing",
-          `"${e.activity || e.groupName}" - are you in? Closing soon.`,
+          `"${planLabel(e)}" - are you in? Closing soon.`,
         );
       }
     }

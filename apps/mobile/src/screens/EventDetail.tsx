@@ -13,6 +13,7 @@ import {
   NO_NAMES,
   NOTE_BLIND,
   NOTE_TOP_PICK,
+  planLabel,
   statusLabel,
 } from "../lib/copy";
 import { clock12, dayUpper, formatSlot, isoFrom, partOfDayLabel } from "../lib/format";
@@ -473,7 +474,7 @@ export function EventDetail({ route, navigation }: Props) {
                 color: ui.ink,
               }}
             >
-              {data.activity || data.groupName}
+              {planLabel(data)}
             </Text>
             {editable && (
               <Pressable
