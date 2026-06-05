@@ -27,6 +27,16 @@ export async function getUserCard(
   };
 }
 
+// Project an existing users row to the avatar card shape. No fallback - these rows always exist
+// (callers pass rows they just read from the users table); getUserCard handles the missing-row case.
+export function userCardFromRow(u: { id: string; name: string; avatarColor: string }): {
+  id: string;
+  name: string;
+  color: string;
+} {
+  return { id: u.id, name: u.name, color: u.avatarColor };
+}
+
 // Insert a first-seen Clerk user; leave existing rows untouched. Name refresh on profile
 // change is out of scope for M2 (onConflictDoNothing keeps this a no-op for known users).
 export async function upsertUser(u: { id: string; name?: string; email?: string }): Promise<void> {

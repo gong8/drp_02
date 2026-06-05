@@ -7,7 +7,7 @@ import {
   RenameGroupInput,
 } from "@bethere/shared";
 import { TRPCError } from "@trpc/server";
-import { and, eq, inArray, notInArray } from "drizzle-orm";
+import { and, count, eq, inArray, notInArray } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { FALLBACK_GROUP_NAME } from "../db/groups.js";
 import {
@@ -19,7 +19,7 @@ import {
   responses,
   users,
 } from "../db/schema.js";
-import { getUserCard } from "../db/users.js";
+import { getUserCard, userCardFromRow } from "../db/users.js";
 import { protectedProcedure, router } from "../trpc.js";
 import { requireMember } from "./events.js";
 
@@ -39,17 +39,26 @@ export const groupsRouter = router({
       .from(groupMembers)
       .where(eq(groupMembers.userId, ctx.userId));
 
-    return Promise.all(
-      memberships.map(async (m) => {
-        const [group] = await db.select().from(groups).where(eq(groups.id, m.groupId));
-        const members = await memberIdsOf(m.groupId);
-        return {
-          id: m.groupId,
-          name: group?.name ?? FALLBACK_GROUP_NAME,
-          memberCount: members.length,
-        };
-      }),
-    );
+    const groupIds = memberships.map((m) => m.groupId);
+    if (groupIds.length === 0) return [];
+
+    const nameRows = await db
+      .select({ id: groups.id, name: groups.name })
+      .from(groups)
+      .where(inArray(groups.id, groupIds));
+    const countRows = await db
+      .select({ groupId: groupMembers.groupId, n: count() })
+      .from(groupMembers)
+      .where(inArray(groupMembers.groupId, groupIds))
+      .groupBy(groupMembers.groupId);
+    const nameMap = new Map(nameRows.map((r) => [r.id, r.name]));
+    const countMap = new Map(countRows.map((r) => [r.groupId, Number(r.n)]));
+
+    return memberships.map((m) => ({
+      id: m.groupId,
+      name: nameMap.get(m.groupId) ?? FALLBACK_GROUP_NAME,
+      memberCount: countMap.get(m.groupId) ?? 0,
+    }));
   }),
 
   // One group with its full member roster (id, name, avatar colour).
@@ -58,10 +67,7 @@ export const groupsRouter = router({
     if (!group) return null;
     await requireMember(input.id, ctx.userId);
     const ids = await memberIdsOf(input.id);
-    const members = [];
-    for (const id of ids) {
-      members.push(await getUserCard(id));
-    }
+    const members = await Promise.all(ids.map(getUserCard));
     return { id: group.id, name: group.name, members };
   }),
 
@@ -69,10 +75,8 @@ export const groupsRouter = router({
   addableUsers: protectedProcedure.input(ByGroupInput).query(async ({ ctx, input }) => {
     await requireMember(input.groupId, ctx.userId);
     const ids = await memberIdsOf(input.groupId);
-    const rows = await (ids.length
-      ? db.select().from(users).where(notInArray(users.id, ids))
-      : db.select().from(users));
-    return rows.map((u) => ({ id: u.id, name: u.name, color: u.avatarColor }));
+    const rows = await db.select().from(users).where(notInArray(users.id, ids));
+    return rows.map(userCardFromRow);
   }),
 
   // Create a group and add the creator as its first member.
