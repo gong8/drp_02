@@ -142,23 +142,21 @@ async function settlePhase(e: EventRow): Promise<void> {
   e.phase = next;
 }
 
-// Lazily auto-lock a collecting plan whose "Decides by" deadline has passed (no scheduler): pick the
-// best-supported TIME candidate (quorum, else most-reacted), resolve the winning activity into the
-// plan's name if empty, and open the blind moment. Opted-out members have no reactions so they drop for
-// free; with no time candidates, or no reactions of any kind, the plan fizzles silently (any +1 -
-// even on an activity - keeps it alive, and it locks the best-supported or first time). Mutates + persists.
-async function settleCollecting(e: EventRow): Promise<void> {
-  if (e.phase !== "collecting" || !e.decidesBy || Date.now() < e.decidesBy.getTime()) return;
-  const cands = await candidatesFor(e.id);
-  const timeCands = cands.filter((c) => c.kind === "time" && c.startsAt);
-  const reactions = await reactionsFor(e.id);
-  if (timeCands.length === 0 || reactions.length === 0) {
-    await fizzle(e);
-    return;
-  }
-  const timeIds = timeCands.map((c) => c.id);
-  const chosenId = pickWinnerOrBestId(timeIds, reactions, e.quorum);
-  const chosen = timeCands.find((c) => c.id === chosenId) as (typeof timeCands)[number];
+// The shared "open the blind moment" transition out of collecting, used by both auto-lock
+// (settleCollecting) and manual lock. Resolves the winning activity into the plan's name if empty,
+// then runs the guarded compare-and-set main UPDATE: it is conditioned on the row STILL being a
+// collecting plan with no chosen time, so a concurrent lock/auto-lock cannot be clobbered (its moment
+// window reset). .returning() tells us whether THIS call did the transition; on a lost race it reloads
+// the winner's state onto the in-memory row and returns false, so each caller serves the winner's slot.
+// On a won transition it fills the derived activity (guarded), mirrors the moment fields onto e, and
+// returns true. Mutates + persists; each call site keeps only its own preconditions.
+async function openMoment(
+  e: EventRow,
+  chosen: { startsAt: Date | null },
+  chosenId: string,
+  cands: (typeof eventCandidates.$inferSelect)[],
+  reactions: { candidateId: string; userId: string }[],
+): Promise<boolean> {
   const startsAt = chosen.startsAt as Date;
   const activity = resolveActivity(
     e.activity,
@@ -167,9 +165,6 @@ async function settleCollecting(e: EventRow): Promise<void> {
   );
   const now = new Date();
   const endsAt = resolveMomentEnd(now.getTime(), startsAt.getTime(), e.replyBy?.getTime() ?? null);
-  // Guard the transition on the row STILL being a collecting plan with no chosen time, so a
-  // concurrent lock/auto-lock cannot be clobbered (its moment window reset). .returning() tells us
-  // whether THIS call did the transition; if it lost the race, reload the winner's state instead.
   const locked = await db
     .update(events)
     .set({
@@ -187,7 +182,7 @@ async function settleCollecting(e: EventRow): Promise<void> {
   if (locked.length === 0) {
     const [fresh] = await db.select().from(events).where(eq(events.id, e.id));
     if (fresh) Object.assign(e, fresh);
-    return;
+    return false;
   }
   // Fill the derived activity only if the row still has none. A member may have edited the activity
   // concurrently (events.update); guarding the write on activity still being "" means an auto-lock can
@@ -205,6 +200,27 @@ async function settleCollecting(e: EventRow): Promise<void> {
   e.momentStartsAt = now;
   e.momentEndsAt = endsAt;
   e.startsAt = startsAt;
+  return true;
+}
+
+// Lazily auto-lock a collecting plan whose "Decides by" deadline has passed (no scheduler): pick the
+// best-supported TIME candidate (quorum, else most-reacted), resolve the winning activity into the
+// plan's name if empty, and open the blind moment. Opted-out members have no reactions so they drop for
+// free; with no time candidates, or no reactions of any kind, the plan fizzles silently (any +1 -
+// even on an activity - keeps it alive, and it locks the best-supported or first time). Mutates + persists.
+async function settleCollecting(e: EventRow): Promise<void> {
+  if (e.phase !== "collecting" || !e.decidesBy || Date.now() < e.decidesBy.getTime()) return;
+  const cands = await candidatesFor(e.id);
+  const timeCands = cands.filter((c) => c.kind === "time" && c.startsAt);
+  const reactions = await reactionsFor(e.id);
+  if (timeCands.length === 0 || reactions.length === 0) {
+    await fizzle(e);
+    return;
+  }
+  const timeIds = timeCands.map((c) => c.id);
+  const chosenId = pickWinnerOrBestId(timeIds, reactions, e.quorum);
+  const chosen = timeCands.find((c) => c.id === chosenId) as (typeof timeCands)[number];
+  await openMoment(e, chosen, chosenId, cands, reactions);
 }
 
 // This user's status. During a blind moment we only ever reflect their OWN answer (we cannot leak
@@ -754,53 +770,10 @@ export const eventsRouter = router({
     if (!chosen?.startsAt)
       throw new TRPCError({ code: "BAD_REQUEST", message: "unknown candidate" });
 
-    const activity = resolveActivity(
-      e.activity,
-      cands.filter((c) => c.kind === "activity").map((c) => ({ id: c.id, label: c.label })),
-      reactions,
-    );
-
-    const now = new Date();
-    const momentEndsAt = resolveMomentEnd(
-      now.getTime(),
-      chosen.startsAt.getTime(),
-      e.replyBy?.getTime() ?? null,
-    );
-    // Guard the transition on the row STILL being a collecting plan with no chosen time, so a
-    // concurrent lock/auto-lock cannot be double-locked (its moment window reset). .returning() tells
-    // us whether THIS call did the transition; if it lost the race, serve the winner's chosen slot.
-    const locked = await db
-      .update(events)
-      .set({
-        phase: "moment",
-        chosenCandidateId: chosenId,
-        momentStartsAt: now,
-        momentEndsAt,
-        startsAt: chosen.startsAt,
-        respondByAt: momentEndsAt,
-      })
-      .where(
-        and(
-          eq(events.id, input.eventId),
-          eq(events.phase, "collecting"),
-          isNull(events.chosenCandidateId),
-        ),
-      )
-      .returning();
-    if (locked.length === 0) {
-      const [fresh] = await db.select().from(events).where(eq(events.id, input.eventId));
-      return { ok: true as const, chosenCandidateId: fresh?.chosenCandidateId ?? chosenId };
-    }
-    // Fill the derived activity only if the row still has none, so a member's concurrent edit (events
-    // .update) is never clobbered at lock. resolveActivity keeps a non-empty activity as-is, so this
-    // only names the never-named case (guarded on the stored activity still being "").
-    if (activity) {
-      await db
-        .update(events)
-        .set({ activity })
-        .where(and(eq(events.id, input.eventId), eq(events.activity, "")));
-    }
-    return { ok: true as const, chosenCandidateId: chosenId };
+    // The shared transition: on a lost race openMoment reloads the winner onto e, so e.chosenCandidateId
+    // serves the winner's slot; on a won transition it equals chosenId. Either way mirror it out.
+    await openMoment(e, chosen, chosenId, cands, reactions);
+    return { ok: true as const, chosenCandidateId: e.chosenCandidateId ?? chosenId };
   }),
 
   // Any member edits a plan's text metadata - activity, location, notes - while it is not yet
