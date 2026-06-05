@@ -54,10 +54,12 @@ export const DEV_DISPLAY_NAME = "Test user";
 // Resolve the signed-in user's display name, with one home for the precedence chain. The dev-bypass
 // user is always "Test user"; otherwise prefer Clerk's firstName, then username, then `fallback`.
 // `fallback` is a parameter so callers stay distinct (Account uses "Account", the header avatar "?").
+// Empty/whitespace-only values are treated as absent (use `||`, not `??`) so a blank firstName falls
+// through to username/fallback instead of yielding a blank name and blank avatar initial.
 export function useDisplayName(fallback: string): string {
   const { user } = useUser();
   const { devUser } = useDevAuth();
-  return devUser ? DEV_DISPLAY_NAME : (user?.firstName ?? user?.username ?? fallback);
+  return devUser ? DEV_DISPLAY_NAME : user?.firstName?.trim() || user?.username?.trim() || fallback;
 }
 
 // Keeps the module-level holder in sync with Clerk + dev state. Render once inside both
