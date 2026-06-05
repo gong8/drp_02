@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  type CandidateReactionInput,
+  type CandidateReaction,
   pickWinnerOrBestId,
   pickWinningCandidate,
   tallyCandidates,
@@ -20,7 +20,7 @@ import { expandWindow } from "./window.js";
 // (ARCHITECTURE.md / CLAUDE.md), not from the current implementation, and targets a gap left by
 // the sibling *.test.ts files. Helpers below mirror the sibling shapes for readability.
 
-const react = (candidateId: string, userId: string): CandidateReactionInput => ({
+const react = (candidateId: string, userId: string): CandidateReaction => ({
   candidateId,
   userId,
 });

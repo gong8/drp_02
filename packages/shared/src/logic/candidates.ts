@@ -1,5 +1,5 @@
 // A single "this time works for me" tap during the collecting phase.
-export interface CandidateReactionInput {
+export interface CandidateReaction {
   candidateId: string;
   userId: string;
 }
@@ -16,17 +16,29 @@ export interface CandidateTally {
  */
 export function tallyCandidates(
   candidateIds: string[],
-  reactions: CandidateReactionInput[],
+  reactions: CandidateReaction[],
 ): CandidateTally[] {
   const byCandidate = new Map<string, Set<string>>();
   for (const id of candidateIds) byCandidate.set(id, new Set());
   for (const r of reactions) {
     byCandidate.get(r.candidateId)?.add(r.userId);
   }
-  return candidateIds.map((id) => ({
-    candidateId: id,
-    userIds: [...(byCandidate.get(id) ?? new Set<string>())],
+  // byCandidate is seeded in candidateIds order with a Set for every id, so we can
+  // emit straight from its entries - no per-id .get lookup or missing-key fallback.
+  return Array.from(byCandidate, ([candidateId, userIds]) => ({
+    candidateId,
+    userIds: [...userIds],
   }));
+}
+
+// earliest-in-order tie-break: replace only on strictly-greater count.
+function pickBest(tallies: CandidateTally[], quorum: number): CandidateTally | null {
+  let best: CandidateTally | null = null;
+  for (const t of tallies) {
+    if (t.userIds.length < quorum) continue;
+    if (!best || t.userIds.length > best.userIds.length) best = t;
+  }
+  return best;
 }
 
 /**
@@ -37,15 +49,10 @@ export function tallyCandidates(
  */
 export function pickWinningCandidate(
   candidateIds: string[],
-  reactions: CandidateReactionInput[],
+  reactions: CandidateReaction[],
   quorum: number,
 ): CandidateTally | null {
-  let best: CandidateTally | null = null;
-  for (const t of tallyCandidates(candidateIds, reactions)) {
-    if (t.userIds.length < quorum) continue;
-    if (!best || t.userIds.length > best.userIds.length) best = t;
-  }
-  return best;
+  return pickBest(tallyCandidates(candidateIds, reactions), quorum);
 }
 
 /**
@@ -55,13 +62,12 @@ export function pickWinningCandidate(
  */
 export function pickWinnerOrBestId(
   candidateIds: string[],
-  reactions: CandidateReactionInput[],
+  reactions: CandidateReaction[],
   quorum: number,
 ): string {
-  return (
-    pickWinningCandidate(candidateIds, reactions, quorum)?.candidateId ??
-    [...tallyCandidates(candidateIds, reactions)].sort(
-      (a, b) => b.userIds.length - a.userIds.length,
-    )[0].candidateId
-  );
+  const tallies = tallyCandidates(candidateIds, reactions);
+  // pickBest(tallies, 0) is the overall most-reacted tally; it is null only for an empty
+  // slate, where tallies[0] is also undefined - the documented non-empty precondition.
+  const best = pickBest(tallies, quorum) ?? pickBest(tallies, 0) ?? tallies[0];
+  return best.candidateId;
 }
