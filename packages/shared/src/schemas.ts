@@ -42,6 +42,16 @@ export type Timescale = z.infer<typeof Timescale>;
 export const PlanPhase = z.enum(["collecting", "moment", "cleared", "fizzled"]);
 export type PlanPhase = z.infer<typeof PlanPhase>;
 
+// Text-length bounds for a plan's editable text fields, single-sourced so create, addCandidate, and
+// update all validate against the same caps (raise one here and every path follows in lockstep).
+const ACTIVITY_MAX = 80;
+const LOCATION_MAX = 120;
+const NOTES_MAX = 500;
+
+// The activity-text rule, single-sourced so addCandidate and create validate identically (mirrors
+// the GroupName pattern). The create array additionally trims; see CreateEventInput.
+export const ActivityText = z.string().min(1).max(ACTIVITY_MAX);
+
 // One time candidate the wizard sends: a concrete instant plus an optional part-of-day hint (the
 // wizard resolves part-of-day chips to concrete days CLIENT-side, so the server only sees instants).
 export const TimeCandidateInput = z.object({
@@ -56,10 +66,10 @@ export type TimeCandidateInput = z.infer<typeof TimeCandidateInput>;
 // `replyBy` closes the blind yes/no/"I'll go if" window, then reveals + resolves. `quorum` defaults.
 export const CreateEventInput = z.object({
   groupId: z.string(),
-  description: z.string().max(500).optional(),
-  location: z.string().max(120).optional(),
+  description: z.string().max(NOTES_MAX).optional(),
+  location: z.string().max(LOCATION_MAX).optional(),
   timeCandidates: z.array(TimeCandidateInput).max(10).optional(),
-  activityCandidates: z.array(z.string().trim().min(1).max(80)).max(10).optional(),
+  activityCandidates: z.array(z.string().trim().min(1).max(ACTIVITY_MAX)).max(10).optional(),
   lockTimes: z.boolean().optional().default(false),
   lockActivity: z.boolean().optional().default(false),
   decidesBy: Instant.optional(),
@@ -86,7 +96,7 @@ export const AddCandidateInput = ByEvent.extend({
   kind: CandidateKind,
   startsAt: Instant.optional(),
   partOfDay: PartOfDay.optional(),
-  text: z.string().min(1).max(80).optional(),
+  text: ActivityText.optional(),
 });
 export type AddCandidateInput = z.infer<typeof AddCandidateInput>;
 
@@ -117,13 +127,13 @@ export type FieldEdit = z.infer<typeof FieldEdit>;
 // Anonymous, like every other write. The `to` length bounds mirror create (activity/location 80/120,
 // description 500); empty is allowed (an empty activity clears the name so it re-derives from the winning candidate, empty location/notes clears).
 export const UpdateEventInput = ByEvent.extend({
-  activity: FieldEdit.refine((f) => f.to.length <= 80, {
+  activity: FieldEdit.refine((f) => f.to.length <= ACTIVITY_MAX, {
     message: "activity is too long",
   }).optional(),
-  location: FieldEdit.refine((f) => f.to.length <= 120, {
+  location: FieldEdit.refine((f) => f.to.length <= LOCATION_MAX, {
     message: "location is too long",
   }).optional(),
-  description: FieldEdit.refine((f) => f.to.length <= 500, {
+  description: FieldEdit.refine((f) => f.to.length <= NOTES_MAX, {
     message: "notes are too long",
   }).optional(),
 });
