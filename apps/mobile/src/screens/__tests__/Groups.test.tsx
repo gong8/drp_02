@@ -123,7 +123,9 @@ function mountStack<P extends object>(
 // the screen reloads when it regains focus. The refocus is wrapped in act() so the navigation state
 // updates and the re-fired load() resolve before assertions run.
 function mountGroupDetailWithRefocus(params: object) {
-  const ref = createNavigationContainerRef();
+  // Type the ref's param list so navigate("Sibling")/goBack() typecheck against this ad-hoc
+  // navigator's route names (GroupDetail carries params; Sibling is a paramless stub).
+  const ref = createNavigationContainerRef<{ GroupDetail: object; Sibling: undefined }>();
   const Initial = GroupDetail as unknown as ComponentType;
   render(
     <SafeAreaProvider initialMetrics={metrics}>
@@ -137,7 +139,6 @@ function mountGroupDetailWithRefocus(params: object) {
   );
   return {
     async refocus() {
-      // @ts-expect-error - the ad-hoc navigator's route names are not typed on the ref.
       await act(async () => ref.navigate("Sibling"));
       await act(async () => ref.goBack());
     },
