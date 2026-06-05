@@ -6,6 +6,7 @@ import type { GroupsStackParams } from "../../App";
 import { AccountAvatar } from "../components/AccountAvatar";
 import { ERR_NETWORK, TITLE_NEW_GROUP } from "../lib/copy";
 import { colorFor, initials } from "../lib/format";
+import type { RouterOutputs } from "../lib/trpc";
 import { trpc } from "../lib/trpc";
 import { font, ui } from "../theme";
 import {
@@ -19,7 +20,7 @@ import {
   ScreenScroll,
 } from "../ui";
 
-type Group = Awaited<ReturnType<typeof trpc.groups.mine.query>>[number];
+type Group = RouterOutputs["groups"]["mine"][number];
 type Props = NativeStackScreenProps<GroupsStackParams, "GroupsList">;
 
 export function GroupsList({ navigation }: Props) {

@@ -20,6 +20,7 @@ import {
   type StepKey,
   wizardSteps,
 } from "../lib/redo";
+import type { RouterOutputs } from "../lib/trpc";
 import { trpc } from "../lib/trpc";
 import { ui } from "../theme";
 import {
@@ -41,8 +42,8 @@ import {
   TextButton,
 } from "../ui";
 
-type Group = Awaited<ReturnType<typeof trpc.groups.mine.query>>[number];
-type PastMeetup = Awaited<ReturnType<typeof trpc.events.pastForGroup.query>>[number];
+type Group = RouterOutputs["groups"]["mine"][number];
+type PastMeetup = RouterOutputs["events"]["pastForGroup"][number];
 type TimeRow = { id: string; date: string; time: string };
 type Props = NativeStackScreenProps<MeetupsStackParams, "CreateWizard">;
 

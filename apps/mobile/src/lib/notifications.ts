@@ -2,13 +2,13 @@ import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 import { planLabel } from "./copy";
 import { formatSlot } from "./format";
-import type { trpc } from "./trpc"; // type-only: server code is never bundled
+import type { RouterOutputs } from "./trpc"; // type-only: server code is never bundled
 
 // The dashboard payload fields a reminder needs - a compiler-enforced subset of an events.mine row.
 // Deriving via Pick<> keeps the subset honest (a renamed/dropped field breaks the build) and gives
 // phase/myStatus their real pgEnum / MyStatus unions, so a literal typo fails typecheck.
 export type ReminderEvent = Pick<
-  Awaited<ReturnType<typeof trpc.events.mine.query>>[number],
+  RouterOutputs["events"]["mine"][number],
   | "id"
   | "activity"
   | "groupName"

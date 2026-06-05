@@ -3,6 +3,7 @@ import { useCallback, useRef, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import type { GroupsStackParams } from "../../App";
 import { LABEL_GROUP_NAME } from "../lib/copy";
+import type { RouterOutputs } from "../lib/trpc";
 import { trpc } from "../lib/trpc";
 import { useFetchOnFocus } from "../lib/useFetchOnFocus";
 import { font, ui } from "../theme";
@@ -22,8 +23,8 @@ import {
   TextButton,
 } from "../ui";
 
-type Detail = NonNullable<Awaited<ReturnType<typeof trpc.groups.get.query>>>;
-type Addable = Awaited<ReturnType<typeof trpc.groups.addableUsers.query>>;
+type Detail = NonNullable<RouterOutputs["groups"]["get"]>;
+type Addable = RouterOutputs["groups"]["addableUsers"];
 type Props = NativeStackScreenProps<GroupsStackParams, "GroupDetail">;
 
 export function GroupDetail({ route, navigation }: Props) {

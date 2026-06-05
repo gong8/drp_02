@@ -19,6 +19,7 @@ import {
 import { clock12, dayUpper, formatSlot, isoFrom, partOfDayLabel } from "../lib/format";
 import { addCandidateHorizon } from "../lib/lock";
 import { deadlineMs } from "../lib/status";
+import type { RouterOutputs } from "../lib/trpc";
 import { trpc } from "../lib/trpc";
 import { useBusyAction } from "../lib/useBusyAction";
 import { TICK_MS, useLiveClock } from "../lib/useLiveClock";
@@ -47,7 +48,7 @@ import {
   StatusPill,
 } from "../ui";
 
-type Detail = NonNullable<Awaited<ReturnType<typeof trpc.events.get.query>>>;
+type Detail = NonNullable<RouterOutputs["events"]["get"]>;
 type Member = Detail["members"][number];
 type TimeCand = Detail["timeCandidates"][number];
 type ActivityCand = Detail["activityCandidates"][number];

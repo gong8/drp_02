@@ -26,6 +26,7 @@ import {
   isActionRequired,
   planBucket,
 } from "../lib/status";
+import type { RouterOutputs } from "../lib/trpc";
 import { trpc } from "../lib/trpc";
 import { useLiveClock } from "../lib/useLiveClock";
 import { font, ui } from "../theme";
@@ -44,7 +45,7 @@ import {
   StatusPill,
 } from "../ui";
 
-type Ev = Awaited<ReturnType<typeof trpc.events.mine.query>>[number];
+type Ev = RouterOutputs["events"]["mine"][number];
 type Props = NativeStackScreenProps<MeetupsStackParams, "Dashboard">;
 
 // "all" is an overview tab (the union of every bucket); it leads the row but is not the default

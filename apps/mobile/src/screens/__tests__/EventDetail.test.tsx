@@ -11,13 +11,13 @@ import {
   mockQuery,
   resetTrpcMock,
 } from "../../lib/__mocks__/trpc";
-import type { trpc as realTrpc } from "../../lib/trpc";
+import type { RouterOutputs } from "../../lib/trpc";
 import { trpc } from "../../lib/trpc";
 import { fireEvent, renderScreen, screen, waitFor } from "../../test/render";
 import { EventDetail } from "../EventDetail";
 
 // The exact shape events.get returns (NonNullable so optional null fields are part of the type).
-type Detail = NonNullable<Awaited<ReturnType<typeof realTrpc.events.get.query>>>;
+type Detail = NonNullable<RouterOutputs["events"]["get"]>;
 
 // A future ISO instant, far enough out that no deadline/moment lazily settles during a test.
 const SOON = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();

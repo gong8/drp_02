@@ -26,6 +26,7 @@ import {
   resetTrpcMock,
 } from "../../lib/__mocks__/trpc";
 import { ERR_NETWORK } from "../../lib/copy";
+import type { RouterOutputs } from "../../lib/trpc";
 import { trpc } from "../../lib/trpc";
 import { act, fireEvent, screen, waitFor } from "../../test/render";
 import { CreateGroup } from "../CreateGroup";
@@ -39,10 +40,10 @@ beforeEach(resetTrpcMock);
 afterEach(cleanup);
 
 // ---- shapes (from the groups router return types; values are spec-irrelevant defaults) ----------
-type Group = Awaited<ReturnType<typeof trpc.groups.mine.query>>[number];
-type Detail = NonNullable<Awaited<ReturnType<typeof trpc.groups.get.query>>>;
+type Group = RouterOutputs["groups"]["mine"][number];
+type Detail = NonNullable<RouterOutputs["groups"]["get"]>;
 type Member = Detail["members"][number];
-type Addable = Awaited<ReturnType<typeof trpc.groups.addableUsers.query>>;
+type Addable = RouterOutputs["groups"]["addableUsers"];
 
 function makeGroup(overrides: Partial<Group> & Pick<Group, "id">): Group {
   return { name: "Climbing Crew", memberCount: 4, ...overrides };
