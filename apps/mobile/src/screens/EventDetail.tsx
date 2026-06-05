@@ -231,8 +231,11 @@ export function EventDetail({ route, navigation }: Props) {
   // Save edits with a per-field compare-and-set: send only the fields whose input diverged from what
   // we loaded, each as { from: loaded, to: typed }. The server writes a field only if its current DB
   // value still equals `from`. If something changed under us, `conflicts` carries the now-current
-  // value: we adopt it into the input, keep the sheet open, and ask the user to review. A throw (e.g.
-  // the plan just went final) shows an inline error and refetches so the screen reflects reality.
+  // value: we adopt it into the input AND advance the local baseline to that value (so a second save
+  // sends from=current and can actually win, instead of re-conflicting in a loop), keep the sheet
+  // open, and ask the user to review. Whenever anything applied we also reload so the applied fields
+  // show fresh values immediately rather than waiting for the next poll. A throw (e.g. the plan just
+  // went final) shows an inline error and refetches so the screen reflects reality.
   function saveEdit() {
     if (!data || savingEdit) return;
     const loadedActivity = data.activityRaw;
@@ -262,13 +265,28 @@ export function EventDetail({ route, navigation }: Props) {
           setEditSheet(false);
           return load();
         }
-        // Adopt the server's current value for each conflicted field and keep the sheet open.
+        // Adopt the server's current value for each conflicted field, advance the local baseline to
+        // it so the next save sends from=current (otherwise a second save re-sends the stale `from`
+        // and conflicts forever), and keep the sheet open.
         for (const c of res.conflicts) {
           if (c.field === "activity") setEditActivity(c.current);
           else if (c.field === "location") setEditLocation(c.current);
           else if (c.field === "description") setEditNotes(c.current);
         }
+        setData((d) => {
+          if (!d) return d;
+          const next = { ...d };
+          for (const c of res.conflicts) {
+            if (c.field === "activity") next.activityRaw = c.current;
+            else if (c.field === "location") next.location = c.current;
+            else if (c.field === "description") next.description = c.current;
+          }
+          return next;
+        });
         setEditNote("Updated by someone else - review and save again.");
+        // A partial save (some fields applied, the rest conflicted) leaves the applied fields stale
+        // in `data` until the next poll, so reload to surface them now while the sheet stays open.
+        if (res.applied.length > 0) return load();
       })
       .catch(() => {
         setEditNote(`${ERR_SAVE} This meetup may have closed.`);

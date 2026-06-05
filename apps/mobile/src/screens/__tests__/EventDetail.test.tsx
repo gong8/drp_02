@@ -407,6 +407,39 @@ describe("EventDetail - edit sheet (per-field compare-and-set)", () => {
     expect(screen.queryByDisplayValue("Rowans")).toBeNull();
   });
 
+  test("after a conflict the next save targets the adopted server value (no re-conflict loop)", async () => {
+    mockQuery(trpc.events.get, momentDetail({ location: "TenPin", activityRaw: "Bowling" }));
+    // First save conflicts: the server reports location is now "Hollywood Bowl". The second save
+    // must therefore send from="Hollywood Bowl" (the adopted baseline), not the stale "TenPin".
+    const update = trpc.events.update.mutate as unknown as jest.Mock;
+    update
+      .mockResolvedValueOnce({
+        applied: [],
+        conflicts: [{ field: "location", current: "Hollywood Bowl" }],
+      })
+      .mockResolvedValueOnce({ applied: ["location"], conflicts: [] });
+    renderScreen(EventDetail, { eventId: "e1" });
+
+    fireEvent.press(await screen.findByText("Edit"));
+    const locationField = await screen.findByDisplayValue("TenPin");
+    fireEvent.changeText(locationField, "Rowans");
+    fireEvent.press(screen.getByText("Save"));
+
+    // The field adopts the server's current value; we then edit it again and re-save.
+    const adopted = await screen.findByDisplayValue("Hollywood Bowl");
+    fireEvent.changeText(adopted, "Rowans");
+    fireEvent.press(screen.getByText("Save"));
+
+    // The decisive assertion: the SECOND call uses from=current ("Hollywood Bowl"), so the baseline
+    // advanced and the save can win - the old bug re-sent from="TenPin" and conflicted forever.
+    await waitFor(() =>
+      expect(update).toHaveBeenLastCalledWith({
+        eventId: "e1",
+        location: { from: "Hollywood Bowl", to: "Rowans" },
+      }),
+    );
+  });
+
   test("while collecting the activity is vote-decided, so no editable activity field is offered", async () => {
     // Spec: an activity edit is rejected during collecting. The sheet must not offer the activity
     // field at all - only location/notes are editable then.
