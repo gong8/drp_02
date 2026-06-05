@@ -135,11 +135,9 @@ function MeetCard({ e, now, onPress }: { e: Ev; now: number; onPress: () => void
         <AppText variant="title" style={{ flexShrink: 1, marginRight: 8 }}>
           {planLabel(e)}
         </AppText>
-        {bucket === "going" ? (
-          <StatusPill label="In" color={ui.going} />
-        ) : bucket === "open" ? (
-          <StatusPill label="Open" color={ui.open} />
-        ) : null}
+        {(bucket === "going" || bucket === "open") && (
+          <StatusPill label={bucket === "going" ? "In" : "Open"} color={TAB_COLOR[bucket]} />
+        )}
       </View>
       <AppText variant="caption" style={{ marginTop: 2 }}>
         {sub}
