@@ -124,7 +124,7 @@ async function insertCandidates(
 }
 
 // The author's own public +1 on a candidate (adding a candidate implies +1'ing it). Idempotent.
-async function reactFor(eventId: string, candidateId: string, userId: string): Promise<void> {
+async function ensureReaction(eventId: string, candidateId: string, userId: string): Promise<void> {
   await db
     .insert(candidateReactions)
     .values({ eventId, candidateId, userId })
@@ -725,7 +725,7 @@ export const eventsRouter = router({
           Math.floor(c.startsAt.getTime() / 60_000) === startMinute,
       );
       if (dup) {
-        await reactFor(input.eventId, dup.id, ctx.userId);
+        await ensureReaction(input.eventId, dup.id, ctx.userId);
         return { id: dup.id };
       }
       newId = `${input.eventId}_t_${randomUUID()}`;
@@ -748,7 +748,7 @@ export const eventsRouter = router({
         (c) => c.kind === "activity" && (c.label ?? "").trim().toLowerCase() === key,
       );
       if (dup) {
-        await reactFor(input.eventId, dup.id, ctx.userId);
+        await ensureReaction(input.eventId, dup.id, ctx.userId);
         return { id: dup.id };
       }
       newId = `${input.eventId}_a_${randomUUID()}`;
@@ -761,7 +761,7 @@ export const eventsRouter = router({
         label: text,
       });
     }
-    await reactFor(input.eventId, newId, ctx.userId);
+    await ensureReaction(input.eventId, newId, ctx.userId);
     return { id: newId };
   }),
 
@@ -980,10 +980,10 @@ export const eventsRouter = router({
     // Public per-candidate +1 counts (momentum) for BOTH kinds; who reacted is never returned, only
     // the count and whether the caller themselves reacted.
     const countBy = new Map<string, number>();
-    const mineSet = new Set<string>();
+    const myReactedIds = new Set<string>();
     for (const r of reactions) {
       countBy.set(r.candidateId, (countBy.get(r.candidateId) ?? 0) + 1);
-      if (r.userId === ctx.userId) mineSet.add(r.candidateId);
+      if (r.userId === ctx.userId) myReactedIds.add(r.candidateId);
     }
     const timeCandidates = cands
       .filter((c) => c.kind === "time" && c.startsAt)
@@ -992,7 +992,7 @@ export const eventsRouter = router({
         startsAt: (c.startsAt as Date).toISOString(),
         partOfDay: c.partOfDay,
         count: countBy.get(c.id) ?? 0,
-        mine: mineSet.has(c.id),
+        mine: myReactedIds.has(c.id),
       }));
     const activityCandidates = cands
       .filter((c) => c.kind === "activity")
@@ -1000,7 +1000,7 @@ export const eventsRouter = router({
         id: c.id,
         text: c.label ?? "",
         count: countBy.get(c.id) ?? 0,
-        mine: mineSet.has(c.id),
+        mine: myReactedIds.has(c.id),
       }))
       .sort((a, b) => b.count - a.count);
 
@@ -1018,7 +1018,7 @@ export const eventsRouter = router({
 
     const showCrowd = revealed !== null && e.phase !== "fizzled";
     const going = showCrowd ? revealed.map((id) => bundle.userCard(id)) : [];
-    const mine = resp.find((r) => r.userId === ctx.userId);
+    const myResponse = resp.find((r) => r.userId === ctx.userId);
     const chosen = cands.find((c) => c.id === e.chosenCandidateId) ?? null;
 
     return {
@@ -1057,7 +1057,7 @@ export const eventsRouter = router({
       readyToLock,
       timeCandidates,
       activityCandidates,
-      myResponse: mine ? { kind: mine.kind, cond: mine.cond ?? null } : null,
+      myResponse: myResponse ? { kind: myResponse.kind, cond: myResponse.cond ?? null } : null,
       myStatus,
       members,
       going,
