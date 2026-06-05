@@ -2,6 +2,7 @@ import {
   activeDeadline,
   type Bucketable,
   compareForDisplay,
+  compareForDisplayAll,
   isActionRequired,
   isPast,
   planBucket,
@@ -97,4 +98,17 @@ test("compareForDisplay: upcoming soonest-first, then past most-recent-first", (
     compareForDisplay(a, b, NOW),
   );
   expect(sorted).toEqual([upSoon, upLater, pastRecent, pastOld]);
+});
+
+test("compareForDisplayAll: agenda (going+open) by time, then DONE sinks even when future-dated", () => {
+  const going = plan({ myStatus: "going", phase: "cleared", startsAt: LATER }); // agenda, later
+  const open = plan({ phase: "collecting", myStatus: "reacting", decidesBy: SOON }); // agenda, soon
+  const declinedUpcoming = plan({ phase: "collecting", myStatus: "declined", decidesBy: SOON }); // done, future
+  const pastDone = plan({ phase: "cleared", myStatus: "awaiting", startsAt: PAST }); // done, past
+  const sorted = [pastDone, going, declinedUpcoming, open].sort((a, b) =>
+    compareForDisplayAll(a, b, NOW),
+  );
+  // Agenda first by time (open soon, then going later), then the DONE section (upcoming-declined
+  // before truly-past) - the declined plan never floats above the live ones despite being sooner.
+  expect(sorted).toEqual([open, going, declinedUpcoming, pastDone]);
 });
