@@ -1,5 +1,5 @@
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, Text, View, type ViewStyle } from "react-native";
 import type { MeetupsStackParams } from "../../App";
 import { ERR_SAVE, NO_NAMES, NOTE_TOP_PICK, STEP_COPY } from "../lib/copy";
@@ -73,6 +73,22 @@ export function CreateWizard({ navigation }: Props) {
   const updateRow = (id: string, patch: Partial<TimeRow>) =>
     setRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
 
+  // Stable across renders (only touches state setters and a ref), so the group-change effect can list
+  // it as a dependency without re-running on every render.
+  const applyPrefill = useCallback((p: Prefill) => {
+    setActivityChips(p.activityChips);
+    setActivityDraft("");
+    setLockTimes(p.lockTimes);
+    setLockActivity(p.lockActivity);
+    setLocation(p.location);
+    setDescription(p.description);
+    // Time is never carried - reset to a single blank row so the creator sets it fresh.
+    setRows([{ id: "t0", date: "", time: "" }]);
+    nextRowId.current = 1;
+    setDecidesEdit(false);
+    setReplyEdit(false);
+  }, []);
+
   useEffect(() => {
     trpc.groups.mine
       .query()
@@ -85,9 +101,8 @@ export function CreateWizard({ navigation }: Props) {
   }, []);
 
   // When the chosen group changes, refresh its redo list and drop any clone/source from the previous
-  // group (the source step is only meaningful for the currently selected group). Intentionally keyed on
-  // groupId alone - applyPrefill is a stable helper and re-running on its identity is not wanted.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: groupId is the only intended trigger.
+  // group (the source step is only meaningful for the currently selected group). applyPrefill is
+  // useCallback-stable, so effectively this re-runs only when groupId changes.
   useEffect(() => {
     if (!groupId) return;
     let active = true;
@@ -102,7 +117,7 @@ export function CreateWizard({ navigation }: Props) {
     return () => {
       active = false;
     };
-  }, [groupId]);
+  }, [groupId, applyPrefill]);
 
   const timeIsos = rows.map((r) => isoFrom(r.date, r.time)).filter((x): x is string => x !== null);
   const earliestMs = timeIsos.length
@@ -171,20 +186,6 @@ export function CreateWizard({ navigation }: Props) {
       default:
         return true; // activities, times, details, confirm - all optional
     }
-  }
-
-  function applyPrefill(p: Prefill) {
-    setActivityChips(p.activityChips);
-    setActivityDraft("");
-    setLockTimes(p.lockTimes);
-    setLockActivity(p.lockActivity);
-    setLocation(p.location);
-    setDescription(p.description);
-    // Time is never carried - reset to a single blank row so the creator sets it fresh.
-    setRows([{ id: "t0", date: "", time: "" }]);
-    nextRowId.current = 1;
-    setDecidesEdit(false);
-    setReplyEdit(false);
   }
 
   // Fold the typed-but-not-added activity into the chip list (case-insensitive de-dup), returning
