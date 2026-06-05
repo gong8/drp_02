@@ -262,23 +262,21 @@ export function CreateWizard({ navigation }: Props) {
     return next;
   }
 
-  function startEditDecides() {
-    if (autoDecidesIso) {
-      const { date, time } = splitIso(autoDecidesIso);
-      setDecidesDate(date);
-      setDecidesTime(time);
-    }
-    setDecidesEdit(true);
-  }
-
-  function startEditReply() {
-    if (autoReplyIso) {
-      const { date, time } = splitIso(autoReplyIso);
-      setReplyDate(date);
-      setReplyTime(time);
-    }
-    setReplyEdit(true);
-  }
+  // Both deadlines run the same edit/reset machinery: seed the date/time pill from the shown default
+  // when starting an edit, and clear back to the default when reset. The only things that vary are
+  // which auto ISO seeds the edit and which four state setters are written, so build one factory.
+  const decidesHandlers = makeDeadlineHandlers(
+    autoDecidesIso,
+    setDecidesEdit,
+    setDecidesDate,
+    setDecidesTime,
+  );
+  const replyHandlers = makeDeadlineHandlers(
+    autoReplyIso,
+    setReplyEdit,
+    setReplyDate,
+    setReplyTime,
+  );
 
   async function submit() {
     if (busy || !groupId) return;
@@ -487,12 +485,8 @@ export function CreateWizard({ navigation }: Props) {
                 defaultSub={
                   autoDecidesIso ? NOTE_TOP_PICK : "Add times to set this, or we'll pick a horizon"
                 }
-                onEdit={autoDecidesIso ? startEditDecides : undefined}
-                onUseDefault={() => {
-                  setDecidesEdit(false);
-                  setDecidesDate("");
-                  setDecidesTime("");
-                }}
+                onEdit={autoDecidesIso ? decidesHandlers.startEdit : undefined}
+                onUseDefault={decidesHandlers.useDefault}
               />
             )}
 
@@ -513,12 +507,8 @@ export function CreateWizard({ navigation }: Props) {
                   autoReplyIso ? `Replies close ${formatSlot(autoReplyIso)}` : "A sensible deadline"
                 }
                 defaultSub="Blind until then, then it reveals who's in"
-                onEdit={autoReplyIso ? startEditReply : undefined}
-                onUseDefault={() => {
-                  setReplyEdit(false);
-                  setReplyDate("");
-                  setReplyTime("");
-                }}
+                onEdit={autoReplyIso ? replyHandlers.startEdit : undefined}
+                onUseDefault={replyHandlers.useDefault}
               />
             )}
           </>
@@ -594,6 +584,33 @@ export function CreateWizard({ navigation }: Props) {
       />
     </ScreenScroll>
   );
+}
+
+// The shared edit/reset handlers for one deadline editor (decides-by / reply-by). startEdit seeds the
+// date/time pill from the shown default (so editing begins from what the user saw) then enables edit
+// mode; useDefault clears back to the default. The two deadlines differ only in their auto ISO and
+// their four state setters, so both are built from this one factory.
+function makeDeadlineHandlers(
+  autoIso: string | null,
+  setEdit: (b: boolean) => void,
+  setDate: (t: string) => void,
+  setTime: (t: string) => void,
+) {
+  return {
+    startEdit() {
+      if (autoIso) {
+        const { date, time } = splitIso(autoIso);
+        setDate(date);
+        setTime(time);
+      }
+      setEdit(true);
+    },
+    useDefault() {
+      setEdit(false);
+      setDate("");
+      setTime("");
+    },
+  };
 }
 
 function ProgressDots({ steps, index }: { steps: readonly StepKey[]; index: number }) {
