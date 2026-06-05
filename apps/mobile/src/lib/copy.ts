@@ -3,6 +3,7 @@
 // "meetup", and the privacy / deadline / error lines never drift between screens. Code-internal names
 // (plan, candidate, react) are unchanged; this only governs what the user reads.
 
+import type { StepKey } from "./redo";
 import type { MyStatus } from "./status";
 
 // The single verb for reacting to a candidate (banner already says "Voting closes").
@@ -76,7 +77,7 @@ export function statusLabel(s: MyStatus): string {
 }
 
 // Wizard step titles + subs, keyed by the step key from lib/redo.ts. Terse; one table = one voice.
-export const STEP_COPY: Record<string, { title: string; sub?: string }> = {
+export const STEP_COPY: Record<StepKey, { title: string; sub?: string }> = {
   group: { title: "Who's it for?" },
   source: { title: "Start from", sub: "Reuse a past meetup, or start fresh." },
   activities: { title: "What do you fancy?", sub: "Optional - the group can add more." },

@@ -13,7 +13,13 @@ import {
 } from "../lib/copy";
 import { formatSlot, isoFrom, splitIso } from "../lib/format";
 import { defaultDecidesByForCandidates, defaultReplyByMs, MOMENT_MS } from "../lib/lock";
-import { EMPTY_PREFILL, type Prefill, prefillFromMeetup, wizardSteps } from "../lib/redo";
+import {
+  EMPTY_PREFILL,
+  type Prefill,
+  prefillFromMeetup,
+  type StepKey,
+  wizardSteps,
+} from "../lib/redo";
 import { trpc } from "../lib/trpc";
 import { font, ui } from "../theme";
 import {
@@ -226,7 +232,7 @@ export function CreateWizard({ navigation }: Props) {
           ...(replyShown ? [`Replies close ${formatSlot(replyShown)}`] : []),
         ];
 
-  function valid(key: string): boolean {
+  function valid(key: StepKey): boolean {
     switch (key) {
       case "group":
         // Wait for the past-meetups query so the step list is final before leaving this step.
@@ -589,7 +595,7 @@ export function CreateWizard({ navigation }: Props) {
   );
 }
 
-function ProgressDots({ steps, index }: { steps: readonly string[]; index: number }) {
+function ProgressDots({ steps, index }: { steps: readonly StepKey[]; index: number }) {
   return (
     <View style={{ flexDirection: "row", gap: 6, marginBottom: 16 }}>
       {steps.map((stepKey, i) => (

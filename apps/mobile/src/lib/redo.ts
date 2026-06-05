@@ -46,7 +46,16 @@ export function prefillFromMeetup(m: PastMeetupShell): Prefill {
 // The wizard steps. The "source" step (start fresh vs use a previous meetup) appears only when the
 // chosen group has past meetups. "details" (location + notes) and "deadlines" (decides-by + reply-by)
 // are separate screens - they are unrelated concerns that were cramped onto one step before.
-export function wizardSteps(hasPast: boolean): string[] {
+export type StepKey =
+  | "group"
+  | "source"
+  | "activities"
+  | "times"
+  | "details"
+  | "deadlines"
+  | "confirm";
+
+export function wizardSteps(hasPast: boolean): StepKey[] {
   return hasPast
     ? ["group", "source", "activities", "times", "details", "deadlines", "confirm"]
     : ["group", "activities", "times", "details", "deadlines", "confirm"];
