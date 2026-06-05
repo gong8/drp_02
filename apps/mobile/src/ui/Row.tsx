@@ -23,7 +23,7 @@ export function Row({
     borderRadius: ui.rInput,
     borderWidth: ui.border,
     borderColor: ui.ink,
-    backgroundColor: tinted ? "#F1EEF6" : ui.surface,
+    backgroundColor: tinted ? ui.tint : ui.surface,
   };
   return onPress ? (
     <Pressable onPress={onPress} style={style}>

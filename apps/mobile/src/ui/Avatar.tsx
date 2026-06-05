@@ -23,7 +23,7 @@ export function Avatar({
         justifyContent: "center",
       }}
     >
-      <Text style={{ fontFamily: font.display, fontSize: size * 0.38, color: "#fff" }}>
+      <Text style={{ fontFamily: font.display, fontSize: size * 0.38, color: ui.onInk }}>
         {initial}
       </Text>
     </View>
