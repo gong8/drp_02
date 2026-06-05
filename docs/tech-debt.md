@@ -152,3 +152,6 @@ mixed-tz deployment would need `timestamptz`.
 components (the Hermes parse bug is already fixed). Same posture as the existing timestamp columns.
 
 **When to fix:** a `timestamptz` migration if the backend ever runs across time zones.
+
+Mark: Only focus on core features this week
+Sooyoung: Have you considered onboarding?
