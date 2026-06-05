@@ -111,12 +111,11 @@ server.log.info(scoped("boot"), "migrations applied");
 // SEED_ON_BOOT: "reset" (default, local dev) wipes + reseeds a clean demo each boot;
 // "if-empty" (live backend) seeds only a fresh DB; "off" skips seeding.
 const seedMode = process.env.SEED_ON_BOOT ?? "reset";
-if (seedMode === "reset") {
-  await reseedDemo();
-  server.log.info(scoped("boot"), "seeded demo data (reset)");
-} else if (seedMode === "if-empty") {
-  await seedDemoIfEmpty();
-  server.log.info(scoped("boot"), "seeded demo data (if-empty)");
+if (seedMode === "reset") await reseedDemo();
+else if (seedMode === "if-empty") await seedDemoIfEmpty();
+// One log carrying the mode as a structured field instead of baking it into the message.
+if (seedMode !== "off") {
+  server.log.info({ ...scoped("boot"), seedMode }, "seeded demo data");
 }
 
 const port = envInt("PORT", 3000);
@@ -126,12 +125,19 @@ const port = envInt("PORT", 3000);
 // shows; errors (>= warn) still surface if the bind fails.
 const restoreLevel = server.log.level;
 server.log.level = "warn";
+let listening = false;
 try {
   await server.listen({ port, host: "0.0.0.0" });
-  server.log.level = restoreLevel;
-  server.log.info({ ...scoped("boot"), port }, `API listening on http://localhost:${port}`);
+  listening = true;
 } catch (err) {
-  server.log.level = restoreLevel;
+  // Still at warn level here, but error >= warn so this line prints regardless.
   server.log.error({ ...scoped("boot"), err }, "failed to start");
   process.exit(1);
+} finally {
+  server.log.level = restoreLevel;
+}
+// Fires after the restore so the info line is not suppressed by the temporary warn level.
+// process.exit(1) in the catch means we only reach here on a successful listen.
+if (listening) {
+  server.log.info({ ...scoped("boot"), port }, `API listening on http://localhost:${port}`);
 }
