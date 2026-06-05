@@ -1091,8 +1091,7 @@ export const eventsRouter = router({
   // silent fizzle. Idempotent and safe to call early (it no-ops until the deadline passes).
   resolve: protectedProcedure.input(ResolveInput).mutation(async ({ ctx, input }) => {
     const e = await loadEvent(input.eventId, ctx.userId);
-    await settleCollecting(e);
-    await settlePhase(e);
+    await settleLifecycle(e);
     return { ok: true as const, phase: e.phase };
   }),
 });
