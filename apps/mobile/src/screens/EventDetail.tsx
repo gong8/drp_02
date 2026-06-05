@@ -2,7 +2,7 @@ import type { PartOfDay } from "@bethere/shared";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useCallback, useRef, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
 import {
   DEADLINE_RSVP,
@@ -46,6 +46,7 @@ import {
   Segmented,
   SelectCheck,
   StatusPill,
+  TextButton,
 } from "../ui";
 
 type Detail = NonNullable<RouterOutputs["events"]["get"]>;
@@ -479,13 +480,11 @@ export function EventDetail({ route, navigation }: Props) {
               {planLabel(data)}
             </Text>
             {editable && (
-              <Pressable
+              <TextButton
+                label="Edit"
                 onPress={openEditSheet}
-                hitSlop={8}
-                style={{ marginLeft: 10, marginTop: 4 }}
-              >
-                <Text style={{ fontFamily: font.bold, fontSize: 12, color: ui.brand }}>Edit</Text>
-              </Pressable>
+                style={{ fontSize: 12, marginLeft: 10, marginTop: 4 }}
+              />
             )}
           </View>
           <AppText variant="caption" style={{ marginTop: 4 }}>
