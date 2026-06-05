@@ -1,7 +1,7 @@
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useState } from "react";
 import type { GroupsStackParams } from "../../App";
-import { ERR_SAVE } from "../lib/copy";
+import { ERR_SAVE, LABEL_GROUP_NAME, TITLE_NEW_GROUP } from "../lib/copy";
 import { trpc } from "../lib/trpc";
 import { ui } from "../theme";
 import { AppText, Button, Field, ScreenHeader, ScreenScroll } from "../ui";
@@ -27,7 +27,7 @@ export function CreateGroup({ navigation }: Props) {
 
   return (
     <ScreenScroll
-      header={<ScreenHeader title="New group" onBack={() => navigation.goBack()} />}
+      header={<ScreenHeader title={TITLE_NEW_GROUP} onBack={() => navigation.goBack()} />}
       avoidKeyboard
     >
       {error && (
@@ -35,7 +35,7 @@ export function CreateGroup({ navigation }: Props) {
           {ERR_SAVE}
         </AppText>
       )}
-      <Field label="Group name" value={name} onChangeText={setName} placeholder="The Boys" />
+      <Field label={LABEL_GROUP_NAME} value={name} onChangeText={setName} placeholder="The Boys" />
       <AppText variant="caption" style={{ marginTop: 8 }}>
         You can add members once it's created.
       </AppText>

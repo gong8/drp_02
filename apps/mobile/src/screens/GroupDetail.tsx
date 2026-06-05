@@ -2,6 +2,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useCallback, useRef, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import type { GroupsStackParams } from "../../App";
+import { LABEL_GROUP_NAME } from "../lib/copy";
 import { trpc } from "../lib/trpc";
 import { useFetchOnFocus } from "../lib/useFetchOnFocus";
 import { font, ui } from "../theme";
@@ -95,7 +96,7 @@ export function GroupDetail({ route, navigation }: Props) {
   return (
     <ScreenScroll header={<ScreenHeader title={data.name} onBack={() => navigation.goBack()} />}>
       <Field
-        label="Group name"
+        label={LABEL_GROUP_NAME}
         value={nameDraft}
         onChangeText={setNameDraft}
         right={

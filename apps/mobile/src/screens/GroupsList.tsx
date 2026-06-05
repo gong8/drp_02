@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import type { GroupsStackParams } from "../../App";
 import { AccountAvatar } from "../components/AccountAvatar";
-import { ERR_NETWORK } from "../lib/copy";
+import { ERR_NETWORK, TITLE_NEW_GROUP } from "../lib/copy";
 import { colorFor, initials } from "../lib/format";
 import { trpc } from "../lib/trpc";
 import { font, ui } from "../theme";
@@ -90,7 +90,7 @@ export function GroupsList({ navigation }: Props) {
       {groups.length === 0 && <EmptyState>No groups yet.</EmptyState>}
 
       <Button
-        label="New group"
+        label={TITLE_NEW_GROUP}
         variant="primary"
         onPress={() => navigation.navigate("CreateGroup")}
         style={{ marginTop: 8 }}

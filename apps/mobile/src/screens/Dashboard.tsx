@@ -12,6 +12,7 @@ import {
   ERR_NETWORK,
   goingCountLabel,
   planLabel,
+  TITLE_NEW_MEETUP,
 } from "../lib/copy";
 import { countdownLabel, formatSlot, HOT_MS } from "../lib/format";
 import { syncReminders } from "../lib/notifications";
@@ -267,7 +268,11 @@ export function Dashboard({ navigation }: Props) {
         paddingBottom: 18,
       }}
     >
-      <Button size="lg" label="New meetup" onPress={() => navigation.navigate("CreateWizard")} />
+      <Button
+        size="lg"
+        label={TITLE_NEW_MEETUP}
+        onPress={() => navigation.navigate("CreateWizard")}
+      />
     </LinearGradient>
   );
 

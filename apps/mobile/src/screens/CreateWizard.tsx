@@ -9,6 +9,7 @@ import {
   NOTE_TOP_PICK,
   plural,
   STEP_COPY,
+  TITLE_NEW_MEETUP,
 } from "../lib/copy";
 import { formatSlot, isoFrom, splitIso } from "../lib/format";
 import { defaultDecidesByForCandidates, defaultReplyByMs, MOMENT_MS } from "../lib/lock";
@@ -312,7 +313,7 @@ export function CreateWizard({ navigation }: Props) {
   const copy = STEP_COPY[stepKey];
 
   return (
-    <ScreenScroll header={<ScreenHeader title="New meetup" onBack={goBack} />} avoidKeyboard>
+    <ScreenScroll header={<ScreenHeader title={TITLE_NEW_MEETUP} onBack={goBack} />} avoidKeyboard>
       <ProgressDots steps={STEPS} index={step} />
       {error && <FormError>{ERR_SAVE}</FormError>}
 

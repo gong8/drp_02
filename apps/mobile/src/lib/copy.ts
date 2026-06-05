@@ -85,3 +85,8 @@ export const STEP_COPY: Record<string, { title: string; sub?: string }> = {
   deadlines: { title: "Deadlines", sub: "When voting and replies close." },
   confirm: { title: "Ready to send?" },
 };
+
+// Recurring screen titles + labels (>=2 screens each).
+export const TITLE_NEW_MEETUP = "New meetup";
+export const TITLE_NEW_GROUP = "New group";
+export const LABEL_GROUP_NAME = "Group name";
