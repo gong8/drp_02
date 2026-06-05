@@ -1,6 +1,10 @@
-import type { PartOfDay, PlanPhase, WhenMode } from "@bethere/shared";
-
-export type Kind = "yes" | "no" | "conditional";
+import type {
+  CandidateKind,
+  Conditional,
+  PartOfDay,
+  PlanPhase,
+  ResponseKind,
+} from "@bethere/shared";
 
 export const DEMO_USERS = [
   { id: "u_dev", name: "You", avatarColor: "#5F9472" },
@@ -42,102 +46,99 @@ export function dayAt(daysFromNow: number, hour: number): Date {
   return d;
 }
 
+// A candidate on a plan: a TIME (startsAt set, optional partOfDay hint) or an ACTIVITY (label set,
+// startsAt null). `reactedBy` are the (now PUBLIC) +1 backers.
 export interface Cand {
   suffix: string;
-  startsAt: Date;
+  kind: CandidateKind;
+  startsAt?: Date;
   partOfDay?: PartOfDay;
   label?: string;
   reactedBy?: string[];
 }
-// A chip on a float: a free-text IDEA, or a loose TIME band (a `day` relative to now at `partOfDay`).
-// `votedBy` are the (private) +1 backers. Mirrors Cand, but for the floating phase.
-export interface FloatSugg {
-  suffix: string;
-  axis: "idea" | "time";
-  text?: string;
-  partOfDay?: PartOfDay;
-  day?: number;
-  votedBy?: string[];
-}
 export interface Resp {
   userId: string;
-  kind: Kind;
-  cond?: { mode: "all" | "any"; targetIds: string[] };
+  kind: ResponseKind;
+  cond?: Conditional;
 }
 export interface Plan {
   id: string;
   groupId: string;
   createdBy: string;
-  title: string;
+  activity: string;
   location?: string;
-  whenMode: WhenMode;
   contingent: boolean;
   quorum: number;
   phase: PlanPhase;
+  // Unified candidate list: any mix of kind "time" and kind "activity". Reactions are PUBLIC.
   candidates: Cand[];
-  // Floats only: unsigned + ownerless, the tip min-heat, and the two-axis chips with their +1s.
-  // A floating plan carries no candidates; its `lockAt` is the tip deadline.
-  isAnonymous?: boolean;
-  minHeat?: number;
-  floatSuggestions?: FloatSugg[];
-  // When a collecting plan auto-locks the winning slot and opens the moment. Must sit before the
-  // earliest candidate. Null/absent for exact plans (no collecting phase).
-  lockAt?: Date;
+  // Creator flags, default false=open. When true, members cannot add that kind of candidate.
+  lockTimes?: boolean;
+  lockActivity?: boolean;
+  // When a collecting plan auto-decides the winning slot and opens the moment. Must sit before the
+  // earliest TIME candidate. Null/absent for the concrete shortcut (straight to moment).
+  decidesBy?: Date;
   chosenSuffix?: string;
   momentStartsAt?: Date;
   momentEndsAt?: Date;
   responses?: Resp[];
 }
 
-// Demo plans cover the (whenMode x phase) states the dashboard renders, including a "floating"
-// plan (an unsigned, ownerless idea brewing in a group) so the Brewing zone and the tip are
-// demoable on every reset boot.
+// Demo plans cover the phases the dashboard renders. Every plan is anonymous (names never shown);
+// collecting plans carry PUBLIC +1 counts on both time and activity candidates.
 export const PLANS: Plan[] = [
   {
     id: "e_movie",
     groupId: "g_boys",
     createdBy: "u_dev",
-    title: "Dune: Part Two",
+    activity: "Dune: Part Two",
     location: "Cineworld Bexleyheath",
-    whenMode: "options",
     contingent: true,
     quorum: 3,
     phase: "collecting",
-    lockAt: dayAt(1, 18),
+    decidesBy: dayAt(1, 18),
     candidates: [
-      { suffix: "c1", startsAt: dayAt(2, 18), reactedBy: ["u_dev", "u_adi", "u_lily", "u_joe"] },
-      { suffix: "c2", startsAt: dayAt(2, 20), reactedBy: ["u_dev", "u_nathan", "u_bethan"] },
-      { suffix: "c3", startsAt: dayAt(3, 14), reactedBy: ["u_lily"] },
+      {
+        suffix: "c1",
+        kind: "time",
+        startsAt: dayAt(2, 18),
+        reactedBy: ["u_dev", "u_adi", "u_lily", "u_joe"],
+      },
+      {
+        suffix: "c2",
+        kind: "time",
+        startsAt: dayAt(2, 20),
+        reactedBy: ["u_dev", "u_nathan", "u_bethan"],
+      },
+      { suffix: "c3", kind: "time", startsAt: dayAt(3, 14), reactedBy: ["u_lily"] },
     ],
   },
   {
     id: "e_pub",
     groupId: "g_climb",
     createdBy: "u_adi",
-    title: "Pub night",
+    activity: "Pub night",
     location: "The Lighthouse",
-    whenMode: "options",
     contingent: true,
     quorum: 2,
     phase: "collecting",
-    lockAt: dayAt(1, 12),
+    decidesBy: dayAt(1, 12),
     candidates: [
-      { suffix: "c1", startsAt: dayAt(1, 19), reactedBy: ["u_adi", "u_joe"] },
-      { suffix: "c2", startsAt: dayAt(2, 19), reactedBy: ["u_adi"] },
-      { suffix: "c3", startsAt: dayAt(3, 20), reactedBy: ["u_joe"] },
+      { suffix: "c1", kind: "time", startsAt: dayAt(1, 19), reactedBy: ["u_adi", "u_joe"] },
+      { suffix: "c2", kind: "time", startsAt: dayAt(2, 19), reactedBy: ["u_adi"] },
+      { suffix: "c3", kind: "time", startsAt: dayAt(3, 20), reactedBy: ["u_joe"] },
     ],
   },
   {
     id: "e_bowling",
     groupId: "g_boys",
     createdBy: "u_adi",
-    title: "Bowling",
+    activity: "Bowling",
     location: "TenPin Bowling, Bexleyheath",
-    whenMode: "exact",
     contingent: false,
     quorum: 1,
     phase: "moment",
-    candidates: [{ suffix: "c1", startsAt: dayAt(0, 19) }],
+    candidates: [{ suffix: "c1", kind: "time", startsAt: dayAt(0, 19) }],
     chosenSuffix: "c1",
     momentStartsAt: new Date(Date.now() - HOUR),
     momentEndsAt: new Date(Date.now() + 8 * HOUR),
@@ -153,15 +154,14 @@ export const PLANS: Plan[] = [
     id: "e_dinner",
     groupId: "g_hs",
     createdBy: "u_vasanth",
-    title: "Dinner",
+    activity: "Dinner",
     location: "La Palombe",
-    whenMode: "options",
     contingent: true,
     quorum: 2,
     phase: "cleared",
     candidates: [
-      { suffix: "c1", startsAt: dayAt(-3, 20) },
-      { suffix: "c2", startsAt: dayAt(-2, 20) },
+      { suffix: "c1", kind: "time", startsAt: dayAt(-3, 20) },
+      { suffix: "c2", kind: "time", startsAt: dayAt(-2, 20) },
     ],
     chosenSuffix: "c2",
     momentStartsAt: new Date(Date.now() - 50 * HOUR),
@@ -176,13 +176,12 @@ export const PLANS: Plan[] = [
     id: "e_football",
     groupId: "g_boys",
     createdBy: "u_joe",
-    title: "Football",
+    activity: "Football",
     location: "Goals Wembley",
-    whenMode: "exact",
     contingent: false,
     quorum: 1,
     phase: "cleared",
-    candidates: [{ suffix: "c1", startsAt: dayAt(-1, 10) }],
+    candidates: [{ suffix: "c1", kind: "time", startsAt: dayAt(-1, 10) }],
     chosenSuffix: "c1",
     momentStartsAt: new Date(Date.now() - 26 * HOUR),
     momentEndsAt: new Date(Date.now() - 24 * HOUR),
@@ -192,26 +191,34 @@ export const PLANS: Plan[] = [
     ],
   },
   {
-    // A float brewing in the climbing group. Unsigned + ownerless: "bowling" leads (2 backers, clears
-    // minHeat), and among its backers "Wed evening" is the agreed time (2 backers), so advancing
-    // lockAt tips it straight into a blind moment. No title/location until it crystallizes.
+    // A still-collecting plan in the climbing group, left unnamed so its winning ACTIVITY resolves
+    // into the plan's name at lock. Anonymous (no names), with PUBLIC +1 counts on both lists: among
+    // activities "bowling" leads (2 backers), and among times the day-2 evening slot leads (2).
     id: "e_float_climb",
     groupId: "g_climb",
     createdBy: "u_adi",
-    title: "",
-    whenMode: "fuzzy",
+    activity: "",
     contingent: true,
     quorum: 2,
-    isAnonymous: true,
-    minHeat: 2,
-    phase: "floating",
-    lockAt: dayAt(1, 12),
-    candidates: [],
-    floatSuggestions: [
-      { suffix: "i1", axis: "idea", text: "bowling", votedBy: ["u_adi", "u_joe"] },
-      { suffix: "i2", axis: "idea", text: "the pub", votedBy: ["u_dev"] },
-      { suffix: "t1", axis: "time", partOfDay: "evening", day: 2, votedBy: ["u_adi", "u_joe"] },
-      { suffix: "t2", axis: "time", partOfDay: "afternoon", day: 3, votedBy: ["u_dev"] },
+    phase: "collecting",
+    decidesBy: dayAt(1, 12),
+    candidates: [
+      { suffix: "a1", kind: "activity", label: "bowling", reactedBy: ["u_adi", "u_joe"] },
+      { suffix: "a2", kind: "activity", label: "the pub", reactedBy: ["u_dev"] },
+      {
+        suffix: "t1",
+        kind: "time",
+        startsAt: dayAt(2, 19),
+        partOfDay: "evening",
+        reactedBy: ["u_adi", "u_joe"],
+      },
+      {
+        suffix: "t2",
+        kind: "time",
+        startsAt: dayAt(3, 14),
+        partOfDay: "afternoon",
+        reactedBy: ["u_dev"],
+      },
     ],
   },
 ];
@@ -249,30 +256,15 @@ export function seedIntegrityErrors(
     if (!members.has(p.createdBy))
       errors.push(`plan ${p.id}: creator ${p.createdBy} is not in group ${p.groupId}`);
 
-    if (p.phase === "floating") {
-      if (!p.isAnonymous) errors.push(`plan ${p.id}: floating plan must be anonymous`);
-      if (p.candidates.length > 0)
-        errors.push(`plan ${p.id}: floating plan must have no candidates`);
-      const sugg = p.floatSuggestions ?? [];
-      if (!sugg.some((s) => s.axis === "idea"))
-        errors.push(`plan ${p.id}: floating plan needs at least one idea suggestion`);
-      const sufx = new Set<string>();
-      for (const s of sugg) {
-        if (sufx.has(s.suffix))
-          errors.push(`plan ${p.id}: duplicate float suggestion suffix ${s.suffix}`);
-        sufx.add(s.suffix);
-        for (const u of s.votedBy ?? []) {
-          if (!members.has(u))
-            errors.push(`plan ${p.id}: float vote by ${u} who is not in group ${p.groupId}`);
-        }
-      }
-    } else {
-      if (p.candidates.length === 0) errors.push(`plan ${p.id}: has no candidates`);
-      if (p.whenMode === "exact" && p.candidates.length !== 1) {
-        errors.push(
-          `plan ${p.id}: exact plan must have exactly 1 candidate, has ${p.candidates.length}`,
-        );
-      }
+    if (p.candidates.length === 0) errors.push(`plan ${p.id}: has no candidates`);
+    const timeCands = p.candidates.filter((c) => c.kind === "time");
+    if (p.phase === "collecting" && timeCands.length === 0)
+      errors.push(`plan ${p.id}: collecting plan needs at least one time candidate`);
+    for (const c of p.candidates) {
+      if (c.kind === "time" && !c.startsAt)
+        errors.push(`plan ${p.id}: time candidate ${c.suffix} has no startsAt`);
+      if (c.kind === "activity" && !c.label)
+        errors.push(`plan ${p.id}: activity candidate ${c.suffix} has no label`);
     }
 
     const suffixes = new Set<string>();
@@ -295,10 +287,13 @@ export function seedIntegrityErrors(
     if (p.phase === "collecting" && p.chosenSuffix) {
       errors.push(`plan ${p.id}: collecting plan should not have a chosenSuffix`);
     }
-    if (p.lockAt && p.candidates.length > 0) {
-      const earliest = Math.min(...p.candidates.map((c) => c.startsAt.getTime()));
-      if (p.lockAt.getTime() > earliest)
-        errors.push(`plan ${p.id}: lockAt is after the earliest candidate`);
+    const startTimes = p.candidates
+      .filter((c) => c.kind === "time" && c.startsAt)
+      .map((c) => (c.startsAt as Date).getTime());
+    if (p.decidesBy && startTimes.length > 0) {
+      const earliest = Math.min(...startTimes);
+      if (p.decidesBy.getTime() > earliest)
+        errors.push(`plan ${p.id}: decidesBy is after the earliest time candidate`);
     }
 
     for (const r of p.responses ?? []) {

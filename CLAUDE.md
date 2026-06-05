@@ -4,15 +4,18 @@ Persistent guidance for Claude Code in this repo. These cover things you can't i
 
 ## Project
 
-`drp_02` is **BeThere**, a group meetup-coordination app (Expo mobile + Fastify/tRPC backend). The current model is the **convergence model** (M3, merged to `dev` via DRP-29): a creator floats one plan to a group and the only fork they choose is how precisely to pin the time (`whenMode`):
+`drp_02` is **BeThere**, a group meetup-coordination app (Expo mobile + Fastify/tRPC backend). The current model is the **unified suggest flow** (M3, replacing the older three-mode `whenMode` fork): a creator sends ONE plan to a group through ONE create flow. A plan owns two candidate lists - **TIME** (when) and **ACTIVITY** (what/where) - and members add to and publicly +1 either list during `collecting`. The creator never picks a "mode"; they only set two flags, both default `false` (open):
 
-- **exact** - a fixed time; skips collecting, opens straight into a blind timed **moment**, always happens.
-- **options** - a short menu of fixed times; members react ("works for me"), best-supported wins.
-- **fuzzy** - a loose window (timescale + part-of-day band) expanded into day candidates members react to.
+- **lockTimes** - when `true`, the time list is fixed: members vote but cannot add times.
+- **lockActivity** - when `true`, the activity (what/where) list is fixed: members vote but cannot add activities.
 
-Everything after the `when` is shared: a plan moves `collecting -> moment -> cleared` (or a silent `fizzled`); during the moment members RSVP **yes / no / "I'll go if [people]"** (conditionals resolved server-side); a per-user dashboard groups plans by **Reacting / Awaiting / Going / Declined**; groups support membership CRUD. Full design: `ARCHITECTURE.md`.
+Concrete shortcut: when BOTH axes are pinned - exactly ONE time candidate with `lockTimes`, AND at most one activity candidate with `lockActivity` - the plan skips `collecting` and opens straight into a blind timed **moment** (the old "exact" plan). Any open or contested axis starts a `collecting` round instead.
 
-> The original standalone **loose-availability** prototype still lives in `archive/loose-availability/` (excluded from the build, do not edit it); its ideas were folded back into the convergence model. M2 concrete-event mockups: `docs/mockups/m2/ALL_MOCKUPS.pdf`.
+Everything after collecting is shared: a plan moves `collecting -> moment -> cleared` (or a silent `fizzled`); candidate +1 counts are **public during collecting** (momentum) but no voter names are ever shown - creator anonymity is ALWAYS on; at lock the most-voted TIME candidate wins, and the most-voted ACTIVITY candidate becomes the plan's **activity** (its name) if one is not already set; the plan then runs a **blind moment** where members RSVP **yes / no / "I'll go if [people]"** (conditionals resolved server-side); a per-user dashboard groups plans by **Reacting / Awaiting / Going / Declined**; groups support membership CRUD. Full design: `ARCHITECTURE.md`.
+
+**A plan's name IS its `activity`** - there is no separate `title` (the title/activity/name concepts were unified in DRP-42: DB column `activity`, lock flag `lockActivity` / `lock_activity`; don't reintroduce a title). Two capabilities layer on top. Any group **member** (not just the creator) can edit a plan's text - its `activity` once locked, plus location and notes - before it clears, via `events.update`, an anonymous per-field **compare-and-set** that reports a conflict instead of clobbering a concurrent edit (while `collecting` the activity is still vote-decided, so it is not directly editable). And the create flow can **redo a past meetup**: a `source` step appears when the chosen group has cleared plans (`events.pastForGroup`) and clones a previous plan's shell, preloading what you did as a single locked activity so you only pick a new time - neither the old time nor any RSVPs carry over.
+
+> The original standalone **loose-availability** prototype still lives in `archive/loose-availability/` (excluded from the build, do not edit it); its ideas were folded back into the current unified suggest flow. M2 concrete-event mockups: `docs/mockups/m2/ALL_MOCKUPS.pdf`.
 
 ## Stack & layout
 

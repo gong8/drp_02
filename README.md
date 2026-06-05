@@ -1,23 +1,26 @@
 # BeThere
 
-A group meetup-coordination app. A creator floats one plan to a group and chooses only how precisely to pin the time; the plan then converges on a blind timed **moment** where members RSVP **yes / no / "I'll go if [people]"**, and either clears (it's on) or quietly fizzles. A per-user dashboard groups plans by **Reacting / Awaiting / Going / Declined**, and groups support membership CRUD. Built as a pnpm monorepo: an Expo mobile client talking to a Fastify + tRPC backend over a shared, end-to-end-typed API.
+A group meetup-coordination app. A creator sends one plan to a group; the group publicly +1s candidate **times** and **activities** (no names shown - it's the group's), then the plan runs a blind timed **moment** where members RSVP **yes / no / "I'll go if [people]"**, and either clears (it's on) or quietly fizzles. A per-user dashboard groups plans by **Reacting / Awaiting / Going / Declined**, and groups support membership CRUD. Built as a pnpm monorepo: an Expo mobile client talking to a Fastify + tRPC backend over a shared, end-to-end-typed API.
 
 ## How a plan works
 
-The only choice the creator makes is how precisely to pin the time:
+One create flow, one votable plan. The creator gives the plan an optional location and two candidate lists - **times** (when) and **activities** (what/where) - either of which may be empty; the activity that wins becomes the plan's name. They set two flags, both off by default:
 
-- **Set a time** (exact) - it's happening; opens straight into the moment and always clears.
-- **A few options** - a short menu of times; members react ("works for me"), the creator locks the best-supported slot.
-- **Whenever suits** (fuzzy) - a loose window expanded into day candidates; members react, then the creator locks a slot.
+- **lockTimes** - leave it off and members can add their own times; turn it on to fix the time list to vote-only.
+- **lockActivity** - leave it off and members can add their own activities; turn it on to fix the activity list to vote-only.
 
-Once a slot is locked (or instantly, for an exact time) the plan runs a blind **moment**: members commit, nobody sees who else is in until it ends, and it clears if enough commit (or always, for an exact plan) or silently fizzles. See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full model.
+During **collecting**, members add to the open lists and tap **+1** on any candidate. Counts are public (momentum) but voter names are never shown. A "Decides by" deadline (editable, defaulting from the candidate spread) ends collecting: the most-voted time wins, and the most-voted activity becomes the plan's name.
+
+Shortcut: a fully pinned plan - one time with **lockTimes**, and the activity locked too - skips collecting and opens straight into the moment (this is the old "set a time" / exact plan). Once collecting ends (or instantly, for that shortcut) the plan runs a blind **moment**: members commit, nobody sees who else is in until it ends, and it clears if enough commit (or always, for the contingent-free shortcut) or silently fizzles.
+
+Plans are editable and repeatable. Any member can fix a live plan's name, location, or notes (concurrent edits surface a conflict rather than clobbering), and the create flow can **redo a past meetup** - start from a previous plan in the same group and it brings back what you did as a locked activity, so you only pick a new time. See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full model.
 
 ## Structure
 
 - `apps/mobile` - Expo / React Native client (TypeScript)
 - `apps/api` - Fastify + tRPC backend (Drizzle + Postgres)
 - `packages/shared` - shared Zod schemas and types (the single source of truth for the API contract)
-- `archive/` - the original standalone loose-availability prototype, excluded from the build; its ideas were folded back into the current convergence model
+- `archive/` - the original standalone loose-availability prototype, excluded from the build; its ideas were folded back into the current unified suggest flow
 
 ## Stack
 

@@ -1,0 +1,88 @@
+name: Deploy API (dev)
+
+# CD for the DEV backend: on push to dev, build the API image and push it to ECR under the
+# :dev tag. The bethere-api-dev App Runner service has auto-deploy enabled on :dev, so the
+# push triggers a rolling deploy of the dev service automatically - independent of prod, which
+# tracks :latest. This mirrors deploy-api.yml (prod) but targets the isolated dev stack.
+on:
+  push:
+    branches: [dev]
+    paths:
+      - "apps/api/**"
+      - "packages/shared/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/deploy-api-dev.yml"
+  workflow_dispatch:
+
+# Serialise dev deploys among themselves, but use a DISTINCT group from prod so a dev deploy
+# never queues behind (or blocks) a prod deploy. Never cancel a deploy mid-rollout.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: bethere-api
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a  # v4.3.1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@fa648b43de3d4d023bcb3f89ed6940096949c419  # v2.1.5
+
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f  # v3.12.0
+
+      # Shares the prod repo but a distinct :dev tag, so a dev push never disturbs prod's
+      # :latest. gha cache is keyed by content, so unchanged layers are still reused across
+      # both workflows. provenance=false keeps a single plain image (App Runner requirement).
+      - name: Build and push image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8  # v6.19.2
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: true
+          platforms: linux/amd64
+          provenance: false
+          tags: |
+            ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:dev
+            ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:dev-${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # App Runner auto-deploys the dev service on the :dev push. This step does NOT gate the
+      # deploy; it waits for that auto-deploy to settle and raises a loud warning if it did not
+      # succeed (e.g. a boot/migration crash rolls the dev service back to the OLD image). Same
+      # logic as prod's deploy-api.yml, pointed at the dev service ARN.
+      - name: Alert if App Runner rolled back
+        env:
+          SERVICE_ARN: arn:aws:apprunner:us-east-1:208569836255:service/bethere-api-dev/f6c777627a7e473989fe9514709d16c6
+        run: |
+          echo "Waiting for the dev App Runner auto-deploy to settle (not gating)..."
+          sleep 30
+          STATUS=""; TYPE=""
+          for i in $(seq 1 40); do
+            read TYPE STATUS < <(aws apprunner list-operations --service-arn "$SERVICE_ARN" \
+              --max-results 1 --query 'OperationSummaryList[0].[Type,Status]' --output text)
+            echo "operation=$TYPE status=$STATUS"
+            case "$STATUS" in
+              PENDING|IN_PROGRESS|ROLLBACK_IN_PROGRESS|"") sleep 15 ;;
+              *) break ;;
+            esac
+          done
+          if [ "$STATUS" = "SUCCEEDED" ]; then
+            echo "Dev App Runner deploy succeeded - dev is on the new image."
+          else
+            echo "::warning title=Dev App Runner deploy did not succeed::Latest operation '$TYPE' ended with status='$STATUS'. The dev service likely ROLLED BACK to the previous image, so DEV MAY BE STALE despite this green build. Check the dev App Runner application logs for a boot/migration error (see docs/runbook-deploy.md)."
+          fi

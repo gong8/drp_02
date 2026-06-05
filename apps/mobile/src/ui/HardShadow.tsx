@@ -8,13 +8,11 @@ export function HardShadow({
   children,
   radius = ui.rCard,
   offset = ui.shadow,
-  color = ui.ink,
   style,
 }: {
   children: ReactNode;
   radius?: number;
   offset?: number;
-  color?: string;
   style?: ViewStyle;
 }) {
   return (
@@ -27,7 +25,7 @@ export function HardShadow({
           left: offset,
           right: -offset,
           bottom: -offset,
-          backgroundColor: color,
+          backgroundColor: ui.ink,
           borderRadius: radius,
         }}
       />

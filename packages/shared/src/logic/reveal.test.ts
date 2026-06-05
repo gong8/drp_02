@@ -1,26 +1,28 @@
 import { describe, expect, it } from "vitest";
-import type { ResponseInput } from "./resolve.js";
+import type { MomentResponse } from "./resolve.js";
 import { revealGoing } from "./reveal.js";
 
-const yes = (userId: string): ResponseInput => ({ userId, kind: "yes" });
+const yes = (userId: string): MomentResponse => ({ userId, kind: "yes" });
 
 describe("revealGoing", () => {
-  it("hides the crowd while the respond-by timer is still running", () => {
-    expect(revealGoing([yes("a")], { respondByAtMs: 1000, status: "open", nowMs: 500 })).toBeNull();
+  it("hides the crowd while the blind moment is still running", () => {
+    expect(
+      revealGoing([yes("a")], { momentEndsAtMs: 1000, resolved: false, nowMs: 500 }),
+    ).toBeNull();
   });
 
-  it("reveals the IN set once respond-by has passed", () => {
+  it("reveals the IN set once the moment has ended", () => {
     expect(
       revealGoing([yes("a"), yes("b")], {
-        respondByAtMs: 1000,
-        status: "open",
+        momentEndsAtMs: 1000,
+        resolved: false,
         nowMs: 2000,
       })?.sort(),
     ).toEqual(["a", "b"]);
   });
 
-  it("reveals immediately when the event is already resolved", () => {
-    expect(revealGoing([yes("a")], { respondByAtMs: 9999, status: "resolved", nowMs: 0 })).toEqual([
+  it("reveals immediately when the plan is already cleared/fizzled", () => {
+    expect(revealGoing([yes("a")], { momentEndsAtMs: 9999, resolved: true, nowMs: 0 })).toEqual([
       "a",
     ]);
   });

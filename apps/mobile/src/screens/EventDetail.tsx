@@ -1,37 +1,60 @@
+import type { PartOfDay } from "@bethere/shared";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import { useCallback, useRef, useState } from "react";
+import { Pressable, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
 import {
-  clock12,
-  dayUpper,
-  formatCountdown,
-  formatSlot,
-  isoFrom,
-  partOfDayLabel,
-} from "../lib/format";
+  DEADLINE_RSVP,
+  DEADLINE_VOTING,
+  DIDNT_COME_TOGETHER,
+  ERR_SAVE,
+  LABEL_CANT_MAKE_IT,
+  NO_NAMES,
+  NOTE_BLIND,
+  NOTE_TOP_PICK,
+  statusLabel,
+} from "../lib/copy";
+import { clock12, dayUpper, formatSlot, isoFrom, partOfDayLabel } from "../lib/format";
+import { addCandidateHorizon } from "../lib/lock";
 import { trpc } from "../lib/trpc";
+import { useBusyAction } from "../lib/useBusyAction";
+import { TICK_MS, useLiveClock } from "../lib/useLiveClock";
 import { font, ui } from "../theme";
 import {
-  Avatar,
-  BackBar,
+  AddComposer,
+  AppText,
+  Band,
   BottomSheet,
   Button,
   Card,
+  CheckOption,
+  Countdown,
   DateTimePill,
-  ScreenBackground,
+  DetailError,
+  Field,
+  FieldLabel,
+  PersonRow,
+  Row,
+  ScreenHeader,
+  ScreenLoading,
+  ScreenScroll,
+  Section,
+  Segmented,
   SelectCheck,
-  StickerTag,
-  Toggle,
+  StatusPill,
 } from "../ui";
 
 type Detail = NonNullable<Awaited<ReturnType<typeof trpc.events.get.query>>>;
 type Member = Detail["members"][number];
-type Cand = Detail["candidates"][number];
-type Mode = "At least one" | "All of them";
-type SaveState = "idle" | "saving" | "saved" | "error";
+type TimeCand = Detail["timeCandidates"][number];
+type ActivityCand = Detail["activityCandidates"][number];
+type CondModeLabel = "At least one" | "All of them";
 type Props = NativeStackScreenProps<MeetupsStackParams, "EventDetail">;
+
+// Sentinel key for the in-flight-mutation poll guard, used by the opt-out toggle (which is not tied
+// to a single candidate id) so a refetch cannot clobber its optimistic state.
+const OPTOUT_PENDING = "__optout__";
 
 export function EventDetail({ route, navigation }: Props) {
   const { eventId } = route.params;
@@ -39,422 +62,273 @@ export function EventDetail({ route, navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [now, setNow] = useState(Date.now());
 
   // moment conditional sheet
   const [editing, setEditing] = useState(false);
   const [sheet, setSheet] = useState(false);
-  const [mode, setMode] = useState<Mode>("At least one");
+  const [condModeLabel, setCondModeLabel] = useState<CondModeLabel>("At least one");
   const [condPicked, setCondPicked] = useState<string[]>([]);
-  // collecting reactions (seeded once from the server, then edited locally)
-  const [reactPicked, setReactPicked] = useState<string[]>([]);
-  const [optedOutLocal, setOptedOutLocal] = useState(false);
-  // Surfaces whether the latest tap (a reaction or the opt-out) has been persisted yet.
-  const [saveState, setSaveState] = useState<SaveState>("idle");
-  const seededFor = useRef<string>("");
+
+  // Edit-details sheet (activity/location/notes). Anyone can edit while the plan is live; saves use a
+  // per-field compare-and-set so a concurrent edit by someone else surfaces here instead of clobbering.
+  const [editSheet, setEditSheet] = useState(false);
+  const [editActivity, setEditActivity] = useState("");
+  const [editLocation, setEditLocation] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+  const [editNote, setEditNote] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
   const phaseRef = useRef<string>("");
-  // Auto-save: the latest reaction set waiting to be persisted + its debounce timer (no submit btn).
-  const pendingPicks = useRef<string[] | null>(null);
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Suggestion ids with an in-flight toggleReaction: while pending we skip applying poll data so the
+  // optimistic chip never flickers (the next clean poll reconciles the true public count).
+  const pendingReact = useRef<Set<string>>(new Set());
 
   const load = useCallback(() => {
     return trpc.events.get
       .query({ id: eventId })
       .then((d) => {
-        setData(d);
+        if (d && pendingReact.current.size === 0) setData(d);
         setError(false);
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [eventId]);
 
-  // Persist the current reaction set, debounced (see toggleReact). Deliberately NOT followed by a
-  // refetch: that would clobber the optimistic picks and flicker; the 5s poll refreshes the tally
-  // and lock-readiness on its own. Failures are swallowed (the next poll reconciles).
-  const flushReact = useCallback(() => {
-    if (saveTimer.current) {
-      clearTimeout(saveTimer.current);
-      saveTimer.current = null;
-    }
-    if (pendingPicks.current) {
-      const worksCandidateIds = pendingPicks.current;
-      pendingPicks.current = null;
-      setSaveState("saving");
-      trpc.events.react
-        .mutate({ eventId, worksCandidateIds })
-        .then(() => setSaveState("saved"))
-        .catch(() => setSaveState("error"));
-    }
-  }, [eventId]);
+  // Busy-guarded mutate-then-reload runner shared by lock/addCandidate/answer/changeAnswer.
+  const runAction = useBusyAction({ busy, setBusy, setError, load });
+
+  // The 1s ticker only drives the live moment countdown, so only run it during the moment.
+  const now = useLiveClock(
+    TICK_MS,
+    useCallback(() => phaseRef.current === "moment" || phaseRef.current === "collecting", []),
+  );
 
   useFocusEffect(
     useCallback(() => {
       let active = true;
       load();
-      // The 1s ticker only drives the live moment countdown, so only run it during the moment.
-      const tick = setInterval(() => {
-        if (active && (phaseRef.current === "moment" || phaseRef.current === "collecting"))
-          setNow(Date.now());
-      }, 1000);
       // Poll while the plan is live so the tally, countdown and reveal converge without a refresh.
       const poll = setInterval(() => {
         if (active && phaseRef.current !== "cleared" && phaseRef.current !== "fizzled") load();
       }, 5000);
       return () => {
         active = false;
-        clearInterval(tick);
         clearInterval(poll);
-        flushReact(); // persist any reaction tap not yet saved before leaving the screen
       };
-    }, [load, flushReact]),
+    }, [load]),
   );
 
   phaseRef.current = data?.phase ?? "";
 
-  // Seed the reaction picks once per plan (not per focus) so returning to the screen never clobbers
-  // candidate taps the user has not yet submitted.
-  useEffect(() => {
-    if (data && data.phase === "collecting" && seededFor.current !== eventId) {
-      setReactPicked(data.myReactionCandidateIds);
-      setOptedOutLocal(data.iOptedOut);
-      seededFor.current = eventId;
-    }
-  }, [data, eventId]);
-
-  // Tapping a candidate IS the answer - toggle optimistically and save after a short debounce, so
-  // there is no separate "submit" step competing with the deadline. Tapping a time also rejoins
-  // anyone who had opted out.
-  function toggleReact(id: string) {
-    setOptedOutLocal(false);
-    setReactPicked((p) => {
-      const next = p.includes(id) ? p.filter((x) => x !== id) : [...p, id];
-      pendingPicks.current = next;
-      return next;
-    });
-    setSaveState("saving");
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(flushReact, 500);
-  }
-
-  // "I can't make it" - a reversible, private exit. Opting out clears local picks; tapping it again
-  // (or any time above) rejoins. Optimistic, with the same save-state feedback as a reaction.
-  async function toggleOptOut() {
-    const next = !optedOutLocal;
-    setOptedOutLocal(next);
-    if (next) {
-      if (saveTimer.current) clearTimeout(saveTimer.current);
-      pendingPicks.current = null;
-      setReactPicked([]);
-    }
-    setSaveState("saving");
-    try {
-      await trpc.events.setOptOut.mutate({ eventId, out: next });
-      setSaveState("saved");
-      await load();
-    } catch {
-      setOptedOutLocal(!next);
-      setSaveState("error");
-    }
-  }
-
-  // Re-send the current intent after a failed save (tap on the error status).
-  function retrySave() {
-    setSaveState("saving");
-    if (optedOutLocal) {
-      trpc.events.setOptOut
-        .mutate({ eventId, out: true })
-        .then(() => setSaveState("saved"))
-        .catch(() => setSaveState("error"));
-    } else {
-      pendingPicks.current = reactPicked;
-      flushReact();
-    }
-  }
-
-  async function lock(candidateId?: string) {
-    if (busy) return;
-    setBusy(true);
-    try {
-      await trpc.events.lock.mutate(
-        candidateId ? { eventId, candidateId, momentMinutes: 60 } : { eventId, momentMinutes: 60 },
+  // One public +1 / un-+1 on a candidate (either kind), optimistic. Adding a reaction also clears
+  // the caller's opt-out (server-side); a failed toggle reverts; the 5s poll reconciles.
+  function toggleReaction(candidateId: string) {
+    const flipMine = <T extends { id: string; mine: boolean; count: number }>(rows: T[]): T[] =>
+      rows.map((c) =>
+        c.id === candidateId ? { ...c, mine: !c.mine, count: c.count + (c.mine ? -1 : 1) } : c,
       );
-      await load();
-    } catch {
-      setError(true);
-    } finally {
-      setBusy(false);
-    }
+    // Apply forces iOptedOut:false (a +1 rejoins, mirroring the server). The revert flips mine/count
+    // back AND restores the prior opt-out, so a failed toggle on an opted-out plan does not leave the
+    // "I can't make it" checkbox wrongly cleared until the next poll.
+    const flip =
+      (optedOut: boolean) =>
+      (d: Detail | null): Detail | null =>
+        d
+          ? {
+              ...d,
+              timeCandidates: flipMine(d.timeCandidates),
+              activityCandidates: flipMine(d.activityCandidates),
+              iOptedOut: optedOut,
+            }
+          : d;
+    const prevOptedOut = data?.iOptedOut ?? false;
+    setData(flip(false));
+    pendingReact.current.add(candidateId);
+    trpc.events.toggleReaction
+      .mutate({ eventId, candidateId })
+      .catch(() => setData(flip(prevOptedOut)))
+      .finally(() => pendingReact.current.delete(candidateId));
   }
 
-  // Anyone in the group can float a new time into the menu while collecting; refetch so it shows.
-  async function addCandidate(startsAt: string) {
-    if (busy || !data) return;
-    setBusy(true);
-    try {
-      await trpc.events.addCandidate.mutate({ eventId, startsAt });
-      await load();
-    } catch {
-      setError(true);
-    } finally {
-      setBusy(false);
-    }
+  // "Can't make it" - a reversible, private exit. Optimistic; tapping any candidate above rejoins
+  // (server clears the opt-out on a reaction). Opting out clears your +1s server-side, so drop them
+  // locally NOW too (otherwise your votes only fall away on the next 5s poll, which looks laggy).
+  // Guard the poll with a sentinel so an in-flight refetch cannot clobber the optimistic state.
+  function toggleOptOut() {
+    const next = !(data?.iOptedOut ?? false);
+    const prev = data;
+    const clearMine = <T extends { mine: boolean; count: number }>(rows: T[]): T[] =>
+      next ? rows.map((c) => (c.mine ? { ...c, mine: false, count: c.count - 1 } : c)) : rows;
+    setData((d) =>
+      d
+        ? {
+            ...d,
+            iOptedOut: next,
+            timeCandidates: clearMine(d.timeCandidates),
+            activityCandidates: clearMine(d.activityCandidates),
+          }
+        : d,
+    );
+    pendingReact.current.add(OPTOUT_PENDING);
+    trpc.events.setOptOut
+      .mutate({ eventId, out: next })
+      .catch(() => setData(prev))
+      .finally(() => pendingReact.current.delete(OPTOUT_PENDING));
   }
 
-  async function answer(
+  function lock(candidateId?: string) {
+    return runAction(() =>
+      trpc.events.lock.mutate(candidateId ? { eventId, candidateId } : { eventId }),
+    );
+  }
+
+  // Add a candidate while collecting (server +1s it for the author); refetch so it shows. Kind-gated
+  // server-side: a time when lockTimes / an activity when lockActivity is FORBIDDEN (UI hides the add).
+  function addTime(startsAt: string, partOfDay?: PartOfDay) {
+    return runAction(() =>
+      trpc.events.addCandidate.mutate(
+        partOfDay
+          ? { eventId, kind: "time", startsAt, partOfDay }
+          : { eventId, kind: "time", startsAt },
+      ),
+    );
+  }
+
+  function addActivity(text: string) {
+    return runAction(() => trpc.events.addCandidate.mutate({ eventId, kind: "activity", text }));
+  }
+
+  function answer(
     kind: "yes" | "no" | "conditional",
     cond?: { mode: "all" | "any"; targetIds: string[] },
   ) {
-    if (busy) return;
-    setBusy(true);
-    try {
+    return runAction(async () => {
       await trpc.events.respond.mutate(cond ? { eventId, kind, cond } : { eventId, kind });
       setEditing(false);
-      await load();
-    } catch {
-      setError(true);
-    } finally {
-      setBusy(false);
-    }
+    });
   }
 
-  // "Change my answer" un-commits: it clears the response so the plan returns to Action Required
-  // until a new answer is given, then reopens the choices.
-  async function changeAnswer() {
-    if (busy) return;
-    setBusy(true);
-    try {
+  // "Change" un-commits: it clears the response so the plan returns to Action Required until a new
+  // answer is given, then reopens the choices.
+  function changeAnswer() {
+    return runAction(async () => {
       await trpc.events.unrespond.mutate({ eventId });
       setEditing(true);
-      await load();
-    } catch {
-      setError(true);
-    } finally {
-      setBusy(false);
-    }
+    });
   }
 
-  if (loading) {
-    return (
-      <ScreenBackground>
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator color={ui.ink} />
-        </View>
-      </ScreenBackground>
-    );
+  // Open the edit sheet, prefilled from the loaded values. The name prefills from the RAW stored
+  // activity (often ""), so an empty field means "keep auto-naming from the activity list" - the
+  // placeholder shows the current activity so that intent reads clearly.
+  function openEditSheet() {
+    if (!data) return;
+    setEditActivity(data.activityRaw);
+    setEditLocation(data.location);
+    setEditNotes(data.description ?? "");
+    setEditNote("");
+    setEditSheet(true);
   }
-  if (error || !data) {
-    return (
-      <ScreenBackground>
-        <View style={{ padding: 16 }}>
-          <BackBar title="Back" onBack={() => navigation.goBack()} />
-          <Text style={{ fontFamily: font.medium, color: ui.muted }}>
-            {error ? "Couldn't reach the server." : "Plan not found."}
-          </Text>
-        </View>
-      </ScreenBackground>
-    );
+
+  // Save edits with a per-field compare-and-set: send only the fields whose input diverged from what
+  // we loaded, each as { from: loaded, to: typed }. The server writes a field only if its current DB
+  // value still equals `from`. If something changed under us, `conflicts` carries the now-current
+  // value: we adopt it into the input, keep the sheet open, and ask the user to review. A throw (e.g.
+  // the plan just went final) shows an inline error and refetches so the screen reflects reality.
+  function saveEdit() {
+    if (!data || savingEdit) return;
+    const loadedActivity = data.activityRaw;
+    const loadedLocation = data.location;
+    const loadedNotes = data.description ?? "";
+    const patch: {
+      activity?: { from: string; to: string };
+      location?: { from: string; to: string };
+      description?: { from: string; to: string };
+    } = {};
+    if (editActivity !== loadedActivity)
+      patch.activity = { from: loadedActivity, to: editActivity };
+    if (editLocation !== loadedLocation)
+      patch.location = { from: loadedLocation, to: editLocation };
+    if (editNotes !== loadedNotes) patch.description = { from: loadedNotes, to: editNotes };
+    // Nothing changed - just close.
+    if (!patch.activity && !patch.location && !patch.description) {
+      setEditSheet(false);
+      return;
+    }
+    setSavingEdit(true);
+    setEditNote("");
+    trpc.events.update
+      .mutate({ eventId: data.id, ...patch })
+      .then((res) => {
+        if (res.conflicts.length === 0) {
+          setEditSheet(false);
+          return load();
+        }
+        // Adopt the server's current value for each conflicted field and keep the sheet open.
+        for (const c of res.conflicts) {
+          if (c.field === "activity") setEditActivity(c.current);
+          else if (c.field === "location") setEditLocation(c.current);
+          else if (c.field === "description") setEditNotes(c.current);
+        }
+        setEditNote("Updated by someone else - review and save again.");
+      })
+      .catch(() => {
+        setEditNote(`${ERR_SAVE} This meetup may have closed.`);
+        return load();
+      })
+      .finally(() => setSavingEdit(false));
   }
+
+  if (loading) return <ScreenLoading />;
+  if (error || !data)
+    return (
+      <DetailError
+        error={error}
+        onBack={() => navigation.goBack()}
+        notFoundLabel="Meetup not found."
+      />
+    );
 
   const liveMsLeft = data.momentEndsAt ? new Date(data.momentEndsAt).getTime() - now : 0;
-  const liveMsToLock = data.lockAt ? new Date(data.lockAt).getTime() - now : 0;
+  const liveMsToDecide = data.decidesBy ? new Date(data.decidesBy).getTime() - now : 0;
   // The chosen time, shown as a hero banner once a slot is locked (moment/cleared); collecting has
   // no single time yet.
   const heroIso = data.chosenStartsAt && data.phase !== "collecting" ? data.chosenStartsAt : null;
   const heroClock = heroIso ? clock12(heroIso) : null;
+  const editable = data.phase !== "cleared" && data.phase !== "fizzled";
 
-  function headerSticker() {
-    if (!data) return null;
-    // Collecting + moment use the full-bleed countdown banner instead of a sticker.
-    if (data.phase === "cleared") return <StickerTag label="It's on" />;
-    return null;
-  }
-
-  const statusLine =
-    data.myStatus === "going"
-      ? "You're in"
-      : data.myStatus === "declined"
-        ? "You can't make it"
-        : "Awaiting your answer";
-
-  return (
-    <ScreenBackground
-      header={<BackBar title={data.groupName} onBack={() => navigation.goBack()} />}
-    >
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 2, paddingBottom: 28 }}
-        showsVerticalScrollIndicator={false}
-      >
-        {data.phase === "collecting" && data.lockAt && (
-          <CountdownBanner label="Locks in" ms={liveMsToLock} note="best-supported time wins" />
-        )}
-        {data.phase === "moment" && (
-          <CountdownBanner label="Closes in" ms={liveMsLeft} note="who's in reveals then" />
-        )}
-
-        <Card padding={0}>
-          {heroIso && heroClock ? (
-            <View
-              style={{
-                paddingHorizontal: 16,
-                paddingTop: 14,
-                paddingBottom: 12,
-                borderBottomWidth: ui.border,
-                borderBottomColor: ui.ink,
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "flex-start",
-              }}
-            >
-              <View>
-                <Text
-                  style={{ fontFamily: font.mono, fontSize: 12, letterSpacing: 1, color: ui.muted }}
-                >
-                  {dayUpper(heroIso)}
-                </Text>
-                <View style={{ flexDirection: "row", alignItems: "flex-end", marginTop: 3 }}>
-                  <Text
-                    style={{ fontFamily: font.mono, fontSize: 34, lineHeight: 36, color: ui.ink }}
-                  >
-                    {heroClock.time}
-                  </Text>
-                  <Text
-                    style={{
-                      fontFamily: font.mono,
-                      fontSize: 16,
-                      color: ui.muted,
-                      marginLeft: 5,
-                      marginBottom: 3,
-                    }}
-                  >
-                    {heroClock.ampm}
-                  </Text>
-                </View>
-              </View>
-              {headerSticker()}
-            </View>
-          ) : null}
-          <View style={{ paddingHorizontal: 16, paddingTop: heroIso ? 14 : 16, paddingBottom: 16 }}>
-            <Text
-              style={{ fontFamily: font.display, fontSize: 24, letterSpacing: -0.5, color: ui.ink }}
-            >
-              {data.title}
-            </Text>
-            {data.location ? (
-              <Text
-                style={{ fontFamily: font.medium, fontSize: 12, color: ui.muted, marginTop: 4 }}
-              >
-                at <Text style={{ fontFamily: font.bold, color: ui.ink }}>{data.location}</Text>
-              </Text>
-            ) : null}
-            {data.description ? (
-              <Text
-                style={{
-                  fontFamily: font.medium,
-                  fontSize: 12,
-                  color: ui.muted,
-                  marginTop: 8,
-                  lineHeight: 18,
-                }}
-              >
-                {data.description}
-              </Text>
-            ) : null}
-          </View>
-        </Card>
-
-        {data.phase === "collecting" && (
-          <CollectingView
-            data={data}
-            picked={reactPicked}
-            optedOut={optedOutLocal}
-            saveState={saveState}
-            busy={busy}
-            onToggle={toggleReact}
-            onToggleOptOut={toggleOptOut}
-            onRetry={retrySave}
-            onLock={lock}
-            onAddCandidate={addCandidate}
-          />
-        )}
-
-        {data.phase === "moment" && (
-          <MomentView
-            data={data}
-            busy={busy}
-            editing={editing}
-            onEdit={changeAnswer}
-            statusLine={statusLine}
-            onYes={() => answer("yes")}
-            onNo={() => answer("no")}
-            onConditional={() => {
-              setCondPicked([]);
-              setSheet(true);
-            }}
-          />
-        )}
-
-        {data.phase === "cleared" && <RevealView data={data} statusLine={statusLine} />}
-
-        {data.phase === "fizzled" && (
-          <View style={{ marginTop: 16 }}>
-            <Card>
-              <Text style={{ fontFamily: font.display, fontSize: 15, color: ui.ink }}>
-                This one didn't come together
-              </Text>
-              <Text
-                style={{
-                  fontFamily: font.medium,
-                  fontSize: 12,
-                  color: ui.muted,
-                  marginTop: 6,
-                  lineHeight: 18,
-                }}
-              >
-                Not enough people were free this time - no worries, no fuss. Float another whenever.
-              </Text>
-            </Card>
-          </View>
-        )}
-      </ScrollView>
-
+  const sheets = (
+    <>
       <BottomSheet visible={sheet} onClose={() => setSheet(false)}>
-        <Text style={{ fontFamily: font.display, fontSize: 16, color: ui.ink }}>I'll go if...</Text>
-        <Text
-          style={{
-            fontFamily: font.medium,
-            fontSize: 10,
-            color: ui.muted,
-            marginTop: 2,
-            marginBottom: 10,
-          }}
-        >
-          ...these people are going
-        </Text>
-        <Toggle options={["At least one", "All of them"]} value={mode} onChange={setMode} />
+        <Section title="Go if these people are in" size="lg" />
+        <Segmented
+          options={["At least one", "All of them"] as const}
+          value={condModeLabel}
+          onChange={setCondModeLabel}
+          variant="bar"
+        />
         <View style={{ marginTop: 12, marginBottom: 4 }}>
           {data.members.map((m: Member) => {
             const on = condPicked.includes(m.id);
             return (
-              <Pressable
+              <PersonRow
                 key={m.id}
+                name={m.name}
+                color={ui.muted}
+                index={0}
+                divided={false}
+                padding={9}
                 onPress={() =>
                   setCondPicked((p) => (on ? p.filter((x) => x !== m.id) : [...p, m.id]))
                 }
-                style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 9 }}
-              >
-                <Avatar initial={m.name.charAt(0).toUpperCase()} color={ui.muted} size={26} />
-                <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>{m.name}</Text>
-                <View style={{ marginLeft: "auto" }}>
-                  <SelectCheck selected={on} />
-                </View>
-              </Pressable>
+                right={
+                  <View style={{ marginLeft: "auto" }}>
+                    <SelectCheck selected={on} />
+                  </View>
+                }
+              />
             );
           })}
           {data.members.length === 0 && (
-            <Text style={{ fontFamily: font.medium, fontSize: 12, color: ui.muted }}>
-              No one else in this group.
-            </Text>
+            <AppText variant="caption">No one else in this group.</AppText>
           )}
         </View>
         <Button
@@ -464,248 +338,300 @@ export function EventDetail({ route, navigation }: Props) {
           onPress={() => {
             setSheet(false);
             answer("conditional", {
-              mode: mode === "All of them" ? "all" : "any",
+              mode: condModeLabel === "All of them" ? "all" : "any",
               targetIds: condPicked,
             });
           }}
           style={{ marginTop: 12 }}
         />
       </BottomSheet>
-    </ScreenBackground>
+
+      <BottomSheet visible={editSheet} onClose={() => setEditSheet(false)}>
+        <Section title="Edit details" size="lg" />
+        {(data.phase === "moment" || data.phase === "cleared") && (
+          <Field
+            label="Activity"
+            optional
+            value={editActivity}
+            onChangeText={setEditActivity}
+            placeholder={data.activity}
+          />
+        )}
+        <Field
+          label="Location"
+          optional
+          value={editLocation}
+          onChangeText={setEditLocation}
+          placeholder="TenPin Bexleyheath"
+          style={{ marginTop: data.phase === "moment" || data.phase === "cleared" ? 12 : 0 }}
+        />
+        <Field
+          label="Notes"
+          optional
+          value={editNotes}
+          onChangeText={setEditNotes}
+          placeholder="Come at 6, we'll eat around 8"
+          multiline
+          style={{ marginTop: 12 }}
+        />
+        {editNote ? (
+          <AppText variant="caption" style={{ color: ui.brand, marginTop: 12, lineHeight: 16 }}>
+            {editNote}
+          </AppText>
+        ) : null}
+        <Button
+          label="Save"
+          variant="primary"
+          disabled={savingEdit}
+          onPress={saveEdit}
+          style={{ marginTop: 14 }}
+        />
+      </BottomSheet>
+    </>
+  );
+
+  return (
+    <ScreenScroll
+      header={<ScreenHeader title={data.activity || "Meetup"} onBack={() => navigation.goBack()} />}
+      bottomPad={28}
+      footer={sheets}
+    >
+      {data.phase === "collecting" && data.decidesBy && (
+        <CountdownBanner label={DEADLINE_VOTING} ms={liveMsToDecide} note={NOTE_TOP_PICK} />
+      )}
+      {data.phase === "moment" && (
+        <CountdownBanner label={DEADLINE_RSVP} ms={liveMsLeft} note={NOTE_BLIND} />
+      )}
+
+      <Card padding={0}>
+        {heroIso && heroClock ? (
+          <View
+            style={{
+              paddingHorizontal: 16,
+              paddingTop: 14,
+              paddingBottom: 12,
+              borderBottomWidth: ui.border,
+              borderBottomColor: ui.ink,
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+            }}
+          >
+            <View>
+              <FieldLabel tone="muted" style={{ letterSpacing: 1 }}>
+                {dayUpper(heroIso)}
+              </FieldLabel>
+              <View style={{ flexDirection: "row", alignItems: "flex-end", marginTop: 3 }}>
+                <Text
+                  style={{ fontFamily: font.display, fontSize: 34, lineHeight: 36, color: ui.ink }}
+                >
+                  {heroClock.time}
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: font.bold,
+                    fontSize: 16,
+                    color: ui.muted,
+                    marginLeft: 5,
+                    marginBottom: 3,
+                  }}
+                >
+                  {heroClock.ampm}
+                </Text>
+              </View>
+            </View>
+            {data.phase === "cleared" ? <StatusPill label="It's on" /> : null}
+          </View>
+        ) : null}
+        <View style={{ paddingHorizontal: 16, paddingTop: heroIso ? 14 : 16, paddingBottom: 16 }}>
+          <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
+            <Text
+              style={{
+                flex: 1,
+                fontFamily: font.display,
+                fontSize: 24,
+                letterSpacing: -0.5,
+                color: ui.ink,
+              }}
+            >
+              {data.activity || data.groupName}
+            </Text>
+            {editable && (
+              <Pressable
+                onPress={openEditSheet}
+                hitSlop={8}
+                style={{ marginLeft: 10, marginTop: 4 }}
+              >
+                <Text style={{ fontFamily: font.bold, fontSize: 12, color: ui.brand }}>Edit</Text>
+              </Pressable>
+            )}
+          </View>
+          <AppText variant="caption" style={{ marginTop: 4 }}>
+            {data.groupName}
+            {data.location ? ` · ${data.location}` : ""}
+          </AppText>
+          {data.description ? (
+            <AppText variant="caption" style={{ marginTop: 8, lineHeight: 18 }}>
+              {data.description}
+            </AppText>
+          ) : null}
+        </View>
+      </Card>
+
+      {data.phase === "collecting" && (
+        <CollectingView
+          data={data}
+          optedOut={data.iOptedOut}
+          busy={busy}
+          onToggleReaction={toggleReaction}
+          onToggleOptOut={toggleOptOut}
+          onLock={lock}
+          onAddTime={addTime}
+          onAddActivity={addActivity}
+        />
+      )}
+
+      {data.phase === "moment" && (
+        <MomentView
+          data={data}
+          busy={busy}
+          editing={editing}
+          onEdit={changeAnswer}
+          statusLine={statusLabel(data.myStatus)}
+          onYes={() => answer("yes")}
+          onNo={() => answer("no")}
+          onConditional={() => {
+            setCondPicked([]);
+            setSheet(true);
+          }}
+        />
+      )}
+
+      {data.phase === "cleared" && (
+        <RevealView data={data} statusLine={statusLabel(data.myStatus)} />
+      )}
+
+      {data.phase === "fizzled" && (
+        <View style={{ marginTop: 16 }}>
+          <Card>
+            <Text style={{ fontFamily: font.display, fontSize: 15, color: ui.ink }}>
+              {DIDNT_COME_TOGETHER}
+            </Text>
+            <AppText variant="caption" style={{ marginTop: 6, lineHeight: 18 }}>
+              Not enough people in. Suggest another anytime.
+            </AppText>
+          </Card>
+        </View>
+      )}
+    </ScreenScroll>
   );
 }
 
-// A full-bleed countdown bar for the time-pressured phases (the collecting deadline and the moment
-// reveal). Stretches edge-to-edge with top/bottom ink rules - visually distinct from rounded cards.
+// The committed-answer / outcome status line, shared by the moment locked-in view and the reveal.
+function StatusHeading({ children }: { children: string }) {
+  return (
+    <Text style={{ fontFamily: font.bold, fontSize: 14, color: ui.ink, marginBottom: 12 }}>
+      {children}
+    </Text>
+  );
+}
+
+// A full-bleed countdown banner for the time-pressured phases (the collecting deadline and the
+// moment reveal). The duration is the loud element; `note` is a one-word tag on the right.
 function CountdownBanner({ label, ms, note }: { label: string; ms: number; note: string }) {
   return (
-    <View
-      style={{
-        marginHorizontal: -16,
-        marginTop: -2,
-        marginBottom: 14,
-        backgroundColor: ui.brand,
-        borderColor: ui.ink,
-        borderTopWidth: ui.border,
-        borderBottomWidth: ui.border,
-        paddingVertical: 14,
-        paddingHorizontal: 16,
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-      }}
-    >
-      <View>
-        <Text
-          style={{
-            fontFamily: font.bold,
-            fontSize: 9,
-            letterSpacing: 1.4,
-            textTransform: "uppercase",
-            color: "#fff",
-          }}
-        >
-          {label}
-        </Text>
-        <Text
-          style={{
-            fontFamily: font.black,
-            fontSize: 28,
-            letterSpacing: -1,
-            color: "#fff",
-            marginTop: 2,
-          }}
-        >
-          {formatCountdown(ms)}
-        </Text>
+    <Band style={{ marginTop: -2, marginBottom: 14, flexDirection: "row", alignItems: "center" }}>
+      <View style={{ flex: 1 }}>
+        <Countdown ms={ms} label={label} color={ui.onInk} big />
       </View>
       <Text
         style={{
           fontFamily: font.bold,
-          fontSize: 10,
-          color: "#fff",
+          fontSize: 11,
+          color: ui.onInk,
           opacity: 0.92,
-          maxWidth: 130,
-          textAlign: "right",
+          marginLeft: 12,
         }}
       >
         {note}
       </Text>
-    </View>
+    </Band>
   );
 }
 
-// Collecting: tap which candidate times work, or opt out; the plan auto-locks at its deadline.
+// Collecting: PUBLIC vote board. Two candidate lists - ACTIVITY (what) and TIME (when) - each a table
+// of rows with a checkbox (the caller's own +1) and the public count. The add control is the SAME
+// composer for both lists; it is hidden when the creator locked that axis. No names ever shown.
 function CollectingView({
   data,
-  picked,
   optedOut,
-  saveState,
   busy,
-  onToggle,
+  onToggleReaction,
   onToggleOptOut,
-  onRetry,
   onLock,
-  onAddCandidate,
+  onAddTime,
+  onAddActivity,
 }: {
   data: Detail;
-  picked: string[];
   optedOut: boolean;
-  saveState: SaveState;
   busy: boolean;
-  onToggle: (id: string) => void;
+  onToggleReaction: (candidateId: string) => void;
   onToggleOptOut: () => void;
-  onRetry: () => void;
   onLock: (candidateId?: string) => void;
-  onAddCandidate: (startsAt: string) => void;
+  onAddTime: (startsAt: string, partOfDay?: PartOfDay) => void;
+  onAddActivity: (text: string) => void;
 }) {
-  const [addOpen, setAddOpen] = useState(false);
-  const [newDate, setNewDate] = useState("");
-  const [newTime, setNewTime] = useState("");
-  const newIso = isoFrom(newDate, newTime);
-
-  // Shared table-row style; the first row overrides to no top divider.
-  const row = {
-    flexDirection: "row" as const,
-    alignItems: "center" as const,
-    gap: 10,
-    padding: 12,
-    borderTopWidth: 1,
-    borderTopColor: ui.hairline,
-  };
-
   return (
     <View style={{ marginTop: 16 }}>
-      <Text style={{ fontFamily: font.display, fontSize: 14, color: ui.ink, marginBottom: 4 }}>
-        Which of these work?
-      </Text>
-      <Text style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted, marginBottom: 10 }}>
-        Tap the times you can make - private to you.
-      </Text>
-      <Card padding={0}>
-        {data.candidates.map((c: Cand, i: number) => {
-          const on = !optedOut && picked.includes(c.id);
-          return (
-            <Pressable
+      {(data.activityCandidates.length > 0 || !data.lockActivity) && (
+        <Section title="What">
+          {data.activityCandidates.map((c: ActivityCand) => (
+            <VoteRow
               key={c.id}
-              onPress={() => onToggle(c.id)}
-              style={{ ...row, borderTopWidth: i === 0 ? 0 : 1 }}
-            >
-              <SelectCheck selected={on} />
-              <View>
-                <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>
-                  {formatSlot(c.startsAt)}
-                </Text>
-                {c.partOfDay ? (
-                  <Text style={{ fontFamily: font.medium, fontSize: 10, color: ui.muted }}>
-                    {partOfDayLabel(c.partOfDay)}
-                  </Text>
-                ) : null}
-              </View>
-            </Pressable>
-          );
-        })}
-
-        {!addOpen && (
-          <Pressable onPress={() => setAddOpen(true)} style={row}>
-            <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.brand }}>
-              + Add a time
-            </Text>
-          </Pressable>
-        )}
-
-        {/* Opt-out: a distinct, tinted last row of the same table (mutually exclusive). */}
-        <Pressable onPress={onToggleOptOut} style={{ ...row, backgroundColor: "#F1EEF6" }}>
-          <View
-            style={{
-              width: 18,
-              height: 18,
-              borderRadius: 5,
-              borderWidth: 1.5,
-              borderColor: ui.ink,
-              backgroundColor: optedOut ? ui.ink : "transparent",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {optedOut && <Text style={{ fontSize: 11, color: "#fff" }}>{"✓"}</Text>}
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>
-              I can't make it
-            </Text>
-            <Text style={{ fontFamily: font.medium, fontSize: 10, color: ui.muted }}>
-              you won't be asked again - tap a time to rejoin
-            </Text>
-          </View>
-        </Pressable>
-      </Card>
-
-      <SaveStatus state={saveState} onRetry={onRetry} />
-
-      {addOpen && (
-        <Card style={{ marginTop: 14 }}>
-          <Text
-            style={{
-              fontFamily: font.bold,
-              fontSize: 9,
-              letterSpacing: 1,
-              textTransform: "uppercase",
-              color: ui.ink,
-              marginBottom: 10,
-            }}
-          >
-            Add a time
-          </Text>
-          <DateTimePill
-            dateValue={newDate}
-            timeValue={newTime}
-            onDate={setNewDate}
-            onTime={setNewTime}
-            minimumDate={new Date()}
-          />
-          <View
-            style={{
-              flexDirection: "row",
-              gap: 16,
-              marginTop: 14,
-              alignItems: "center",
-              justifyContent: "flex-end",
-            }}
-          >
-            <Pressable
-              hitSlop={8}
-              onPress={() => {
-                setNewDate("");
-                setNewTime("");
-                setAddOpen(false);
-              }}
-            >
-              <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.muted }}>Cancel</Text>
-            </Pressable>
-            <View style={{ width: 110 }}>
-              <Button
-                label="Add"
-                variant="primary"
-                disabled={busy || !newIso}
-                onPress={() => {
-                  if (!newIso) return;
-                  onAddCandidate(newIso);
-                  setNewDate("");
-                  setNewTime("");
-                  setAddOpen(false);
-                }}
-              />
-            </View>
-          </View>
-        </Card>
+              label={c.text}
+              count={c.count}
+              mine={c.mine}
+              onPress={() => onToggleReaction(c.id)}
+            />
+          ))}
+          {!data.lockActivity && <AddActivity busy={busy} onAdd={onAddActivity} />}
+        </Section>
       )}
 
-      {/* No manual lock for members (pure deadline); this dev-only button forces it for demos. */}
-      {__DEV__ && data.isCreator && (
+      {(data.timeCandidates.length > 0 || !data.lockTimes) && (
+        <Section title="When">
+          {data.timeCandidates.map((c: TimeCand) => (
+            <VoteRow
+              key={c.id}
+              label={timeChipLabel(c)}
+              count={c.count}
+              mine={c.mine}
+              onPress={() => onToggleReaction(c.id)}
+            />
+          ))}
+          {!data.lockTimes && <AddTime busy={busy} data={data} onAdd={onAddTime} />}
+        </Section>
+      )}
+
+      <CheckOption
+        label={LABEL_CANT_MAKE_IT}
+        sub="Tap anything above to rejoin"
+        on={optedOut}
+        onToggle={onToggleOptOut}
+        accent={ui.ink}
+        tinted
+      />
+
+      <AppText variant="caption" style={{ textAlign: "center", marginTop: 16 }}>
+        {NO_NAMES}
+      </AppText>
+
+      {/* No manual lock for members (pure deadline); this dev-only button forces it for demos. Needs
+          at least one time candidate to lock onto - otherwise the server rejects it. */}
+      {__DEV__ && data.isCreator && data.timeCandidates.length > 0 && (
         <View style={{ marginTop: 16 }}>
           <Button
-            label="Force lock now (dev)"
+            label="Decide now (dev)"
             variant="outline"
             disabled={busy}
             onPress={() => onLock()}
@@ -716,29 +642,118 @@ function CollectingView({
   );
 }
 
-// Tiny inline indicator for the auto-save: "Saving..." -> "Saved", or a tappable retry on failure.
-function SaveStatus({ state, onRetry }: { state: SaveState; onRetry: () => void }) {
-  if (state === "idle") return null;
-  if (state === "error") {
-    return (
-      <Pressable onPress={onRetry} hitSlop={8} style={{ marginTop: 10 }}>
-        <Text style={{ fontFamily: font.bold, fontSize: 11, color: ui.brand }}>
-          Couldn't save - tap to retry
-        </Text>
-      </Pressable>
-    );
-  }
+// A time row label: the concrete slot, with the part-of-day hint appended when present.
+function timeChipLabel(c: TimeCand): string {
+  const slot = formatSlot(c.startsAt);
+  return c.partOfDay ? `${slot} · ${partOfDayLabel(c.partOfDay)}` : slot;
+}
+
+// A votable candidate as a table row: a checkbox (the caller's own +1), the label, and the public
+// count on the right. Tapping toggles the +1. No names - the count is the group's momentum.
+function VoteRow({
+  label,
+  count,
+  mine,
+  onPress,
+}: {
+  label: string;
+  count: number;
+  mine: boolean;
+  onPress: () => void;
+}) {
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 10 }}>
-      {state === "saving" ? (
-        <ActivityIndicator size="small" color={ui.muted} />
-      ) : (
-        <Text style={{ fontSize: 12, color: ui.going }}>{"✓"}</Text>
-      )}
-      <Text style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted }}>
-        {state === "saving" ? "Saving..." : "Saved - private to you"}
+    <Row onPress={onPress} tinted={mine}>
+      <SelectCheck selected={mine} />
+      <AppText variant="rowLabel" style={{ flex: 1 }}>
+        {label}
+      </AppText>
+      <Text
+        style={{
+          fontFamily: font.bold,
+          fontSize: 12,
+          color: ui.muted,
+          fontVariant: ["tabular-nums"],
+        }}
+      >
+        {count}
       </Text>
-    </View>
+    </Row>
+  );
+}
+
+// Inline free-text activity entry through the shared AddComposer (one add affordance for both lists).
+function AddActivity({ busy, onAdd }: { busy: boolean; onAdd: (text: string) => void }) {
+  const [text, setText] = useState("");
+  return (
+    <AddComposer
+      triggerLabel="+ add an activity"
+      busy={busy}
+      canSubmit={!!text.trim()}
+      onSubmit={() => {
+        const t = text.trim();
+        if (t) onAdd(t);
+        setText("");
+      }}
+      onCancel={() => setText("")}
+    >
+      <Field
+        label="Activity"
+        value={text}
+        onChangeText={setText}
+        placeholder="bowling, the pub..."
+      />
+    </AddComposer>
+  );
+}
+
+// Inline concrete time entry through the shared AddComposer, bounded to a sensible horizon from the
+// existing candidate spread. De-duped by minute server-side.
+function AddTime({
+  busy,
+  data,
+  onAdd,
+}: {
+  busy: boolean;
+  data: Detail;
+  onAdd: (startsAt: string, partOfDay?: PartOfDay) => void;
+}) {
+  const [newDate, setNewDate] = useState("");
+  const [newTime, setNewTime] = useState("");
+  const newIso = isoFrom(newDate, newTime);
+
+  const times = data.timeCandidates.map((c: TimeCand) => new Date(c.startsAt).getTime());
+  const decideMs = data.decidesBy ? new Date(data.decidesBy).getTime() : Date.now();
+  const addMinDate = new Date(Math.max(Date.now(), decideMs));
+  const addMaxDate = new Date(
+    times.length
+      ? addCandidateHorizon(Math.min(...times), Math.max(...times))
+      : decideMs + 14 * 24 * 60 * 60 * 1000,
+  );
+
+  const reset = () => {
+    setNewDate("");
+    setNewTime("");
+  };
+  return (
+    <AddComposer
+      triggerLabel="+ add a time"
+      busy={busy}
+      canSubmit={!!newIso}
+      onSubmit={() => {
+        if (newIso) onAdd(newIso);
+        reset();
+      }}
+      onCancel={reset}
+    >
+      <DateTimePill
+        dateValue={newDate}
+        timeValue={newTime}
+        onDate={setNewDate}
+        onTime={setNewTime}
+        minimumDate={addMinDate}
+        maximumDate={addMaxDate}
+      />
+    </AddComposer>
   );
 }
 
@@ -766,49 +781,37 @@ function MomentView({
   // A blind conditional reads as "awaiting" server-side (we cannot resolve it without leaking), so
   // give the committed-conditional case its own heading instead of the misleading "Awaiting...".
   const lockedHeading =
-    data.myResponse?.kind === "conditional" ? "You're in if your people are" : statusLine;
+    data.myResponse?.kind === "conditional" ? "In if your people are" : statusLine;
   return (
     <View style={{ marginTop: 16 }}>
       {showAnswer ? (
-        <>
-          <Text style={{ fontFamily: font.display, fontSize: 14, color: ui.ink, marginBottom: 4 }}>
-            Are you in?
-          </Text>
-          <Text
-            style={{ fontFamily: font.medium, fontSize: 11, color: ui.muted, marginBottom: 10 }}
-          >
-            No one sees who's in until the timer ends. Answer honestly.
-          </Text>
+        <Section title="Are you in?" sub="Blind until close.">
           <Button
-            label={"✓  I'm in"}
+            label="I'm in"
             variant="affirmative"
             disabled={busy}
             onPress={onYes}
             style={{ marginBottom: 10 }}
           />
           <Button
-            label="I'll go if..."
+            label="Go if..."
             variant="outline"
             disabled={busy}
             onPress={onConditional}
             style={{ marginBottom: 10 }}
           />
-          <Button label="Can't make it" variant="outline" disabled={busy} onPress={onNo} />
-        </>
+          <Button label={LABEL_CANT_MAKE_IT} variant="outline" disabled={busy} onPress={onNo} />
+        </Section>
       ) : (
         <>
-          <Text style={{ fontFamily: font.bold, fontSize: 14, color: ui.ink, marginBottom: 12 }}>
-            {lockedHeading}
-          </Text>
+          <StatusHeading>{lockedHeading}</StatusHeading>
           <Card>
-            <Text
-              style={{ fontFamily: font.medium, fontSize: 12, color: ui.muted, lineHeight: 18 }}
-            >
-              Locked in. Who's in is revealed when the timer ends - hang tight.
-            </Text>
+            <AppText variant="caption" style={{ lineHeight: 18 }}>
+              Locked in. Revealed at close.
+            </AppText>
           </Card>
           <Button
-            label="Change my answer"
+            label="Change"
             variant="outline"
             disabled={busy}
             onPress={onEdit}
@@ -824,43 +827,24 @@ function MomentView({
 function RevealView({ data, statusLine }: { data: Detail; statusLine: string }) {
   return (
     <View style={{ marginTop: 16 }}>
-      <Text style={{ fontFamily: font.bold, fontSize: 14, color: ui.ink, marginBottom: 12 }}>
-        {statusLine}
-      </Text>
-      <Text
-        style={{
-          fontFamily: font.bold,
-          fontSize: 9,
-          letterSpacing: 1,
-          textTransform: "uppercase",
-          color: ui.muted,
-          marginBottom: 8,
-        }}
-      >
+      <StatusHeading>{statusLine}</StatusHeading>
+      <FieldLabel tone="muted" style={{ marginBottom: 8 }}>
         Who's in
-      </Text>
+      </FieldLabel>
       <Card padding={0}>
         {data.going.map((p, i) => (
-          <View
+          <PersonRow
             key={p.id}
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 10,
-              padding: 11,
-              borderTopWidth: i === 0 ? 0 : 1,
-              borderTopColor: ui.hairline,
-            }}
-          >
-            <Avatar initial={p.name.charAt(0).toUpperCase()} color={p.color} size={26} />
-            <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>{p.name}</Text>
-            <Text style={{ marginLeft: "auto", color: ui.going }}>{"✓"}</Text>
-          </View>
+            name={p.name}
+            color={p.color}
+            index={i}
+            right={<Text style={{ marginLeft: "auto", color: ui.going }}>{"✓"}</Text>}
+          />
         ))}
         {data.going.length === 0 && (
-          <Text style={{ fontFamily: font.medium, fontSize: 12, color: ui.muted, padding: 14 }}>
+          <AppText variant="caption" style={{ padding: 14 }}>
             No one's in.
-          </Text>
+          </AppText>
         )}
       </Card>
     </View>

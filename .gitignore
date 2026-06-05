@@ -7,5 +7,7 @@ ios/
 *.log
 **/.DS_Store
 infra/.deploy-state.local
+infra/.deploy-state-dev.local
 .superpowers/
 .vercel
+.claude/scheduled_tasks.lock

@@ -14,10 +14,11 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",
-    "test": "node --import tsx --test src/**/*.test.ts",
+    "test": "node --import tsx --import ./src/test/env.ts --test src/**/*.test.ts",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "db:test:clean": "node --import tsx src/test/clean.ts"
   },
   "engines": {
     "node": ">=20"

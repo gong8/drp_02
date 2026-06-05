@@ -1,48 +1,56 @@
 import { randomUUID } from "node:crypto";
 import {
   AddCandidateInput,
+  addCandidateHorizon,
+  ByGroupInput,
+  ByIdInput,
+  type CandidateKind,
   CreateEventInput,
   clears,
-  defaultLockAt,
-  expandWindow,
+  defaultDecidesByForCandidates,
+  defaultReplyByMs,
   LockInput,
+  MOMENT_MS,
+  type MomentResponse,
   type PartOfDay,
+  pickWinnerOrBestId,
   pickWinningCandidate,
-  ReactInput,
   ResolveInput,
   RespondInput,
-  type ResponseInput,
-  reconcileFloat,
   resolveIn,
   revealGoing,
   SetOptOutInput,
-  tallyCandidates,
+  ToggleReactionInput,
+  UpdateEventInput,
 } from "@bethere/shared";
 import { TRPCError } from "@trpc/server";
 import { and, eq, inArray } from "drizzle-orm";
-import { z } from "zod";
 import { db } from "../db/client.js";
+import { getGroupName } from "../db/groups.js";
 import {
   candidateReactions,
   eventCandidates,
   eventOptOuts,
   events,
-  floatSuggestions,
-  floatVotes,
   groupMembers,
-  groups,
   responses,
   users,
 } from "../db/schema.js";
+import { FALLBACK_AVATAR_COLOR, FALLBACK_USER_NAME, getUserCard } from "../db/users.js";
+import { msLeft } from "../format.js";
 import { protectedProcedure, router } from "../trpc.js";
+import { displayActivity, planOpensMoment, resolveActivity } from "./create-plan.js";
+import { shapePastMeetups } from "./past-meetups.js";
 
-type EventRow = typeof events.$inferSelect;
+export type EventRow = typeof events.$inferSelect;
 type MyStatus = "reacting" | "awaiting" | "going" | "declined";
 
 const DEFAULT_QUORUM = 2;
-const DEFAULT_MOMENT_MINUTES = 60;
+// With no time candidates a plan still collects (on activities); anchor its placeholder start and
+// default decides-by this far out so the deadline is sane without a concrete time to hang it on.
+const DEFAULT_HORIZON_MS = 7 * 24 * 60 * 60 * 1000;
 
-async function responsesFor(eventId: string): Promise<ResponseInput[]> {
+async function responsesFor(eventId: string): Promise<MomentResponse[]> {
   const rows = await db.select().from(responses).where(eq(responses.eventId, eventId));
   return rows.map((r) => ({ userId: r.userId, kind: r.kind, cond: r.cond ?? undefined }));
 }
@@ -57,26 +65,32 @@ async function reactionsFor(eventId: string): Promise<{ candidateId: string; use
 
 async function candidatesFor(eventId: string): Promise<(typeof eventCandidates.$inferSelect)[]> {
   const rows = await db.select().from(eventCandidates).where(eq(eventCandidates.eventId, eventId));
-  return rows.sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
+  return rows.sort((a, b) => {
+    const at = a.startsAt?.getTime() ?? Number.POSITIVE_INFINITY;
+    const bt = b.startsAt?.getTime() ?? Number.POSITIVE_INFINITY;
+    return at - bt;
+  });
 }
 
 // The crowd is hidden until the moment ends (or the plan is cleared/fizzled), so a live moment
 // shows its countdown instead of biasing people with who is already in. null while still blind.
-function revealedGoing(e: EventRow, resp: ResponseInput[]): string[] | null {
+function goingFromRow(e: EventRow, resp: MomentResponse[]): string[] | null {
   return revealGoing(resp, {
-    respondByAtMs: e.momentEndsAt ? e.momentEndsAt.getTime() : Number.POSITIVE_INFINITY,
-    status: e.phase === "cleared" || e.phase === "fizzled" ? "resolved" : e.phase,
+    momentEndsAtMs: e.momentEndsAt ? e.momentEndsAt.getTime() : Number.POSITIVE_INFINITY,
+    resolved: e.phase === "cleared" || e.phase === "fizzled",
     nowMs: Date.now(),
   });
 }
 
-// The blind moment always ends by the event itself. Use the configured window, but never run past
-// the chosen start; if the start is already here, fall back to a full window so there is always a
-// real moment to answer (and we never reveal before anyone could respond).
-function momentEnd(now: Date, minutes: number, chosenStartsAt: Date): Date {
-  const windowEnd = new Date(now.getTime() + minutes * 60 * 1000);
-  if (chosenStartsAt.getTime() <= now.getTime()) return windowEnd;
-  return new Date(Math.min(windowEnd.getTime(), chosenStartsAt.getTime()));
+// When the blind moment ends: the creator's "reply by" if set, else the default (one-day-capped from
+// the open, to the event). Clamped to leave a real window after the moment starts and to never run
+// past the event itself; if the event is already here, fall back to a full short window so there is
+// always a moment to answer (and we never reveal before anyone could respond).
+function resolveMomentEnd(openMs: number, eventMs: number, replyByMs: number | null): Date {
+  if (eventMs <= openMs) return new Date(openMs + MOMENT_MS);
+  const wanted = replyByMs ?? defaultReplyByMs(openMs, eventMs);
+  const floor = openMs + Math.min(MOMENT_MS, eventMs - openMs);
+  return new Date(Math.min(eventMs, Math.max(wanted, floor)));
 }
 
 // Who has opted out of a (collecting) plan. Their reactions are already cleared, so this is only
@@ -84,6 +98,46 @@ function momentEnd(now: Date, minutes: number, chosenStartsAt: Date): Date {
 async function optedOut(eventId: string): Promise<Set<string>> {
   const rows = await db.select().from(eventOptOuts).where(eq(eventOptOuts.eventId, eventId));
   return new Set(rows.map((r) => r.userId));
+}
+
+// Fizzle a plan: persist the silent dead-end (and resolve it) then mirror onto the in-memory row so
+// the same read returns the new phase. The single source for every "this plan fizzles" transition.
+async function fizzle(e: EventRow): Promise<void> {
+  await db.update(events).set({ phase: "fizzled", status: "resolved" }).where(eq(events.id, e.id));
+  e.phase = "fizzled";
+}
+
+// Persist a plan's candidate slate (one row per slot). Time candidates carry a startsAt + optional
+// part-of-day hint; activity candidates carry a label and a null startsAt. Single source for the
+// candidate row shape across create and the addCandidate mutation.
+async function insertCandidates(
+  eventId: string,
+  rows: {
+    id: string;
+    kind: CandidateKind;
+    startsAt: Date | null;
+    partOfDay: PartOfDay | null;
+    label: string | null;
+  }[],
+): Promise<void> {
+  for (const r of rows) {
+    await db.insert(eventCandidates).values({
+      id: r.id,
+      eventId,
+      kind: r.kind,
+      startsAt: r.startsAt,
+      partOfDay: r.partOfDay,
+      label: r.label,
+    });
+  }
+}
+
+// The author's own public +1 on a candidate (adding a candidate implies +1'ing it). Idempotent.
+async function reactFor(eventId: string, candidateId: string, userId: string): Promise<void> {
+  await db
+    .insert(candidateReactions)
+    .values({ eventId, candidateId, userId })
+    .onConflictDoNothing();
 }
 
 // Lazily settle a moment whose countdown has ended (no scheduler): clears if quorum is met, else
@@ -97,34 +151,31 @@ async function settlePhase(e: EventRow): Promise<void> {
   e.phase = next;
 }
 
-// Lazily auto-lock a collecting plan whose deadline (`lockAt`) has passed (no scheduler): pick the
-// best-supported slot - the one meeting quorum, else the most-reacted ("lock the best anyway") -
-// and open the blind moment. Opted-out members have no reactions, so they are excluded for free;
-// with zero reactions at all the plan fizzles silently rather than opening an empty moment. Mutates
-// the in-memory row and persists, so reads converge the lifecycle on their own.
+// Lazily auto-lock a collecting plan whose "Decides by" deadline has passed (no scheduler): pick the
+// best-supported TIME candidate (quorum, else most-reacted), resolve the winning activity into the
+// plan's name if empty, and open the blind moment. Opted-out members have no reactions so they drop for
+// free; with no time candidates, or no reactions of any kind, the plan fizzles silently (any +1 -
+// even on an activity - keeps it alive, and it locks the best-supported or first time). Mutates + persists.
 async function settleCollecting(e: EventRow): Promise<void> {
-  if (e.phase !== "collecting" || !e.lockAt || Date.now() < e.lockAt.getTime()) return;
+  if (e.phase !== "collecting" || !e.decidesBy || Date.now() < e.decidesBy.getTime()) return;
   const cands = await candidatesFor(e.id);
+  const timeCands = cands.filter((c) => c.kind === "time" && c.startsAt);
   const reactions = await reactionsFor(e.id);
-  if (cands.length === 0 || reactions.length === 0) {
-    await db
-      .update(events)
-      .set({ phase: "fizzled", status: "resolved" })
-      .where(eq(events.id, e.id));
-    e.phase = "fizzled";
+  if (timeCands.length === 0 || reactions.length === 0) {
+    await fizzle(e);
     return;
   }
-  const candIds = cands.map((c) => c.id);
-  const winner = pickWinningCandidate(candIds, reactions, e.quorum);
-  const chosenId = winner
-    ? winner.candidateId
-    : [...tallyCandidates(candIds, reactions)].sort(
-        (a, b) => b.userIds.length - a.userIds.length,
-      )[0].candidateId;
-  const chosen = cands.find((c) => c.id === chosenId);
-  if (!chosen) return;
+  const timeIds = timeCands.map((c) => c.id);
+  const chosenId = pickWinnerOrBestId(timeIds, reactions, e.quorum);
+  const chosen = timeCands.find((c) => c.id === chosenId) as (typeof timeCands)[number];
+  const startsAt = chosen.startsAt as Date;
+  const activity = resolveActivity(
+    e.activity,
+    cands.filter((c) => c.kind === "activity").map((c) => ({ id: c.id, label: c.label })),
+    reactions,
+  );
   const now = new Date();
-  const endsAt = momentEnd(now, DEFAULT_MOMENT_MINUTES, chosen.startsAt);
+  const endsAt = resolveMomentEnd(now.getTime(), startsAt.getTime(), e.replyBy?.getTime() ?? null);
   await db
     .update(events)
     .set({
@@ -132,146 +183,35 @@ async function settleCollecting(e: EventRow): Promise<void> {
       chosenCandidateId: chosenId,
       momentStartsAt: now,
       momentEndsAt: endsAt,
-      startsAt: chosen.startsAt,
+      startsAt,
       respondByAt: endsAt,
     })
     .where(eq(events.id, e.id));
+  // Fill the derived activity only if the row still has none. A member may have edited the activity
+  // concurrently (events.update); guarding the write on activity still being "" means an auto-lock can
+  // never clobber an explicit activity. resolveActivity already returns e.activity unchanged when
+  // non-empty, so this writes the activity-derived name solely for the never-named case.
+  if (activity) {
+    await db
+      .update(events)
+      .set({ activity })
+      .where(and(eq(events.id, e.id), eq(events.activity, "")));
+  }
   e.phase = "moment";
+  e.activity = activity;
   e.chosenCandidateId = chosenId;
   e.momentStartsAt = now;
   e.momentEndsAt = endsAt;
-  e.startsAt = chosen.startsAt;
-}
-
-// A float left this far past its tip deadline (a dormant group nobody opened) fizzles rather than
-// resurrecting a stale idea into a live plan.
-const FLOAT_STALE_MS = 7 * 24 * 60 * 60 * 1000;
-
-// Lazily tip a float whose deadline (`lockAt`) has passed (no scheduler), mirroring settleCollecting.
-// reconcileFloat crystallizes the chips into a concrete outcome: a clear idea + an agreed time opens
-// the blind moment; a hot idea with no agreed time opens a short collecting round on the proposed
-// times; a cold idea (or a stale one) fizzles silently. `isAnonymous` stays set forever, so the
-// resulting plan is named for RSVPs while the originator is never surfaced. Mutates + persists.
-export async function settleFloating(e: EventRow): Promise<void> {
-  if (e.phase !== "floating" || !e.lockAt || Date.now() < e.lockAt.getTime()) return;
-  if (Date.now() - e.lockAt.getTime() > FLOAT_STALE_MS) {
-    await db
-      .update(events)
-      .set({ phase: "fizzled", status: "resolved" })
-      .where(eq(events.id, e.id));
-    e.phase = "fizzled";
-    return;
-  }
-
-  const sugg = await db.select().from(floatSuggestions).where(eq(floatSuggestions.eventId, e.id));
-  const allVotes = await db.select().from(floatVotes).where(eq(floatVotes.eventId, e.id));
-  const ideas = sugg
-    .filter((s) => s.axis === "idea")
-    .map((s) => ({ id: s.id, text: s.text ?? "", createdAtMs: s.createdAt.getTime() }));
-  const times = sugg
-    .filter((s) => s.axis === "time")
-    .map((s) => ({
-      id: s.id,
-      startsAtMs: (s.startsAt ?? e.startsAt).getTime(),
-      createdAtMs: s.createdAt.getTime(),
-    }));
-  // Collecting-fallback candidates when the float grew no time chips: a few days from the window
-  // placeholder at its band hour, future only.
-  const windowSlotsMs =
-    times.length > 0
-      ? []
-      : Array.from({ length: 5 }, (_, i) => {
-          const d = new Date(e.startsAt);
-          d.setDate(d.getDate() + i);
-          return d.getTime();
-        }).filter((ms) => ms >= Date.now());
-
-  const result = reconcileFloat(
-    ideas,
-    times,
-    allVotes.map((v) => ({ suggestionId: v.suggestionId, userId: v.userId })),
-    e.minHeat,
-    windowSlotsMs,
-  );
-
-  if (result.kind === "fizzle") {
-    await db
-      .update(events)
-      .set({ phase: "fizzled", status: "resolved" })
-      .where(eq(events.id, e.id));
-    e.phase = "fizzled";
-    return;
-  }
-
-  const now = new Date();
-  if (result.kind === "moment") {
-    const chosenStartsAt = new Date(result.startsAtMs);
-    const endsAt = momentEnd(now, DEFAULT_MOMENT_MINUTES, chosenStartsAt);
-    await db
-      .update(events)
-      .set({
-        phase: "moment",
-        title: result.ideaText,
-        startsAt: chosenStartsAt,
-        momentStartsAt: now,
-        momentEndsAt: endsAt,
-        respondByAt: endsAt,
-      })
-      .where(eq(events.id, e.id));
-    e.phase = "moment";
-    e.title = result.ideaText;
-    e.startsAt = chosenStartsAt;
-    e.momentStartsAt = now;
-    e.momentEndsAt = endsAt;
-    // TODO push (notifications seam): "the float caught on: <idea>, <time> - you in?"
-    return;
-  }
-
-  // collecting: the idea is hot but the time is unresolved - crystallize the idea as the title and
-  // open a normal collecting round on the proposed (future) times so the group can converge a slot.
-  const slots = [...new Set(result.candidateStartsAtMs)]
-    .filter((ms) => ms > Date.now())
-    .sort((a, b) => a - b);
-  if (slots.length === 0) {
-    await db
-      .update(events)
-      .set({ phase: "fizzled", status: "resolved" })
-      .where(eq(events.id, e.id));
-    e.phase = "fizzled";
-    return;
-  }
-  const lockAt = new Date(
-    defaultLockAt(slots[0], now.getTime(), DEFAULT_MOMENT_MINUTES * 60 * 1000),
-  );
-  await db
-    .update(events)
-    .set({
-      phase: "collecting",
-      title: result.ideaText,
-      startsAt: new Date(slots[0]),
-      respondByAt: new Date(slots[slots.length - 1]),
-      lockAt,
-    })
-    .where(eq(events.id, e.id));
-  for (let i = 0; i < slots.length; i++) {
-    await db.insert(eventCandidates).values({
-      id: `${e.id}_d${i + 1}`,
-      eventId: e.id,
-      startsAt: new Date(slots[i]),
-      partOfDay: null,
-      label: null,
-    });
-  }
-  e.phase = "collecting";
-  e.title = result.ideaText;
-  e.startsAt = new Date(slots[0]);
-  e.lockAt = lockAt;
-  // TODO push (notifications seam): "the float caught on: <idea> - which time works?"
+  e.startsAt = startsAt;
 }
 
 // This user's status. During a blind moment we only ever reflect their OWN answer (we cannot leak
 // others); once revealed we use the full resolved IN set.
-function statusFor(userId: string, resp: ResponseInput[], revealed: string[] | null): MyStatus {
+function computeBaseStatus(
+  userId: string,
+  resp: MomentResponse[],
+  revealed: string[] | null,
+): MyStatus {
   const mine = resp.find((r) => r.userId === userId);
   if (revealed) {
     if (mine?.kind === "no") return "declined";
@@ -288,8 +228,7 @@ async function buildGoing(
 ): Promise<{ id: string; name: string; color: string }[]> {
   const out: { id: string; name: string; color: string }[] = [];
   for (const id of revealed) {
-    const [u] = await db.select().from(users).where(eq(users.id, id));
-    out.push({ id, name: u?.name ?? "Someone", color: u?.avatarColor ?? "#8B948B" });
+    out.push(await getUserCard(id));
   }
   return out;
 }
@@ -304,7 +243,7 @@ async function goingPreview(revealed: string[] | null): Promise<{
     const [u] = await db.select().from(users).where(eq(users.id, uid));
     preview.push({
       uid,
-      color: u?.avatarColor ?? "#8B948B",
+      color: u?.avatarColor ?? FALLBACK_AVATAR_COLOR,
       initial: (u?.name ?? "?").charAt(0).toUpperCase(),
     });
   }
@@ -322,141 +261,242 @@ export async function requireMember(groupId: string, userId: string): Promise<vo
   if (m.length === 0) throw new TRPCError({ code: "FORBIDDEN" });
 }
 
+// Load an event for a member-scoped mutation: fetch by id, 404 if missing, then assert membership.
+// The shared head of the NOT_FOUND mutations (toggleReaction/setOptOut/addCandidate/lock/respond/
+// unrespond/resolve); the null-returning read (events.get) keeps its own preamble.
+export async function loadEvent(eventId: string, userId: string): Promise<EventRow> {
+  const [e] = await db.select().from(events).where(eq(events.id, eventId));
+  if (!e) throw new TRPCError({ code: "NOT_FOUND" });
+  await requireMember(e.groupId, userId);
+  return e;
+}
+
+// Run the convergence pass in its load-bearing order: a collecting round locks, then a moment
+// clears/fizzles. Each step no-ops unless the row is in its phase, so it is safe on any row.
+async function settleLifecycle(e: EventRow): Promise<void> {
+  await settleCollecting(e);
+  await settlePhase(e);
+}
+
+// The opt-out-aware status of the caller, shared by mine (dashboard) and get (detail). In collecting
+// an opt-out reads as declined else reacting; after collecting an opt-out with no moment answer reads
+// as declined, else the blind/revealed rule. Takes iOptedOut precomputed - it never queries.
+function computeMyStatus(
+  phase: EventRow["phase"],
+  userId: string,
+  resp: MomentResponse[],
+  revealed: string[] | null,
+  iOptedOut: boolean,
+): MyStatus {
+  if (phase === "collecting") return iOptedOut ? "declined" : "reacting";
+  return iOptedOut && !resp.find((r) => r.userId === userId)
+    ? "declined"
+    : computeBaseStatus(userId, resp, revealed);
+}
+
 export const eventsRouter = router({
-  // Create one plan. The `when` precision routes everything: an exact time opens straight into the
-  // blind moment and always happens; an options menu or a fuzzy window starts collecting reactions.
+  // Create one plan. It owns two candidate lists - TIME and ACTIVITY - each react-able with public
+  // +1 counts. The creator is ALWAYS anonymous. The only real fork is the concrete shortcut: one time
+  // candidate that the creator locks opens the blind moment immediately; everything else collects.
   create: protectedProcedure.input(CreateEventInput).mutation(async ({ ctx, input }) => {
     await requireMember(input.groupId, ctx.userId);
     const id = `e_${randomUUID()}`;
-    const when = input.when;
 
-    let cands: { id: string; startsAt: Date; partOfDay: PartOfDay | null }[] = [];
-    if (when.mode === "exact") {
-      cands = [{ id: `${id}_c1`, startsAt: new Date(when.startsAt), partOfDay: null }];
-    } else if (when.mode === "options") {
-      cands = when.options.map((iso, i) => ({
-        id: `${id}_c${i + 1}`,
-        startsAt: new Date(iso),
-        partOfDay: null,
-      }));
-    } else {
-      const slots = expandWindow(when.timescale, when.band, Date.now());
-      cands = slots.map((s, i) => ({
-        id: `${id}_d${i + 1}`,
-        startsAt: new Date(s.startsAt),
-        partOfDay: s.partOfDay,
-      }));
+    const timeInputs = input.timeCandidates ?? [];
+    const activityInputs = input.activityCandidates ?? [];
+
+    const sortedTimeInputs = timeInputs
+      .map((t, i) => ({
+        id: `${id}_t${i + 1}`,
+        kind: "time" as const,
+        startsAt: new Date(t.startsAt),
+        partOfDay: t.partOfDay ?? null,
+        label: null,
+      }))
+      .filter((c) => !Number.isNaN(c.startsAt.getTime()))
+      .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
+    // Collapse candidates that land in the same minute (the wizard's granularity), keeping the
+    // earliest. A single intended slot sent twice must stay one row - otherwise it splits +1
+    // momentum and defeats the concrete-moment shortcut (planOpensMoment needs exactly one time).
+    // This mirrors addCandidate's minute dedupe so create and add agree.
+    const seenMinutes = new Set<number>();
+    const timeCands = sortedTimeInputs.filter((c) => {
+      const minute = Math.floor(c.startsAt.getTime() / 60_000);
+      if (seenMinutes.has(minute)) return false;
+      seenMinutes.add(minute);
+      return true;
+    });
+
+    const activityCands = activityInputs.map((text, i) => ({
+      id: `${id}_a${i + 1}`,
+      kind: "activity" as const,
+      startsAt: null,
+      partOfDay: null,
+      label: text,
+    }));
+
+    // You can only lock an axis that has at least one candidate - locking nothing would just leave a
+    // plan that can never converge (a locked, empty time axis can never get a time and silently fizzles).
+    if (input.lockTimes && timeCands.length === 0) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "cannot lock the times with no time" });
     }
-    cands.sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
-
-    const exact = when.mode === "exact";
-    const quorum = input.quorum ?? (exact ? 1 : DEFAULT_QUORUM);
-    const startsAt = cands[0].startsAt; // the chosen time for exact; a placeholder until lock otherwise
-    // Exact plans open the blind moment now and run until the event itself, so respond stays open the
-    // whole time and the crowd reveals when it starts. If that time is already here, fall back to a
-    // short window so there is always a real moment to answer (and we never reveal before anyone can).
-    const momentStartsAt = exact ? new Date() : null;
-    let momentEndsAt: Date | null = exact ? startsAt : null;
-    if (exact && momentEndsAt && momentEndsAt.getTime() <= Date.now()) {
-      momentEndsAt = new Date(Date.now() + DEFAULT_MOMENT_MINUTES * 60 * 1000);
+    if (input.lockActivity && activityCands.length === 0) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "cannot lock the activity with no activity",
+      });
     }
-    const respondByAt = momentEndsAt ?? cands[cands.length - 1].startsAt;
 
-    // Non-exact plans collect until a deadline, then auto-lock the winning slot. Default to "the day
-    // before" the earliest slot; honour an explicit creator override if it sits after now and no
-    // later than that earliest slot (so we never lock in a time that has already passed).
-    let lockAt: Date | null = null;
-    if (!exact) {
-      const earliestMs = cands[0].startsAt.getTime();
-      if (input.lockAt) {
-        const t = new Date(input.lockAt);
-        if (Number.isNaN(t.getTime()) || t.getTime() <= Date.now() || t.getTime() > earliestMs) {
+    const opensMoment = planOpensMoment(
+      timeCands.length,
+      input.lockTimes,
+      activityCands.length,
+      input.lockActivity,
+    );
+    const quorum = input.quorum ?? (opensMoment ? 1 : DEFAULT_QUORUM);
+
+    // Concrete plans skip lock()/settleCollecting (where the collecting path resolves the activity),
+    // so resolve the single activity into the stored name now; collecting plans resolve it at lock.
+    const resolvedActivity = opensMoment
+      ? resolveActivity(
+          "",
+          activityCands.map((c) => ({ id: c.id, label: c.label })),
+          [],
+        )
+      : "";
+
+    // Time anchors. With no time candidates a plan still collects (on activities), so anchor the
+    // placeholder start + the default decides-by to a sensible horizon instead of a candidate.
+    const now = Date.now();
+    const earliestMs =
+      timeCands.length > 0 ? timeCands[0].startsAt.getTime() : now + DEFAULT_HORIZON_MS;
+    const lastMs =
+      timeCands.length > 0 ? timeCands[timeCands.length - 1].startsAt.getTime() : earliestMs;
+    const startsAt = new Date(earliestMs); // the chosen time when opensMoment; a placeholder otherwise
+
+    const momentStartsAt = opensMoment ? new Date() : null;
+
+    // Collecting plans converge by a fixed deadline ("Decides by"), then auto-pick the winner. The
+    // creator may override it; the override must sit after now and leave the blind moment room before
+    // the time window. With no time candidates we only have activities, so any future deadline is fine.
+    let decidesBy: Date | null = null;
+    if (!opensMoment) {
+      if (input.decidesBy) {
+        const t = new Date(input.decidesBy);
+        const tooLate = timeCands.length > 0 && t.getTime() > earliestMs - MOMENT_MS;
+        if (Number.isNaN(t.getTime()) || t.getTime() <= now || tooLate) {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message: "lock-in time must be after now and on or before the earliest proposed time",
+            message: "decides-by must be after now and leave room before the plan's window",
           });
         }
-        lockAt = t;
+        decidesBy = t;
       } else {
-        lockAt = new Date(
-          defaultLockAt(earliestMs, Date.now(), DEFAULT_MOMENT_MINUTES * 60 * 1000),
-        );
+        decidesBy = new Date(defaultDecidesByForCandidates(earliestMs, now));
       }
     }
+
+    // Reply-by: when the blind RSVP window closes (then it reveals + resolves). Editable; defaulted at
+    // lock when unset. Must sit after the vote closes (or now, for a concrete plan) and no later than
+    // the earliest event time. Loose plans (no times yet) have no editor; it defaults at lock.
+    let replyBy: Date | null = null;
+    if (input.replyBy) {
+      const t = new Date(input.replyBy);
+      const floorMs = decidesBy ? decidesBy.getTime() : now;
+      const tooLate = timeCands.length > 0 && t.getTime() > earliestMs;
+      if (Number.isNaN(t.getTime()) || t.getTime() <= floorMs || tooLate) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "reply-by must be after the vote closes and no later than the event",
+        });
+      }
+      replyBy = t;
+    }
+
+    // The concrete shortcut opens the blind moment now and runs until reply-by (default one-day-capped,
+    // to the event). Otherwise the moment opens later, at the lock.
+    const momentEndsAt: Date | null = opensMoment
+      ? resolveMomentEnd(now, earliestMs, replyBy?.getTime() ?? null)
+      : null;
+    const respondByAt = momentEndsAt ?? new Date(lastMs);
 
     await db.insert(events).values({
       id,
       groupId: input.groupId,
       createdByUserId: ctx.userId,
-      title: input.title,
+      activity: resolvedActivity,
       description: input.description ?? null,
       location: input.location ?? "",
       startsAt,
       respondByAt,
       status: "open",
-      whenMode: when.mode,
-      contingent: !exact,
+      contingent: !opensMoment,
       quorum,
-      phase: exact ? "moment" : "collecting",
-      lockAt,
-      chosenCandidateId: exact ? cands[0].id : null,
+      isAnonymous: true,
+      lockTimes: input.lockTimes,
+      lockActivity: input.lockActivity,
+      phase: opensMoment ? "moment" : "collecting",
+      decidesBy,
+      replyBy,
+      chosenCandidateId: opensMoment && timeCands.length > 0 ? timeCands[0].id : null,
       momentStartsAt,
       momentEndsAt,
     });
-    for (const c of cands) {
-      await db.insert(eventCandidates).values({
-        id: c.id,
-        eventId: id,
-        startsAt: c.startsAt,
-        partOfDay: c.partOfDay,
-        label: null,
-      });
-    }
-    // TODO push: notify group members "X floated a plan - which times work?" / "you're in a moment".
+    await insertCandidates(id, [...timeCands, ...activityCands]);
+    // TODO push: notify group members "a plan went out - what works?" / "you're in a moment".
     return { id };
   }),
 
-  // Replace the caller's "these times work for me" reactions during collecting. Private: only the
-  // caller and the creator (via the tally) ever see them.
-  react: protectedProcedure.input(ReactInput).mutation(async ({ ctx, input }) => {
-    const [e] = await db.select().from(events).where(eq(events.id, input.eventId));
-    if (!e) throw new TRPCError({ code: "NOT_FOUND" });
-    await requireMember(e.groupId, ctx.userId);
+  // Toggle the caller's public +1 on ONE candidate (time or activity) during collecting. Counts are
+  // PUBLIC (momentum), but who reacted is never shown. Adding a +1 rejoins anyone who had opted out.
+  toggleReaction: protectedProcedure.input(ToggleReactionInput).mutation(async ({ ctx, input }) => {
+    const e = await loadEvent(input.eventId, ctx.userId);
     if (e.phase !== "collecting") {
       throw new TRPCError({ code: "BAD_REQUEST", message: "plan is not collecting reactions" });
     }
-    const cands = await candidatesFor(input.eventId);
-    const valid = new Set(cands.map((c) => c.id));
-    const chosen = input.worksCandidateIds.filter((cid) => valid.has(cid));
-    await db
-      .delete(candidateReactions)
+    const [cand] = await db
+      .select()
+      .from(eventCandidates)
+      .where(eq(eventCandidates.id, input.candidateId));
+    if (!cand || cand.eventId !== input.eventId) throw new TRPCError({ code: "NOT_FOUND" });
+
+    const mine = await db
+      .select()
+      .from(candidateReactions)
       .where(
         and(
           eq(candidateReactions.eventId, input.eventId),
+          eq(candidateReactions.candidateId, input.candidateId),
           eq(candidateReactions.userId, ctx.userId),
         ),
       );
-    for (const candidateId of chosen) {
+    if (mine.length > 0) {
       await db
-        .insert(candidateReactions)
-        .values({ eventId: input.eventId, candidateId, userId: ctx.userId });
+        .delete(candidateReactions)
+        .where(
+          and(
+            eq(candidateReactions.eventId, input.eventId),
+            eq(candidateReactions.candidateId, input.candidateId),
+            eq(candidateReactions.userId, ctx.userId),
+          ),
+        );
+      return { reacted: false as const };
     }
-    // Reacting to a time rejoins anyone who had opted out (mutual exclusion with "I can't make it").
-    if (chosen.length > 0) {
-      await db
-        .delete(eventOptOuts)
-        .where(and(eq(eventOptOuts.eventId, input.eventId), eq(eventOptOuts.userId, ctx.userId)));
-    }
-    return { recorded: true as const };
+    await db
+      .insert(candidateReactions)
+      .values({ eventId: input.eventId, candidateId: input.candidateId, userId: ctx.userId });
+    // A +1 rejoins anyone who had opted out (mutual exclusion with "I can't make it").
+    await db
+      .delete(eventOptOuts)
+      .where(and(eq(eventOptOuts.eventId, input.eventId), eq(eventOptOuts.userId, ctx.userId)));
+    return { reacted: true as const };
   }),
 
   // A member bows out of a collecting plan ("I can't make it") or rejoins. Opting out clears their
   // reactions (dropping them from the tally/quorum) and excludes them from the moment + reminders.
   // Private: no one else, not even the creator, sees it. Reversible via out:false or by reacting.
   setOptOut: protectedProcedure.input(SetOptOutInput).mutation(async ({ ctx, input }) => {
-    const [e] = await db.select().from(events).where(eq(events.id, input.eventId));
-    if (!e) throw new TRPCError({ code: "NOT_FOUND" });
-    await requireMember(e.groupId, ctx.userId);
+    const e = await loadEvent(input.eventId, ctx.userId);
     if (e.phase !== "collecting") {
       throw new TRPCError({ code: "BAD_REQUEST", message: "plan is not collecting" });
     }
@@ -481,54 +521,110 @@ export const eventsRouter = router({
     return { ok: true as const };
   }),
 
-  // Any group member (not just the creator) can propose a new concrete time while the plan is still
-  // collecting - the crowd simply gains another slot to react to. New candidates carry no
-  // part-of-day and no author. Identical minutes are de-duped so two proposers can't clutter the list.
+  // Any member adds a candidate while collecting - a new time, or a new activity - and the crowd
+  // gains another row to +1. Kind-gated by the creator's locks: a locked axis rejects new candidates.
+  // Time candidates dedupe by minute; activity candidates dedupe case-insensitively. Adding +1s it.
   addCandidate: protectedProcedure.input(AddCandidateInput).mutation(async ({ ctx, input }) => {
-    const [e] = await db.select().from(events).where(eq(events.id, input.eventId));
-    if (!e) throw new TRPCError({ code: "NOT_FOUND" });
-    await requireMember(e.groupId, ctx.userId);
+    const e = await loadEvent(input.eventId, ctx.userId);
     if (e.phase !== "collecting") {
       throw new TRPCError({ code: "BAD_REQUEST", message: "plan is not collecting" });
     }
-    const startsAt = new Date(input.startsAt);
-    if (Number.isNaN(startsAt.getTime())) {
-      throw new TRPCError({ code: "BAD_REQUEST", message: "invalid time" });
+    if (input.kind === "time" && e.lockTimes) {
+      throw new TRPCError({ code: "FORBIDDEN", message: "times are locked on this plan" });
     }
-    // A new slot must sit after the lock-in deadline, so it is still a live choice when we lock and
-    // the invariant lockAt <= earliest candidate holds.
-    if (e.lockAt && startsAt.getTime() <= e.lockAt.getTime()) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "that time is before the lock-in deadline",
-      });
+    if (input.kind === "activity" && e.lockActivity) {
+      throw new TRPCError({ code: "FORBIDDEN", message: "activities are locked on this plan" });
     }
     const existing = await candidatesFor(input.eventId);
-    const dup = existing.find((c) => c.startsAt.getTime() === startsAt.getTime());
-    if (dup) return { id: dup.id };
-    const id = `${input.eventId}_c_${randomUUID()}`;
-    await db.insert(eventCandidates).values({
-      id,
-      eventId: input.eventId,
-      startsAt,
-      partOfDay: null,
-      label: null,
-    });
-    return { id };
-  }),
 
-  // The creator locks the winning slot, opening the blind timed moment. With no candidateId we pick
-  // the best-supported candidate (falling back to the most-reacted so a lock always succeeds).
-  lock: protectedProcedure.input(LockInput).mutation(async ({ ctx, input }) => {
-    const [e] = await db.select().from(events).where(eq(events.id, input.eventId));
-    if (!e) throw new TRPCError({ code: "NOT_FOUND" });
-    await requireMember(e.groupId, ctx.userId);
-    if (e.isAnonymous) {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "a float is ownerless - it tips on its own",
+    let newId: string;
+    if (input.kind === "time") {
+      if (!input.startsAt) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "a time candidate needs a start time",
+        });
+      }
+      const startsAt = new Date(input.startsAt);
+      if (Number.isNaN(startsAt.getTime())) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "invalid time" });
+      }
+      // A new slot must sit after the decides-by deadline (still a live choice when we lock) and
+      // within the plan's horizon (a small slack past the existing time spread).
+      if (e.decidesBy && startsAt.getTime() <= e.decidesBy.getTime()) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "that time is before the decides-by deadline",
+        });
+      }
+      const times = existing
+        .filter((c) => c.kind === "time" && c.startsAt)
+        .map((c) => (c.startsAt as Date).getTime());
+      if (times.length > 0) {
+        const horizon = addCandidateHorizon(Math.min(...times), Math.max(...times));
+        if (startsAt.getTime() > horizon) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "that time is past this plan's window",
+          });
+        }
+      }
+      // Dedupe by minute (the comment above and the wizard's granularity): a candidate at HH:MM:00
+      // and a new add at HH:MM:30 are the same slot, so the add +1s the existing row.
+      const startMinute = Math.floor(startsAt.getTime() / 60_000);
+      const dup = existing.find(
+        (c) =>
+          c.kind === "time" &&
+          c.startsAt != null &&
+          Math.floor(c.startsAt.getTime() / 60_000) === startMinute,
+      );
+      if (dup) {
+        await reactFor(input.eventId, dup.id, ctx.userId);
+        return { id: dup.id };
+      }
+      newId = `${input.eventId}_t_${randomUUID()}`;
+      await db.insert(eventCandidates).values({
+        id: newId,
+        eventId: input.eventId,
+        kind: "time",
+        startsAt,
+        partOfDay: input.partOfDay ?? null,
+        label: null,
+      });
+    } else {
+      if (!input.text) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "an activity needs a name" });
+      }
+      const text = input.text.trim();
+      if (!text) throw new TRPCError({ code: "BAD_REQUEST", message: "an activity needs a name" });
+      const key = text.toLowerCase();
+      const dup = existing.find(
+        (c) => c.kind === "activity" && (c.label ?? "").trim().toLowerCase() === key,
+      );
+      if (dup) {
+        await reactFor(input.eventId, dup.id, ctx.userId);
+        return { id: dup.id };
+      }
+      newId = `${input.eventId}_a_${randomUUID()}`;
+      await db.insert(eventCandidates).values({
+        id: newId,
+        eventId: input.eventId,
+        kind: "activity",
+        startsAt: null,
+        partOfDay: null,
+        label: text,
       });
     }
+    await reactFor(input.eventId, newId, ctx.userId);
+    return { id: newId };
+  }),
+
+  // The creator locks the winning TIME, opening the blind moment. The creator is anonymous to others
+  // but we still authorize via the stored createdByUserId (a self-check, never surfaced). With no
+  // candidateId we pick the best-supported time (most public +1s). If the plan has no activity yet,
+  // the winning ACTIVITY becomes the plan's name at lock.
+  lock: protectedProcedure.input(LockInput).mutation(async ({ ctx, input }) => {
+    const e = await loadEvent(input.eventId, ctx.userId);
     if (e.createdByUserId !== ctx.userId) {
       throw new TRPCError({ code: "FORBIDDEN", message: "only the creator can lock the moment" });
     }
@@ -536,26 +632,32 @@ export const eventsRouter = router({
       throw new TRPCError({ code: "BAD_REQUEST", message: "plan is not collecting" });
     }
     const cands = await candidatesFor(input.eventId);
-    if (cands.length === 0) throw new TRPCError({ code: "BAD_REQUEST", message: "no candidates" });
-    const candIds = cands.map((c) => c.id);
-    const reactions = await reactionsFor(input.eventId);
-
-    let chosenId =
-      input.candidateId && candIds.includes(input.candidateId) ? input.candidateId : null;
-    if (!chosenId) {
-      const winner = pickWinningCandidate(candIds, reactions, e.quorum);
-      chosenId = winner
-        ? winner.candidateId
-        : [...tallyCandidates(candIds, reactions)].sort(
-            (a, b) => b.userIds.length - a.userIds.length,
-          )[0].candidateId;
+    const timeCands = cands.filter((c) => c.kind === "time" && c.startsAt);
+    if (timeCands.length === 0) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "no time candidates to lock" });
     }
-    const chosen = cands.find((c) => c.id === chosenId);
-    if (!chosen) throw new TRPCError({ code: "BAD_REQUEST", message: "unknown candidate" });
+    const reactions = await reactionsFor(input.eventId);
+    const timeIds = timeCands.map((c) => c.id);
 
-    const minutes = input.momentMinutes ?? DEFAULT_MOMENT_MINUTES;
+    const requestedId =
+      input.candidateId && timeIds.includes(input.candidateId) ? input.candidateId : null;
+    const chosenId = requestedId ?? pickWinnerOrBestId(timeIds, reactions, e.quorum);
+    const chosen = timeCands.find((c) => c.id === chosenId);
+    if (!chosen?.startsAt)
+      throw new TRPCError({ code: "BAD_REQUEST", message: "unknown candidate" });
+
+    const activity = resolveActivity(
+      e.activity,
+      cands.filter((c) => c.kind === "activity").map((c) => ({ id: c.id, label: c.label })),
+      reactions,
+    );
+
     const now = new Date();
-    const momentEndsAt = momentEnd(now, minutes, chosen.startsAt);
+    const momentEndsAt = resolveMomentEnd(
+      now.getTime(),
+      chosen.startsAt.getTime(),
+      e.replyBy?.getTime() ?? null,
+    );
     await db
       .update(events)
       .set({
@@ -567,7 +669,67 @@ export const eventsRouter = router({
         respondByAt: momentEndsAt,
       })
       .where(eq(events.id, input.eventId));
+    // Fill the derived activity only if the row still has none, so a member's concurrent edit (events
+    // .update) is never clobbered at lock. resolveActivity keeps a non-empty activity as-is, so this
+    // only names the never-named case (guarded on the stored activity still being "").
+    if (activity) {
+      await db
+        .update(events)
+        .set({ activity })
+        .where(and(eq(events.id, input.eventId), eq(events.activity, "")));
+    }
     return { ok: true as const, chosenCandidateId: chosenId };
+  }),
+
+  // Any member edits a plan's text metadata - activity, location, notes - while it is not yet
+  // cleared/fizzled. Anonymous, like every other write (no creator check, no attribution). Each field
+  // is an optimistic compare-and-set: the client sends the value it loaded (`from`) and the new value
+  // (`to`); we apply `to` only if the row's current value still equals `from`, else we report the
+  // field in `conflicts` carrying the now-current value and leave it untouched. A SELECT ... FOR UPDATE
+  // serializes concurrent updates, so same-field edits never clobber (first wins, second conflicts)
+  // and different-field edits both apply. An empty activity reverts to auto-derive (stored ""); an
+  // empty location stays "" (the column is notNull); empty notes clear to null.
+  update: protectedProcedure.input(UpdateEventInput).mutation(async ({ ctx, input }) => {
+    return db.transaction(async (tx) => {
+      const [e] = await tx.select().from(events).where(eq(events.id, input.eventId)).for("update");
+      if (!e) throw new TRPCError({ code: "NOT_FOUND" });
+      await requireMember(e.groupId, ctx.userId);
+      if (e.phase === "cleared" || e.phase === "fizzled") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "this plan is final" });
+      }
+      // While collecting, the activity is whatever ACTIVITY candidate wins the vote - it is not a
+      // free-text field yet, so reject an edit until the plan locks.
+      if (input.activity && e.phase === "collecting") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "the activity is decided by the vote while collecting",
+        });
+      }
+
+      const set: Partial<typeof events.$inferInsert> = {};
+      const conflicts: { field: string; current: string }[] = [];
+      // activity/location are non-null strings; description is nullable, so treat its current as "".
+      if (input.activity) {
+        if (e.activity === input.activity.from) set.activity = input.activity.to;
+        else conflicts.push({ field: "activity", current: e.activity });
+      }
+      if (input.location) {
+        if (e.location === input.location.from) set.location = input.location.to;
+        else conflicts.push({ field: "location", current: e.location });
+      }
+      if (input.description) {
+        const current = e.description ?? "";
+        if (current === input.description.from) {
+          set.description = input.description.to === "" ? null : input.description.to;
+        } else conflicts.push({ field: "description", current });
+      }
+
+      const applied = Object.keys(set);
+      if (applied.length > 0) {
+        await tx.update(events).set(set).where(eq(events.id, input.eventId));
+      }
+      return { applied, conflicts };
+    });
   }),
 
   // The dashboard: every (non-fizzled) plan in the user's groups, phase-aware.
@@ -582,67 +744,54 @@ export const eventsRouter = router({
     const rows = await db.select().from(events).where(inArray(events.groupId, groupIds));
     const out = await Promise.all(
       rows.map(async (e) => {
-        await settleFloating(e);
-        await settleCollecting(e);
-        await settlePhase(e);
-        if (e.phase === "floating") return null; // still brewing: shown in the Brewing zone (floats.mine)
+        await settleLifecycle(e);
         if (e.phase === "fizzled") return null; // silent: a fizzle leaves no trace
-        const [g] = await db.select().from(groups).where(eq(groups.id, e.groupId));
         const resp = await responsesFor(e.id);
-        const revealed = revealedGoing(e, resp);
+        const revealed = goingFromRow(e, resp);
         const { goingCount, preview } = await goingPreview(revealed);
-        // A float stays unsigned forever: the originator is never flagged as creator, even post-tip.
-        const isCreator = !e.isAnonymous && e.createdByUserId === ctx.userId;
-        const iOpted = (await optedOut(e.id)).has(ctx.userId);
+        // A private self-check: returned as a boolean only, never the id - the creator stays anonymous.
+        const isCreator = e.createdByUserId === ctx.userId;
+        const iOptedOut = (await optedOut(e.id)).has(ctx.userId);
+        const myStatus = computeMyStatus(e.phase, ctx.userId, resp, revealed, iOptedOut);
 
-        let myStatus: MyStatus;
         let iReacted = false;
         let candidateCount = 0;
         let readyToLock = false;
+        // Collecting plans have no real activity yet (it is fixed at lock); show the leading activity
+        // candidate (or blank, the client falls back) so a card stays meaningful. Locked plans already
+        // carry a real activity name.
+        let activity = e.activity;
         if (e.phase === "collecting") {
-          myStatus = iOpted ? "declined" : "reacting";
           const cands = await candidatesFor(e.id);
           candidateCount = cands.length;
-          const myReacts = await db
-            .select()
-            .from(candidateReactions)
-            .where(
-              and(eq(candidateReactions.eventId, e.id), eq(candidateReactions.userId, ctx.userId)),
-            );
-          iReacted = myReacts.length > 0;
+          const reactions = await reactionsFor(e.id);
+          iReacted = reactions.some((r) => r.userId === ctx.userId);
+          activity = displayActivity(
+            e.activity,
+            cands.filter((c) => c.kind === "activity").map((c) => ({ id: c.id, label: c.label })),
+            reactions,
+          );
           if (isCreator) {
-            const reactions = await reactionsFor(e.id);
-            readyToLock =
-              pickWinningCandidate(
-                cands.map((c) => c.id),
-                reactions,
-                e.quorum,
-              ) !== null;
+            const timeIds = cands.filter((c) => c.kind === "time" && c.startsAt).map((c) => c.id);
+            readyToLock = pickWinningCandidate(timeIds, reactions, e.quorum) !== null;
           }
-        } else {
-          const mineResp = resp.find((r) => r.userId === ctx.userId);
-          myStatus = iOpted && !mineResp ? "declined" : statusFor(ctx.userId, resp, revealed);
         }
 
         return {
           id: e.id,
-          groupName: g?.name ?? "Group",
-          title: e.title,
+          groupName: await getGroupName(e.groupId),
+          activity,
           location: e.location,
-          whenMode: e.whenMode,
           phase: e.phase,
           startsAt: e.startsAt.toISOString(),
           createdAt: e.createdAt.toISOString(),
-          lockAt: e.lockAt?.toISOString() ?? null,
-          msLeftToLock: e.lockAt ? Math.max(0, e.lockAt.getTime() - Date.now()) : null,
+          decidesBy: e.decidesBy?.toISOString() ?? null,
+          msLeftToDecide: msLeft(e.decidesBy),
           momentStartsAt: e.momentStartsAt?.toISOString() ?? null,
           momentEndsAt: e.momentEndsAt?.toISOString() ?? null,
-          msLeft: e.momentEndsAt ? Math.max(0, e.momentEndsAt.getTime() - Date.now()) : null,
+          msLeft: msLeft(e.momentEndsAt),
           myStatus,
           iReacted,
-          // Whether the caller has a moment answer on record (any of yes/no/conditional). Drives
-          // "is this still Action Required" for the moment, where myStatus alone can't tell a blind
-          // conditional ("awaiting") from a genuine no-answer.
           iResponded: resp.some((r) => r.userId === ctx.userId),
           candidateCount,
           isCreator,
@@ -655,46 +804,77 @@ export const eventsRouter = router({
     return out.filter((x): x is NonNullable<typeof x> => x !== null);
   }),
 
-  // One plan in full, phase-aware: candidates + my reactions (collecting), the blind countdown
-  // (moment), and the revealed IN crowd (cleared). Counts stay private to the creator.
-  get: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
+  // The redo picker: a group's past (cleared) meetups, each reduced to a clonable shell - the won
+  // activity (the plan's name), lock-times flag, location, notes - so the wizard can pre-fill a fresh
+  // plan from one (the activity preloaded + locked; the creator just picks a new time). The name is the
+  // `events.activity` scalar, so it is carried directly (not re-derived from candidate rows). Carries
+  // no time (always stale) and no RSVP data; the creator stays anonymous (no creator identity).
+  pastForGroup: protectedProcedure.input(ByGroupInput).query(async ({ ctx, input }) => {
+    await requireMember(input.groupId, ctx.userId);
+    const rows = await db
+      .select()
+      .from(events)
+      .where(and(eq(events.groupId, input.groupId), eq(events.phase, "cleared")));
+    return shapePastMeetups(
+      rows.map((e) => ({
+        id: e.id,
+        activity: e.activity,
+        location: e.location,
+        description: e.description,
+        startsAt: e.startsAt,
+        lockTimes: e.lockTimes,
+      })),
+    );
+  }),
+
+  // One plan in full, phase-aware: time + activity candidates with public +1 counts (collecting),
+  // the blind countdown (moment), and the revealed IN crowd (cleared).
+  get: protectedProcedure.input(ByIdInput).query(async ({ ctx, input }) => {
     const [e] = await db.select().from(events).where(eq(events.id, input.id));
     if (!e) return null;
     await requireMember(e.groupId, ctx.userId);
-    await settleFloating(e);
-    await settleCollecting(e);
-    await settlePhase(e);
-    if (e.phase === "floating") return null; // a still-brewing float is read via floats.get
-    const [g] = await db.select().from(groups).where(eq(groups.id, e.groupId));
+    await settleLifecycle(e);
 
     const resp = await responsesFor(e.id);
-    const revealed = revealedGoing(e, resp);
-    // A float stays unsigned forever: the originator is never flagged as creator, even post-tip.
-    const isCreator = !e.isAnonymous && e.createdByUserId === ctx.userId;
+    const revealed = goingFromRow(e, resp);
+    // A private self-check: returned as a boolean only, never the id - the creator stays anonymous.
+    const isCreator = e.createdByUserId === ctx.userId;
     const iOptedOut = (await optedOut(e.id)).has(ctx.userId);
 
     const cands = await candidatesFor(e.id);
     const reactions = await reactionsFor(e.id);
-    const myReacts = new Set(
-      reactions.filter((r) => r.userId === ctx.userId).map((r) => r.candidateId),
-    );
-    // Per-candidate counts are deliberately NOT returned: nobody (not even the creator) sees how
-    // many are free for each slot before the lock. The auto-lock picks the winner server-side.
-    const candidates = cands.map((c) => ({
-      id: c.id,
-      startsAt: c.startsAt.toISOString(),
-      partOfDay: c.partOfDay,
-      label: c.label,
-      worksForMe: myReacts.has(c.id),
-    }));
+    // Public per-candidate +1 counts (momentum) for BOTH kinds; who reacted is never returned, only
+    // the count and whether the caller themselves reacted.
+    const countBy = new Map<string, number>();
+    const mineSet = new Set<string>();
+    for (const r of reactions) {
+      countBy.set(r.candidateId, (countBy.get(r.candidateId) ?? 0) + 1);
+      if (r.userId === ctx.userId) mineSet.add(r.candidateId);
+    }
+    const timeCandidates = cands
+      .filter((c) => c.kind === "time" && c.startsAt)
+      .map((c) => ({
+        id: c.id,
+        startsAt: (c.startsAt as Date).toISOString(),
+        partOfDay: c.partOfDay,
+        count: countBy.get(c.id) ?? 0,
+        mine: mineSet.has(c.id),
+      }));
+    const activityCandidates = cands
+      .filter((c) => c.kind === "activity")
+      .map((c) => ({
+        id: c.id,
+        text: c.label ?? "",
+        count: countBy.get(c.id) ?? 0,
+        mine: mineSet.has(c.id),
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    const timeIds = timeCandidates.map((c) => c.id);
     const readyToLock =
       isCreator &&
       e.phase === "collecting" &&
-      pickWinningCandidate(
-        cands.map((c) => c.id),
-        reactions,
-        e.quorum,
-      ) !== null;
+      pickWinningCandidate(timeIds, reactions, e.quorum) !== null;
 
     const memberRows = await db
       .select()
@@ -704,7 +884,7 @@ export const eventsRouter = router({
     for (const row of memberRows) {
       if (row.userId === ctx.userId) continue;
       const [u] = await db.select().from(users).where(eq(users.id, row.userId));
-      members.push({ id: row.userId, name: u?.name ?? "Someone" });
+      members.push({ id: row.userId, name: u?.name ?? FALLBACK_USER_NAME });
     }
 
     const showCrowd = revealed !== null && e.phase !== "fizzled";
@@ -714,36 +894,42 @@ export const eventsRouter = router({
 
     return {
       id: e.id,
-      groupName: g?.name ?? "Group",
-      title: e.title,
+      groupName: await getGroupName(e.groupId),
+      // No real activity until lock; show the leading activity candidate (or blank, the client falls
+      // back) so it stays meaningful while collecting.
+      activity: displayActivity(
+        e.activity,
+        cands.filter((c) => c.kind === "activity").map((c) => ({ id: c.id, label: c.label })),
+        reactions,
+      ),
+      // The RAW stored activity (often "" while collecting); the edit sheet needs it so an empty
+      // activity keeps auto-deriving rather than locking in the derived value.
+      activityRaw: e.activity,
       description: e.description,
       location: e.location,
-      whenMode: e.whenMode,
       phase: e.phase,
       contingent: e.contingent,
       quorum: e.quorum,
+      lockTimes: e.lockTimes,
+      lockActivity: e.lockActivity,
       startsAt: e.startsAt.toISOString(),
-      lockAt: e.lockAt?.toISOString() ?? null,
-      msLeftToLock: e.lockAt ? Math.max(0, e.lockAt.getTime() - Date.now()) : null,
-      chosenStartsAt: chosen?.startsAt.toISOString() ?? null,
+      decidesBy: e.decidesBy?.toISOString() ?? null,
+      msLeftToDecide: msLeft(e.decidesBy),
+      // The planned RSVP deadline (set/defaulted at lock); shown while collecting so the creator can
+      // see when replies will close. Once the moment opens, momentEndsAt is the live countdown.
+      replyBy: e.replyBy?.toISOString() ?? null,
+      chosenStartsAt: chosen?.startsAt?.toISOString() ?? null,
       momentStartsAt: e.momentStartsAt?.toISOString() ?? null,
       momentEndsAt: e.momentEndsAt?.toISOString() ?? null,
-      msLeft: e.momentEndsAt ? Math.max(0, e.momentEndsAt.getTime() - Date.now()) : null,
+      msLeft: msLeft(e.momentEndsAt),
       revealed: showCrowd,
       isCreator,
       iOptedOut,
       readyToLock,
-      candidates,
-      myReactionCandidateIds: [...myReacts],
+      timeCandidates,
+      activityCandidates,
       myResponse: mine ? { kind: mine.kind, cond: mine.cond ?? null } : null,
-      myStatus:
-        e.phase === "collecting"
-          ? iOptedOut
-            ? ("declined" as const)
-            : ("reacting" as const)
-          : iOptedOut && !mine
-            ? ("declined" as const)
-            : statusFor(ctx.userId, resp, revealed),
+      myStatus: computeMyStatus(e.phase, ctx.userId, resp, revealed, iOptedOut),
       members,
       going,
     };
@@ -751,9 +937,7 @@ export const eventsRouter = router({
 
   // Record (or replace) this user's commitment during the moment.
   respond: protectedProcedure.input(RespondInput).mutation(async ({ ctx, input }) => {
-    const [e] = await db.select().from(events).where(eq(events.id, input.eventId));
-    if (!e) throw new TRPCError({ code: "NOT_FOUND" });
-    await requireMember(e.groupId, ctx.userId);
+    const e = await loadEvent(input.eventId, ctx.userId);
     if (e.phase !== "moment") {
       throw new TRPCError({ code: "BAD_REQUEST", message: "the moment is not open" });
     }
@@ -776,27 +960,21 @@ export const eventsRouter = router({
 
   // Clear the caller's moment answer (the "Change" action): they return to un-answered, so the plan
   // goes back to Action Required until they answer again.
-  unrespond: protectedProcedure
-    .input(z.object({ eventId: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      const [e] = await db.select().from(events).where(eq(events.id, input.eventId));
-      if (!e) throw new TRPCError({ code: "NOT_FOUND" });
-      await requireMember(e.groupId, ctx.userId);
-      if (e.phase !== "moment") {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "the moment is not open" });
-      }
-      await db
-        .delete(responses)
-        .where(and(eq(responses.eventId, input.eventId), eq(responses.userId, ctx.userId)));
-      return { ok: true as const };
-    }),
+  unrespond: protectedProcedure.input(ResolveInput).mutation(async ({ ctx, input }) => {
+    const e = await loadEvent(input.eventId, ctx.userId);
+    if (e.phase !== "moment") {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "the moment is not open" });
+    }
+    await db
+      .delete(responses)
+      .where(and(eq(responses.eventId, input.eventId), eq(responses.userId, ctx.userId)));
+    return { ok: true as const };
+  }),
 
   // Settle the moment once its countdown has ended: cleared (quorum met or non-contingent) or a
   // silent fizzle. Idempotent and safe to call early (it no-ops until the deadline passes).
   resolve: protectedProcedure.input(ResolveInput).mutation(async ({ ctx, input }) => {
-    const [e] = await db.select().from(events).where(eq(events.id, input.eventId));
-    if (!e) throw new TRPCError({ code: "NOT_FOUND" });
-    await requireMember(e.groupId, ctx.userId);
+    const e = await loadEvent(input.eventId, ctx.userId);
     await settleCollecting(e);
     await settlePhase(e);
     return { ok: true as const, phase: e.phase };

@@ -1,37 +1,12 @@
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
+import type { PartOfDay } from "@bethere/shared";
 
-function ordinal(n: number): string {
-  const rem10 = n % 10;
-  const rem100 = n % 100;
-  if (rem10 === 1 && rem100 !== 11) return `${n}st`;
-  if (rem10 === 2 && rem100 !== 12) return `${n}nd`;
-  if (rem10 === 3 && rem100 !== 13) return `${n}rd`;
-  return `${n}th`;
-}
-
-// "2026-05-28T16:00:00.000Z" -> "28th May 2026"
-export function formatDate(iso: string): string {
-  const d = new Date(iso);
-  return `${ordinal(d.getDate())} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
-}
+// Zero-pad a small number to two digits ("3" -> "03"); shared by every time/date string builder.
+const pad2 = (n: number) => String(n).padStart(2, "0");
 
 // "...T16:00..." -> "16:00"
-export function formatTime(iso: string): string {
+function formatTime(iso: string): string {
   const d = new Date(iso);
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 }
 
 // Build a UTC ISO instant from the picker's local "YYYY-MM-DD" + "HH:mm" strings. Uses the numeric
@@ -47,23 +22,25 @@ export function isoFrom(date: string, time: string): string | null {
   return Number.isNaN(dt.getTime()) ? null : dt.toISOString();
 }
 
-// A stable per-day key for grouping a list of events under date headers.
-export function dateKey(iso: string): string {
-  const d = new Date(iso);
-  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+// Date -> the picker's local "YYYY-MM-DD" string (the forward of isoFrom's date half).
+export function dateStringFrom(d: Date): string {
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
-// Time remaining until `iso`, e.g. "8h 49m" or "3d 4h". Empty once passed.
-export function countdown(iso: string): string {
-  const ms = new Date(iso).getTime() - Date.now();
-  if (ms <= 0) return "now";
-  const mins = Math.floor(ms / 60000);
-  const days = Math.floor(mins / (60 * 24));
-  const hours = Math.floor((mins % (60 * 24)) / 60);
-  const m = mins % 60;
-  if (days > 0) return `${days}d ${hours}h`;
-  if (hours > 0) return `${hours}h ${m}m`;
-  return `${m}m`;
+// Date -> the picker's local "HH:mm" string (the forward of isoFrom's time half).
+export function timeStringFrom(d: Date): string {
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
+// ISO instant -> the picker's local { date, time } strings. The literal inverse of isoFrom.
+export function splitIso(iso: string): { date: string; time: string } {
+  const d = new Date(iso);
+  return { date: dateStringFrom(d), time: timeStringFrom(d) };
+}
+
+// Date -> "Wed 4 Jun" short day label (used by DateTimeField).
+export function shortDayLabel(d: Date): string {
+  return d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
 }
 
 const AVATAR_COLORS = ["#5F9472", "#C9823F", "#7E6BB0", "#3F7BA8", "#B0654F"] as const;
@@ -115,11 +92,11 @@ export function clock12(iso: string): { time: string; ampm: string } {
   const ampm = h < 12 ? "AM" : "PM";
   h %= 12;
   if (h === 0) h = 12;
-  return { time: `${h}:${String(d.getMinutes()).padStart(2, "0")}`, ampm };
+  return { time: `${h}:${pad2(d.getMinutes())}`, ampm };
 }
 
 // "evening" -> "Evening".
-export function partOfDayLabel(part: string | null | undefined): string {
+export function partOfDayLabel(part: PartOfDay | null | undefined): string {
   if (!part) return "";
   return part.charAt(0).toUpperCase() + part.slice(1);
 }
@@ -130,9 +107,39 @@ export function formatCountdown(ms: number): string {
   const totalMins = Math.floor(ms / 60000);
   if (totalMins < 60) {
     const secs = Math.floor((ms % 60000) / 1000);
-    return `${totalMins}:${String(secs).padStart(2, "0")}`;
+    return `${totalMins}:${pad2(secs)}`;
   }
   const hours = Math.floor(totalMins / 60);
-  if (hours < 24) return `${hours}h ${String(totalMins % 60).padStart(2, "0")}m`;
+  if (hours < 24) return `${hours}h ${pad2(totalMins % 60)}m`;
   return `${Math.floor(hours / 24)}d ${hours % 24}h`;
+}
+
+// A bare, verbose duration phrase for the largest whole unit: "2 days", "1 hour", "23 minutes",
+// "under a minute". Returns the duration ALONE (no "left"/"in") so callers compose phase-aware copy,
+// e.g. `${label} in ${formatTimeLeft(ms)}` -> "Voting closes in 2 days". Callers special-case the
+// passed `ms <= 0` themselves to render "Closing now" (this returns the bare "now").
+export function formatTimeLeft(ms: number): string {
+  if (ms <= 0) return "now";
+  if (ms >= 86400000) {
+    const n = Math.floor(ms / 86400000);
+    return `${n} day${n !== 1 ? "s" : ""}`;
+  }
+  if (ms >= 3600000) {
+    const n = Math.floor(ms / 3600000);
+    return `${n} hour${n !== 1 ? "s" : ""}`;
+  }
+  if (ms >= 60000) {
+    const n = Math.floor(ms / 60000);
+    return `${n} minute${n !== 1 ? "s" : ""}`;
+  }
+  return "under a minute";
+}
+
+// The "under an hour is hot" threshold, shared by every countdown surface.
+export const HOT_MS = 3_600_000;
+
+// The standalone time-left phrase shared by the Countdown primitive and the dashboard card footer:
+// "Closing now" once passed, else "<duration> left". One home for the terminal string + wording.
+export function countdownLabel(ms: number): string {
+  return ms <= 0 ? "Closing now" : `${formatTimeLeft(ms)} left`;
 }

@@ -1,7 +1,7 @@
 // Module-level auth state, updated by <AuthBridge/> (added in a later task) and read by the
 // tRPC client. Kept outside React so the non-React tRPC client can attach the right header.
 
-import { useAuth } from "@clerk/clerk-expo";
+import { useAuth, useUser } from "@clerk/clerk-expo";
 import type { ReactNode } from "react";
 import { createContext, createElement, useContext, useEffect, useMemo, useState } from "react";
 
@@ -46,6 +46,18 @@ export function DevAuthProvider({ children }: { children: ReactNode }) {
 
 export function useDevAuth(): DevAuth {
   return useContext(DevAuthContext);
+}
+
+// The display name shown for the spoofable dev-bypass user (no Clerk identity to read).
+export const DEV_DISPLAY_NAME = "Test user";
+
+// Resolve the signed-in user's display name, with one home for the precedence chain. The dev-bypass
+// user is always "Test user"; otherwise prefer Clerk's firstName, then username, then `fallback`.
+// `fallback` is a parameter so callers stay distinct (Account uses "Account", the header avatar "?").
+export function useDisplayName(fallback: string): string {
+  const { user } = useUser();
+  const { devUser } = useDevAuth();
+  return devUser ? DEV_DISPLAY_NAME : (user?.firstName ?? user?.username ?? fallback);
 }
 
 // Keeps the module-level holder in sync with Clerk + dev state. Render once inside both

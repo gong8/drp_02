@@ -1,5 +1,5 @@
 ---
-description: Write a comprehensive, dated session summary (all context + learnings) to docs/summary/
+description: Write a comprehensive, dated session summary (all context + learnings) to docs/summary/ and commit it
 argument-hint: "[optional short descriptor]"
 allowed-tools: Bash(date:*), Bash(git:*), Bash(gh:*), Bash(echo:*), Bash(mkdir:*), Read, Glob, Grep, Write
 ---
@@ -75,4 +75,18 @@ Key files, specs, plans, docs, and PR links worth reading, with paths.
 - Specific over vague: prefer paths, versions, commands, commit SHAs, and PR numbers.
 - Ground every claim in the conversation or the gathered facts above.
 
-After writing, report the file path you created and a one-sentence description of its contents.
+## Step 4 - commit the summary
+
+Commit the file you just wrote so the archive is preserved in history. Stage ONLY that one file:
+
+```bash
+git add docs/summary/<Filename stamp>-<descriptor>.md
+git commit -m "docs(summary): <descriptor>"
+```
+
+- Stage only the new summary file - never `git add -A` or `git add .`; leave any other working-tree changes untouched and unstaged.
+- Commit on the current branch; do not switch or create branches, and do not push.
+- Use a `docs(summary):` subject and otherwise follow the repo's commit conventions (including the Co-Authored-By trailer the environment requires).
+- If the commit fails (nothing to commit, or a hook blocks it), report the error rather than forcing or amending.
+
+After writing and committing, report the file path you created, the resulting commit SHA, and a one-sentence description of the summary's contents.

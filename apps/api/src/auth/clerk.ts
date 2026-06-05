@@ -1,10 +1,10 @@
 import { verifyToken } from "@clerk/backend";
-import type { VerifiedClaims } from "./resolve.js";
+import type { VerifyFn } from "./resolve.js";
 
 // Networkless verification: checks the JWT signature against the instance public key
 // (CLERK_JWT_KEY) without a round-trip to Clerk. name/email are present only if added to
 // the session-token claims in the Clerk dashboard (see the manual ops checklist).
-export async function verifyClerkToken(token: string): Promise<VerifiedClaims> {
+export const verifyClerkToken: VerifyFn = async (token) => {
   const jwtKey = process.env.CLERK_JWT_KEY;
   if (!jwtKey) throw new Error("CLERK_JWT_KEY is not set");
 
@@ -15,4 +15,4 @@ export async function verifyClerkToken(token: string): Promise<VerifiedClaims> {
     name: typeof c.name === "string" ? c.name : undefined,
     email: typeof c.email === "string" ? c.email : undefined,
   };
-}
+};
