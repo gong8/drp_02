@@ -14,6 +14,18 @@ import { logger } from "./logger.js";
 import { appRouter } from "./router.js";
 import { createContext } from "./trpc.js";
 
+// Read a positive integer from an env var, falling back to a default when the var is
+// unset, empty, non-numeric, or non-positive. Plain `Number(process.env.X ?? d)` is a
+// trap: `??` only substitutes for null/undefined, so an empty-string env var (common in
+// container/CI setups that export every key) slips through and `Number("")` is 0, which
+// e.g. makes a rate-limit max of 0 reject every request. parseInt of "" is NaN, so we
+// guard on Number.isFinite and `> 0`.
+function envInt(name: string, fallback: number): number {
+  const raw = process.env[name];
+  const parsed = Number.parseInt(raw ?? "", 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 // Our own Pino instance (see logger.ts). disableRequestLogging turns off Fastify's default
 // two-lines-per-request output; the onResponse hook below emits one clean line instead.
 // trustProxy: App Runner terminates TLS and forwards via X-Forwarded-For, so req.ip must
@@ -41,8 +53,10 @@ server.addHook("onResponse", (req, reply, done) => {
 // generous for real use but stops scripted abuse.
 await server.register(rateLimit, {
   global: true,
-  max: Number(process.env.RATE_LIMIT_MAX ?? 100),
-  timeWindow: process.env.RATE_LIMIT_WINDOW ?? "1 minute",
+  max: envInt("RATE_LIMIT_MAX", 100),
+  // Same empty-string trap as envInt, but the window is a string ("1 minute"), so treat an
+  // empty/whitespace-only value as absent and fall back to the default.
+  timeWindow: process.env.RATE_LIMIT_WINDOW?.trim() ? process.env.RATE_LIMIT_WINDOW : "1 minute",
   // App Runner's health check (GET /trpc/health) must never be throttled. Exact-path
   // match only: a batched tRPC call has a different path (e.g. /trpc/health,groups.mine),
   // so this exemption cannot be abused to bypass the limit.
@@ -108,7 +122,7 @@ if (seedMode === "reset") {
   server.log.info({ scope: "boot" }, "seeded demo data (if-empty)");
 }
 
-const port = Number(process.env.PORT ?? 3000);
+const port = envInt("PORT", 3000);
 
 // Fastify logs its own "Server listening at <addr>" line at info level (one per bound
 // address, with no scope). Mute info briefly around listen so only our single scoped line
