@@ -1,4 +1,4 @@
-import type { PartOfDay } from "@bethere/shared";
+import type { PartOfDay, UpdateEventInput } from "@bethere/shared";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useCallback, useRef, useState } from "react";
@@ -242,21 +242,34 @@ export function EventDetail({ route, navigation }: Props) {
   // went final) shows an inline error and refetches so the screen reflects reality.
   function saveEdit() {
     if (!data || savingEdit) return;
-    const loadedActivity = data.activityRaw;
-    const loadedLocation = data.location;
-    const loadedNotes = data.description ?? "";
-    const patch: {
-      activity?: { from: string; to: string };
-      location?: { from: string; to: string };
-      description?: { from: string; to: string };
-    } = {};
-    if (editActivity !== loadedActivity)
-      patch.activity = { from: loadedActivity, to: editActivity };
-    if (editLocation !== loadedLocation)
-      patch.location = { from: loadedLocation, to: editLocation };
-    if (editNotes !== loadedNotes) patch.description = { from: loadedNotes, to: editNotes };
+    // One descriptor list is the single source of truth for the editable-field set, driving both the
+    // per-field diff below and the conflict-adopt loop. The `as const` keys keep `patch` typed against
+    // UpdateEventInput's optional activity/location/description keys.
+    const fields = [
+      {
+        key: "activity" as const,
+        loaded: data.activityRaw,
+        value: editActivity,
+        set: setEditActivity,
+      },
+      {
+        key: "location" as const,
+        loaded: data.location,
+        value: editLocation,
+        set: setEditLocation,
+      },
+      {
+        key: "description" as const,
+        loaded: data.description ?? "",
+        value: editNotes,
+        set: setEditNotes,
+      },
+    ];
+    const patch: Pick<UpdateEventInput, "activity" | "location" | "description"> = {};
+    for (const f of fields)
+      if (f.value !== f.loaded) patch[f.key] = { from: f.loaded, to: f.value };
     // Nothing changed - just close.
-    if (!patch.activity && !patch.location && !patch.description) {
+    if (Object.keys(patch).length === 0) {
       setEditSheet(false);
       return;
     }
@@ -272,11 +285,7 @@ export function EventDetail({ route, navigation }: Props) {
         // Adopt the server's current value for each conflicted field, advance the local baseline to
         // it so the next save sends from=current (otherwise a second save re-sends the stale `from`
         // and conflicts forever), and keep the sheet open.
-        for (const c of res.conflicts) {
-          if (c.field === "activity") setEditActivity(c.current);
-          else if (c.field === "location") setEditLocation(c.current);
-          else if (c.field === "description") setEditNotes(c.current);
-        }
+        for (const c of res.conflicts) fields.find((f) => f.key === c.field)?.set(c.current);
         setData((d) => {
           if (!d) return d;
           const next = { ...d };
