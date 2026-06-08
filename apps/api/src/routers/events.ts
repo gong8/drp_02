@@ -72,6 +72,20 @@ async function candidatesFor(eventId: string): Promise<(typeof eventCandidates.$
   return rows.sort(byStartsAtThenNullsLast);
 }
 
+// A usable time candidate: a time-kind row with a concrete startsAt. Narrows startsAt to non-null
+// at the value level, so the `as Date` casts on the filtered rows downstream stay valid.
+const isTimeCand = (c: typeof eventCandidates.$inferSelect) =>
+  c.kind === "time" && c.startsAt != null;
+
+// The creator lock-readiness rule: a winning time candidate exists at the given quorum.
+function isReadyToLock(
+  timeIds: string[],
+  reactions: { candidateId: string; userId: string }[],
+  quorum: number,
+): boolean {
+  return pickWinningCandidate(timeIds, reactions, quorum) !== null;
+}
+
 // Projects mixed candidate rows into the {id,label} shape resolveActivity/displayActivity expect.
 function activityCandidateInputs(cands: (typeof eventCandidates.$inferSelect)[]) {
   return cands.filter((c) => c.kind === "activity").map((c) => ({ id: c.id, label: c.label }));
@@ -213,7 +227,7 @@ async function openMoment(
 async function settleCollecting(e: EventRow): Promise<void> {
   if (e.phase !== "collecting" || !e.decidesBy || Date.now() < e.decidesBy.getTime()) return;
   const cands = await candidatesFor(e.id);
-  const timeCands = cands.filter((c) => c.kind === "time" && c.startsAt);
+  const timeCands = cands.filter(isTimeCand);
   const reactions = await reactionsFor(e.id);
   if (timeCands.length === 0 || reactions.length === 0) {
     await fizzle(e);
@@ -701,9 +715,7 @@ export const eventsRouter = router({
           message: "that time is before the decides-by deadline",
         });
       }
-      const times = existing
-        .filter((c) => c.kind === "time" && c.startsAt)
-        .map((c) => (c.startsAt as Date).getTime());
+      const times = existing.filter(isTimeCand).map((c) => (c.startsAt as Date).getTime());
       if (times.length > 0) {
         const horizon = addCandidateHorizon(Math.min(...times), Math.max(...times));
         if (startsAt.getTime() > horizon) {
@@ -779,7 +791,7 @@ export const eventsRouter = router({
       throw new TRPCError({ code: "BAD_REQUEST", message: "plan is not collecting" });
     }
     const cands = await candidatesFor(input.eventId);
-    const timeCands = cands.filter((c) => c.kind === "time" && c.startsAt);
+    const timeCands = cands.filter(isTimeCand);
     if (timeCands.length === 0) {
       throw new TRPCError({ code: "BAD_REQUEST", message: "no time candidates to lock" });
     }
@@ -891,8 +903,8 @@ export const eventsRouter = router({
         iReacted = reactions.some((r) => r.userId === ctx.userId);
         activity = displayActivity(e.activity, activityCandidateInputs(cands), reactions);
         if (isCreator) {
-          const timeIds = cands.filter((c) => c.kind === "time" && c.startsAt).map((c) => c.id);
-          readyToLock = pickWinningCandidate(timeIds, reactions, e.quorum) !== null;
+          const timeIds = cands.filter(isTimeCand).map((c) => c.id);
+          readyToLock = isReadyToLock(timeIds, reactions, e.quorum);
         }
       }
 
@@ -979,15 +991,13 @@ export const eventsRouter = router({
       countBy.set(r.candidateId, (countBy.get(r.candidateId) ?? 0) + 1);
       if (r.userId === ctx.userId) myReactedIds.add(r.candidateId);
     }
-    const timeCandidates = cands
-      .filter((c) => c.kind === "time" && c.startsAt)
-      .map((c) => ({
-        id: c.id,
-        startsAt: (c.startsAt as Date).toISOString(),
-        partOfDay: c.partOfDay,
-        count: countBy.get(c.id) ?? 0,
-        mine: myReactedIds.has(c.id),
-      }));
+    const timeCandidates = cands.filter(isTimeCand).map((c) => ({
+      id: c.id,
+      startsAt: (c.startsAt as Date).toISOString(),
+      partOfDay: c.partOfDay,
+      count: countBy.get(c.id) ?? 0,
+      mine: myReactedIds.has(c.id),
+    }));
     const activityCandidates = cands
       .filter((c) => c.kind === "activity")
       .map((c) => ({
@@ -1000,9 +1010,7 @@ export const eventsRouter = router({
 
     const timeIds = timeCandidates.map((c) => c.id);
     const readyToLock =
-      isCreator &&
-      e.phase === "collecting" &&
-      pickWinningCandidate(timeIds, reactions, e.quorum) !== null;
+      isCreator && e.phase === "collecting" && isReadyToLock(timeIds, reactions, e.quorum);
 
     const members: { id: string; name: string }[] = [];
     for (const row of memberRows) {
