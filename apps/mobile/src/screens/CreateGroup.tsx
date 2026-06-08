@@ -1,7 +1,7 @@
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useState } from "react";
 import type { GroupsStackParams } from "../../App";
-import { ERR_SAVE, LABEL_GROUP_NAME, TITLE_NEW_GROUP } from "../lib/copy";
+import { CREATE_GROUP_NEXT, ERR_SAVE, LABEL_GROUP_NAME, TITLE_NEW_GROUP } from "../lib/copy";
 import { trpc } from "../lib/trpc";
 import { AppText, Button, Field, FormError, ScreenHeader, ScreenScroll } from "../ui";
 
@@ -19,8 +19,9 @@ export function CreateGroup({ navigation }: Props) {
     if (!canCreate) return;
     setBusy(true);
     try {
-      await trpc.groups.create.mutate({ name: trimmed });
-      navigation.goBack();
+      const res = await trpc.groups.create.mutate({ name: trimmed });
+      // Land in the live group with its invite ready to share (replace, so back returns to the list).
+      navigation.replace("GroupDetail", { groupId: res.id, justCreated: true });
     } catch {
       setError(true);
       setBusy(false);
@@ -35,7 +36,7 @@ export function CreateGroup({ navigation }: Props) {
       {error && <FormError>{ERR_SAVE}</FormError>}
       <Field label={LABEL_GROUP_NAME} value={name} onChangeText={setName} placeholder="The Boys" />
       <AppText variant="caption" style={{ marginTop: 8 }}>
-        You can add members once it's created.
+        {CREATE_GROUP_NEXT}
       </AppText>
       <Button
         label="Create group"

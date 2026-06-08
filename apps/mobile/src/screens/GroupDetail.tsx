@@ -1,18 +1,35 @@
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { useCallback, useRef, useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { View } from "react-native";
 import type { GroupsStackParams } from "../../App";
-import { LABEL_GROUP_NAME } from "../lib/copy";
+import {
+  ACTION_COPIED,
+  ACTION_COPY,
+  ACTION_LINK_COPIED,
+  ACTION_SHARE_INVITE,
+  INVITE_CODE_PENDING,
+  INVITE_HINT,
+  inviteShareText,
+  LABEL_GROUP_NAME,
+  LABEL_INVITE_LINK,
+  LABEL_JOIN_CODE,
+  TITLE_INVITE,
+  welcomeToGroup,
+} from "../lib/copy";
+import { formatCode, joinUrl } from "../lib/invite";
+import { copyToClipboard, shareInvite } from "../lib/share";
 import type { RouterOutputs } from "../lib/trpc";
 import { trpc } from "../lib/trpc";
 import { useFetchOnFocus } from "../lib/useFetchOnFocus";
-import { font, ui } from "../theme";
+import { ui } from "../theme";
 import {
   AppText,
+  Band,
   BottomSheet,
   Button,
   Card,
   DetailError,
+  EmptyState,
   Field,
   FieldLabel,
   PersonRow,
@@ -24,21 +41,27 @@ import {
 } from "../ui";
 
 type Detail = NonNullable<RouterOutputs["groups"]["get"]>;
-type Addable = RouterOutputs["groups"]["addableUsers"];
+type Invite = RouterOutputs["groups"]["inviteByGroup"];
 type Props = NativeStackScreenProps<GroupsStackParams, "GroupDetail">;
 
 export function GroupDetail({ route, navigation }: Props) {
   const { groupId } = route.params;
   const [data, setData] = useState<Detail | null>(null);
+  const [invite, setInvite] = useState<Invite | null>(null);
   const [nameDraft, setNameDraft] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
-  const [addOpen, setAddOpen] = useState(false);
-  const [addable, setAddable] = useState<Addable>([]);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  // Which invite control most recently confirmed a copy (label swaps to "Copied" for ~1.5s).
+  const [copied, setCopied] = useState<null | "code" | "link" | "share">(null);
+  // A one-time welcome band after joining via an invite.
+  const [welcome, setWelcome] = useState(false);
   // Whether the name field has been seeded from the server yet. We seed only on the first successful
-  // load so a later reload (e.g. after adding a member) cannot clobber an in-progress rename draft.
+  // load so a later reload (e.g. after renaming) cannot clobber an in-progress rename draft.
   const seededName = useRef(false);
+  const handledCreate = useRef(false);
+  const handledJoin = useRef(false);
 
   const load = useCallback(() => {
     return trpc.groups.get
@@ -57,6 +80,41 @@ export function GroupDetail({ route, navigation }: Props) {
 
   useFetchOnFocus(load);
 
+  // Lazily fetch the invite the first time the sheet opens (member-gated; the viewer is a member, so
+  // it resolves). Kept off the focus load so opening a group never pays for an invite query.
+  useEffect(() => {
+    if (!inviteOpen || invite) return;
+    let active = true;
+    trpc.groups.inviteByGroup
+      .query({ groupId })
+      .then((inv) => {
+        if (active) setInvite(inv);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [inviteOpen, invite, groupId]);
+
+  // Land-on-invite after creating the group: open the sheet once the group has loaded, then clear the
+  // flag so a refocus does not reopen it.
+  useEffect(() => {
+    if (!handledCreate.current && route.params?.justCreated && data) {
+      handledCreate.current = true;
+      setInviteOpen(true);
+      navigation.setParams({ justCreated: undefined });
+    }
+  }, [route.params?.justCreated, data, navigation]);
+
+  // One-time welcome band after joining via an invite.
+  useEffect(() => {
+    if (!handledJoin.current && route.params?.justJoined && data) {
+      handledJoin.current = true;
+      setWelcome(true);
+      navigation.setParams({ justJoined: undefined });
+    }
+  }, [route.params?.justJoined, data, navigation]);
+
   async function run(fn: () => Promise<unknown>): Promise<boolean> {
     if (busy) return false;
     setBusy(true);
@@ -73,13 +131,28 @@ export function GroupDetail({ route, navigation }: Props) {
     }
   }
 
-  async function openAdd() {
-    try {
-      setAddable(await trpc.groups.addableUsers.query({ groupId }));
-      setAddOpen(true);
-    } catch {
-      setError(true);
-    }
+  function flash(which: "code" | "link" | "share") {
+    setCopied(which);
+    setTimeout(() => setCopied(null), 1500);
+  }
+
+  // Prefer the server-built link (canonical, from PUBLIC_WEB_URL); fall back to one built client-side.
+  const inviteLink = invite ? (invite.url ?? joinUrl(invite.code)) : null;
+
+  async function copyCode() {
+    if (!invite) return;
+    await copyToClipboard(invite.code);
+    flash("code");
+  }
+  async function copyLink() {
+    if (!inviteLink) return;
+    await copyToClipboard(inviteLink);
+    flash("link");
+  }
+  async function share() {
+    if (!inviteLink || !data) return;
+    const { copied: didCopy } = await shareInvite(inviteShareText(data.name), inviteLink);
+    if (didCopy) flash("share");
   }
 
   if (loading) return <ScreenLoading />;
@@ -96,6 +169,14 @@ export function GroupDetail({ route, navigation }: Props) {
 
   return (
     <ScreenScroll header={<ScreenHeader title={data.name} onBack={() => navigation.goBack()} />}>
+      {welcome ? (
+        <Band style={{ marginBottom: 16 }}>
+          <AppText variant="title" style={{ color: ui.onInk }}>
+            {welcomeToGroup(data.name)}
+          </AppText>
+        </Band>
+      ) : null}
+
       <Field
         label={LABEL_GROUP_NAME}
         value={nameDraft}
@@ -141,46 +222,58 @@ export function GroupDetail({ route, navigation }: Props) {
       </Card>
 
       <Button
-        label="+ Add to group"
-        variant="outline"
-        onPress={openAdd}
+        label={TITLE_INVITE}
+        variant="primary"
+        onPress={() => setInviteOpen(true)}
         style={{ marginTop: 16 }}
       />
 
-      <BottomSheet visible={addOpen} onClose={() => setAddOpen(false)}>
-        <Section title="Add to group" size="lg" />
-        <ScrollView style={{ maxHeight: 280 }} showsVerticalScrollIndicator={false}>
-          {addable.map((u) => (
-            <PersonRow
-              key={u.id}
-              name={u.name}
-              color={u.color}
-              index={0}
-              divided={false}
-              padding={9}
-              onPress={async () => {
-                // Only drop the user from the picker once the add actually succeeded; on failure the
-                // row must stay so it can be retried. Re-derive the list from the server so the picker
-                // reflects post-add reality rather than an optimistic guess.
-                const ok = await run(() => trpc.groups.addMember.mutate({ groupId, userId: u.id }));
-                if (ok) setAddable(await trpc.groups.addableUsers.query({ groupId }));
-              }}
+      <BottomSheet visible={inviteOpen} onClose={() => setInviteOpen(false)}>
+        <Section title={TITLE_INVITE} size="lg" sub={INVITE_HINT} />
+        {invite ? (
+          <>
+            <Card tone={ui.tint}>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <FieldLabel tone="muted">{LABEL_JOIN_CODE}</FieldLabel>
+                <View style={{ marginLeft: "auto" }}>
+                  <TextButton
+                    label={copied === "code" ? ACTION_COPIED : ACTION_COPY}
+                    onPress={copyCode}
+                  />
+                </View>
+              </View>
+              <AppText
+                variant="screenTitle"
+                mono
+                style={{ fontSize: 34, letterSpacing: 4, marginTop: 4 }}
+              >
+                {formatCode(invite.code)}
+              </AppText>
+            </Card>
+
+            <Field
+              label={LABEL_INVITE_LINK}
+              value={inviteLink ?? ""}
+              editable={false}
               right={
-                <Text
-                  style={{
-                    marginLeft: "auto",
-                    fontFamily: font.display,
-                    fontSize: 16,
-                    color: ui.brand,
-                  }}
-                >
-                  +
-                </Text>
+                <TextButton
+                  label={copied === "link" ? ACTION_COPIED : ACTION_COPY}
+                  onPress={copyLink}
+                />
               }
+              style={{ marginTop: 14 }}
             />
-          ))}
-          {addable.length === 0 && <AppText variant="caption">Everyone's already in.</AppText>}
-        </ScrollView>
+
+            <Button
+              label={copied === "share" ? ACTION_LINK_COPIED : ACTION_SHARE_INVITE}
+              variant="primary"
+              onPress={share}
+              style={{ marginTop: 16 }}
+            />
+          </>
+        ) : (
+          <EmptyState inCard>{INVITE_CODE_PENDING}</EmptyState>
+        )}
       </BottomSheet>
     </ScreenScroll>
   );

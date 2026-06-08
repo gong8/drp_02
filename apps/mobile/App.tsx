@@ -2,15 +2,26 @@ import { ClerkProvider } from "@clerk/clerk-expo";
 import { Archivo_800ExtraBold, Archivo_900Black } from "@expo-google-fonts/archivo";
 import { Inter_400Regular, Inter_500Medium, Inter_700Bold } from "@expo-google-fonts/inter";
 import { type BottomTabBarProps, createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { NavigationContainer } from "@react-navigation/native";
+import {
+  createNavigationContainerRef,
+  type LinkingOptions,
+  NavigationContainer,
+  type NavigatorScreenParams,
+} from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useFonts } from "expo-font";
 import { StatusBar } from "expo-status-bar";
-import type { ReactNode } from "react";
-import { Platform, Pressable, Text, View } from "react-native";
+import { type ReactNode, useEffect } from "react";
+import { Linking, Platform, Pressable, Text, View } from "react-native";
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import { DevAuthProvider, useAuthBridge } from "./src/lib/auth";
 import { publishableKey, tokenCache } from "./src/lib/clerk";
+import {
+  clearPendingInvite,
+  extractInviteCode,
+  getPendingInvite,
+  setPendingInvite,
+} from "./src/lib/invite";
 import { Account } from "./src/screens/Account";
 import { CreateGroup } from "./src/screens/CreateGroup";
 import { CreateWizard } from "./src/screens/CreateWizard";
@@ -18,6 +29,7 @@ import { Dashboard } from "./src/screens/Dashboard";
 import { EventDetail } from "./src/screens/EventDetail";
 import { GroupDetail } from "./src/screens/GroupDetail";
 import { GroupsList } from "./src/screens/GroupsList";
+import { JoinGroup } from "./src/screens/JoinGroup";
 import { SignIn } from "./src/screens/SignIn";
 import { font, ui } from "./src/theme";
 
@@ -31,9 +43,40 @@ export type MeetupsStackParams = {
 };
 export type GroupsStackParams = {
   GroupsList: undefined;
-  GroupDetail: { groupId: string };
+  // justCreated: opened straight after creating the group (auto-opens the invite sheet).
+  // justJoined: opened straight after joining (shows a one-time welcome band).
+  GroupDetail: { groupId: string; justCreated?: boolean; justJoined?: boolean };
   CreateGroup: undefined;
+  JoinGroup: { code?: string };
   Account: undefined;
+};
+
+// The root tab param list, used to type the navigation ref so the auth gate can route a pending
+// invite into the nested Groups -> JoinGroup screen.
+export type RootTabParamList = {
+  Meetups: NavigatorScreenParams<MeetupsStackParams>;
+  Groups: NavigatorScreenParams<GroupsStackParams>;
+};
+
+export const navigationRef = createNavigationContainerRef<RootTabParamList>();
+
+// Deep-link map. The only path we need today is the invite link; `/join/:code` resolves to the
+// Groups tab's JoinGroup screen (pushed over GroupsList). The same path-based config upgrades to a
+// native universal link later with no change here. Both the custom scheme and the public web origin
+// (when configured) are accepted as prefixes.
+const linking: LinkingOptions<RootTabParamList> = {
+  prefixes: [
+    "bethere://",
+    ...(process.env.EXPO_PUBLIC_WEB_URL ? [process.env.EXPO_PUBLIC_WEB_URL] : []),
+  ],
+  config: {
+    screens: {
+      Groups: {
+        initialRouteName: "GroupsList",
+        screens: { JoinGroup: "join/:code" },
+      },
+    },
+  },
 };
 
 const stackHeader = {
@@ -60,6 +103,7 @@ function GroupsStackScreen() {
       <GroupsStack.Screen name="GroupsList" component={GroupsList} />
       <GroupsStack.Screen name="GroupDetail" component={GroupDetail} />
       <GroupsStack.Screen name="CreateGroup" component={CreateGroup} />
+      <GroupsStack.Screen name="JoinGroup" component={JoinGroup} />
       <GroupsStack.Screen name="Account" component={Account} />
     </GroupsStack.Navigator>
   );
@@ -133,8 +177,57 @@ function MainTabs() {
 // the app or the sign-in screen.
 function Gate() {
   const authed = useAuthBridge();
+
+  // While signed out, stash an invite code from the launch URL / any incoming link, so it survives
+  // sign-in (on web the OAuth redirect reloads the page). When already authed the linking config
+  // routes invite URLs directly, so we skip stashing - and a stale code never lingers.
+  useEffect(() => {
+    if (authed) return;
+    let active = true;
+    Linking.getInitialURL().then((url) => {
+      const code = url ? extractInviteCode(url) : null;
+      if (active && code) setPendingInvite(code);
+    });
+    const sub = Linking.addEventListener("url", ({ url }) => {
+      const code = extractInviteCode(url);
+      if (code) setPendingInvite(code);
+    });
+    return () => {
+      active = false;
+      sub.remove();
+    };
+  }, [authed]);
+
+  // Once authed, resume any pending invite: route to JoinGroup and clear it. Falls back to the launch
+  // URL because a web OAuth reload wipes the in-memory stash while the URL bar still holds /join/code.
+  useEffect(() => {
+    if (!authed) return;
+    let active = true;
+    (async () => {
+      let code = getPendingInvite();
+      if (!code) {
+        const url = await Linking.getInitialURL();
+        code = url ? extractInviteCode(url) : null;
+      }
+      if (!active || !code) return;
+      clearPendingInvite();
+      const resolved = code;
+      const go = () => {
+        if (navigationRef.isReady()) {
+          navigationRef.navigate("Groups", { screen: "JoinGroup", params: { code: resolved } });
+        } else {
+          setTimeout(go, 50);
+        }
+      };
+      go();
+    })();
+    return () => {
+      active = false;
+    };
+  }, [authed]);
+
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef} linking={linking}>
       {authed ? <MainTabs /> : <SignIn />}
       <StatusBar style="dark" />
     </NavigationContainer>
