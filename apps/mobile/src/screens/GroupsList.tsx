@@ -157,7 +157,7 @@ export function GroupsList({ navigation }: Props) {
           label={LABEL_JOIN_CODE}
           value={codeDraft}
           onChangeText={(t) => setCodeDraft(normalizeCode(t))}
-          placeholder="ABCD-EF12"
+          placeholder="ABCDEF12"
         />
         <Button
           label={ACTION_JOIN}

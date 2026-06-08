@@ -1,10 +1,11 @@
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useNavigation } from "@react-navigation/native";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { View } from "react-native";
-import { useDevAuth, useDisplayName } from "../lib/auth";
+import { useDevAuth } from "../lib/auth";
 import { ERR_SAVE, LABEL_DISPLAY_NAME, NAME_HINT, PLACEHOLDER_DISPLAY_NAME } from "../lib/copy";
 import { trpc } from "../lib/trpc";
+import { useFetchOnFocus } from "../lib/useFetchOnFocus";
 import { ui } from "../theme";
 import {
   AppText,
@@ -26,42 +27,50 @@ export function Account() {
   const { user } = useUser();
   const { devUser, signOutDev } = useDevAuth();
 
-  const name = useDisplayName("Account");
   const email = devUser
     ? "Signed in with the dev bypass"
     : (user?.emailAddresses?.[0]?.emailAddress ?? "");
 
   const [nameDraft, setNameDraft] = useState("");
   // The last-saved name, the baseline the Save button compares against (so it disappears after a save
-  // in both auth modes - the dev user's useDisplayName is a fixed string and would never advance).
+  // in either auth mode).
   const [savedName, setSavedName] = useState("");
   const [busy, setBusy] = useState(false);
   const [saveError, setSaveError] = useState(false);
-  // Seed the draft + baseline once the display name resolves; a later Clerk re-render must not clobber
-  // an in-progress edit (the same guard GroupDetail's rename uses).
+  // Seed the draft + baseline once from the SERVER display name - the same name rosters show - so an
+  // edit round-trips for every identity (including the dev bypass, whose Clerk name is a fixed stub).
+  // A ref guards the seed so a later refetch cannot clobber an in-progress edit.
   const seeded = useRef(false);
 
-  useEffect(() => {
-    if (!seeded.current && name && name !== "Account") {
-      setNameDraft(name);
-      setSavedName(name);
-      seeded.current = true;
-    }
-  }, [name]);
+  useFetchOnFocus(
+    useCallback(() => {
+      trpc.users.me
+        .query()
+        .then((me) => {
+          if (!seeded.current) {
+            setNameDraft(me.name);
+            setSavedName(me.name);
+            seeded.current = true;
+          }
+        })
+        .catch(() => {});
+    }, []),
+  );
 
   const trimmed = nameDraft.trim();
   const changed = trimmed !== "" && trimmed !== savedName;
-  const shownName = nameDraft || savedName || name;
+  const shownName = nameDraft || savedName || "Account";
 
   async function save() {
     if (busy || !changed) return;
     setBusy(true);
     setSaveError(false);
     try {
-      // The server name drives rosters; for a Clerk user also update Clerk so useDisplayName (header
-      // avatar) reflects it. The dev user has no Clerk identity, so only the server write runs.
-      if (!devUser) await user?.update({ firstName: trimmed });
+      // Write the server (the roster source of truth) FIRST; only mirror to Clerk once it commits, so
+      // a partial failure cannot leave the roster name and the header avatar silently diverged. The
+      // dev user has no Clerk identity, so only the server write runs for it.
       await trpc.users.updateProfile.mutate({ name: trimmed });
+      if (!devUser) await user?.update({ firstName: trimmed });
       setSavedName(trimmed);
     } catch {
       setSaveError(true);

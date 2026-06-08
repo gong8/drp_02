@@ -59,7 +59,9 @@ export function JoinGroup({ route, navigation }: Props) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [codeDraft, setCodeDraft] = useState(initial);
   const [preview, setPreview] = useState<Preview | null>(null);
-  const [errReason, setErrReason] = useState<"unknown" | "network">("unknown");
+  // "notFound" = the code resolved to no group (a known, specific outcome); "network" = any other
+  // failure. The value name matches the branch it drives below.
+  const [errReason, setErrReason] = useState<"notFound" | "network">("notFound");
   const autoRan = useRef(false);
 
   const code = normalizeCode(codeDraft);
@@ -77,7 +79,7 @@ export function JoinGroup({ route, navigation }: Props) {
       setPreview(await trpc.groups.previewByCode.query({ code: c }));
       setPhase("confirm");
     } catch (e) {
-      setErrReason(trpcErrorCode(e) === "NOT_FOUND" ? "unknown" : "network");
+      setErrReason(trpcErrorCode(e) === "NOT_FOUND" ? "notFound" : "network");
       setPhase("error");
     }
   }, []);
@@ -107,7 +109,7 @@ export function JoinGroup({ route, navigation }: Props) {
         ],
       });
     } catch (e) {
-      setErrReason(trpcErrorCode(e) === "NOT_FOUND" ? "unknown" : "network");
+      setErrReason(trpcErrorCode(e) === "NOT_FOUND" ? "notFound" : "network");
       setPhase("error");
     }
   }
@@ -117,20 +119,20 @@ export function JoinGroup({ route, navigation }: Props) {
   if (phase === "checking") return <ScreenLoading />;
 
   if (phase === "error") {
-    const unknown = errReason === "unknown";
+    const notFound = errReason === "notFound";
     return (
       <ScreenScroll header={header}>
         <Card>
-          <AppText variant="title">{unknown ? JOIN_NOT_FOUND_TITLE : ERR_NETWORK}</AppText>
-          {unknown ? (
+          <AppText variant="title">{notFound ? JOIN_NOT_FOUND_TITLE : ERR_NETWORK}</AppText>
+          {notFound ? (
             <AppText variant="caption" style={{ marginTop: 6, lineHeight: 18 }}>
               {JOIN_NOT_FOUND_BODY}
             </AppText>
           ) : null}
           <Button
-            label={unknown ? ACTION_BACK_TO_GROUPS : ACTION_TRY_AGAIN}
-            variant={unknown ? "primary" : "outline"}
-            onPress={unknown ? () => navigation.navigate("GroupsList") : () => lookUp(code)}
+            label={notFound ? ACTION_BACK_TO_GROUPS : ACTION_TRY_AGAIN}
+            variant={notFound ? "primary" : "outline"}
+            onPress={notFound ? () => navigation.navigate("GroupsList") : () => lookUp(code)}
             style={{ marginTop: 14 }}
           />
         </Card>
@@ -172,7 +174,7 @@ export function JoinGroup({ route, navigation }: Props) {
         label={LABEL_JOIN_CODE}
         value={codeDraft}
         onChangeText={(t) => setCodeDraft(normalizeCode(t))}
-        placeholder="ABCD-EF12"
+        placeholder="ABCDEF12"
       />
       <Button
         label={ACTION_FIND_GROUP}

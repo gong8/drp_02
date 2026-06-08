@@ -7,6 +7,8 @@ import {
   ACTION_COPY,
   ACTION_LINK_COPIED,
   ACTION_SHARE_INVITE,
+  ACTION_TRY_AGAIN,
+  ERR_NETWORK,
   INVITE_CODE_PENDING,
   INVITE_HINT,
   inviteShareText,
@@ -53,6 +55,8 @@ export function GroupDetail({ route, navigation }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
+  // The invite fetch failed (vs still loading); drives an error+retry surface in the sheet.
+  const [inviteError, setInviteError] = useState(false);
   // Which invite control most recently confirmed a copy (label swaps to "Copied" for ~1.5s).
   const [copied, setCopied] = useState<null | "code" | "link" | "share">(null);
   // A one-time welcome band after joining via an invite.
@@ -80,21 +84,21 @@ export function GroupDetail({ route, navigation }: Props) {
 
   useFetchOnFocus(load);
 
-  // Lazily fetch the invite the first time the sheet opens (member-gated; the viewer is a member, so
-  // it resolves). Kept off the focus load so opening a group never pays for an invite query.
-  useEffect(() => {
-    if (!inviteOpen || invite) return;
-    let active = true;
+  // Fetch the group's invite (member-gated; the viewer is a member, so it resolves). Shared by the
+  // open effect and the retry button.
+  const loadInvite = useCallback(() => {
+    setInviteError(false);
     trpc.groups.inviteByGroup
       .query({ groupId })
-      .then((inv) => {
-        if (active) setInvite(inv);
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, [inviteOpen, invite, groupId]);
+      .then((inv) => setInvite(inv))
+      .catch(() => setInviteError(true));
+  }, [groupId]);
+
+  // Lazily fetch the invite the first time the sheet opens. Kept off the focus load so opening a group
+  // never pays for an invite query.
+  useEffect(() => {
+    if (inviteOpen && !invite) loadInvite();
+  }, [inviteOpen, invite, loadInvite]);
 
   // Land-on-invite after creating the group: open the sheet once the group has loaded, then clear the
   // flag so a refocus does not reopen it.
@@ -271,6 +275,13 @@ export function GroupDetail({ route, navigation }: Props) {
               style={{ marginTop: 16 }}
             />
           </>
+        ) : inviteError ? (
+          <Card>
+            <AppText variant="caption">{ERR_NETWORK}</AppText>
+            <View style={{ marginTop: 8, alignItems: "flex-start" }}>
+              <TextButton label={ACTION_TRY_AGAIN} onPress={loadInvite} />
+            </View>
+          </Card>
         ) : (
           <EmptyState inCard>{INVITE_CODE_PENDING}</EmptyState>
         )}

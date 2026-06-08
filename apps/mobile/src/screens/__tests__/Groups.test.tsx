@@ -258,7 +258,7 @@ describe("GroupsList", () => {
 
     // Open the paste sheet, type a pretty/lowercased code, and join.
     fireEvent.press(await screen.findByText(ACTION_JOIN_WITH_CODE));
-    const field = await screen.findByPlaceholderText("ABCD-EF12");
+    const field = await screen.findByPlaceholderText("ABCDEF12");
     fireEvent.changeText(field, "abcd-2345");
     fireEvent.press(screen.getByText(ACTION_JOIN));
 

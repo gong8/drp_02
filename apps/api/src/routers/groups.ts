@@ -121,8 +121,9 @@ export const groupsRouter = router({
   // Redeem a group's invite code to join it (M4 onboarding). Surface-agnostic: the same path serves
   // a tapped web link, a typed code, or (later) a native deep link. Idempotent - re-joining is a
   // no-op that still resolves the group so the client can route there, and reports `alreadyMember`
-  // so the UI can say "you're already in" instead of "welcome". The caller's user row already exists
-  // (Clerk users are upserted in createContext; the dev user is seeded), so the membership FK holds.
+  // so the UI can say "you're already in" instead of "welcome". For any real caller the membership
+  // FK holds: Clerk users are upserted in createContext and the seeded dev user u_dev exists. (A
+  // deliberately spoofed, unseeded x-user-id under DEV_AUTH_BYPASS is the only gap - dev-only.)
   joinByCode: protectedProcedure.input(JoinByCodeInput).mutation(async ({ ctx, input }) => {
     const code = normalizeInviteCode(input.code);
     if (!code) throw new TRPCError({ code: "BAD_REQUEST", message: "Enter an invite code" });

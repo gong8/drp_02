@@ -75,7 +75,7 @@ test("entering a code previews the group, then joining lands in it (justJoined)"
   mountJoin({});
 
   // idle -> type a code -> find the group.
-  const field = await screen.findByPlaceholderText("ABCD-EF12");
+  const field = await screen.findByPlaceholderText("ABCDEF12");
   fireEvent.changeText(field, "abcd-2345");
   fireEvent.press(screen.getByText(ACTION_FIND_GROUP));
 

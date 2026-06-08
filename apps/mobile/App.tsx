@@ -179,8 +179,11 @@ function Gate() {
   const authed = useAuthBridge();
 
   // While signed out, stash an invite code from the launch URL / any incoming link, so it survives
-  // sign-in (on web the OAuth redirect reloads the page). When already authed the linking config
-  // routes invite URLs directly, so we skip stashing - and a stale code never lingers.
+  // sign-in. This runs during every signed-out window - including the brief one before an async Clerk
+  // session resolves - so the code is captured even when the navigator was not yet mounted to route
+  // it. When already authed the linking config routes invite URLs directly, so we skip stashing (and
+  // a stale code never lingers). The web stash lives in localStorage (see lib/invite), so it survives
+  // the OAuth redirect's page reload; native keeps it in memory, which the app's lifetime preserves.
   useEffect(() => {
     if (authed) return;
     let active = true;
@@ -198,29 +201,25 @@ function Gate() {
     };
   }, [authed]);
 
-  // Once authed, resume any pending invite: route to JoinGroup and clear it. Falls back to the launch
-  // URL because a web OAuth reload wipes the in-memory stash while the URL bar still holds /join/code.
+  // Once authed, resume a STASHED invite (the signed-out capture above): route to JoinGroup, then
+  // clear it. We rely only on the stash - an already-authed user opening /join/code is routed by the
+  // linking config (the navigator is mounted), so the two never both fire. Clearing only after the
+  // navigate lands means a torn-down poll cannot drop the code, and go() bails if the effect is gone.
   useEffect(() => {
     if (!authed) return;
+    const code = getPendingInvite();
+    if (!code) return;
     let active = true;
-    (async () => {
-      let code = getPendingInvite();
-      if (!code) {
-        const url = await Linking.getInitialURL();
-        code = url ? extractInviteCode(url) : null;
+    const go = () => {
+      if (!active) return;
+      if (navigationRef.isReady()) {
+        navigationRef.navigate("Groups", { screen: "JoinGroup", params: { code } });
+        clearPendingInvite();
+      } else {
+        setTimeout(go, 50);
       }
-      if (!active || !code) return;
-      clearPendingInvite();
-      const resolved = code;
-      const go = () => {
-        if (navigationRef.isReady()) {
-          navigationRef.navigate("Groups", { screen: "JoinGroup", params: { code: resolved } });
-        } else {
-          setTimeout(go, 50);
-        }
-      };
-      go();
-    })();
+    };
+    go();
     return () => {
       active = false;
     };
