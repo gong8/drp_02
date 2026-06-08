@@ -567,9 +567,9 @@ export function EventDetail({ route, navigation }: Props) {
 // The committed-answer / outcome status line, shared by the moment locked-in view and the reveal.
 function StatusHeading({ children }: { children: string }) {
   return (
-    <Text style={{ fontFamily: font.bold, fontSize: 14, color: ui.ink, marginBottom: 12 }}>
+    <AppText variant="rowLabel" style={{ marginBottom: 12 }}>
       {children}
-    </Text>
+    </AppText>
   );
 }
 
