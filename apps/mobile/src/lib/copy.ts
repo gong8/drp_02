@@ -1,14 +1,10 @@
 // One vocabulary for the whole app. Every user-facing string that recurs (or used to recur in three
-// different phrasings) lives here, so the verb for +1'ing is always "vote", a plan is always a
-// "meetup", and the privacy / deadline / error lines never drift between screens. Code-internal names
-// (plan, candidate, react) are unchanged; this only governs what the user reads.
+// different phrasings) lives here, so a plan is always a "meetup", and the privacy / deadline / error
+// lines never drift between screens. Code-internal names (plan, candidate, react) are unchanged; this
+// only governs what the user reads.
 
 import type { StepKey } from "./redo";
 import type { MyStatus } from "./status";
-
-// The single verb for reacting to a candidate (banner already says "Voting closes").
-export const VERB_VOTE = "Vote";
-export const VERB_VOTED = "Voted";
 
 // The single decline phrase (drop "I"/"You're").
 export const LABEL_CANT_MAKE_IT = "Can't make it";
