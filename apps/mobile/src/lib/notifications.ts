@@ -94,13 +94,7 @@ export async function syncReminders(events: ReminderEvent[]): Promise<void> {
           );
         }
         const decideMs = new Date(e.decidesBy).getTime();
-        if (decideMs > now) {
-          await scheduleAt(
-            new Date(decideMs),
-            "Who's in?",
-            `"${planLabel(e)}" just opened for the moment - say if you're in.`,
-          );
-        }
+        if (decideMs > now) await scheduleMomentOpen(e, new Date(decideMs));
       }
 
       if (e.phase === "moment" && e.myStatus === "awaiting" && e.momentEndsAt) {
@@ -111,11 +105,7 @@ export async function syncReminders(events: ReminderEvent[]): Promise<void> {
         if (!e.iResponded && e.momentStartsAt) {
           const startedMs = new Date(e.momentStartsAt).getTime();
           if (now - startedMs >= 0 && now - startedMs <= MOMENT_OPEN_WINDOW_MS) {
-            await scheduleAt(
-              new Date(now),
-              "Who's in?",
-              `"${planLabel(e)}" just opened for the moment - say if you're in.`,
-            );
+            await scheduleMomentOpen(e, new Date(now));
           }
         }
         await scheduleLead(
@@ -133,6 +123,17 @@ export async function syncReminders(events: ReminderEvent[]): Promise<void> {
   } catch {
     // best-effort: never let a notification hiccup break the dashboard
   }
+}
+
+// The "just opened for the moment" ping, fired from both the collecting branch (at the decides-by
+// instant) and the moment re-arm branch (at now). Naming the content once keeps the two intentionally
+// identical re-arm paths from drifting (see the MOMENT_OPEN_WINDOW_MS comment for why both exist).
+async function scheduleMomentOpen(e: ReminderEvent, date: Date): Promise<void> {
+  await scheduleAt(
+    date,
+    "Who's in?",
+    `"${planLabel(e)}" just opened for the moment - say if you're in.`,
+  );
 }
 
 // Schedule a "fires leadMs before iso" reminder, but only if that lead time is still in the future.
