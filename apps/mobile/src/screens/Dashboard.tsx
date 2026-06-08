@@ -156,6 +156,24 @@ function MeetupCard({ e, now, onPress }: { e: Meetup; now: number; onPress: () =
   );
 }
 
+// The black-weight uppercase eyebrow used by the history divider and the action-required band header.
+// One in-file recipe so the two callers keep identical typography (only size/colour vary).
+function Eyebrow({ size, color, children }: { size: number; color: string; children: string }) {
+  return (
+    <Text
+      style={{
+        fontFamily: font.black,
+        fontSize: size,
+        letterSpacing: 1,
+        textTransform: "uppercase",
+        color,
+      }}
+    >
+      {children}
+    </Text>
+  );
+}
+
 // Rules off the history section in the "All" tab: a hairline with a small DONE label, so the agenda
 // above and the finished/declined plans below read as two distinct groups.
 function HistoryDivider() {
@@ -170,17 +188,9 @@ function HistoryDivider() {
       }}
     >
       <View style={{ flex: 1, height: ui.border, backgroundColor: ui.hairline }} />
-      <Text
-        style={{
-          fontFamily: font.black,
-          fontSize: 11,
-          letterSpacing: 1,
-          textTransform: "uppercase",
-          color: ui.muted,
-        }}
-      >
+      <Eyebrow size={11} color={ui.muted}>
         Done
-      </Text>
+      </Eyebrow>
       <View style={{ flex: 1, height: ui.border, backgroundColor: ui.hairline }} />
     </View>
   );
@@ -302,17 +312,9 @@ export function Dashboard({ navigation }: Props) {
         <>
           {actionCount > 0 && (
             <Band style={{ marginBottom: 22, paddingTop: 13, paddingBottom: 16 }}>
-              <Text
-                style={{
-                  fontFamily: font.black,
-                  fontSize: 13,
-                  letterSpacing: 1,
-                  textTransform: "uppercase",
-                  color: ui.onInk,
-                }}
-              >
+              <Eyebrow size={13} color={ui.onInk}>
                 {actionsRequiredLabel(actionCount)}
-              </Text>
+              </Eyebrow>
               {actionItems.map((e) => (
                 <ActionRow
                   key={e.id}

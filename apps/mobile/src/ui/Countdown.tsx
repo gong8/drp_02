@@ -1,6 +1,7 @@
 import { Text, View } from "react-native";
 import { countdownLabel, HOT_MS } from "../lib/format";
 import { font, ui } from "../theme";
+import { FieldLabel } from "./FieldLabel";
 
 // The one time-left display. Leads with the DURATION (big, tabular) so "how long is left" is the
 // obvious thing, with a small uppercase label above it ("RSVP CLOSES"). `color` overrides the text
@@ -23,19 +24,7 @@ export function Countdown({
   return (
     <View>
       {label ? (
-        <Text
-          style={{
-            fontFamily: font.bold,
-            fontSize: 9,
-            letterSpacing: 1,
-            textTransform: "uppercase",
-            color: c,
-            opacity: 0.8,
-            marginBottom: 1,
-          }}
-        >
-          {label}
-        </Text>
+        <FieldLabel style={{ color: c, opacity: 0.8, marginBottom: 1 }}>{label}</FieldLabel>
       ) : null}
       <Text
         style={{
