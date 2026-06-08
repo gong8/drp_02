@@ -33,6 +33,16 @@ async function memberIdsOf(groupId: string): Promise<string[]> {
   return rows.map((r) => r.userId);
 }
 
+async function resolveGroupByCode(rawCode: string) {
+  const code = normalizeInviteCode(rawCode);
+  if (!code) throw new TRPCError({ code: "BAD_REQUEST", message: "Enter an invite code" });
+  const [group] = await db.select().from(groups).where(eq(groups.inviteCode, code)).limit(1);
+  if (!group) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "That code does not match a group" });
+  }
+  return group;
+}
+
 export const groupsRouter = router({
   // The groups the current user belongs to, with a member count for the list rows.
   mine: protectedProcedure.query(async ({ ctx }) => {
@@ -105,12 +115,7 @@ export const groupsRouter = router({
   // member-gated: holding the code is the invitation. Reveals only the group name + size, never
   // member names (anonymity is preserved until you are actually in the roster).
   previewByCode: protectedProcedure.input(JoinByCodeInput).query(async ({ input }) => {
-    const code = normalizeInviteCode(input.code);
-    if (!code) throw new TRPCError({ code: "BAD_REQUEST", message: "Enter an invite code" });
-    const [group] = await db.select().from(groups).where(eq(groups.inviteCode, code)).limit(1);
-    if (!group) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "That code does not match a group" });
-    }
+    const group = await resolveGroupByCode(input.code);
     const [tally] = await db
       .select({ n: count() })
       .from(groupMembers)
@@ -125,12 +130,7 @@ export const groupsRouter = router({
   // FK holds: Clerk users are upserted in createContext and the seeded dev user u_dev exists. (A
   // deliberately spoofed, unseeded x-user-id under DEV_AUTH_BYPASS is the only gap - dev-only.)
   joinByCode: protectedProcedure.input(JoinByCodeInput).mutation(async ({ ctx, input }) => {
-    const code = normalizeInviteCode(input.code);
-    if (!code) throw new TRPCError({ code: "BAD_REQUEST", message: "Enter an invite code" });
-    const [group] = await db.select().from(groups).where(eq(groups.inviteCode, code)).limit(1);
-    if (!group) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "That code does not match a group" });
-    }
+    const group = await resolveGroupByCode(input.code);
     const [existing] = await db
       .select({ userId: groupMembers.userId })
       .from(groupMembers)
