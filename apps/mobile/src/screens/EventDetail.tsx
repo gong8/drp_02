@@ -1,4 +1,4 @@
-import type { PartOfDay, UpdateEventInput } from "@bethere/shared";
+import type { UpdateEventInput } from "@bethere/shared";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useCallback, useRef, useState } from "react";
@@ -190,14 +190,8 @@ export function EventDetail({ route, navigation }: Props) {
 
   // Add a candidate while collecting (server +1s it for the author); refetch so it shows. Kind-gated
   // server-side: a time when lockTimes / an activity when lockActivity is FORBIDDEN (UI hides the add).
-  function addTime(startsAt: string, partOfDay?: PartOfDay) {
-    return runAction(() =>
-      trpc.events.addCandidate.mutate(
-        partOfDay
-          ? { eventId, kind: "time", startsAt, partOfDay }
-          : { eventId, kind: "time", startsAt },
-      ),
-    );
+  function addTime(startsAt: string) {
+    return runAction(() => trpc.events.addCandidate.mutate({ eventId, kind: "time", startsAt }));
   }
 
   function addActivity(text: string) {
@@ -514,7 +508,6 @@ export function EventDetail({ route, navigation }: Props) {
       {data.phase === "collecting" && (
         <CollectingView
           data={data}
-          optedOut={data.iOptedOut}
           busy={busy}
           onToggleReaction={toggleReaction}
           onToggleOptOut={toggleOptOut}
@@ -597,7 +590,6 @@ function CountdownBanner({ label, ms, note }: { label: string; ms: number; note:
 // composer for both lists; it is hidden when the creator locked that axis. No names ever shown.
 function CollectingView({
   data,
-  optedOut,
   busy,
   onToggleReaction,
   onToggleOptOut,
@@ -606,12 +598,11 @@ function CollectingView({
   onAddActivity,
 }: {
   data: Detail;
-  optedOut: boolean;
   busy: boolean;
   onToggleReaction: (candidateId: string) => void;
   onToggleOptOut: () => void;
   onLock: (candidateId?: string) => void;
-  onAddTime: (startsAt: string, partOfDay?: PartOfDay) => void;
+  onAddTime: (startsAt: string) => void;
   onAddActivity: (text: string) => void;
 }) {
   return (
@@ -649,7 +640,7 @@ function CollectingView({
       <CheckOption
         label={LABEL_CANT_MAKE_IT}
         sub="Tap anything above to rejoin"
-        on={optedOut}
+        on={data.iOptedOut}
         onToggle={onToggleOptOut}
         accent={ui.ink}
         tinted
@@ -748,7 +739,7 @@ function AddTime({
 }: {
   busy: boolean;
   data: Detail;
-  onAdd: (startsAt: string, partOfDay?: PartOfDay) => void;
+  onAdd: (startsAt: string) => void;
 }) {
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("");
