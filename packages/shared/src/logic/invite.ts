@@ -16,10 +16,3 @@ export const INVITE_CODE_LENGTH = 8;
 export function normalizeInviteCode(raw: string): string {
   return raw.replace(/[^0-9a-zA-Z]/g, "").toUpperCase();
 }
-
-// Group a code for display as two readable quads: "ABCD-EF12". Shorter codes are returned as-is.
-export function formatInviteCode(code: string): string {
-  const c = code.toUpperCase();
-  if (c.length <= 4) return c;
-  return `${c.slice(0, 4)}-${c.slice(4)}`;
-}
