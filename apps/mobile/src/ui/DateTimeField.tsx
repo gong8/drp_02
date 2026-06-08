@@ -9,6 +9,7 @@ import {
   parseLocalDate,
   parseLocalTime,
   shortDayLabel,
+  shortTimeLabel,
   timeStringFrom,
 } from "../lib/format";
 import { font, ui } from "../theme";
@@ -70,7 +71,7 @@ function displayValue(mode: "date" | "time", value: string): string | null {
     return d ? shortDayLabel(d) : value;
   }
   const t = parseLocalTime(value);
-  return t ? t.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }) : value;
+  return t ? shortTimeLabel(t) : value;
 }
 
 export function DateTimeField({

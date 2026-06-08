@@ -62,6 +62,11 @@ export function shortDayLabel(d: Date): string {
   return d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
 }
 
+// Date -> "4:00 PM" short time label (used by DateTimeField).
+export function shortTimeLabel(d: Date): string {
+  return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+
 const AVATAR_COLORS = ["#5F9472", "#C9823F", "#7E6BB0", "#3F7BA8", "#B0654F"] as const;
 
 // Deterministic avatar colour from an id, so a group reads as a distinct circle.

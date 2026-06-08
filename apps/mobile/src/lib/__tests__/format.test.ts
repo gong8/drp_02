@@ -16,6 +16,7 @@ import {
   formatSlot,
   formatTimeLeft,
   isoFrom,
+  shortTimeLabel,
   splitIso,
   timeStringFrom,
 } from "../format";
@@ -227,5 +228,17 @@ describe("dateStringFrom / timeStringFrom", () => {
     const iso = isoFrom(dateStringFrom(d), timeStringFrom(d));
     if (iso === null) throw new Error("isoFrom returned null for a valid date/time");
     expect(new Date(iso).getTime()).toBe(d.getTime());
+  });
+});
+
+// ---------------------------------------------------------------------------
+// shortTimeLabel: locale-tolerant hour:minute label for the DateTimeField trigger
+// ---------------------------------------------------------------------------
+
+describe("shortTimeLabel", () => {
+  test("returns a non-empty hour:minute string for a known Date", () => {
+    const label = shortTimeLabel(new Date(2026, 5, 3, 16, 0));
+    expect(label).toMatch(/\d/);
+    expect(label).toContain(":");
   });
 });

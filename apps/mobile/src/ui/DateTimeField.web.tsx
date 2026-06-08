@@ -46,7 +46,7 @@ export function DateTimeField({
           fontFamily: font.medium,
           fontSize: 13,
           color: ui.ink,
-          boxShadow: bare ? "none" : `3px 3px 0 0 ${ui.ink}`,
+          boxShadow: bare ? "none" : `${ui.shadowInput}px ${ui.shadowInput}px 0 0 ${ui.ink}`,
           // Tints the calendar/time popup selection in supporting browsers.
           accentColor: ui.brand,
           outline: "none",
