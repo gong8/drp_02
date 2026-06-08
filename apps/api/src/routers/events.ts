@@ -72,6 +72,11 @@ async function candidatesFor(eventId: string): Promise<(typeof eventCandidates.$
   return rows.sort(byStartsAtThenNullsLast);
 }
 
+// Projects mixed candidate rows into the {id,label} shape resolveActivity/displayActivity expect.
+function activityCandidateInputs(cands: (typeof eventCandidates.$inferSelect)[]) {
+  return cands.filter((c) => c.kind === "activity").map((c) => ({ id: c.id, label: c.label }));
+}
+
 // Maps an EventRow into revealGoing's opts; see revealGoing for the blind-until-end rule.
 function goingFromRow(e: EventRow, resp: MomentResponse[]): string[] | null {
   return revealGoing(resp, {
@@ -159,11 +164,7 @@ async function openMoment(
   reactions: { candidateId: string; userId: string }[],
 ): Promise<boolean> {
   const startsAt = chosen.startsAt as Date;
-  const activity = resolveActivity(
-    e.activity,
-    cands.filter((c) => c.kind === "activity").map((c) => ({ id: c.id, label: c.label })),
-    reactions,
-  );
+  const activity = resolveActivity(e.activity, activityCandidateInputs(cands), reactions);
   const now = new Date();
   const endsAt = resolveMomentEnd(now.getTime(), startsAt.getTime(), e.replyBy?.getTime() ?? null);
   const locked = await db
@@ -888,11 +889,7 @@ export const eventsRouter = router({
         candidateCount = cands.length;
         const reactions = bundle.reactions(e.id);
         iReacted = reactions.some((r) => r.userId === ctx.userId);
-        activity = displayActivity(
-          e.activity,
-          cands.filter((c) => c.kind === "activity").map((c) => ({ id: c.id, label: c.label })),
-          reactions,
-        );
+        activity = displayActivity(e.activity, activityCandidateInputs(cands), reactions);
         if (isCreator) {
           const timeIds = cands.filter((c) => c.kind === "time" && c.startsAt).map((c) => c.id);
           readyToLock = pickWinningCandidate(timeIds, reactions, e.quorum) !== null;
@@ -1023,11 +1020,7 @@ export const eventsRouter = router({
       groupName: bundle.groupName(e.groupId),
       // No real activity until lock; show the leading activity candidate (or blank, the client falls
       // back) so it stays meaningful while collecting.
-      activity: displayActivity(
-        e.activity,
-        cands.filter((c) => c.kind === "activity").map((c) => ({ id: c.id, label: c.label })),
-        reactions,
-      ),
+      activity: displayActivity(e.activity, activityCandidateInputs(cands), reactions),
       // The RAW stored activity (often "" while collecting); the edit sheet needs it so an empty
       // activity keeps auto-deriving rather than locking in the derived value.
       activityRaw: e.activity,
