@@ -13,6 +13,7 @@ export function PersonRow({
   color,
   index,
   right,
+  rightAlign = true,
   padding = 11,
   avatarSize = 26,
   divided = true,
@@ -23,6 +24,7 @@ export function PersonRow({
   color: string;
   index: number;
   right?: ReactNode;
+  rightAlign?: boolean;
   padding?: number;
   avatarSize?: number;
   divided?: boolean;
@@ -41,7 +43,13 @@ export function PersonRow({
     <>
       <Avatar initial={name.charAt(0).toUpperCase()} color={color} size={avatarSize} />
       <AppText variant="rowLabelSm">{name}</AppText>
-      {right}
+      {right != null ? (
+        rightAlign ? (
+          <View style={{ marginLeft: "auto" }}>{right}</View>
+        ) : (
+          right
+        )
+      ) : null}
     </>
   );
   return onPress ? (

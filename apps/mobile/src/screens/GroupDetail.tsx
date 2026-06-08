@@ -197,16 +197,14 @@ export function GroupDetail({ route, navigation }: Props) {
             index={i}
             avatarSize={28}
             right={
-              <View style={{ marginLeft: "auto" }}>
-                <TextButton
-                  label="×"
-                  tone="muted"
-                  disabled={busy}
-                  onPress={() =>
-                    runAction(() => trpc.groups.removeMember.mutate({ groupId, userId: m.id }))
-                  }
-                />
-              </View>
+              <TextButton
+                label="×"
+                tone="muted"
+                disabled={busy}
+                onPress={() =>
+                  runAction(() => trpc.groups.removeMember.mutate({ groupId, userId: m.id }))
+                }
+              />
             }
           />
         ))}

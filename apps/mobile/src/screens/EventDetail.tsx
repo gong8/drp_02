@@ -359,11 +359,7 @@ export function EventDetail({ route, navigation }: Props) {
                 onPress={() =>
                   setCondPicked((p) => (on ? p.filter((x) => x !== m.id) : [...p, m.id]))
                 }
-                right={
-                  <View style={{ marginLeft: "auto" }}>
-                    <SelectCheck selected={on} />
-                  </View>
-                }
+                right={<SelectCheck selected={on} />}
               />
             );
           })}
@@ -873,7 +869,7 @@ function RevealView({ data, statusLine }: { data: Detail; statusLine: string }) 
             name={p.name}
             color={p.color}
             index={i}
-            right={<Text style={{ marginLeft: "auto", color: ui.going }}>{"✓"}</Text>}
+            right={<Text style={{ color: ui.going }}>{"✓"}</Text>}
           />
         ))}
         {data.going.length === 0 && (
