@@ -35,6 +35,7 @@ import {
   groupMembers,
   responses,
 } from "../db/schema.js";
+import type { UserCard } from "../db/users.js";
 import { FALLBACK_AVATAR_COLOR, FALLBACK_USER_NAME, getUserCards } from "../db/users.js";
 import { msLeft } from "../format.js";
 import { shapePastMeetups } from "../logic/past-meetups.js";
@@ -378,7 +379,7 @@ async function loadEventBundle(
   reactions: (id: string) => { candidateId: string; userId: string }[];
   optOuts: (id: string) => Set<string>;
   groupName: (id: string) => string;
-  userCard: (id: string) => { id: string; name: string; color: string };
+  userCard: (id: string) => UserCard;
   hasUser: (id: string) => boolean;
 }> {
   const ids = rows.map((e) => e.id);
