@@ -10,13 +10,14 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
-// Legacy M2 lifecycle, kept so the change stays additive (the new flow uses `phase`).
+// Frozen legacy: written on every plan but never read; `phase` is the live lifecycle source of
+// truth. Slated for removal in a dedicated migration.
 export const eventStatusEnum = pgEnum("event_status", ["open", "resolved"]);
 export const responseKindEnum = pgEnum("response_kind", ["yes", "no", "conditional"]);
 
 // Plan lifecycle: a plan collects reactions -> opens a blind moment -> cleared / fizzled.
 export const planPhaseEnum = pgEnum("plan_phase", ["collecting", "moment", "cleared", "fizzled"]);
-// Rough time-of-day band a fuzzy candidate sits in.
+// Rough time-of-day band hint for a TIME candidate.
 export const partOfDayEnum = pgEnum("part_of_day", ["morning", "afternoon", "evening", "late"]);
 // Which list a candidate sits on: a concrete TIME, or a free-text ACTIVITY (what/where, fused).
 export const candidateKindEnum = pgEnum("candidate_kind", ["time", "activity"]);
@@ -50,10 +51,9 @@ export const groupMembers = pgTable(
   (t) => ({ pk: primaryKey({ columns: [t.groupId, t.userId] }) }),
 );
 
-// A plan. It collects per-candidate reactions across the TIME and ACTIVITY lists, the creator
-// locks the winning candidates to open the blind moment, and it clears or silently fizzles.
-// `startsAt`/`respondByAt` are retained from M2; they hold the first/last candidate as a
-// placeholder until `lock` sets `chosenCandidateId` + the moment window.
+// A plan. It collects per-candidate reactions across the TIME and ACTIVITY lists; the creator
+// (or the decidesBy deadline) locks the winning candidates to open the blind moment, then it
+// clears or silently fizzles.
 export const events = pgTable("events", {
   id: text("id").primaryKey(),
   groupId: text("group_id")
@@ -65,13 +65,18 @@ export const events = pgTable("events", {
   activity: text("activity").notNull(),
   description: text("description"),
   location: text("location").notNull(),
+  // Required. Seeded from the leading/trailing candidate; superseded by the moment window
+  // (momentStartsAt/momentEndsAt) once `lock` sets chosenCandidateId.
   startsAt: timestamp("starts_at").notNull(),
   respondByAt: timestamp("respond_by_at").notNull(),
+  // Frozen legacy column: written on every plan but never read - phase is the live lifecycle
+  // source of truth. Slated for removal in a dedicated migration.
   status: eventStatusEnum("status").notNull().default("open"),
   contingent: boolean("contingent").notNull().default(false),
   quorum: integer("quorum").notNull().default(1),
-  // Plans are always anonymous: createdByUserId is stored for accountability but never surfaced,
-  // so isCreator is forced false whenever this is set.
+  // Frozen legacy flag: always true. Anonymity is a global invariant (createdByUserId is stored
+  // for accountability but never surfaced; isCreator is always false), not a per-plan toggle.
+  // Slated for removal in a dedicated migration.
   isAnonymous: boolean("is_anonymous").notNull().default(true),
   phase: planPhaseEnum("phase").notNull().default("collecting"),
   lockTimes: boolean("lock_times").notNull().default(false),
@@ -88,8 +93,8 @@ export const events = pgTable("events", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-// A candidate time people react to during `collecting`. Exact plans have exactly one; options
-// plans have the creator's menu; fuzzy plans have day candidates expanded from the window.
+// A candidate on a plan's TIME or ACTIVITY list that members react to during `collecting`.
+// TIME candidates set startsAt (with an optional partOfDay hint); ACTIVITY candidates set `label`.
 export const eventCandidates = pgTable("event_candidates", {
   id: text("id").primaryKey(),
   eventId: text("event_id")
