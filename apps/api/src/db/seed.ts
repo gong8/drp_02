@@ -1,4 +1,5 @@
 import { db } from "./client.js";
+import { freshInviteCode } from "./groups.js";
 import {
   candidateReactions,
   eventCandidates,
@@ -19,7 +20,10 @@ async function insertDemoData(): Promise<void> {
       .onConflictDoUpdate({ target: users.id, set: { name: u.name, avatarColor: u.avatarColor } });
   }
   for (const g of GROUPS) {
-    await db.insert(groups).values({ id: g.id, name: g.name }).onConflictDoNothing();
+    await db
+      .insert(groups)
+      .values({ id: g.id, name: g.name, inviteCode: await freshInviteCode() })
+      .onConflictDoNothing();
     for (const userId of g.members) {
       await db.insert(groupMembers).values({ groupId: g.id, userId }).onConflictDoNothing();
     }

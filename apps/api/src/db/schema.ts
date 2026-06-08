@@ -31,6 +31,9 @@ export const users = pgTable("users", {
 export const groups = pgTable("groups", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
+  // Stable per-group invite code (M4 onboarding). Shared via a link or typed in to join; unique so
+  // a code resolves to exactly one group. Minted at create time and on demand for legacy rows.
+  inviteCode: text("invite_code").notNull().unique(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

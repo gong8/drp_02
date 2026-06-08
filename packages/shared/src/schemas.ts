@@ -175,3 +175,18 @@ export type ByGroupInput = z.infer<typeof ByGroupInput>;
 // Shared `{ groupId, userId }` ref for membership mutations (groups.addMember / removeMember).
 export const GroupMemberRef = z.object({ groupId: z.string(), userId: z.string() });
 export type GroupMemberRef = z.infer<typeof GroupMemberRef>;
+
+// Network boundary for groups.joinByCode - a caller redeems a group's invite code to join it. The
+// raw code is normalized server-side (see normalizeInviteCode), so we accept any reasonable string
+// here and let an unknown code surface as NOT_FOUND rather than rejecting odd casing/dashes upfront.
+export const JoinByCodeInput = z.object({ code: z.string().min(1).max(40) });
+export type JoinByCodeInput = z.infer<typeof JoinByCodeInput>;
+
+// A person's editable display name (M4 onboarding). Trimmed; single-sourced so every path that
+// writes a name validates identically. Shown in rosters, so it must be non-empty.
+export const DisplayName = z.string().trim().min(1).max(40);
+
+// Network boundary for users.updateProfile - the signed-in user sets their own display name so real
+// names (not the "Member" default) show in group rosters.
+export const UpdateProfileInput = z.object({ name: DisplayName });
+export type UpdateProfileInput = z.infer<typeof UpdateProfileInput>;

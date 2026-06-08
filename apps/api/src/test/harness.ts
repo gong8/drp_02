@@ -21,6 +21,7 @@ import { randomUUID } from "node:crypto";
 import { sql } from "drizzle-orm";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { db } from "../db/client.js";
+import { freshInviteCode } from "../db/groups.js";
 import { migrationsFolder } from "../db/paths.js";
 import {
   candidateReactions,
@@ -108,7 +109,7 @@ export async function makeUsers(n: number): Promise<string[]> {
 // Create a group and add the given users as members (no creator is implied - pass them in).
 export async function makeGroup(memberIds: string[] = [], name = "Test Group"): Promise<string> {
   const id = `g_${randomUUID()}`;
-  await db.insert(groups).values({ id, name });
+  await db.insert(groups).values({ id, name, inviteCode: await freshInviteCode() });
   for (const userId of memberIds) await db.insert(groupMembers).values({ groupId: id, userId });
   return id;
 }
