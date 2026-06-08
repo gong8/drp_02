@@ -5,7 +5,6 @@ import { plural } from "./copy";
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
 // Millisecond magnitudes, single-sourced so every countdown/duration surface shares one set.
-const SEC_MS = 1000;
 const MIN_MS = 60_000;
 const HOUR_MS = 3_600_000;
 const DAY_MS = 24 * HOUR_MS;
@@ -123,19 +122,6 @@ export function clock12(iso: string): { time: string; ampm: string } {
 export function partOfDayLabel(part: PartOfDay | null | undefined): string {
   if (!part) return "";
   return part.charAt(0).toUpperCase() + part.slice(1);
-}
-
-// A live moment countdown: "12:34" under an hour, "3h 04m" / "2d 3h" beyond. Empty once passed.
-export function formatCountdown(ms: number): string {
-  if (ms <= 0) return "0:00";
-  const totalMins = Math.floor(ms / MIN_MS);
-  if (totalMins < 60) {
-    const secs = Math.floor((ms % MIN_MS) / SEC_MS);
-    return `${totalMins}:${pad2(secs)}`;
-  }
-  const hours = Math.floor(totalMins / 60);
-  if (hours < 24) return `${hours}h ${pad2(totalMins % 60)}m`;
-  return `${Math.floor(hours / 24)}d ${hours % 24}h`;
 }
 
 // A bare, verbose duration phrase for the largest whole unit: "2 days", "1 hour", "23 minutes",
