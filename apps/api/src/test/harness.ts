@@ -18,7 +18,7 @@
 //   test("...", async () => { const u = await makeUser(); ... });
 
 import { randomUUID } from "node:crypto";
-import { sql } from "drizzle-orm";
+import { getTableName, sql } from "drizzle-orm";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { db } from "../db/client.js";
 import { freshInviteCode } from "../db/groups.js";
@@ -37,6 +37,18 @@ import { logger } from "../logger.js";
 import { appRouter } from "../router.js";
 import { dropDatabase, withMaintenanceClient } from "./maintenance-db.js";
 import { testDbName as testDbNameFor } from "./pg-config.js";
+
+// Single source of truth for the wipe set, shared by resetTables and the named re-export below.
+const TRUNCATE_TABLES = [
+  responses,
+  candidateReactions,
+  eventOptOuts,
+  eventCandidates,
+  events,
+  groupMembers,
+  groups,
+  users,
+] as const;
 
 const testDbName = process.env.TEST_DB_NAME ?? testDbNameFor();
 
@@ -65,11 +77,8 @@ export function setupTestDb(): Promise<void> {
 
 // Wipe every table between tests. CASCADE clears FK-referencing rows; the order does not matter.
 export async function resetTables(): Promise<void> {
-  await db.execute(
-    sql.raw(
-      `TRUNCATE TABLE "responses","candidate_reactions","event_opt_outs","event_candidates","events","group_members","groups","users" RESTART IDENTITY CASCADE`,
-    ),
-  );
+  const list = TRUNCATE_TABLES.map((t) => `"${getTableName(t)}"`).join(",");
+  await db.execute(sql.raw(`TRUNCATE TABLE ${list} RESTART IDENTITY CASCADE`));
 }
 
 // Drop this process's database. Call in a top-level `after` so local runs do not leak DBs.
@@ -144,7 +153,10 @@ export async function insertEvent(over: EventOverrides): Promise<string> {
 export async function insertTimeCandidate(
   eventId: string,
   startsAt: Date,
-  over: { id?: string; partOfDay?: "morning" | "afternoon" | "evening" | "late" } = {},
+  over: {
+    id?: string;
+    partOfDay?: NonNullable<(typeof eventCandidates.$inferInsert)["partOfDay"]>;
+  } = {},
 ): Promise<string> {
   const id = over.id ?? `c_${randomUUID()}`;
   await db
@@ -174,8 +186,8 @@ export async function insertReaction(
 export async function insertResponse(
   eventId: string,
   userId: string,
-  kind: "yes" | "no" | "conditional",
-  cond: { mode: "all" | "any"; targetIds: string[] } | null = null,
+  kind: (typeof responses.$inferInsert)["kind"],
+  cond: (typeof responses.$inferInsert)["cond"] = null,
 ): Promise<void> {
   await db.insert(responses).values({ id: randomUUID(), eventId, userId, kind, cond });
 }
@@ -184,7 +196,8 @@ export async function insertOptOut(eventId: string, userId: string): Promise<voi
   await db.insert(eventOptOuts).values({ eventId, userId });
 }
 
-// Re-export the live db + tables so tests can assert on persisted rows directly.
+// Re-export the live db + tables so tests can assert on persisted rows directly. The tables are the
+// same in-scope bindings collected in TRUNCATE_TABLES, so there is no second hand-kept table list.
 export { db } from "../db/client.js";
 export {
   candidateReactions,
@@ -195,4 +208,4 @@ export {
   groups,
   responses,
   users,
-} from "../db/schema.js";
+};
