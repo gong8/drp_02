@@ -46,7 +46,7 @@ export type PlanPhase = z.infer<typeof PlanPhase>;
 // update all validate against the same caps (raise one here and every path follows in lockstep).
 const ACTIVITY_MAX = 80;
 const LOCATION_MAX = 120;
-const NOTES_MAX = 500;
+const DESCRIPTION_MAX = 500;
 
 // The activity-text rule, single-sourced so addCandidate and create validate identically (mirrors
 // the GroupName pattern). The create array additionally trims; see CreateEventInput.
@@ -66,7 +66,7 @@ export type TimeCandidateInput = z.infer<typeof TimeCandidateInput>;
 // `replyBy` closes the blind yes/no/"I'll go if" window, then reveals + resolves. `quorum` defaults.
 export const CreateEventInput = z.object({
   groupId: z.string(),
-  description: z.string().max(NOTES_MAX).optional(),
+  description: z.string().max(DESCRIPTION_MAX).optional(),
   location: z.string().max(LOCATION_MAX).optional(),
   timeCandidates: z.array(TimeCandidateInput).max(10).optional(),
   activityCandidates: z.array(z.string().trim().min(1).max(ACTIVITY_MAX)).max(10).optional(),
@@ -133,7 +133,7 @@ export const UpdateEventInput = ByEvent.extend({
   location: FieldEdit.refine((f) => f.to.length <= LOCATION_MAX, {
     message: "location is too long",
   }).optional(),
-  description: FieldEdit.refine((f) => f.to.length <= NOTES_MAX, {
+  description: FieldEdit.refine((f) => f.to.length <= DESCRIPTION_MAX, {
     message: "notes are too long",
   }).optional(),
 });
@@ -148,10 +148,8 @@ export const RespondInput = ByEvent.extend({
 });
 export type RespondInput = z.infer<typeof RespondInput>;
 
-// Network boundary for events.resolve - resolve the moment at (or after) its deadline. Just an
-// `{ eventId }` envelope, so it aliases the shared ByEvent base.
-export const ResolveInput = ByEvent;
-export type ResolveInput = z.infer<typeof ResolveInput>;
+// events.resolve and events.unrespond are bare `{ eventId }` envelopes, so both reuse the shared
+// ByEvent base directly.
 
 // The group-name rule, single-sourced so create and rename validate identically.
 export const GroupName = z.string().min(1).max(60);
@@ -168,7 +166,8 @@ export type RenameGroupInput = z.infer<typeof RenameGroupInput>;
 export const ByIdInput = z.object({ id: z.string() });
 export type ByIdInput = z.infer<typeof ByIdInput>;
 
-// Shared `{ groupId }` envelope (groups.addableUsers).
+// Shared `{ groupId }` envelope for the group-scoped queries (groups.addableUsers,
+// groups.inviteByGroup, events.pastForGroup).
 export const ByGroupInput = z.object({ groupId: z.string() });
 export type ByGroupInput = z.infer<typeof ByGroupInput>;
 

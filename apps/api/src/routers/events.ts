@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import {
   AddCandidateInput,
   addCandidateHorizon,
+  ByEvent,
   ByGroupInput,
   ByIdInput,
   type CandidateKind,
@@ -15,7 +16,6 @@ import {
   type PartOfDay,
   pickWinnerOrBestId,
   pickWinningCandidate,
-  ResolveInput,
   RespondInput,
   resolveIn,
   revealGoing,
@@ -1094,7 +1094,7 @@ export const eventsRouter = router({
 
   // Clear the caller's moment answer (the "Change" action): they return to un-answered, so the plan
   // goes back to Action Required until they answer again.
-  unrespond: protectedProcedure.input(ResolveInput).mutation(async ({ ctx, input }) => {
+  unrespond: protectedProcedure.input(ByEvent).mutation(async ({ ctx, input }) => {
     const e = await loadEvent(input.eventId, ctx.userId);
     await settleAndRequirePhase(e, "moment", "the moment is not open");
     await db
@@ -1105,7 +1105,7 @@ export const eventsRouter = router({
 
   // Settle the moment once its countdown has ended: cleared (quorum met or non-contingent) or a
   // silent fizzle. Idempotent and safe to call early (it no-ops until the deadline passes).
-  resolve: protectedProcedure.input(ResolveInput).mutation(async ({ ctx, input }) => {
+  resolve: protectedProcedure.input(ByEvent).mutation(async ({ ctx, input }) => {
     const e = await loadEvent(input.eventId, ctx.userId);
     await settleLifecycle(e);
     return { ok: true as const, phase: e.phase };
