@@ -91,3 +91,63 @@ export const STEP_COPY: Record<StepKey, { title: string; sub?: string }> = {
 export const TITLE_NEW_MEETUP = "New meetup";
 export const TITLE_NEW_GROUP = "New group";
 export const LABEL_GROUP_NAME = "Group name";
+
+// ----- M4 onboarding: invite + join + first-run (one voice across the new surfaces) -----
+
+// Invite sheet (GroupDetail).
+export const TITLE_INVITE = "Invite to group";
+export const INVITE_HINT = "Anyone with the code can join.";
+export const LABEL_JOIN_CODE = "Join code";
+export const LABEL_INVITE_LINK = "Invite link";
+export const ACTION_SHARE_INVITE = "Share invite";
+export const ACTION_COPY = "Copy";
+export const ACTION_COPIED = "Copied";
+export const ACTION_LINK_COPIED = "Link copied";
+export const INVITE_CODE_PENDING = "This group's code is on its way.";
+
+// Join funnel (JoinGroup + the GroupsList paste sheet).
+export const TITLE_JOIN = "Join a group";
+export const ACTION_JOIN_WITH_CODE = "Join with a code";
+export const JOIN_PROMPT_TITLE = "Got a code?";
+export const JOIN_PROMPT_SUB = "Type or paste your group's join code.";
+export const ACTION_FIND_GROUP = "Find group";
+export const ACTION_JOIN = "Join";
+export const ACTION_JOIN_GROUP = "Join group";
+export const ACTION_JOINING = "Joining...";
+export const ACTION_NOT_NOW = "Not now";
+export const ACTION_BACK_TO_GROUPS = "Back to groups";
+export const ACTION_TRY_AGAIN = "Try again";
+export const JOIN_NOT_FOUND_TITLE = "Code not found";
+export const JOIN_NOT_FOUND_BODY = "That code doesn't match a group. Check it and try again.";
+
+// Zero-group onboarding (GroupsList empty state) + create-to-share.
+export const ONBOARD_NO_GROUPS_TITLE = "No groups yet";
+export const ONBOARD_NO_GROUPS_BODY =
+  "Start a group and invite your people, or join one with a code.";
+export const ACTION_CREATE_GROUP = "Create a group";
+export const CREATE_GROUP_NEXT = "You'll get a link to share right after.";
+
+// Editable display name (Account).
+export const LABEL_DISPLAY_NAME = "Display name";
+export const PLACEHOLDER_DISPLAY_NAME = "Your name";
+export const NAME_HINT = "This is the name your groups see.";
+
+// "12 members" / "1 member" - the join-confirm group-size line.
+export function memberCountLabel(n: number): string {
+  return `${n} ${plural(n, "member")}`;
+}
+
+// "Join The Boys?" - the join-confirm heading.
+export function joinPrompt(name: string): string {
+  return `Join ${name}?`;
+}
+
+// "You're in. Welcome to The Boys." - the one-time post-join welcome band.
+export function welcomeToGroup(name: string): string {
+  return `You're in. Welcome to ${name}.`;
+}
+
+// The OS-share / web-share body: `Join "The Boys" on BeThere.` (the URL is passed separately).
+export function inviteShareText(name: string): string {
+  return `Join "${name}" on BeThere.`;
+}
