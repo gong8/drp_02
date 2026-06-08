@@ -57,7 +57,14 @@ export type StepKey =
   | "confirm";
 
 export function wizardSteps(hasPast: boolean): StepKey[] {
-  return hasPast
-    ? ["group", "source", "activities", "times", "details", "deadlines", "confirm"]
-    : ["group", "activities", "times", "details", "deadlines", "confirm"];
+  const STEPS: StepKey[] = [
+    "group",
+    "source",
+    "activities",
+    "times",
+    "details",
+    "deadlines",
+    "confirm",
+  ];
+  return STEPS.filter((s) => s !== "source" || hasPast);
 }
