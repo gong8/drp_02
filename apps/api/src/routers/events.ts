@@ -297,6 +297,17 @@ async function settleLifecycle(e: EventRow): Promise<void> {
   await settlePhase(e);
 }
 
+// Settle first (loadEvent never settles): a plan past its deadline has already
+// auto-locked/cleared/fizzled, so a late write must gate on the SETTLED phase.
+async function settleAndRequirePhase(
+  e: EventRow,
+  phase: EventRow["phase"],
+  message: string,
+): Promise<void> {
+  await settleLifecycle(e);
+  if (e.phase !== phase) throw new TRPCError({ code: "BAD_REQUEST", message });
+}
+
 // The opt-out-aware status of the caller, shared by mine (dashboard) and get (detail). In collecting
 // an opt-out reads as declined else reacting; after collecting an opt-out with no moment answer reads
 // as declined, else the blind/revealed rule. Takes iOptedOut precomputed - it never queries.
@@ -607,12 +618,7 @@ export const eventsRouter = router({
   // PUBLIC (momentum), but who reacted is never shown. Adding a +1 rejoins anyone who had opted out.
   toggleReaction: protectedProcedure.input(ToggleReactionInput).mutation(async ({ ctx, input }) => {
     const e = await loadEvent(input.eventId, ctx.userId);
-    // Settle first (loadEvent never settles): a collecting plan past its decides-by deadline has
-    // already auto-locked/fizzled, so a late +1 must be rejected against the SETTLED phase.
-    await settleLifecycle(e);
-    if (e.phase !== "collecting") {
-      throw new TRPCError({ code: "BAD_REQUEST", message: "plan is not collecting reactions" });
-    }
+    await settleAndRequirePhase(e, "collecting", "plan is not collecting reactions");
     const [cand] = await db
       .select()
       .from(eventCandidates)
@@ -661,12 +667,7 @@ export const eventsRouter = router({
   // Private: no one else, not even the creator, sees it. Reversible via out:false or by reacting.
   setOptOut: protectedProcedure.input(SetOptOutInput).mutation(async ({ ctx, input }) => {
     const e = await loadEvent(input.eventId, ctx.userId);
-    // Settle first (loadEvent never settles): once the decides-by deadline has passed the plan has
-    // auto-locked/fizzled, so opting in/out is rejected against the SETTLED phase.
-    await settleLifecycle(e);
-    if (e.phase !== "collecting") {
-      throw new TRPCError({ code: "BAD_REQUEST", message: "plan is not collecting" });
-    }
+    await settleAndRequirePhase(e, "collecting", "plan is not collecting");
     if (input.out) {
       await db
         .delete(candidateReactions)
@@ -693,12 +694,7 @@ export const eventsRouter = router({
   // Time candidates dedupe by minute; activity candidates dedupe case-insensitively. Adding +1s it.
   addCandidate: protectedProcedure.input(AddCandidateInput).mutation(async ({ ctx, input }) => {
     const e = await loadEvent(input.eventId, ctx.userId);
-    // Settle first (loadEvent never settles): a collecting plan past its decides-by deadline has
-    // already auto-locked/fizzled, so a late candidate must be rejected against the SETTLED phase.
-    await settleLifecycle(e);
-    if (e.phase !== "collecting") {
-      throw new TRPCError({ code: "BAD_REQUEST", message: "plan is not collecting" });
-    }
+    await settleAndRequirePhase(e, "collecting", "plan is not collecting");
     if (input.kind === "time" && e.lockTimes) {
       throw new TRPCError({ code: "FORBIDDEN", message: "times are locked on this plan" });
     }
@@ -796,12 +792,7 @@ export const eventsRouter = router({
     if (e.createdByUserId !== ctx.userId) {
       throw new TRPCError({ code: "FORBIDDEN", message: "only the creator can lock the moment" });
     }
-    // Settle first (loadEvent never settles): a collecting plan past its decides-by deadline has
-    // already auto-locked/fizzled, so a manual lock is rejected against the SETTLED phase.
-    await settleLifecycle(e);
-    if (e.phase !== "collecting") {
-      throw new TRPCError({ code: "BAD_REQUEST", message: "plan is not collecting" });
-    }
+    await settleAndRequirePhase(e, "collecting", "plan is not collecting");
     const cands = await candidatesFor(input.eventId);
     const timeCands = cands.filter(isTimeCand);
     if (timeCands.length === 0) {
@@ -1077,13 +1068,7 @@ export const eventsRouter = router({
   // Record (or replace) this user's commitment during the moment.
   respond: protectedProcedure.input(RespondInput).mutation(async ({ ctx, input }) => {
     const e = await loadEvent(input.eventId, ctx.userId);
-    // Settle on the write path too (loadEvent never settles): a moment whose countdown has passed is
-    // already cleared/fizzled, so a late RSVP must be rejected against the SETTLED phase, not the
-    // stale stored one.
-    await settleLifecycle(e);
-    if (e.phase !== "moment") {
-      throw new TRPCError({ code: "BAD_REQUEST", message: "the moment is not open" });
-    }
+    await settleAndRequirePhase(e, "moment", "the moment is not open");
     await db
       .delete(responses)
       .where(and(eq(responses.eventId, input.eventId), eq(responses.userId, ctx.userId)));
@@ -1105,12 +1090,7 @@ export const eventsRouter = router({
   // goes back to Action Required until they answer again.
   unrespond: protectedProcedure.input(ResolveInput).mutation(async ({ ctx, input }) => {
     const e = await loadEvent(input.eventId, ctx.userId);
-    // Settle first: once the moment has ended (settled to cleared/fizzled) the answer is final and
-    // can no longer be cleared, so gate against the settled phase rather than the stale stored one.
-    await settleLifecycle(e);
-    if (e.phase !== "moment") {
-      throw new TRPCError({ code: "BAD_REQUEST", message: "the moment is not open" });
-    }
+    await settleAndRequirePhase(e, "moment", "the moment is not open");
     await db
       .delete(responses)
       .where(and(eq(responses.eventId, input.eventId), eq(responses.userId, ctx.userId)));
