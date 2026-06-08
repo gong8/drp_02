@@ -509,3 +509,137 @@ test("a removed member loses access (subsequent get -> FORBIDDEN)", async () => 
   // After removal, friend is a non-member and is forbidden.
   await assert.rejects(() => caller(friend).groups.get({ id }), isForbidden);
 });
+
+// ----- invite codes (create mints one) -----
+
+const VALID_CODE = /^[23456789ABCDEFGHJKMNPQRSTVWXYZ]+$/;
+
+// Read a group's persisted invite code (the code is never returned by create itself).
+async function inviteCodeOf(groupId: string): Promise<string> {
+  const [g] = await db.select().from(groups).where(eq(groups.id, groupId));
+  assert.ok(g, "group should exist");
+  return g.inviteCode;
+}
+
+test("create mints a well-formed invite code from the no-confusable alphabet", async () => {
+  const owner = await makeUser();
+  const { id } = await caller(owner).groups.create({ name: "Crew" });
+
+  const code = await inviteCodeOf(id);
+  assert.equal(code.length, 8);
+  // Codes never contain the confusable characters 0/1/I/L/O/U.
+  assert.match(code, VALID_CODE);
+});
+
+test("create mints distinct invite codes for distinct groups", async () => {
+  const a = await makeUser();
+  const b = await makeUser();
+  const { id: id1 } = await caller(a).groups.create({ name: "One" });
+  const { id: id2 } = await caller(b).groups.create({ name: "Two" });
+
+  assert.notEqual(await inviteCodeOf(id1), await inviteCodeOf(id2));
+});
+
+// ----- inviteByGroup -----
+
+test("inviteByGroup returns the group's code for a member", async () => {
+  const member = await makeUser();
+  const { id } = await caller(member).groups.create({ name: "Crew" });
+
+  const invite = await caller(member).groups.inviteByGroup({ groupId: id });
+  assert.equal(invite.code, await inviteCodeOf(id));
+});
+
+test("inviteByGroup url is null without a configured web origin, else a join link", async () => {
+  const member = await makeUser();
+  const { id } = await caller(member).groups.create({ name: "Crew" });
+  const code = await inviteCodeOf(id);
+
+  const prev = process.env.PUBLIC_WEB_URL;
+  try {
+    process.env.PUBLIC_WEB_URL = "";
+    const noBase = await caller(member).groups.inviteByGroup({ groupId: id });
+    assert.equal(noBase.url, null);
+
+    process.env.PUBLIC_WEB_URL = "https://bethere.example.com/";
+    const withBase = await caller(member).groups.inviteByGroup({ groupId: id });
+    // Trailing slash collapsed; path mirrors the mobile linking config.
+    assert.equal(withBase.url, `https://bethere.example.com/join/${code}`);
+  } finally {
+    if (prev === undefined) delete process.env.PUBLIC_WEB_URL;
+    else process.env.PUBLIC_WEB_URL = prev;
+  }
+});
+
+test("inviteByGroup rejects a non-member with FORBIDDEN", async () => {
+  const member = await makeUser();
+  const outsider = await makeUser();
+  const id = await makeGroup([member], "Members only");
+
+  await assert.rejects(() => caller(outsider).groups.inviteByGroup({ groupId: id }), isForbidden);
+});
+
+// ----- joinByCode -----
+
+test("joinByCode adds the caller to the group matching the code", async () => {
+  const owner = await makeUser();
+  const joiner = await makeUser();
+  const { id } = await caller(owner).groups.create({ name: "Crew" });
+  const code = await inviteCodeOf(id);
+
+  const res = await caller(joiner).groups.joinByCode({ code });
+  assert.equal(res.groupId, id);
+  assert.equal(res.name, "Crew");
+  assert.equal(res.alreadyMember, false);
+  assert.equal(await membershipRowCount(id, joiner), 1);
+});
+
+test("joinByCode normalizes dashes, whitespace and case before lookup", async () => {
+  const owner = await makeUser();
+  const joiner = await makeUser();
+  const { id } = await caller(owner).groups.create({ name: "Crew" });
+  const code = await inviteCodeOf(id);
+
+  // The "pretty" form a user would paste from a share message: grouped, lowercased, padded.
+  const pretty = `  ${code.slice(0, 4)}-${code.slice(4).toLowerCase()} `;
+  const res = await caller(joiner).groups.joinByCode({ code: pretty });
+
+  assert.equal(res.groupId, id);
+  assert.equal(await membershipRowCount(id, joiner), 1);
+});
+
+test("joinByCode is idempotent and reports alreadyMember for an existing member", async () => {
+  const owner = await makeUser();
+  const { id } = await caller(owner).groups.create({ name: "Crew" });
+  const code = await inviteCodeOf(id);
+
+  const res = await caller(owner).groups.joinByCode({ code });
+  assert.equal(res.alreadyMember, true);
+  // No duplicate membership row.
+  assert.equal(await membershipRowCount(id, owner), 1);
+});
+
+test("joinByCode rejects an unknown code with NOT_FOUND and adds nobody", async () => {
+  const joiner = await makeUser();
+  // A well-formed but unused code.
+  await assert.rejects(
+    () => caller(joiner).groups.joinByCode({ code: "ZZZZ9999" }),
+    (e: unknown) => e instanceof TRPCError && e.code === "NOT_FOUND",
+  );
+});
+
+test("joinByCode rejects a blank code with BAD_REQUEST", async () => {
+  const joiner = await makeUser();
+  // Only punctuation normalizes to empty -> BAD_REQUEST, not NOT_FOUND.
+  await assert.rejects(
+    () => caller(joiner).groups.joinByCode({ code: "----" }),
+    (e: unknown) => e instanceof TRPCError && e.code === "BAD_REQUEST",
+  );
+});
+
+test("joinByCode requires authentication", async () => {
+  await assert.rejects(
+    () => caller(null).groups.joinByCode({ code: "ABCD2345" }),
+    (e: unknown) => e instanceof TRPCError && e.code === "UNAUTHORIZED",
+  );
+});

@@ -4,12 +4,14 @@ import {
   ByIdInput,
   CreateGroupInput,
   GroupMemberRef,
+  JoinByCodeInput,
+  normalizeInviteCode,
   RenameGroupInput,
 } from "@bethere/shared";
 import { TRPCError } from "@trpc/server";
 import { and, count, eq, inArray, notInArray } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { FALLBACK_GROUP_NAME } from "../db/groups.js";
+import { FALLBACK_GROUP_NAME, freshInviteCode, inviteUrlFor } from "../db/groups.js";
 import {
   candidateReactions,
   eventOptOuts,
@@ -79,12 +81,50 @@ export const groupsRouter = router({
     return rows.map(userCardFromRow);
   }),
 
-  // Create a group and add the creator as its first member.
+  // Create a group and add the creator as its first member. Mints the group's shareable invite code.
   create: protectedProcedure.input(CreateGroupInput).mutation(async ({ ctx, input }) => {
     const id = `g_${randomUUID()}`;
-    await db.insert(groups).values({ id, name: input.name });
+    const inviteCode = await freshInviteCode();
+    await db.insert(groups).values({ id, name: input.name, inviteCode });
     await db.insert(groupMembers).values({ groupId: id, userId: ctx.userId });
     return { id };
+  }),
+
+  // The shareable invite for a group: its code plus a fully-qualified link when a public web origin
+  // is configured (PUBLIC_WEB_URL). Member-gated - only people already in the group can fetch, and
+  // thus share, the invite. The client builds its own link from the code when `url` is null.
+  inviteByGroup: protectedProcedure.input(ByGroupInput).query(async ({ ctx, input }) => {
+    await requireMember(input.groupId, ctx.userId);
+    const [group] = await db.select().from(groups).where(eq(groups.id, input.groupId)).limit(1);
+    if (!group) throw new TRPCError({ code: "NOT_FOUND", message: "group not found" });
+    return { code: group.inviteCode, url: inviteUrlFor(group.inviteCode) };
+  }),
+
+  // Redeem a group's invite code to join it (M4 onboarding). Surface-agnostic: the same path serves
+  // a tapped web link, a typed code, or (later) a native deep link. Idempotent - re-joining is a
+  // no-op that still resolves the group so the client can route there, and reports `alreadyMember`
+  // so the UI can say "you're already in" instead of "welcome". The caller's user row already exists
+  // (Clerk users are upserted in createContext; the dev user is seeded), so the membership FK holds.
+  joinByCode: protectedProcedure.input(JoinByCodeInput).mutation(async ({ ctx, input }) => {
+    const code = normalizeInviteCode(input.code);
+    if (!code) throw new TRPCError({ code: "BAD_REQUEST", message: "Enter an invite code" });
+    const [group] = await db.select().from(groups).where(eq(groups.inviteCode, code)).limit(1);
+    if (!group) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "That code does not match a group" });
+    }
+    const [existing] = await db
+      .select({ userId: groupMembers.userId })
+      .from(groupMembers)
+      .where(and(eq(groupMembers.groupId, group.id), eq(groupMembers.userId, ctx.userId)))
+      .limit(1);
+    const alreadyMember = !!existing;
+    if (!alreadyMember) {
+      await db
+        .insert(groupMembers)
+        .values({ groupId: group.id, userId: ctx.userId })
+        .onConflictDoNothing();
+    }
+    return { groupId: group.id, name: group.name, alreadyMember };
   }),
 
   rename: protectedProcedure.input(RenameGroupInput).mutation(async ({ ctx, input }) => {
