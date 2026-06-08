@@ -11,16 +11,8 @@ type BusyActionDeps = {
 };
 
 // The repeated "guard while busy -> set busy -> mutate -> reload -> clear busy (surfacing errors)"
-// skeleton, factored into one runner. EventDetail (lock/addTime/addActivity/answer/changeAnswer)
-// open-codes this body per handler; GroupDetail already factored it
-// locally as `run(fn)`. This is that body, byte-for-byte:
-//
-//   if (busy) return;
-//   setBusy(true);
-//   try { await fn(); await load(); }
-//   catch { setError(true); }
-//   finally { setBusy(false); }
-//
+// skeleton, factored into one runner and adopted by both EventDetail and GroupDetail. It reuses the
+// screen's own busy/error/load state, so a screen adopts it without moving where that state lives.
 // Returns a memoized `runAction(fn)`; each handler becomes `runAction(() => trpc.x.mutate(...))`.
 // A handler that needs to run extra work in the same busy window (e.g. EventDetail's
 // `setEditing(false)` before reload) passes an async `fn` that does it after the mutation, before

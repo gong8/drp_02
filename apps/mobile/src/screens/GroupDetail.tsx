@@ -22,6 +22,7 @@ import { formatCode, joinUrl } from "../lib/invite";
 import { copyToClipboard, shareInvite } from "../lib/share";
 import type { RouterOutputs } from "../lib/trpc";
 import { trpc } from "../lib/trpc";
+import { useBusyAction } from "../lib/useBusyAction";
 import { useFetchOnFocus } from "../lib/useFetchOnFocus";
 import { ui } from "../theme";
 import {
@@ -119,21 +120,7 @@ export function GroupDetail({ route, navigation }: Props) {
     }
   }, [route.params?.justJoined, data, navigation]);
 
-  async function run(fn: () => Promise<unknown>): Promise<boolean> {
-    if (busy) return false;
-    setBusy(true);
-    setError(false);
-    try {
-      await fn();
-      await load();
-      return true;
-    } catch {
-      setError(true);
-      return false;
-    } finally {
-      setBusy(false);
-    }
-  }
+  const runAction = useBusyAction({ busy, setBusy, setError, load });
 
   function flash(which: "code" | "link" | "share") {
     setCopied(which);
@@ -191,7 +178,7 @@ export function GroupDetail({ route, navigation }: Props) {
               label="Save"
               disabled={busy}
               onPress={() =>
-                run(() => trpc.groups.rename.mutate({ id: groupId, name: nameDraft.trim() }))
+                runAction(() => trpc.groups.rename.mutate({ id: groupId, name: nameDraft.trim() }))
               }
             />
           ) : undefined
@@ -216,7 +203,7 @@ export function GroupDetail({ route, navigation }: Props) {
                   tone="muted"
                   disabled={busy}
                   onPress={() =>
-                    run(() => trpc.groups.removeMember.mutate({ groupId, userId: m.id }))
+                    runAction(() => trpc.groups.removeMember.mutate({ groupId, userId: m.id }))
                   }
                 />
               </View>
