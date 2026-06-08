@@ -93,16 +93,20 @@ const MONTHS_SHORT = [
   "Dec",
 ];
 
+// Shared "Wed 3 Jun" day label - the weekday/day/month half of every slot string.
+const dayLabel = (d: Date) =>
+  `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`;
+
 // "2026-06-03T19:00..." -> "Wed 3 Jun, 19:00" - the compact label for a candidate slot.
 export function formatSlot(iso: string): string {
   const d = new Date(iso);
-  return `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}, ${timeStringFrom(d)}`;
+  return `${dayLabel(d)}, ${timeStringFrom(d)}`;
 }
 
 // "2026-06-06T19:00..." -> "SAT 6 JUN" - the uppercase day line for the plan-detail time hero.
 export function dayUpper(iso: string): string {
   const d = new Date(iso);
-  return `${WEEKDAYS[d.getDay()].toUpperCase()} ${d.getDate()} ${MONTHS_SHORT[d.getMonth()].toUpperCase()}`;
+  return dayLabel(d).toUpperCase();
 }
 
 // "...T19:00..." -> { time: "7:00", ampm: "PM" } - 12-hour clock split for the time hero.
