@@ -60,9 +60,9 @@ export function CreateWizard({ navigation }: Props) {
   // The source-step choice: null = not chosen yet, "fresh" = start blank, otherwise a past-meetup id.
   const [source, setSource] = useState<"fresh" | string | null>(null);
 
-  const STEPS = wizardSteps(pastMeetups.length > 0);
-  const stepKey = STEPS[step];
-  const isLastStep = step === STEPS.length - 1;
+  const steps = wizardSteps(pastMeetups.length > 0);
+  const stepKey = steps[step];
+  const isLastStep = step === steps.length - 1;
   const [location, setLocation] = useState("");
   const [notes, setNotes] = useState("");
   // Activity ("what") candidates - ideas, optional, no names ever shown.
@@ -155,7 +155,10 @@ export function CreateWizard({ navigation }: Props) {
     earliestMs != null
       ? new Date(defaultDecidesByForCandidates(earliestMs, Date.now())).toISOString()
       : null;
-  const activityCount = activityChips.length + (activityDraft.trim() ? 1 : 0);
+  const summaryActivities = activityChips.concat(
+    activityDraft.trim() ? [activityDraft.trim()] : [],
+  );
+  const activityCount = summaryActivities.length;
   // You can only lock an axis that has something on it (you can't fix nothing). A lock with no
   // candidate is ignored, so the checkbox is disabled until at least one exists.
   const canLockTimes = timeIsos.length > 0;
@@ -218,12 +221,10 @@ export function CreateWizard({ navigation }: Props) {
   // call won't do. Each axis reports its candidates plus whether it is locked (fixed) or open to the
   // group; the deadlines mirror decidesToSend/replyToSend (or the shown defaults).
   const groupName = groups.find((g) => g.id === groupId)?.name ?? "";
-  const summaryActivities = activityChips.concat(
-    activityDraft.trim() ? [activityDraft.trim()] : [],
-  );
   const summaryTimes = timeIsos.map(formatSlot);
   const decidesShown = !isConcrete ? (decidesToSend ?? autoDecidesIso) : null;
-  const replyShown = replyToSend ?? autoReplyIso;
+  // reply-by (unlike decides-by) already bakes its default into replyToSend, so no fallback here.
+  const replyShown = replyToSend;
   const deadlineLines = isConcrete
     ? [replyShown ? `Replies close ${formatSlot(replyShown)}` : "We'll pick a sensible deadline"]
     : earliestMs == null
@@ -302,7 +303,7 @@ export function CreateWizard({ navigation }: Props) {
   }
 
   function goNext() {
-    if (!canAdvance(stepKey) || busy) return;
+    if (!canGoNext || busy) return;
     if (stepKey === "activities") commitDraftActivity();
     if (isLastStep) submit();
     else setStep(step + 1);
@@ -316,10 +317,11 @@ export function CreateWizard({ navigation }: Props) {
 
   const nextLabel = isLastStep ? "Send to the group" : "Next";
   const stepCopy = STEP_COPY[stepKey];
+  const canGoNext = canAdvance(stepKey);
 
   return (
     <ScreenScroll header={<ScreenHeader title={TITLE_NEW_MEETUP} onBack={goBack} />} avoidKeyboard>
-      <ProgressDots steps={STEPS} index={step} />
+      <ProgressDots steps={steps} index={step} />
       {error && <FormError>{ERR_SAVE}</FormError>}
 
       <Section title={stepCopy.title} sub={stepCopy.sub} size="lg">
@@ -581,7 +583,7 @@ export function CreateWizard({ navigation }: Props) {
       <Button
         label={nextLabel}
         variant="primary"
-        disabled={!canAdvance(stepKey) || busy}
+        disabled={!canGoNext || busy}
         onPress={goNext}
         style={{ marginTop: 24 }}
       />
