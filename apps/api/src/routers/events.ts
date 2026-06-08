@@ -163,6 +163,18 @@ async function ensureReaction(eventId: string, candidateId: string, userId: stri
     .onConflictDoNothing();
 }
 
+// The pooled db or a transaction handle from db.transaction's callback - both expose the
+// delete/where surface clearOptOut needs (the tx omits db's $client, so it is not `typeof db`).
+type DbOrTx = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+// Drop the caller's opt-out row (a +1 / explicit RSVP rejoins them - mutual exclusion with "I can't
+// make it"). Idempotent; pass a tx handle to enlist in a wrapping transaction.
+async function clearOptOut(eventId: string, userId: string, handle: DbOrTx = db): Promise<void> {
+  await handle
+    .delete(eventOptOuts)
+    .where(and(eq(eventOptOuts.eventId, eventId), eq(eventOptOuts.userId, userId)));
+}
+
 // Lazily settle a moment whose countdown has ended (no scheduler): clears if quorum is met, else
 // fizzles - but a non-contingent (exact) plan always happens, so it clears regardless. Mutates the
 // in-memory row and persists, so reads converge the lifecycle on their own.
@@ -655,9 +667,7 @@ export const eventsRouter = router({
         .insert(candidateReactions)
         .values({ eventId: input.eventId, candidateId: input.candidateId, userId: ctx.userId })
         .onConflictDoNothing();
-      await tx
-        .delete(eventOptOuts)
-        .where(and(eq(eventOptOuts.eventId, input.eventId), eq(eventOptOuts.userId, ctx.userId)));
+      await clearOptOut(input.eventId, ctx.userId, tx);
     });
     return { reacted: true as const };
   }),
@@ -682,9 +692,7 @@ export const eventsRouter = router({
         .values({ eventId: input.eventId, userId: ctx.userId })
         .onConflictDoNothing();
     } else {
-      await db
-        .delete(eventOptOuts)
-        .where(and(eq(eventOptOuts.eventId, input.eventId), eq(eventOptOuts.userId, ctx.userId)));
+      await clearOptOut(input.eventId, ctx.userId);
     }
     return { ok: true as const };
   }),
@@ -1080,9 +1088,7 @@ export const eventsRouter = router({
       cond: input.cond ?? null,
     });
     // An explicit moment answer supersedes any earlier opt-out (the escape hatch back in).
-    await db
-      .delete(eventOptOuts)
-      .where(and(eq(eventOptOuts.eventId, input.eventId), eq(eventOptOuts.userId, ctx.userId)));
+    await clearOptOut(input.eventId, ctx.userId);
     return { recorded: true as const };
   }),
 
