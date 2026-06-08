@@ -100,6 +100,24 @@ export const groupsRouter = router({
     return { code: group.inviteCode, url: inviteUrlFor(group.inviteCode) };
   }),
 
+  // Preview the group a code resolves to WITHOUT joining - powers the JoinGroup confirm step
+  // ("Join <name>? N members"). Authed (the join flow is only reachable signed in) but NOT
+  // member-gated: holding the code is the invitation. Reveals only the group name + size, never
+  // member names (anonymity is preserved until you are actually in the roster).
+  previewByCode: protectedProcedure.input(JoinByCodeInput).query(async ({ input }) => {
+    const code = normalizeInviteCode(input.code);
+    if (!code) throw new TRPCError({ code: "BAD_REQUEST", message: "Enter an invite code" });
+    const [group] = await db.select().from(groups).where(eq(groups.inviteCode, code)).limit(1);
+    if (!group) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "That code does not match a group" });
+    }
+    const [tally] = await db
+      .select({ n: count() })
+      .from(groupMembers)
+      .where(eq(groupMembers.groupId, group.id));
+    return { groupId: group.id, name: group.name, memberCount: Number(tally?.n ?? 0) };
+  }),
+
   // Redeem a group's invite code to join it (M4 onboarding). Surface-agnostic: the same path serves
   // a tapped web link, a typed code, or (later) a native deep link. Idempotent - re-joining is a
   // no-op that still resolves the group so the client can route there, and reports `alreadyMember`

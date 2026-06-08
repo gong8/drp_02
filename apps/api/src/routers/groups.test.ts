@@ -579,6 +579,49 @@ test("inviteByGroup rejects a non-member with FORBIDDEN", async () => {
   await assert.rejects(() => caller(outsider).groups.inviteByGroup({ groupId: id }), isForbidden);
 });
 
+// ----- previewByCode -----
+
+test("previewByCode returns the group name and member count without joining", async () => {
+  const owner = await makeUser();
+  const second = await makeUser();
+  const id = await makeGroup([owner, second], "Trip crew");
+  const code = await inviteCodeOf(id);
+  const outsider = await makeUser();
+
+  const preview = await caller(outsider).groups.previewByCode({ code });
+  assert.equal(preview.groupId, id);
+  assert.equal(preview.name, "Trip crew");
+  assert.equal(preview.memberCount, 2);
+  // Previewing must NOT add the caller to the group.
+  assert.equal(await membershipRowCount(id, outsider), 0);
+});
+
+test("previewByCode is not member-gated: holding the code is the invitation", async () => {
+  const owner = await makeUser();
+  const { id } = await caller(owner).groups.create({ name: "Crew" });
+  const code = await inviteCodeOf(id);
+  const stranger = await makeUser();
+
+  // A non-member can preview (so they can decide to join); contrast inviteByGroup which is gated.
+  const preview = await caller(stranger).groups.previewByCode({ code });
+  assert.equal(preview.groupId, id);
+});
+
+test("previewByCode rejects an unknown code with NOT_FOUND", async () => {
+  const u = await makeUser();
+  await assert.rejects(
+    () => caller(u).groups.previewByCode({ code: "ZZZZ9999" }),
+    (e: unknown) => e instanceof TRPCError && e.code === "NOT_FOUND",
+  );
+});
+
+test("previewByCode requires authentication", async () => {
+  await assert.rejects(
+    () => caller(null).groups.previewByCode({ code: "ABCD2345" }),
+    (e: unknown) => e instanceof TRPCError && e.code === "UNAUTHORIZED",
+  );
+});
+
 // ----- joinByCode -----
 
 test("joinByCode adds the caller to the group matching the code", async () => {
