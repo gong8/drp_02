@@ -49,9 +49,21 @@ const DEFAULT_QUORUM = 2;
 // default decides-by this far out so the deadline is sane without a concrete time to hang it on.
 const DEFAULT_HORIZON_MS = 7 * 24 * 60 * 60 * 1000;
 
+// Row->domain mappers shared by the per-event and bulk (loadEventBundle) readers so the two paths
+// cannot drift. Pure; keep them the single source of truth for these shapes.
+const toMomentResponse = (r: typeof responses.$inferSelect): MomentResponse => ({
+  userId: r.userId,
+  kind: r.kind,
+  cond: r.cond ?? undefined,
+});
+const toReaction = (r: typeof candidateReactions.$inferSelect) => ({
+  candidateId: r.candidateId,
+  userId: r.userId,
+});
+
 async function responsesFor(eventId: string): Promise<MomentResponse[]> {
   const rows = await db.select().from(responses).where(eq(responses.eventId, eventId));
-  return rows.map((r) => ({ userId: r.userId, kind: r.kind, cond: r.cond ?? undefined }));
+  return rows.map(toMomentResponse);
 }
 
 async function reactionsFor(eventId: string): Promise<{ candidateId: string; userId: string }[]> {
@@ -59,7 +71,7 @@ async function reactionsFor(eventId: string): Promise<{ candidateId: string; use
     .select()
     .from(candidateReactions)
     .where(eq(candidateReactions.eventId, eventId));
-  return rows.map((r) => ({ candidateId: r.candidateId, userId: r.userId }));
+  return rows.map(toReaction);
 }
 
 // Candidate display order: startsAt ascending, nulls (activities) last.
@@ -366,7 +378,7 @@ async function loadEventBundle(
   const respMap = new Map<string, MomentResponse[]>();
   for (const r of respRows) {
     const list = respMap.get(r.eventId) ?? [];
-    list.push({ userId: r.userId, kind: r.kind, cond: r.cond ?? undefined });
+    list.push(toMomentResponse(r));
     respMap.set(r.eventId, list);
   }
   const candMap = new Map<string, (typeof eventCandidates.$inferSelect)[]>();
@@ -382,7 +394,7 @@ async function loadEventBundle(
   const reactMap = new Map<string, { candidateId: string; userId: string }[]>();
   for (const r of reactRows) {
     const list = reactMap.get(r.eventId) ?? [];
-    list.push({ candidateId: r.candidateId, userId: r.userId });
+    list.push(toReaction(r));
     reactMap.set(r.eventId, list);
   }
   const optMap = new Map<string, Set<string>>();
