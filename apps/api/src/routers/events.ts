@@ -296,7 +296,7 @@ export async function requireMember(groupId: string, userId: string): Promise<vo
 // Load an event for a member-scoped mutation: fetch by id, 404 if missing, then assert membership.
 // The shared head of the NOT_FOUND mutations (toggleReaction/setOptOut/addCandidate/lock/respond/
 // unrespond/resolve); the null-returning read (events.get) keeps its own preamble.
-export async function loadEvent(eventId: string, userId: string): Promise<EventRow> {
+async function loadEvent(eventId: string, userId: string): Promise<EventRow> {
   const [e] = await db.select().from(events).where(eq(events.id, eventId));
   if (!e) throw new TRPCError({ code: "NOT_FOUND" });
   await requireMember(e.groupId, userId);
@@ -547,9 +547,8 @@ export const eventsRouter = router({
 
     // Time anchors. With no time candidates a plan still collects (on activities), so anchor the
     // placeholder start + the default decides-by to a sensible horizon instead of a candidate.
-    const now = nowMs;
     const earliestMs =
-      timeCands.length > 0 ? timeCands[0].startsAt.getTime() : now + DEFAULT_HORIZON_MS;
+      timeCands.length > 0 ? timeCands[0].startsAt.getTime() : nowMs + DEFAULT_HORIZON_MS;
     const lastMs =
       timeCands.length > 0 ? timeCands[timeCands.length - 1].startsAt.getTime() : earliestMs;
     const startsAt = new Date(earliestMs); // the chosen time when opensMoment; a placeholder otherwise
@@ -564,7 +563,7 @@ export const eventsRouter = router({
       if (input.decidesBy) {
         const t = new Date(input.decidesBy);
         const tooLate = timeCands.length > 0 && t.getTime() > earliestMs - MOMENT_MS;
-        if (Number.isNaN(t.getTime()) || t.getTime() <= now || tooLate) {
+        if (Number.isNaN(t.getTime()) || t.getTime() <= nowMs || tooLate) {
           throw new TRPCError({
             code: "BAD_REQUEST",
             message: "decides-by must be after now and leave room before the plan's window",
@@ -572,7 +571,7 @@ export const eventsRouter = router({
         }
         decidesBy = t;
       } else {
-        decidesBy = new Date(defaultDecidesByForCandidates(earliestMs, now));
+        decidesBy = new Date(defaultDecidesByForCandidates(earliestMs, nowMs));
       }
     }
 
@@ -582,7 +581,7 @@ export const eventsRouter = router({
     let replyBy: Date | null = null;
     if (input.replyBy) {
       const t = new Date(input.replyBy);
-      const floorMs = decidesBy ? decidesBy.getTime() : now;
+      const floorMs = decidesBy ? decidesBy.getTime() : nowMs;
       const tooLate = timeCands.length > 0 && t.getTime() > earliestMs;
       if (Number.isNaN(t.getTime()) || t.getTime() <= floorMs || tooLate) {
         throw new TRPCError({
@@ -596,7 +595,7 @@ export const eventsRouter = router({
     // The concrete shortcut opens the blind moment now and runs until reply-by (default one-day-capped,
     // to the event). Otherwise the moment opens later, at the lock.
     const momentEndsAt: Date | null = opensMoment
-      ? resolveMomentEnd(now, earliestMs, replyBy?.getTime() ?? null)
+      ? resolveMomentEnd(nowMs, earliestMs, replyBy?.getTime() ?? null)
       : null;
     const respondByAt = momentEndsAt ?? new Date(lastMs);
 
@@ -710,7 +709,7 @@ export const eventsRouter = router({
     if (input.kind === "activity" && e.lockActivity) {
       throw new TRPCError({ code: "FORBIDDEN", message: "activities are locked on this plan" });
     }
-    const existing = await candidatesFor(input.eventId);
+    const cands = await candidatesFor(input.eventId);
 
     let newId: string;
     if (input.kind === "time") {
@@ -732,7 +731,7 @@ export const eventsRouter = router({
           message: "that time is before the decides-by deadline",
         });
       }
-      const times = existing.filter(isTimeCand).map((c) => (c.startsAt as Date).getTime());
+      const times = cands.filter(isTimeCand).map((c) => (c.startsAt as Date).getTime());
       if (times.length > 0) {
         const horizon = addCandidateHorizon(Math.min(...times), Math.max(...times));
         if (startsAt.getTime() > horizon) {
@@ -745,7 +744,7 @@ export const eventsRouter = router({
       // Dedupe by minute (the comment above and the wizard's granularity): a candidate at HH:MM:00
       // and a new add at HH:MM:30 are the same slot, so the add +1s the existing row.
       const startMinute = Math.floor(startsAt.getTime() / 60_000);
-      const dup = existing.find(
+      const dup = cands.find(
         (c) =>
           c.kind === "time" &&
           c.startsAt != null &&
@@ -771,7 +770,7 @@ export const eventsRouter = router({
       const text = input.text.trim();
       if (!text) throw new TRPCError({ code: "BAD_REQUEST", message: "an activity needs a name" });
       const key = text.toLowerCase();
-      const dup = existing.find(
+      const dup = cands.find(
         (c) => c.kind === "activity" && (c.label ?? "").trim().toLowerCase() === key,
       );
       if (dup) {
