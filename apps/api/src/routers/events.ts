@@ -62,13 +62,14 @@ async function reactionsFor(eventId: string): Promise<{ candidateId: string; use
   return rows.map((r) => ({ candidateId: r.candidateId, userId: r.userId }));
 }
 
+// Candidate display order: startsAt ascending, nulls (activities) last.
+const byStartsAtThenNullsLast = (a: { startsAt: Date | null }, b: { startsAt: Date | null }) =>
+  (a.startsAt?.getTime() ?? Number.POSITIVE_INFINITY) -
+  (b.startsAt?.getTime() ?? Number.POSITIVE_INFINITY);
+
 async function candidatesFor(eventId: string): Promise<(typeof eventCandidates.$inferSelect)[]> {
   const rows = await db.select().from(eventCandidates).where(eq(eventCandidates.eventId, eventId));
-  return rows.sort((a, b) => {
-    const at = a.startsAt?.getTime() ?? Number.POSITIVE_INFINITY;
-    const bt = b.startsAt?.getTime() ?? Number.POSITIVE_INFINITY;
-    return at - bt;
-  });
+  return rows.sort(byStartsAtThenNullsLast);
 }
 
 // Maps an EventRow into revealGoing's opts; see revealGoing for the blind-until-end rule.
@@ -359,13 +360,9 @@ async function loadEventBundle(
     list.push(c);
     candMap.set(c.eventId, list);
   }
-  // Preserve candidatesFor's order: startsAt asc, nulls (activities) last.
+  // Candidate display order shared with candidatesFor: startsAt asc, nulls (activities) last.
   for (const list of candMap.values()) {
-    list.sort((a, b) => {
-      const at = a.startsAt?.getTime() ?? Number.POSITIVE_INFINITY;
-      const bt = b.startsAt?.getTime() ?? Number.POSITIVE_INFINITY;
-      return at - bt;
-    });
+    list.sort(byStartsAtThenNullsLast);
   }
   const reactMap = new Map<string, { candidateId: string; userId: string }[]>();
   for (const r of reactRows) {
