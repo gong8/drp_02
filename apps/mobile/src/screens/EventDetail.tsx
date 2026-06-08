@@ -239,27 +239,37 @@ export function EventDetail({ route, navigation }: Props) {
   // went final) shows an inline error and refetches so the screen reflects reality.
   function saveEdit() {
     if (!data || savingEdit) return;
-    // One descriptor list is the single source of truth for the editable-field set, driving both the
-    // per-field diff below and the conflict-adopt loop. The `as const` keys keep `patch` typed against
-    // UpdateEventInput's optional activity/location/description keys.
+    // One descriptor list is the single source of truth for the editable-field set, driving the
+    // per-field diff below, the conflict-adopt input state via `set`, and the local-baseline adopt
+    // via `applyToData`. The `as const` keys keep `patch` typed against UpdateEventInput's optional
+    // activity/location/description keys.
     const fields = [
       {
         key: "activity" as const,
         loaded: data.activityRaw,
         value: editActivity,
         set: setEditActivity,
+        applyToData: (d: Detail, v: string) => {
+          d.activityRaw = v;
+        },
       },
       {
         key: "location" as const,
         loaded: data.location,
         value: editLocation,
         set: setEditLocation,
+        applyToData: (d: Detail, v: string) => {
+          d.location = v;
+        },
       },
       {
         key: "description" as const,
         loaded: data.description ?? "",
         value: editNotes,
         set: setEditNotes,
+        applyToData: (d: Detail, v: string) => {
+          d.description = v;
+        },
       },
     ];
     const patch: Pick<UpdateEventInput, "activity" | "location" | "description"> = {};
@@ -279,17 +289,18 @@ export function EventDetail({ route, navigation }: Props) {
           setEditSheet(false);
           return load();
         }
-        // Adopt the server's current value for each conflicted field, advance the local baseline to
-        // it so the next save sends from=current (otherwise a second save re-sends the stale `from`
-        // and conflicts forever), and keep the sheet open.
-        for (const c of res.conflicts) fields.find((f) => f.key === c.field)?.set(c.current);
+        // Adopt the server's current value for each conflicted field, advancing both the input state
+        // (`set`) and the local baseline (`applyToData`) via the one descriptor list so the next save
+        // sends from=current (otherwise a second save re-sends the stale `from` and conflicts forever),
+        // and keep the sheet open. An unknown conflict field is silently skipped.
         setData((d) => {
           if (!d) return d;
           const next = { ...d };
           for (const c of res.conflicts) {
-            if (c.field === "activity") next.activityRaw = c.current;
-            else if (c.field === "location") next.location = c.current;
-            else if (c.field === "description") next.description = c.current;
+            const f = fields.find((f) => f.key === c.field);
+            if (!f) continue;
+            f.set(c.current);
+            f.applyToData(next, c.current);
           }
           return next;
         });
