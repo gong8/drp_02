@@ -5,6 +5,7 @@ import type { MeetupsStackParams } from "../../App";
 import {
   ANON_SEND_BODY,
   ANON_SEND_TITLE,
+  DEADLINE_VOTING,
   ERR_SAVE,
   NOTE_TOP_PICK,
   plural,
@@ -233,7 +234,7 @@ export function CreateWizard({ navigation }: Props) {
     : earliestMs == null
       ? ["Set once there's a time on the table"]
       : [
-          ...(decidesShown ? [`Voting closes ${formatSlot(decidesShown)}`] : []),
+          ...(decidesShown ? [`${DEADLINE_VOTING} ${formatSlot(decidesShown)}`] : []),
           ...(replyLine ? [replyLine] : []),
         ];
 
