@@ -126,6 +126,8 @@ export const ONBOARD_NO_GROUPS_BODY =
   "Start a group and invite your people, or join one with a code.";
 export const ACTION_CREATE_GROUP = "Create a group";
 export const CREATE_GROUP_NEXT = "You'll get a link to share right after.";
+// The inline "+ New group" affordance in the create-meetup wizard's group step.
+export const ACTION_NEW_GROUP = "+ New group";
 
 // Editable display name (Account).
 export const LABEL_DISPLAY_NAME = "Display name";

@@ -3,13 +3,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, View, type ViewStyle } from "react-native";
 import type { MeetupsStackParams } from "../../App";
 import {
+  ACTION_NEW_GROUP,
   ANON_SEND_BODY,
   ANON_SEND_TITLE,
   DEADLINE_VOTING,
   ERR_SAVE,
+  LABEL_GROUP_NAME,
   NOTE_TOP_PICK,
   plural,
   STEP_COPY,
+  TITLE_NEW_GROUP,
   TITLE_NEW_MEETUP,
 } from "../lib/copy";
 import { formatSlot, isoFrom, splitIso } from "../lib/format";
@@ -26,6 +29,7 @@ import { trpc } from "../lib/trpc";
 import { ui } from "../theme";
 import {
   AppText,
+  BottomSheet,
   Button,
   Card,
   CheckOption,
@@ -53,6 +57,11 @@ export function CreateWizard({ navigation }: Props) {
 
   const [groups, setGroups] = useState<Group[]>([]);
   const [groupId, setGroupId] = useState<string | null>(null);
+  // Inline "create a group" without leaving the meetup flow (the group step's "+ New group" chip):
+  // creating one appends it to the list and selects it, so the wizard continues with it preselected.
+  const [newGroupOpen, setNewGroupOpen] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
+  const [creatingGroup, setCreatingGroup] = useState(false);
   const [pastMeetups, setPastMeetups] = useState<PastMeetup[]>([]);
   // Whether the past-meetups query for the current group has settled. The "source" step is inserted
   // only once it has, so the group step gates Next on this - otherwise a late insert would shift the
@@ -314,6 +323,26 @@ export function CreateWizard({ navigation }: Props) {
     }
   }
 
+  // Create a group inline from the group step, then select it (no navigation away - the wizard state
+  // is preserved). Setting groupId triggers the group-change effect, which loads the new group's (empty)
+  // redo list and resolves pastLoaded so the step can advance.
+  async function createNewGroup() {
+    const trimmed = newGroupName.trim();
+    if (!trimmed || creatingGroup) return;
+    setCreatingGroup(true);
+    try {
+      const res = await trpc.groups.create.mutate({ name: trimmed });
+      setGroups((gs) => [...gs, { id: res.id, name: trimmed, memberCount: 1 }]);
+      setGroupId(res.id);
+      setNewGroupName("");
+      setNewGroupOpen(false);
+    } catch {
+      setError(true);
+    } finally {
+      setCreatingGroup(false);
+    }
+  }
+
   function goNext() {
     if (!canGoNext || busy) return;
     if (stepKey === "activities") commitDraftActivity();
@@ -347,9 +376,7 @@ export function CreateWizard({ navigation }: Props) {
                 onPress={() => setGroupId(g.id)}
               />
             ))}
-            {groups.length === 0 && (
-              <AppText variant="caption">You're not in any groups yet.</AppText>
-            )}
+            <Chip label={ACTION_NEW_GROUP} selected={false} onPress={() => setNewGroupOpen(true)} />
           </View>
         )}
 
@@ -587,6 +614,23 @@ export function CreateWizard({ navigation }: Props) {
         onPress={goNext}
         style={{ marginTop: 24 }}
       />
+
+      <BottomSheet visible={newGroupOpen} onClose={() => setNewGroupOpen(false)}>
+        <Section title={TITLE_NEW_GROUP} size="lg" />
+        <Field
+          label={LABEL_GROUP_NAME}
+          value={newGroupName}
+          onChangeText={setNewGroupName}
+          placeholder="The Boys"
+        />
+        <Button
+          label="Create group"
+          variant="primary"
+          disabled={newGroupName.trim() === "" || creatingGroup}
+          onPress={createNewGroup}
+          style={{ marginTop: 16 }}
+        />
+      </BottomSheet>
     </ScreenScroll>
   );
 }

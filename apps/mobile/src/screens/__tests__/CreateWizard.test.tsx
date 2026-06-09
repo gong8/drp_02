@@ -576,6 +576,30 @@ describe("the redo source step", () => {
   });
 });
 
+// ---- inline create-group on the group step ------------------------------------------------------
+
+describe("creating a group inline", () => {
+  test("the group step creates a new group inline and selects it", async () => {
+    mockBaseline();
+    mockMutation(trpc.groups.create, { id: "g2" } satisfies RouterOutputs["groups"]["create"]);
+    await landOnGroupStep();
+
+    // Open the inline sheet, name a group, and create it - no navigation away from the wizard.
+    fireEvent.press(screen.getByText("+ New group"));
+    const field = await screen.findByPlaceholderText("The Boys");
+    fireEvent.changeText(field, "Bowling Buddies");
+    await act(async () => {
+      fireEvent.press(screen.getByText("Create group"));
+    });
+
+    await waitFor(() =>
+      expect(trpc.groups.create.mutate).toHaveBeenCalledWith({ name: "Bowling Buddies" }),
+    );
+    // The new group appears as a chip (selected), so the wizard proceeds with it.
+    expect(await screen.findByText("Bowling Buddies")).toBeOnTheScreen();
+  });
+});
+
 // ---- submit: assembles the input and navigates --------------------------------------------------
 
 describe("submitting the plan", () => {
