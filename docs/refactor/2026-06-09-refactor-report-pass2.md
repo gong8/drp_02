@@ -44,7 +44,40 @@
 
 ## Application log
 
-_Filled in after the sequential apply - see commit list at the end._
+Applied **sequentially** on branch `refactor/simplify-everything` (the events.ts clusters contend on one
+file, and the API tests share one local Postgres, so parallel worktrees were not viable). Each cluster is
+one commit, gated by `pnpm typecheck` + `pnpm lint` and the relevant package's test suite; full repo-wide
+gate green at HEAD.
+
+- **Applied: 13 of 14 clusters** (cluster #1 landed as two commits - candidate normalization, then deadline
+  derivation). Net: **25 files changed, +2030 / -910**.
+- **Proposal only: 1 cluster** - #14 `split-events-router-lifecycle-bundle` (L/med). Per the apply policy,
+  the one medium-risk cluster stays a proposal; it is also the highest-churn item and overlaps the three
+  events.ts clusters that DID land (#1/#2/#7), so it should be re-scoped against the post-pass file.
+- **Blocked: 0.**
+
+Final gate at HEAD: **lint clean, typecheck clean, API 407 pass / 0 fail, shared 129 pass / 1 skipped,
+mobile 193 pass / 0 fail.** Behavior, wire shapes, and pixels unchanged; the two extracted pure API helpers
+gained 12 new co-located unit tests (API 395 -> 407).
+
+### Commits (oldest first)
+
+```
+760b342 refactor(api/events): extract pure normalizeCreateCandidates from create()
+1893f42 refactor(api/events): extract pure resolveCreateDeadlines + resolveMomentEnd
+d507c27 refactor(api/events): extract get()'s reaction-count + candidate projection helpers
+bc8c7b8 refactor(api/events): add clearMyReactions helper + fold update()'s 3x CAS into one applier
+633eafc refactor(api/db): route getUserCard through userCardFromRow / fallbackUserCard
+9c057d9 refactor(api/test): trim dead harness override params + dead env write
+96a7ff0 refactor(shared): delete the dead window.ts module + fix stale invite mirror comment
+ed6d98d refactor(mobile): centralize the 5000ms data-poll cadence as POLL_MS
+c4a206d refactor(mobile): route ScreenHeader title + conditional-mode labels through the shared vocab
+5d71d33 refactor(mobile): disambiguate EventDetail's sheet/editStatus state names
+7064ce2 refactor(mobile): move EventDetail's phase sub-components into screens/event-detail/
+0502584 refactor(mobile): extract EventDetail's inline plan-header into PlanHeaderCard
+4d931c9 refactor(mobile): extract GroupDetail's invite BottomSheet into InviteSheet
+8a33f95 refactor(mobile): extract Gate's pending-invite effects into usePendingInviteRouting
+```
 
 ---
 
