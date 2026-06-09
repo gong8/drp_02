@@ -232,6 +232,18 @@ async function clearMyResponse(
     .where(and(eq(responses.eventId, eventId), eq(responses.userId, userId)));
 }
 
+// Drop the caller's +1s across every candidate on this plan (opting out clears them, dropping the
+// caller from the tally/quorum). Idempotent; pass a tx handle to enlist in a wrapping transaction.
+async function clearMyReactions(
+  eventId: string,
+  userId: string,
+  handle: DbOrTx = db,
+): Promise<void> {
+  await handle
+    .delete(candidateReactions)
+    .where(and(eq(candidateReactions.eventId, eventId), eq(candidateReactions.userId, userId)));
+}
+
 // Lazily settle a moment whose countdown has ended (no scheduler): clears if quorum is met, else
 // fizzles - but a non-contingent (exact) plan always happens, so it clears regardless. Mutates the
 // in-memory row and persists, so reads converge the lifecycle on their own.
@@ -636,14 +648,7 @@ export const eventsRouter = router({
     const e = await loadEvent(input.eventId, ctx.userId);
     await settleAndRequirePhase(e, "collecting", "plan is not collecting");
     if (input.out) {
-      await db
-        .delete(candidateReactions)
-        .where(
-          and(
-            eq(candidateReactions.eventId, input.eventId),
-            eq(candidateReactions.userId, ctx.userId),
-          ),
-        );
+      await clearMyReactions(input.eventId, ctx.userId);
       await db
         .insert(eventOptOuts)
         .values({ eventId: input.eventId, userId: ctx.userId })
@@ -791,21 +796,23 @@ export const eventsRouter = router({
 
       const set: Partial<typeof events.$inferInsert> = {};
       const conflicts: { field: string; current: string }[] = [];
-      // activity/location are non-null strings; description is nullable, so treat its current as "".
-      if (input.activity) {
-        if (e.activity === input.activity.from) set.activity = input.activity.to;
-        else conflicts.push({ field: "activity", current: e.activity });
-      }
-      if (input.location) {
-        if (e.location === input.location.from) set.location = input.location.to;
-        else conflicts.push({ field: "location", current: e.location });
-      }
-      if (input.description) {
-        const current = e.description ?? "";
-        if (current === input.description.from) {
-          set.description = input.description.to === "" ? null : input.description.to;
-        } else conflicts.push({ field: "description", current });
-      }
+      // One compare-and-set per editable field: write `to` only if the loaded `from` still equals the
+      // current value, else report a conflict carrying the now-current value. `write` maps the new
+      // value onto the column (description clears "" -> null; activity/location are non-null strings).
+      // The cast narrows the dynamically-keyed write to these three string-ish columns.
+      const applyCas = (
+        field: "activity" | "location" | "description",
+        edit: { from: string; to: string } | undefined,
+        current: string,
+        write: (v: string) => string | null = (v) => v,
+      ) => {
+        if (!edit) return;
+        if (current === edit.from) (set as Record<string, string | null>)[field] = write(edit.to);
+        else conflicts.push({ field, current });
+      };
+      applyCas("activity", input.activity, e.activity);
+      applyCas("location", input.location, e.location);
+      applyCas("description", input.description, e.description ?? "", (v) => (v === "" ? null : v));
 
       const applied = Object.keys(set);
       if (applied.length > 0) {
