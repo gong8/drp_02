@@ -43,15 +43,9 @@ export function inviteUrlFor(code: string): string | null {
   return `${base.replace(/\/+$/, "")}/join/${code}`;
 }
 
-// Read a group's display name, falling back to the sentinel above when the row is missing.
-export async function getGroupName(id: string): Promise<string> {
-  const [g] = await db.select().from(groups).where(eq(groups.id, id));
-  return g?.name ?? FALLBACK_GROUP_NAME;
-}
-
-// Bulk version of getGroupName: resolve many group names in ONE inArray query, returning a
-// Map<groupId, name>. Callers read names via the map (with FALLBACK_GROUP_NAME for missing rows),
-// avoiding a per-row SELECT. An empty id list issues no query and returns an empty map.
+// Resolve many group names in ONE inArray query, returning a Map<groupId, name>. Callers read names
+// via the map (with FALLBACK_GROUP_NAME for missing rows), avoiding a per-row SELECT. An empty id
+// list issues no query and returns an empty map.
 export async function getGroupNames(ids: string[]): Promise<Map<string, string>> {
   const out = new Map<string, string>();
   if (ids.length === 0) return out;

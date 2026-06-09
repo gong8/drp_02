@@ -11,7 +11,13 @@ import {
 import { TRPCError } from "@trpc/server";
 import { and, count, eq, inArray, notInArray } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { FALLBACK_GROUP_NAME, freshInviteCode, inviteUrlFor, memberIdsOf } from "../db/groups.js";
+import {
+  FALLBACK_GROUP_NAME,
+  freshInviteCode,
+  getGroupNames,
+  inviteUrlFor,
+  memberIdsOf,
+} from "../db/groups.js";
 import {
   candidateReactions,
   eventOptOuts,
@@ -46,16 +52,12 @@ export const groupsRouter = router({
     const groupIds = memberships.map((m) => m.groupId);
     if (groupIds.length === 0) return [];
 
-    const nameRows = await db
-      .select({ id: groups.id, name: groups.name })
-      .from(groups)
-      .where(inArray(groups.id, groupIds));
+    const nameMap = await getGroupNames(groupIds);
     const countRows = await db
       .select({ groupId: groupMembers.groupId, n: count() })
       .from(groupMembers)
       .where(inArray(groupMembers.groupId, groupIds))
       .groupBy(groupMembers.groupId);
-    const nameMap = new Map(nameRows.map((r) => [r.id, r.name]));
     const countMap = new Map(countRows.map((r) => [r.groupId, Number(r.n)]));
 
     return memberships.map((m) => ({
