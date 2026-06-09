@@ -62,16 +62,11 @@ function useConsumeParam(active: boolean, onConsume: () => void) {
 export function GroupDetail({ route, navigation }: Props) {
   const { groupId } = route.params;
   const [data, setData] = useState<Detail | null>(null);
-  const [invite, setInvite] = useState<Invite | null>(null);
   const [nameDraft, setNameDraft] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
-  // The invite fetch failed (vs still loading); drives an error+retry surface in the sheet.
-  const [inviteError, setInviteError] = useState(false);
-  // Which invite control most recently confirmed a copy (label swaps to "Copied" for ~1.5s).
-  const [copied, setCopied] = useState<null | "code" | "link" | "share">(null);
   // A one-time welcome band after joining via an invite.
   const [welcome, setWelcome] = useState(false);
   // Whether the name field has been seeded from the server yet. We seed only on the first successful
@@ -95,22 +90,6 @@ export function GroupDetail({ route, navigation }: Props) {
 
   useFetchOnFocus(load);
 
-  // Fetch the group's invite (member-gated; the viewer is a member, so it resolves). Shared by the
-  // open effect and the retry button.
-  const loadInvite = useCallback(() => {
-    setInviteError(false);
-    trpc.groups.inviteByGroup
-      .query({ groupId })
-      .then((inv) => setInvite(inv))
-      .catch(() => setInviteError(true));
-  }, [groupId]);
-
-  // Lazily fetch the invite the first time the sheet opens. Kept off the focus load so opening a group
-  // never pays for an invite query.
-  useEffect(() => {
-    if (inviteOpen && !invite) loadInvite();
-  }, [inviteOpen, invite, loadInvite]);
-
   // Land-on-invite after creating the group: open the sheet once the group has loaded, then clear the
   // flag so a refocus does not reopen it.
   useConsumeParam(!!route.params?.justCreated && !!data, () => {
@@ -125,30 +104,6 @@ export function GroupDetail({ route, navigation }: Props) {
   });
 
   const runAction = useBusyAction({ busy, setBusy, setError, load });
-
-  function flash(which: "code" | "link" | "share") {
-    setCopied(which);
-    setTimeout(() => setCopied(null), 1500);
-  }
-
-  // Prefer the server-built link (canonical, from PUBLIC_WEB_URL); fall back to one built client-side.
-  const inviteLink = invite ? (invite.url ?? joinUrl(invite.code)) : null;
-
-  async function copyCode() {
-    if (!invite) return;
-    await copyToClipboard(invite.code);
-    flash("code");
-  }
-  async function copyLink() {
-    if (!inviteLink) return;
-    await copyToClipboard(inviteLink);
-    flash("link");
-  }
-  async function share() {
-    if (!inviteLink || !data) return;
-    const { copied: didCopy } = await shareInvite(inviteShareText(data.name), inviteLink);
-    if (didCopy) flash("share");
-  }
 
   if (loading) return <ScreenLoading />;
   if (error || !data)
@@ -221,60 +176,130 @@ export function GroupDetail({ route, navigation }: Props) {
         style={{ marginTop: 16 }}
       />
 
-      <BottomSheet visible={inviteOpen} onClose={() => setInviteOpen(false)}>
-        <Section title={TITLE_INVITE} size="lg" sub={INVITE_HINT} />
-        {invite ? (
-          <>
-            <Card tone={ui.tint}>
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <FieldLabel tone="muted">{LABEL_JOIN_CODE}</FieldLabel>
-                <View style={{ marginLeft: "auto" }}>
-                  <TextButton
-                    label={copied === "code" ? ACTION_COPIED : ACTION_COPY}
-                    onPress={copyCode}
-                  />
-                </View>
-              </View>
-              <AppText
-                variant="screenTitle"
-                mono
-                style={{ fontSize: 34, letterSpacing: 4, marginTop: 4 }}
-              >
-                {formatCode(invite.code)}
-              </AppText>
-            </Card>
-
-            <Field
-              label={LABEL_INVITE_LINK}
-              value={inviteLink ?? ""}
-              editable={false}
-              right={
-                <TextButton
-                  label={copied === "link" ? ACTION_COPIED : ACTION_COPY}
-                  onPress={copyLink}
-                />
-              }
-              style={{ marginTop: 14 }}
-            />
-
-            <Button
-              label={copied === "share" ? ACTION_LINK_COPIED : ACTION_SHARE_INVITE}
-              variant="primary"
-              onPress={share}
-              style={{ marginTop: 16 }}
-            />
-          </>
-        ) : inviteError ? (
-          <Card>
-            <AppText variant="caption">{ERR_NETWORK}</AppText>
-            <View style={{ marginTop: 8, alignItems: "flex-start" }}>
-              <TextButton label={ACTION_TRY_AGAIN} onPress={loadInvite} />
-            </View>
-          </Card>
-        ) : (
-          <EmptyState inCard>{INVITE_CODE_PENDING}</EmptyState>
-        )}
-      </BottomSheet>
+      <InviteSheet
+        groupId={groupId}
+        groupName={data.name}
+        visible={inviteOpen}
+        onClose={() => setInviteOpen(false)}
+      />
     </ScreenScroll>
+  );
+}
+
+// The invite bottom sheet: lazily fetches the group's invite the first time it opens, then shows the
+// join code, the canonical link, and a share action (each with a transient "Copied" confirmation), or
+// an error+retry / pending surface. Self-contained - it owns the invite fetch and copy state.
+function InviteSheet({
+  groupId,
+  groupName,
+  visible,
+  onClose,
+}: {
+  groupId: string;
+  groupName: string;
+  visible: boolean;
+  onClose: () => void;
+}) {
+  const [invite, setInvite] = useState<Invite | null>(null);
+  // The invite fetch failed (vs still loading); drives an error+retry surface in the sheet.
+  const [inviteError, setInviteError] = useState(false);
+  // Which invite control most recently confirmed a copy (label swaps to "Copied" for ~1.5s).
+  const [copied, setCopied] = useState<null | "code" | "link" | "share">(null);
+
+  // Fetch the group's invite (member-gated; the viewer is a member, so it resolves). Shared by the
+  // open effect and the retry button.
+  const loadInvite = useCallback(() => {
+    setInviteError(false);
+    trpc.groups.inviteByGroup
+      .query({ groupId })
+      .then((inv) => setInvite(inv))
+      .catch(() => setInviteError(true));
+  }, [groupId]);
+
+  // Lazily fetch the invite the first time the sheet opens. Kept off the focus load so opening a group
+  // never pays for an invite query.
+  useEffect(() => {
+    if (visible && !invite) loadInvite();
+  }, [visible, invite, loadInvite]);
+
+  function flash(which: "code" | "link" | "share") {
+    setCopied(which);
+    setTimeout(() => setCopied(null), 1500);
+  }
+
+  // Prefer the server-built link (canonical, from PUBLIC_WEB_URL); fall back to one built client-side.
+  const inviteLink = invite ? (invite.url ?? joinUrl(invite.code)) : null;
+
+  async function copyCode() {
+    if (!invite) return;
+    await copyToClipboard(invite.code);
+    flash("code");
+  }
+  async function copyLink() {
+    if (!inviteLink) return;
+    await copyToClipboard(inviteLink);
+    flash("link");
+  }
+  async function share() {
+    if (!inviteLink) return;
+    const { copied: didCopy } = await shareInvite(inviteShareText(groupName), inviteLink);
+    if (didCopy) flash("share");
+  }
+
+  return (
+    <BottomSheet visible={visible} onClose={onClose}>
+      <Section title={TITLE_INVITE} size="lg" sub={INVITE_HINT} />
+      {invite ? (
+        <>
+          <Card tone={ui.tint}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <FieldLabel tone="muted">{LABEL_JOIN_CODE}</FieldLabel>
+              <View style={{ marginLeft: "auto" }}>
+                <TextButton
+                  label={copied === "code" ? ACTION_COPIED : ACTION_COPY}
+                  onPress={copyCode}
+                />
+              </View>
+            </View>
+            <AppText
+              variant="screenTitle"
+              mono
+              style={{ fontSize: 34, letterSpacing: 4, marginTop: 4 }}
+            >
+              {formatCode(invite.code)}
+            </AppText>
+          </Card>
+
+          <Field
+            label={LABEL_INVITE_LINK}
+            value={inviteLink ?? ""}
+            editable={false}
+            right={
+              <TextButton
+                label={copied === "link" ? ACTION_COPIED : ACTION_COPY}
+                onPress={copyLink}
+              />
+            }
+            style={{ marginTop: 14 }}
+          />
+
+          <Button
+            label={copied === "share" ? ACTION_LINK_COPIED : ACTION_SHARE_INVITE}
+            variant="primary"
+            onPress={share}
+            style={{ marginTop: 16 }}
+          />
+        </>
+      ) : inviteError ? (
+        <Card>
+          <AppText variant="caption">{ERR_NETWORK}</AppText>
+          <View style={{ marginTop: 8, alignItems: "flex-start" }}>
+            <TextButton label={ACTION_TRY_AGAIN} onPress={loadInvite} />
+          </View>
+        </Card>
+      ) : (
+        <EmptyState inCard>{INVITE_CODE_PENDING}</EmptyState>
+      )}
+    </BottomSheet>
   );
 }
