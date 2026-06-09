@@ -12,6 +12,16 @@
 - Every survivor is **S effort** and **low risk** (one med-risk item flagged for scrutiny). Theme: extract a single source of truth for logic/strings/types that had drifted into 2-5 hand-copied sites, and reuse the existing `ui/` + `lib/` + `@bethere/shared` surface instead of re-inlining.
 - The mobile/shared type-only boundary was respected throughout: no mobile helper is merged into the shared package via a runtime import.
 
+## Application log (apply + aggressive)
+
+All 32 clusters were applied on branch `refactor/aggressive-simplify`, one cluster per commit (33 commits incl. this report), each verified green with `pnpm typecheck && pnpm lint && pnpm test` before committing. Final state of the branch: **lint clean, typecheck clean, API 395 tests pass / 0 fail, mobile 193 tests pass**.
+
+- **Applied in full: 31 clusters** (all but #12).
+- **Applied partially: 1 cluster** - #12 "Reuse the shared Conditional type and ActivityText rule". The `Conditional`-type reuse half was applied (pure compile-time, zero behavior change). The `ActivityText.trim()` half was **deliberately skipped**: `addCandidate` already trims in its handler, so adding `.trim()` to the shared schema would only shift its max-length validation boundary (an input that was rejected would become accepted) and change the whitespace-only error path - a small but real behavior change, out of scope for a behavior-preserving pass. Re-file as a separate normalization change if desired.
+- **Blocked: 0.**
+
+Two low-value / optional sub-items the verified epics already marked optional were intentionally not done, to keep each commit focused and behavior-risk minimal: the `memberCounts` bulk helper in #8 (the two high-value edits were applied), and the single-call-site `getGroup(id)` extraction in #8.
+
 ## Prioritized roadmap
 
 | # | Cluster | Effort | Risk | Impact | Files |
