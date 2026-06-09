@@ -1,9 +1,9 @@
-import type { ResponseKind } from "../schemas.js";
+import type { Conditional, ResponseKind } from "../schemas.js";
 
 export interface MomentResponse {
   userId: string;
   kind: ResponseKind;
-  cond?: { mode: "all" | "any"; targetIds: string[] };
+  cond?: Conditional;
 }
 
 /**

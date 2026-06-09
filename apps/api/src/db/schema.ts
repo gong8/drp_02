@@ -1,3 +1,4 @@
+import type { Conditional } from "@bethere/shared";
 import {
   boolean,
   integer,
@@ -155,7 +156,7 @@ export const responses = pgTable(
       .notNull()
       .references(() => users.id),
     kind: responseKindEnum("kind").notNull(),
-    cond: jsonb("cond").$type<{ mode: "all" | "any"; targetIds: string[] }>(),
+    cond: jsonb("cond").$type<Conditional>(),
   },
   (t) => ({ eventUser: uniqueIndex("responses_event_user_unique").on(t.eventId, t.userId) }),
 );
