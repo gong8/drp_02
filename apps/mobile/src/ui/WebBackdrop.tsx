@@ -8,8 +8,10 @@ import { font } from "../theme";
 // BEHIND the column (which is opaque), so only the gutters reveal it. pointerEvents is off so it never
 // intercepts taps, and it returns null on native (phones have no gutters).
 
-const ROWS = 30; // enough rows to fill the oversized, rotated field; extras clip off-screen
 const LINE = "BeThere   ".repeat(20); // one row, long enough to span the oversized field
+// Stable keys for the fixed-length, never-reordered set of rows; enough to fill the oversized,
+// rotated field (extras clip off-screen). Static ids avoid keying on the array index.
+const ROW_KEYS = Array.from({ length: 30 }, (_, r) => `bg-row-${r}`);
 
 export function WebBackdrop() {
   if (Platform.OS !== "web") return null;
@@ -26,10 +28,9 @@ export function WebBackdrop() {
           transform: [{ rotate: "-18deg" }],
         }}
       >
-        {Array.from({ length: ROWS }).map((_, r) => (
+        {ROW_KEYS.map((rowKey) => (
           <Text
-            // biome-ignore lint/suspicious/noArrayIndexKey: fixed-length static pattern, never reordered
-            key={r}
+            key={rowKey}
             numberOfLines={1}
             style={{
               fontFamily: font.black,
