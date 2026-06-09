@@ -44,7 +44,7 @@ const isWeb = Platform.OS === "web";
 // The web origin the share link points at. Prefers an explicit build-time origin (the Vercel domain),
 // then the browser's own origin on web, then a placeholder. The server-built link (from PUBLIC_WEB_URL)
 // is preferred when present; this is the client fallback for when it is not (local dev / native).
-function webOrigin(): string {
+export function webOrigin(): string {
   const env = process.env.EXPO_PUBLIC_WEB_URL?.trim();
   if (env) return env.replace(/\/+$/, "");
   if (isWeb && typeof window !== "undefined") return window.location.origin;
@@ -63,7 +63,9 @@ export function joinUrl(code: string): string {
 const STORAGE_KEY = "bethere.pendingInvite";
 let nativePending: string | null = null;
 
-function webStore(): Storage | null {
+// The web localStorage handle when available (web + a real localStorage), else null - the signal to
+// fall back to an in-memory stash on native. Shared by the invite + meetup pending-value stashes.
+export function webStore(): Storage | null {
   return isWeb && typeof localStorage !== "undefined" ? localStorage : null;
 }
 
