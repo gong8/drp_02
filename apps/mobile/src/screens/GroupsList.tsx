@@ -1,4 +1,3 @@
-import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useCallback, useState } from "react";
 import { Text, View } from "react-native";
@@ -18,6 +17,7 @@ import { colorFor, initials } from "../lib/format";
 import { CODE_LENGTH, normalizeCode } from "../lib/invite";
 import type { RouterOutputs } from "../lib/trpc";
 import { trpc } from "../lib/trpc";
+import { useFetchOnFocus } from "../lib/useFetchOnFocus";
 import { font, ui } from "../theme";
 import {
   AppText,
@@ -43,22 +43,16 @@ export function GroupsList({ navigation }: Props) {
   const [joinOpen, setJoinOpen] = useState(false);
   const [codeDraft, setCodeDraft] = useState("");
 
-  useFocusEffect(
+  useFetchOnFocus(
     useCallback(() => {
-      let active = true;
       trpc.groups.mine
         .query()
         .then((g) => {
-          if (active) {
-            setGroups(g);
-            setError(false);
-          }
+          setGroups(g);
+          setError(false);
         })
-        .catch(() => active && setError(true))
-        .finally(() => active && setLoading(false));
-      return () => {
-        active = false;
-      };
+        .catch(() => setError(true))
+        .finally(() => setLoading(false));
     }, []),
   );
 
