@@ -11,17 +11,12 @@ import {
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useFonts } from "expo-font";
 import { StatusBar } from "expo-status-bar";
-import { type ReactNode, useEffect } from "react";
-import { Linking, Platform, Pressable, Text, View } from "react-native";
+import { type ReactNode, useCallback } from "react";
+import { Platform, Pressable, Text, View } from "react-native";
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import { DevAuthProvider, useAuthBridge } from "./src/lib/auth";
 import { publishableKey, tokenCache } from "./src/lib/clerk";
-import {
-  clearPendingInvite,
-  extractInviteCode,
-  getPendingInvite,
-  setPendingInvite,
-} from "./src/lib/invite";
+import { usePendingInviteRouting } from "./src/lib/usePendingInvite";
 import { Account } from "./src/screens/Account";
 import { CreateGroup } from "./src/screens/CreateGroup";
 import { CreateWizard } from "./src/screens/CreateWizard";
@@ -178,52 +173,16 @@ function MainTabs() {
 function Gate() {
   const authed = useAuthBridge();
 
-  // While signed out, stash an invite code from the launch URL / any incoming link, so it survives
-  // sign-in. This runs during every signed-out window - including the brief one before an async Clerk
-  // session resolves - so the code is captured even when the navigator was not yet mounted to route
-  // it. When already authed the linking config routes invite URLs directly, so we skip stashing (and
-  // a stale code never lingers). The web stash lives in localStorage (see lib/invite), so it survives
-  // the OAuth redirect's page reload; native keeps it in memory, which the app's lifetime preserves.
-  useEffect(() => {
-    if (authed) return;
-    let active = true;
-    Linking.getInitialURL().then((url) => {
-      const code = url ? extractInviteCode(url) : null;
-      if (active && code) setPendingInvite(code);
-    });
-    const sub = Linking.addEventListener("url", ({ url }) => {
-      const code = extractInviteCode(url);
-      if (code) setPendingInvite(code);
-    });
-    return () => {
-      active = false;
-      sub.remove();
-    };
-  }, [authed]);
-
-  // Once authed, resume a STASHED invite (the signed-out capture above): route to JoinGroup, then
-  // clear it. We rely only on the stash - an already-authed user opening /join/code is routed by the
-  // linking config (the navigator is mounted), so the two never both fire. Clearing only after the
-  // navigate lands means a torn-down poll cannot drop the code, and go() bails if the effect is gone.
-  useEffect(() => {
-    if (!authed) return;
-    const code = getPendingInvite();
-    if (!code) return;
-    let active = true;
-    const go = () => {
-      if (!active) return;
-      if (navigationRef.isReady()) {
-        navigationRef.navigate("Groups", { screen: "JoinGroup", params: { code } });
-        clearPendingInvite();
-      } else {
-        setTimeout(go, 50);
-      }
-    };
-    go();
-    return () => {
-      active = false;
-    };
-  }, [authed]);
+  // Route a deep-link invite code across the sign-in boundary (the hook captures it while signed out
+  // and resumes it once authed). navigate is the only App-coupled step - it routes to JoinGroup once
+  // the navigator is ready, returning false until then so the hook keeps polling. useCallback-stable
+  // so the hook's resume effect re-runs only on an auth change, as before.
+  const navigate = useCallback((code: string) => {
+    if (!navigationRef.isReady()) return false;
+    navigationRef.navigate("Groups", { screen: "JoinGroup", params: { code } });
+    return true;
+  }, []);
+  usePendingInviteRouting(authed, navigate);
 
   return (
     <NavigationContainer ref={navigationRef} linking={linking}>
