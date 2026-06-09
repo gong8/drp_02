@@ -26,7 +26,8 @@ import { GroupDetail } from "./src/screens/GroupDetail";
 import { GroupsList } from "./src/screens/GroupsList";
 import { JoinGroup } from "./src/screens/JoinGroup";
 import { SignIn } from "./src/screens/SignIn";
-import { font, ui } from "./src/theme";
+import { font, ui, webColumnMaxWidth } from "./src/theme";
+import { WebBackdrop } from "./src/ui/WebBackdrop";
 
 // Account is reachable from either tab (via the top-right avatar), so it is registered in both stacks
 // and gets a real back button - there is no Account tab anymore.
@@ -192,12 +193,26 @@ function Gate() {
   );
 }
 
-// On web, constrain to a centered phone-width column so desktop looks intentional.
+// On web, constrain to a centered phone-width column so desktop looks intentional. The pink gutters
+// either side are filled with a decorative WebBackdrop; the column itself is opaque (every screen
+// paints a gradient), so the backdrop only ever shows through the gutters.
 function Shell({ children }: { children: ReactNode }) {
   if (Platform.OS !== "web") return <>{children}</>;
   return (
-    <View style={{ flex: 1, alignItems: "center", backgroundColor: ui.ink }}>
-      <View style={{ flex: 1, width: "100%", maxWidth: 480 }}>{children}</View>
+    <View style={{ flex: 1, alignItems: "center", backgroundColor: ui.brand }}>
+      <WebBackdrop />
+      <View
+        style={{
+          flex: 1,
+          width: "100%",
+          maxWidth: webColumnMaxWidth,
+          borderLeftWidth: 4,
+          borderRightWidth: 4,
+          borderColor: ui.ink,
+        }}
+      >
+        {children}
+      </View>
     </View>
   );
 }
