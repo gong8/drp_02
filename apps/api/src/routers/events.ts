@@ -92,6 +92,14 @@ async function candidatesFor(eventId: string): Promise<(typeof eventCandidates.$
 const isTimeCand = (c: typeof eventCandidates.$inferSelect) =>
   c.kind === "time" && c.startsAt != null;
 
+const MINUTE_MS = 60_000;
+// The minute bucket a time falls in. create and addCandidate collapse times to the same minute (the
+// wizard's granularity), so a slot sent twice - or at HH:MM:30 vs HH:MM:00 - stays one row.
+const startMinute = (d: Date) => Math.floor(d.getTime() / MINUTE_MS);
+// The case-insensitive dedupe key for an activity label. create and addCandidate must agree on it so
+// the same name added either way collapses to one row (keeping the both-axes-pinned moment shortcut).
+const activityKey = (s: string) => s.trim().toLowerCase();
+
 // The creator lock-readiness rule: a winning time candidate exists at the given quorum.
 function isReadyToLock(timeIds: string[], reactions: CandidateReaction[], quorum: number): boolean {
   return pickWinningCandidate(timeIds, reactions, quorum) !== null;
@@ -497,7 +505,7 @@ export const eventsRouter = router({
     // This mirrors addCandidate's minute dedupe so create and add agree.
     const seenMinutes = new Set<number>();
     const timeCands = sortedTimeInputs.filter((c) => {
-      const minute = Math.floor(c.startsAt.getTime() / 60_000);
+      const minute = startMinute(c.startsAt);
       if (seenMinutes.has(minute)) return false;
       seenMinutes.add(minute);
       return true;
@@ -511,7 +519,7 @@ export const eventsRouter = router({
       .map((text) => text.trim())
       .filter((text) => {
         if (text === "") return false;
-        const key = text.toLowerCase();
+        const key = activityKey(text);
         if (seenActivityKeys.has(key)) return false;
         seenActivityKeys.add(key);
         return true;
@@ -742,49 +750,34 @@ export const eventsRouter = router({
       }
       // Dedupe by minute (the comment above and the wizard's granularity): a candidate at HH:MM:00
       // and a new add at HH:MM:30 are the same slot, so the add +1s the existing row.
-      const startMinute = Math.floor(startsAt.getTime() / 60_000);
+      const minute = startMinute(startsAt);
       const dup = cands.find(
-        (c) =>
-          c.kind === "time" &&
-          c.startsAt != null &&
-          Math.floor(c.startsAt.getTime() / 60_000) === startMinute,
+        (c) => c.kind === "time" && c.startsAt != null && startMinute(c.startsAt) === minute,
       );
       if (dup) {
         await ensureReaction(input.eventId, dup.id, ctx.userId);
         return { id: dup.id };
       }
       newId = `${input.eventId}_t_${randomUUID()}`;
-      await db.insert(eventCandidates).values({
-        id: newId,
-        eventId: input.eventId,
-        kind: "time",
-        startsAt,
-        partOfDay: input.partOfDay ?? null,
-        label: null,
-      });
+      await insertCandidates(input.eventId, [
+        { id: newId, kind: "time", startsAt, partOfDay: input.partOfDay ?? null, label: null },
+      ]);
     } else {
       if (!input.text) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "an activity needs a name" });
       }
       const text = input.text.trim();
       if (!text) throw new TRPCError({ code: "BAD_REQUEST", message: "an activity needs a name" });
-      const key = text.toLowerCase();
-      const dup = cands.find(
-        (c) => c.kind === "activity" && (c.label ?? "").trim().toLowerCase() === key,
-      );
+      const key = activityKey(text);
+      const dup = cands.find((c) => c.kind === "activity" && activityKey(c.label ?? "") === key);
       if (dup) {
         await ensureReaction(input.eventId, dup.id, ctx.userId);
         return { id: dup.id };
       }
       newId = `${input.eventId}_a_${randomUUID()}`;
-      await db.insert(eventCandidates).values({
-        id: newId,
-        eventId: input.eventId,
-        kind: "activity",
-        startsAt: null,
-        partOfDay: null,
-        label: text,
-      });
+      await insertCandidates(input.eventId, [
+        { id: newId, kind: "activity", startsAt: null, partOfDay: null, label: text },
+      ]);
     }
     await ensureReaction(input.eventId, newId, ctx.userId);
     return { id: newId };
