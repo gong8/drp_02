@@ -5,6 +5,7 @@ import { useCallback, useRef, useState } from "react";
 import { Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
 import {
+  COND_MODE,
   DIDNT_COME_TOGETHER,
   ERR_SAVE,
   LABEL_CANT_MAKE_IT,
@@ -51,7 +52,7 @@ type Detail = NonNullable<RouterOutputs["events"]["get"]>;
 type Member = Detail["members"][number];
 type TimeCand = Detail["timeCandidates"][number];
 type ActivityCand = Detail["activityCandidates"][number];
-type CondModeLabel = "At least one" | "All of them";
+type CondModeLabel = (typeof COND_MODE)[keyof typeof COND_MODE];
 type Props = NativeStackScreenProps<MeetupsStackParams, "EventDetail">;
 
 // Sentinel key for the in-flight-mutation poll guard, used by the opt-out toggle (which is not tied
@@ -68,7 +69,7 @@ export function EventDetail({ route, navigation }: Props) {
   // moment conditional sheet
   const [reanswering, setReanswering] = useState(false);
   const [sheet, setSheet] = useState(false);
-  const [condModeLabel, setCondModeLabel] = useState<CondModeLabel>("At least one");
+  const [condModeLabel, setCondModeLabel] = useState<CondModeLabel>(COND_MODE.any);
   const [condPicked, setCondPicked] = useState<string[]>([]);
 
   // Edit-details sheet (activity/location/notes). Anyone can edit while the plan is live; saves use a
@@ -340,7 +341,7 @@ export function EventDetail({ route, navigation }: Props) {
       <BottomSheet visible={sheet} onClose={() => setSheet(false)}>
         <Section title="Go if these people are in" size="lg" />
         <Segmented
-          options={["At least one", "All of them"] as const}
+          options={[COND_MODE.any, COND_MODE.all] as const}
           value={condModeLabel}
           onChange={setCondModeLabel}
           variant="bar"
@@ -374,7 +375,7 @@ export function EventDetail({ route, navigation }: Props) {
           onPress={() => {
             setSheet(false);
             answer("conditional", {
-              mode: condModeLabel === "All of them" ? "all" : "any",
+              mode: condModeLabel === COND_MODE.all ? "all" : "any",
               targetIds: condPicked,
             });
           }}

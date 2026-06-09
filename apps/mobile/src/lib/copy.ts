@@ -9,6 +9,10 @@ import type { MyStatus } from "./status";
 // The single decline phrase (drop "I"/"You're").
 export const LABEL_CANT_MAKE_IT = "Can't make it";
 
+// The two conditional-RSVP modes ("Go if these people are in"), labelled once so the segmented
+// control's options and the mode-to-wire mapping in EventDetail stay in lockstep.
+export const COND_MODE = { any: "At least one", all: "All of them" } as const;
+
 // Deadline labels, paired with the phase field in status.activeDeadline.
 export const DEADLINE_VOTING = "Voting closes";
 export const DEADLINE_RSVP = "RSVP closes";

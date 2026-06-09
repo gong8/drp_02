@@ -51,9 +51,9 @@ export function ScreenHeader({
         </HardShadow>
       ) : null}
       <AppText
-        variant={onBack ? "title" : "screenTitle"}
+        variant={onBack ? "cardTitle" : "screenTitle"}
         numberOfLines={1}
-        style={[{ flexShrink: 1 }, onBack ? { fontSize: 15 } : null]}
+        style={{ flexShrink: 1 }}
       >
         {title}
       </AppText>
