@@ -5,8 +5,6 @@ import { useCallback, useRef, useState } from "react";
 import { Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
 import {
-  DEADLINE_RSVP,
-  DEADLINE_VOTING,
   DIDNT_COME_TOGETHER,
   ERR_SAVE,
   LABEL_CANT_MAKE_IT,
@@ -18,7 +16,7 @@ import {
 } from "../lib/copy";
 import { clock12, dayUpper, formatSlot, isoFrom, partOfDayLabel } from "../lib/format";
 import { addCandidateHorizon } from "../lib/lock";
-import { deadlineMs, isLive, isTerminal, type Phase } from "../lib/status";
+import { activeDeadline, deadlineMs, isLive, isTerminal, type Phase } from "../lib/status";
 import type { RouterOutputs } from "../lib/trpc";
 import { trpc } from "../lib/trpc";
 import { useBusyAction } from "../lib/useBusyAction";
@@ -326,8 +324,10 @@ export function EventDetail({ route, navigation }: Props) {
       />
     );
 
-  // The live phase's ms-to-deadline; the two CountdownBanners below are mutually exclusive by phase.
+  // The live phase's ms-to-deadline + label; the two CountdownBanners below are mutually exclusive by
+  // phase, and activeDeadline owns the same phase->label mapping the dashboard cards consume.
   const ms = deadlineMs(data, now);
+  const { label } = activeDeadline(data);
   // The chosen time, shown as a hero banner once a slot is locked (moment/cleared); collecting has
   // no single time yet.
   const heroIso = data.chosenStartsAt && data.phase !== "collecting" ? data.chosenStartsAt : null;
@@ -433,11 +433,9 @@ export function EventDetail({ route, navigation }: Props) {
       footer={sheets}
     >
       {data.phase === "collecting" && data.decidesBy && (
-        <CountdownBanner label={DEADLINE_VOTING} ms={ms} note={NOTE_TOP_PICK} />
+        <CountdownBanner label={label} ms={ms} note={NOTE_TOP_PICK} />
       )}
-      {data.phase === "moment" && (
-        <CountdownBanner label={DEADLINE_RSVP} ms={ms} note={NOTE_BLIND} />
-      )}
+      {data.phase === "moment" && <CountdownBanner label={label} ms={ms} note={NOTE_BLIND} />}
 
       <Card padding={0}>
         {heroIso && heroClock ? (
