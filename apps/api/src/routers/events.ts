@@ -9,11 +9,8 @@ import {
   type CandidateReaction,
   CreateEventInput,
   clears,
-  defaultDecidesByForCandidates,
-  defaultReplyByMs,
   isTerminalPhase,
   LockInput,
-  MOMENT_MS,
   type MomentResponse,
   type PartOfDay,
   pickWinnerOrBestId,
@@ -41,6 +38,7 @@ import type { UserCard } from "../db/users.js";
 import { fallbackUserCard, getUserCards } from "../db/users.js";
 import { msLeft } from "../format.js";
 import { activityKey, normalizeCreateCandidates, startMinute } from "../logic/create-candidates.js";
+import { resolveCreateDeadlines, resolveMomentEnd } from "../logic/event-schedule.js";
 import { shapePastMeetups } from "../logic/past-meetups.js";
 import { displayActivity, planOpensMoment, resolveActivity } from "../logic/plan-activity.js";
 import { protectedProcedure, router } from "../trpc.js";
@@ -127,17 +125,6 @@ function goingFromRow(e: EventRow, resp: MomentResponse[]): string[] | null {
     terminal: isTerminalPhase(e.phase),
     nowMs: Date.now(),
   });
-}
-
-// When the blind moment ends: the creator's "reply by" if set, else the default (one-day-capped from
-// the open, to the event). Clamped to leave a real window after the moment starts and to never run
-// past the event itself; if the event is already here, fall back to a full short window so there is
-// always a moment to answer (and we never reveal before anyone could respond).
-function resolveMomentEnd(openMs: number, eventMs: number, replyByMs: number | null): Date {
-  if (eventMs <= openMs) return new Date(openMs + MOMENT_MS);
-  const wanted = replyByMs ?? defaultReplyByMs(openMs, eventMs);
-  const floor = openMs + Math.min(MOMENT_MS, eventMs - openMs);
-  return new Date(Math.min(eventMs, Math.max(wanted, floor)));
 }
 
 // Fizzle a plan: persist the silent dead-end (and resolve it) then mirror onto the in-memory row so
@@ -525,49 +512,18 @@ export const eventsRouter = router({
 
     const momentStartsAt = opensMoment ? new Date() : null;
 
-    // Collecting plans converge by a fixed deadline ("Decides by"), then auto-pick the winner. The
-    // creator may override it; the override must sit after now and leave the blind moment room before
-    // the time window. With no time candidates we only have activities, so any future deadline is fine.
-    let decidesBy: Date | null = null;
-    if (!opensMoment) {
-      if (input.decidesBy) {
-        const t = new Date(input.decidesBy);
-        const tooLate = timeCands.length > 0 && t.getTime() > earliestMs - MOMENT_MS;
-        if (Number.isNaN(t.getTime()) || t.getTime() <= nowMs || tooLate) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "decides-by must be after now and leave room before the plan's window",
-          });
-        }
-        decidesBy = t;
-      } else {
-        decidesBy = new Date(defaultDecidesByForCandidates(earliestMs, nowMs));
-      }
-    }
-
-    // Reply-by: when the blind RSVP window closes (then it reveals + resolves). Editable; defaulted at
-    // lock when unset. Must sit after the vote closes (or now, for a concrete plan) and no later than
-    // the earliest event time. Loose plans (no times yet) have no editor; it defaults at lock.
-    let replyBy: Date | null = null;
-    if (input.replyBy) {
-      const t = new Date(input.replyBy);
-      const floorMs = decidesBy ? decidesBy.getTime() : nowMs;
-      const tooLate = timeCands.length > 0 && t.getTime() > earliestMs;
-      if (Number.isNaN(t.getTime()) || t.getTime() <= floorMs || tooLate) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "reply-by must be after the vote closes and no later than the event",
-        });
-      }
-      replyBy = t;
-    }
-
-    // The concrete shortcut opens the blind moment now and runs until reply-by (default one-day-capped,
-    // to the event). Otherwise the moment opens later, at the lock.
-    const momentEndsAt: Date | null = opensMoment
-      ? resolveMomentEnd(nowMs, earliestMs, replyBy?.getTime() ?? null)
-      : null;
-    const respondByAt = momentEndsAt ?? new Date(lastMs);
+    // Derive both deadlines + the moment window from the anchors (pure; validates the custom
+    // decides-by/reply-by and throws BAD_REQUEST on a bad one). momentStartsAt/startsAt stay here -
+    // they read a fresh clock / the chosen anchor.
+    const { decidesBy, replyBy, momentEndsAt, respondByAt } = resolveCreateDeadlines(
+      opensMoment,
+      earliestMs,
+      lastMs,
+      timeCands.length > 0,
+      input.decidesBy,
+      input.replyBy,
+      nowMs,
+    );
 
     await db.insert(events).values({
       id,
