@@ -122,20 +122,18 @@ export type LockInput = z.infer<typeof LockInput>;
 export const FieldEdit = z.object({ from: z.string(), to: z.string() });
 export type FieldEdit = z.infer<typeof FieldEdit>;
 
+// A FieldEdit whose `to` value is length-capped, with a field-specific message.
+const boundedFieldEdit = (max: number, message: string) =>
+  FieldEdit.refine((f) => f.to.length <= max, { message });
+
 // Network boundary for events.update - ANY member edits a plan's text metadata (activity/location/notes)
 // before it is cleared/fizzled. Each field is an optional CAS; an omitted field is left untouched.
 // Anonymous, like every other write. The `to` length bounds mirror create (activity/location 80/120,
 // description 500); empty is allowed (an empty activity clears the name so it re-derives from the winning candidate, empty location/notes clears).
 export const UpdateEventInput = ByEvent.extend({
-  activity: FieldEdit.refine((f) => f.to.length <= ACTIVITY_MAX, {
-    message: "activity is too long",
-  }).optional(),
-  location: FieldEdit.refine((f) => f.to.length <= LOCATION_MAX, {
-    message: "location is too long",
-  }).optional(),
-  description: FieldEdit.refine((f) => f.to.length <= DESCRIPTION_MAX, {
-    message: "notes are too long",
-  }).optional(),
+  activity: boundedFieldEdit(ACTIVITY_MAX, "activity is too long").optional(),
+  location: boundedFieldEdit(LOCATION_MAX, "location is too long").optional(),
+  description: boundedFieldEdit(DESCRIPTION_MAX, "notes are too long").optional(),
 });
 export type UpdateEventInput = z.infer<typeof UpdateEventInput>;
 
