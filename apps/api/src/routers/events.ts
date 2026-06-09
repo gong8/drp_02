@@ -6,6 +6,7 @@ import {
   ByGroupInput,
   ByIdInput,
   type CandidateKind,
+  type CandidateReaction,
   CreateEventInput,
   clears,
   defaultDecidesByForCandidates,
@@ -58,7 +59,7 @@ const toMomentResponse = (r: typeof responses.$inferSelect): MomentResponse => (
   kind: r.kind,
   cond: r.cond ?? undefined,
 });
-const toReaction = (r: typeof candidateReactions.$inferSelect) => ({
+const toReaction = (r: typeof candidateReactions.$inferSelect): CandidateReaction => ({
   candidateId: r.candidateId,
   userId: r.userId,
 });
@@ -68,7 +69,7 @@ async function responsesFor(eventId: string): Promise<MomentResponse[]> {
   return rows.map(toMomentResponse);
 }
 
-async function reactionsFor(eventId: string): Promise<{ candidateId: string; userId: string }[]> {
+async function reactionsFor(eventId: string): Promise<CandidateReaction[]> {
   const rows = await db
     .select()
     .from(candidateReactions)
@@ -92,11 +93,7 @@ const isTimeCand = (c: typeof eventCandidates.$inferSelect) =>
   c.kind === "time" && c.startsAt != null;
 
 // The creator lock-readiness rule: a winning time candidate exists at the given quorum.
-function isReadyToLock(
-  timeIds: string[],
-  reactions: { candidateId: string; userId: string }[],
-  quorum: number,
-): boolean {
+function isReadyToLock(timeIds: string[], reactions: CandidateReaction[], quorum: number): boolean {
   return pickWinningCandidate(timeIds, reactions, quorum) !== null;
 }
 
@@ -201,7 +198,7 @@ async function openMoment(
   chosen: { startsAt: Date | null },
   chosenId: string,
   cands: (typeof eventCandidates.$inferSelect)[],
-  reactions: { candidateId: string; userId: string }[],
+  reactions: CandidateReaction[],
 ): Promise<boolean> {
   const startsAt = chosen.startsAt as Date;
   const activity = resolveActivity(e.activity, activityCandidateInputs(cands), reactions);
@@ -377,7 +374,7 @@ async function loadEventBundle(
 ): Promise<{
   responses: (id: string) => MomentResponse[];
   candidates: (id: string) => (typeof eventCandidates.$inferSelect)[];
-  reactions: (id: string) => { candidateId: string; userId: string }[];
+  reactions: (id: string) => CandidateReaction[];
   optOuts: (id: string) => Set<string>;
   groupName: (id: string) => string;
   userCard: (id: string) => UserCard;
@@ -416,7 +413,7 @@ async function loadEventBundle(
   for (const list of candMap.values()) {
     list.sort(byStartsAtThenNullsLast);
   }
-  const reactMap = new Map<string, { candidateId: string; userId: string }[]>();
+  const reactMap = new Map<string, CandidateReaction[]>();
   for (const r of reactRows) {
     const list = reactMap.get(r.eventId) ?? [];
     list.push(toReaction(r));
