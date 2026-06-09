@@ -4,7 +4,10 @@ import { View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
 import { devAuthEnabled } from "../lib/clerk";
 import {
+  ACTION_COPY_LINK,
   ACTION_JOINING_MEETUP,
+  ACTION_LINK_COPIED,
+  ACTION_OPEN_IN_BROWSER,
   ACTION_TRY_AGAIN,
   ACTION_VIEW_MEETUP,
   ERR_NETWORK,
@@ -12,15 +15,19 @@ import {
   MEETUP_NO_APP,
   MEETUP_NOT_FOUND_BODY,
   MEETUP_NOT_FOUND_TITLE,
+  MEETUP_OPEN_IN_BROWSER_BODY,
+  MEETUP_OPEN_IN_BROWSER_TITLE,
   MEETUP_PREVIEW_PICK_TIME,
   meetupInviteHeadline,
 } from "../lib/copy";
 import { colorFor, formatSlot, initials } from "../lib/format";
-import { setPendingMeetup } from "../lib/meetup";
+import { meetupUrl, setPendingMeetup } from "../lib/meetup";
+import { copyToClipboard } from "../lib/share";
 import type { RouterOutputs } from "../lib/trpc";
 import { trpc } from "../lib/trpc";
 import { trpcErrorCode } from "../lib/trpcError";
 import { useSignInActions } from "../lib/useSignInActions";
+import { detectInAppBrowser } from "../lib/webview";
 import {
   AppText,
   Avatar,
@@ -153,6 +160,42 @@ export function JoinMeetup({ route, navigation }: Props) {
   );
 }
 
+// Shown when the link opened inside a hostile in-app browser (WhatsApp/Instagram/etc.), where Google
+// sign-in is blocked. Offers an escape hatch: open in the real browser (best-effort) or copy the link
+// to paste there. Never a dead end - copy always works even when window.open is swallowed.
+function InAppBrowserNotice({ token }: { token: string }) {
+  const [copied, setCopied] = useState(false);
+  const url = meetupUrl(token);
+  const openExternal = () => {
+    if (typeof window !== "undefined") window.open(url, "_blank");
+  };
+  const copy = async () => {
+    await copyToClipboard(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+  return (
+    <Card style={{ marginBottom: 16 }}>
+      <AppText variant="title">{MEETUP_OPEN_IN_BROWSER_TITLE}</AppText>
+      <AppText variant="captionPara" style={{ marginTop: 6 }}>
+        {MEETUP_OPEN_IN_BROWSER_BODY}
+      </AppText>
+      <Button
+        label={ACTION_OPEN_IN_BROWSER}
+        variant="primary"
+        onPress={openExternal}
+        style={{ marginTop: 12 }}
+      />
+      <Button
+        label={copied ? ACTION_LINK_COPIED : ACTION_COPY_LINK}
+        variant="outline"
+        onPress={copy}
+        style={{ marginTop: 8 }}
+      />
+    </Card>
+  );
+}
+
 // The public (logged-out) landing rendered by the auth Gate when a /m/<token> link is opened while
 // signed out. Shows the meetup BEFORE sign-in (value first), then one CTA starts Google sign-in;
 // the token is stashed first so the post-redirect resume joins + lands on the plan. The dev-bypass
@@ -160,6 +203,8 @@ export function JoinMeetup({ route, navigation }: Props) {
 export function MeetupWelcome({ token }: { token: string }) {
   const { phase, preview, reload } = useMeetupPreview(token);
   const { onGoogle, signInDev, busy } = useSignInActions();
+  // In a hostile in-app browser, Google sign-in is blocked - surface the open-in-browser escape hatch.
+  const inApp = detectInAppBrowser();
 
   // Stash the token before sign-in so it survives the web OAuth page reload, then start the flow.
   const start = (signIn: () => void) => {
@@ -188,6 +233,7 @@ export function MeetupWelcome({ token }: { token: string }) {
             />
           </Card>
         )}
+        {inApp.hostile ? <InAppBrowserNotice token={token} /> : null}
         <Button
           label={busy ? "Connecting..." : joinAndRespond(preview?.groupName ?? "the group")}
           variant="affirmative"
