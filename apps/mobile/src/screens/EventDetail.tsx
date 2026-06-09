@@ -2,18 +2,22 @@ import type { UpdateEventInput } from "@bethere/shared";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Text, View } from "react-native";
+import { Platform, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
 import {
   ACTION_COPIED,
   ACTION_COPY,
+  ACTION_GET_APP,
   ACTION_LINK_COPIED,
+  ACTION_NOT_NOW,
   ACTION_SHARE_INVITE,
   ACTION_TRY_AGAIN,
   COND_MODE,
   DIDNT_COME_TOGETHER,
   ERR_NETWORK,
   ERR_SAVE,
+  GET_APP_BODY,
+  GET_APP_TITLE,
   INVITE_CODE_PENDING,
   LABEL_INVITE_LINK,
   meetupShareText,
@@ -512,6 +516,10 @@ export function EventDetail({ route, navigation }: Props) {
           </Card>
         </View>
       )}
+
+      {Platform.OS === "web" &&
+        data.phase !== "fizzled" &&
+        (data.myStatus === "going" || data.myStatus === "declined") && <GetAppNudge />}
     </ScreenScroll>
   );
 }
@@ -600,6 +608,44 @@ function PlanShareSheet({
         <EmptyState inCard>{INVITE_CODE_PENDING}</EmptyState>
       )}
     </BottomSheet>
+  );
+}
+
+// The web user's download URL (env-gated): there is no public App Store listing yet, so the nudge is
+// hidden unless a destination is configured. localStorage remembers a dismissal so it shows once.
+const APP_DOWNLOAD_URL = process.env.EXPO_PUBLIC_APP_DOWNLOAD_URL?.trim();
+const GET_APP_DISMISS_KEY = "bethere.getAppDismissed";
+
+// A dismissible "get the app" card shown to a WEB user after they have responded - web users get no
+// notifications yet, so this is the retention hook back into the (push-capable) app. Renders nothing
+// on native or when no download URL is configured; gating happens BEFORE any hook so the native path
+// never touches browser globals (the GetAppCard child owns the dismissed state, web-only).
+function GetAppNudge() {
+  if (Platform.OS !== "web" || !APP_DOWNLOAD_URL) return null;
+  return <GetAppCard url={APP_DOWNLOAD_URL} />;
+}
+
+function GetAppCard({ url }: { url: string }) {
+  const [dismissed, setDismissed] = useState(
+    () => typeof localStorage !== "undefined" && localStorage.getItem(GET_APP_DISMISS_KEY) === "1",
+  );
+  if (dismissed) return null;
+  const dismiss = () => {
+    if (typeof localStorage !== "undefined") localStorage.setItem(GET_APP_DISMISS_KEY, "1");
+    setDismissed(true);
+  };
+  const getApp = () => {
+    if (typeof window !== "undefined") window.open(url, "_blank");
+  };
+  return (
+    <Card style={{ marginTop: 16 }}>
+      <AppText variant="cardTitle">{GET_APP_TITLE}</AppText>
+      <AppText variant="captionPara" style={{ marginTop: 6 }}>
+        {GET_APP_BODY}
+      </AppText>
+      <Button label={ACTION_GET_APP} variant="primary" onPress={getApp} style={{ marginTop: 12 }} />
+      <Button label={ACTION_NOT_NOW} variant="ghost" onPress={dismiss} style={{ marginTop: 8 }} />
+    </Card>
   );
 }
 
