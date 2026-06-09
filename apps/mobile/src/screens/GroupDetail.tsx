@@ -47,6 +47,18 @@ type Detail = NonNullable<RouterOutputs["groups"]["get"]>;
 type Invite = RouterOutputs["groups"]["inviteByGroup"];
 type Props = NativeStackScreenProps<GroupsStackParams, "GroupDetail">;
 
+// Run a side effect exactly once, the first time `active` becomes true - e.g. a one-shot route param
+// that should fire only after data has loaded, then be cleared. Owns its own once-guard ref.
+function useConsumeParam(active: boolean, onConsume: () => void) {
+  const done = useRef(false);
+  useEffect(() => {
+    if (active && !done.current) {
+      done.current = true;
+      onConsume();
+    }
+  }, [active, onConsume]);
+}
+
 export function GroupDetail({ route, navigation }: Props) {
   const { groupId } = route.params;
   const [data, setData] = useState<Detail | null>(null);
@@ -65,8 +77,6 @@ export function GroupDetail({ route, navigation }: Props) {
   // Whether the name field has been seeded from the server yet. We seed only on the first successful
   // load so a later reload (e.g. after renaming) cannot clobber an in-progress rename draft.
   const seededName = useRef(false);
-  const handledCreate = useRef(false);
-  const handledJoin = useRef(false);
 
   const load = useCallback(() => {
     return trpc.groups.get
@@ -103,22 +113,16 @@ export function GroupDetail({ route, navigation }: Props) {
 
   // Land-on-invite after creating the group: open the sheet once the group has loaded, then clear the
   // flag so a refocus does not reopen it.
-  useEffect(() => {
-    if (!handledCreate.current && route.params?.justCreated && data) {
-      handledCreate.current = true;
-      setInviteOpen(true);
-      navigation.setParams({ justCreated: undefined });
-    }
-  }, [route.params?.justCreated, data, navigation]);
+  useConsumeParam(!!route.params?.justCreated && !!data, () => {
+    setInviteOpen(true);
+    navigation.setParams({ justCreated: undefined });
+  });
 
   // One-time welcome band after joining via an invite.
-  useEffect(() => {
-    if (!handledJoin.current && route.params?.justJoined && data) {
-      handledJoin.current = true;
-      setWelcome(true);
-      navigation.setParams({ justJoined: undefined });
-    }
-  }, [route.params?.justJoined, data, navigation]);
+  useConsumeParam(!!route.params?.justJoined && !!data, () => {
+    setWelcome(true);
+    navigation.setParams({ justJoined: undefined });
+  });
 
   const runAction = useBusyAction({ busy, setBusy, setError, load });
 
