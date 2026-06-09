@@ -1,9 +1,9 @@
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useCallback, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import type { GroupsStackParams } from "../../App";
-import { AccountAvatar } from "../components/AccountAvatar";
+import { AccountHeaderButton } from "../components/AccountHeaderButton";
 import {
   ACTION_CREATE_GROUP,
   ACTION_JOIN,
@@ -78,11 +78,7 @@ export function GroupsList({ navigation }: Props) {
   const header = (
     <ScreenHeader
       title="Your groups"
-      right={
-        <Pressable onPress={() => navigation.navigate("Account")} hitSlop={8}>
-          <AccountAvatar />
-        </Pressable>
-      }
+      right={<AccountHeaderButton onPress={() => navigation.navigate("Account")} />}
     />
   );
 
