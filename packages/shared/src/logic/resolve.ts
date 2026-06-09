@@ -1,9 +1,14 @@
-import type { Conditional, ResponseKind } from "../schemas.js";
+import type { Conditional, PlanPhase, ResponseKind } from "../schemas.js";
 
 export interface MomentResponse {
   userId: string;
   kind: ResponseKind;
   cond?: Conditional;
+}
+
+// A plan is terminal once it has cleared or fizzled - no further transitions or edits.
+export function isTerminalPhase(phase: PlanPhase): boolean {
+  return phase === "cleared" || phase === "fizzled";
 }
 
 /**

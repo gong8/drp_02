@@ -1,3 +1,4 @@
+import { isTerminalPhase } from "@bethere/shared";
 import { db } from "./client.js";
 import { freshInviteCode } from "./groups.js";
 import {
@@ -51,7 +52,7 @@ async function insertDemoData(): Promise<void> {
       location: p.location ?? "",
       startsAt,
       respondByAt,
-      status: p.phase === "cleared" || p.phase === "fizzled" ? "resolved" : "open",
+      status: isTerminalPhase(p.phase) ? "resolved" : "open",
       contingent: p.contingent,
       quorum: p.quorum,
       // Creator anonymity is ALWAYS on in the unified model.

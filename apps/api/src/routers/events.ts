@@ -10,6 +10,7 @@ import {
   clears,
   defaultDecidesByForCandidates,
   defaultReplyByMs,
+  isTerminalPhase,
   LockInput,
   MOMENT_MS,
   type MomentResponse,
@@ -108,7 +109,7 @@ function activityCandidateInputs(cands: (typeof eventCandidates.$inferSelect)[])
 function goingFromRow(e: EventRow, resp: MomentResponse[]): string[] | null {
   return revealGoing(resp, {
     momentEndsAtMs: e.momentEndsAt ? e.momentEndsAt.getTime() : Number.POSITIVE_INFINITY,
-    terminal: e.phase === "cleared" || e.phase === "fizzled",
+    terminal: isTerminalPhase(e.phase),
     nowMs: Date.now(),
   });
 }
@@ -835,7 +836,7 @@ export const eventsRouter = router({
       const [e] = await tx.select().from(events).where(eq(events.id, input.eventId)).for("update");
       if (!e) throw new TRPCError({ code: "NOT_FOUND" });
       await requireMember(e.groupId, ctx.userId);
-      if (e.phase === "cleared" || e.phase === "fizzled") {
+      if (isTerminalPhase(e.phase)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "this plan is final" });
       }
       // While collecting, the activity is whatever ACTIVITY candidate wins the vote - it is not a
