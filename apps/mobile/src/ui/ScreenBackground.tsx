@@ -24,7 +24,7 @@ export function ScreenBackground({
       style={{ flex: 1 }}
     >
       <View style={{ flex: 1, paddingTop: insets.top + 14 }}>
-        {header ? <View style={{ paddingHorizontal: 16 }}>{header}</View> : null}
+        {header ? <View style={{ paddingHorizontal: ui.gutter }}>{header}</View> : null}
         {children}
       </View>
     </LinearGradient>
