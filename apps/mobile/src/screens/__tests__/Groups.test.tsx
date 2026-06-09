@@ -25,7 +25,17 @@ import {
   mockQueryError,
   resetTrpcMock,
 } from "../../lib/__mocks__/trpc";
-import { ERR_NETWORK } from "../../lib/copy";
+import {
+  ACTION_CREATE_GROUP,
+  ACTION_JOIN,
+  ACTION_JOIN_WITH_CODE,
+  ERR_NETWORK,
+  LABEL_JOIN_CODE,
+  ONBOARD_NO_GROUPS_TITLE,
+  TITLE_INVITE,
+  TITLE_NEW_GROUP,
+} from "../../lib/copy";
+import type { RouterOutputs } from "../../lib/trpc";
 import { trpc } from "../../lib/trpc";
 import { act, fireEvent, screen, waitFor } from "../../test/render";
 import { CreateGroup } from "../CreateGroup";
@@ -39,10 +49,10 @@ beforeEach(resetTrpcMock);
 afterEach(cleanup);
 
 // ---- shapes (from the groups router return types; values are spec-irrelevant defaults) ----------
-type Group = Awaited<ReturnType<typeof trpc.groups.mine.query>>[number];
-type Detail = NonNullable<Awaited<ReturnType<typeof trpc.groups.get.query>>>;
+type Group = RouterOutputs["groups"]["mine"][number];
+type Detail = NonNullable<RouterOutputs["groups"]["get"]>;
 type Member = Detail["members"][number];
-type Addable = Awaited<ReturnType<typeof trpc.groups.addableUsers.query>>;
+type Invite = RouterOutputs["groups"]["inviteByGroup"];
 
 function makeGroup(overrides: Partial<Group> & Pick<Group, "id">): Group {
   return { name: "Climbing Crew", memberCount: 4, ...overrides };
@@ -167,27 +177,43 @@ describe("GroupsList", () => {
     expect(screen.getByText("7 members")).toBeOnTheScreen();
   });
 
-  test("shows the empty state when the user belongs to no groups", async () => {
+  test("a user with no groups sees the two-path onboarding card (create / join)", async () => {
     mockQuery(trpc.groups.mine, []);
 
     mountStack(GroupsList, {
       initialName: "GroupsList",
-      destinations: ["GroupDetail", "CreateGroup", "Account"],
+      destinations: ["GroupDetail", "CreateGroup", "Account", "JoinGroup"],
     });
 
-    expect(await screen.findByText("No groups yet.")).toBeOnTheScreen();
+    // Spec: a brand-new user is offered both paths into a group, not a dead-end "No groups yet".
+    expect(await screen.findByText(ONBOARD_NO_GROUPS_TITLE)).toBeOnTheScreen();
+    expect(screen.getByText(ACTION_CREATE_GROUP)).toBeOnTheScreen();
+    expect(screen.getByText(ACTION_JOIN_WITH_CODE)).toBeOnTheScreen();
   });
 
-  test("does NOT show the empty state when there is at least one group", async () => {
+  test("the onboarding 'Create a group' button navigates to CreateGroup", async () => {
+    mockQuery(trpc.groups.mine, []);
+
+    mountStack(GroupsList, {
+      initialName: "GroupsList",
+      destinations: ["GroupDetail", "CreateGroup", "Account", "JoinGroup"],
+    });
+
+    fireEvent.press(await screen.findByText(ACTION_CREATE_GROUP));
+
+    expect(await screen.findByText("stub:CreateGroup")).toBeOnTheScreen();
+  });
+
+  test("does NOT show the onboarding card when there is at least one group", async () => {
     mockQuery(trpc.groups.mine, [makeGroup({ id: "g1", name: "Climbing Crew" })]);
 
     mountStack(GroupsList, {
       initialName: "GroupsList",
-      destinations: ["GroupDetail", "CreateGroup", "Account"],
+      destinations: ["GroupDetail", "CreateGroup", "Account", "JoinGroup"],
     });
 
     expect(await screen.findByText("Climbing Crew")).toBeOnTheScreen();
-    expect(screen.queryByText("No groups yet.")).not.toBeOnTheScreen();
+    expect(screen.queryByText(ONBOARD_NO_GROUPS_TITLE)).not.toBeOnTheScreen();
   });
 
   test("tapping a group navigates to GroupDetail carrying that group's id", async () => {
@@ -209,16 +235,36 @@ describe("GroupsList", () => {
   });
 
   test("the 'New group' affordance navigates to CreateGroup", async () => {
-    mockQuery(trpc.groups.mine, []);
+    // With at least one group the trailing "New group" button is shown (the onboarding card is not).
+    mockQuery(trpc.groups.mine, [makeGroup({ id: "g1", name: "Climbing Crew" })]);
 
     mountStack(GroupsList, {
       initialName: "GroupsList",
-      destinations: ["GroupDetail", "CreateGroup", "Account"],
+      destinations: ["GroupDetail", "CreateGroup", "Account", "JoinGroup"],
     });
 
-    fireEvent.press(await screen.findByText("New group"));
+    fireEvent.press(await screen.findByText(TITLE_NEW_GROUP));
 
     expect(await screen.findByText("stub:CreateGroup")).toBeOnTheScreen();
+  });
+
+  test("'Join with a code' navigates to JoinGroup carrying the normalized code", async () => {
+    mockQuery(trpc.groups.mine, [makeGroup({ id: "g1", name: "Climbing Crew" })]);
+
+    mountStack(GroupsList, {
+      initialName: "GroupsList",
+      destinations: ["GroupDetail", "CreateGroup", "Account", "JoinGroup"],
+    });
+
+    // Open the paste sheet, type a pretty/lowercased code, and join.
+    fireEvent.press(await screen.findByText(ACTION_JOIN_WITH_CODE));
+    const field = await screen.findByPlaceholderText("ABCDEF12");
+    fireEvent.changeText(field, "abcd-2345");
+    fireEvent.press(screen.getByText(ACTION_JOIN));
+
+    // The code is normalized (uppercased, dash stripped) before it travels to the join funnel.
+    expect(await screen.findByText("stub:JoinGroup")).toBeOnTheScreen();
+    expect(screen.getByText('params:{"code":"ABCD2345"}')).toBeOnTheScreen();
   });
 
   test("a query failure surfaces the canonical network-error copy", async () => {
@@ -321,16 +367,13 @@ describe("GroupDetail", () => {
     );
   });
 
-  test("opening 'Add to group' lists the addable (not-yet-member) users", async () => {
+  test("the group grows via invites, not a seeded-user picker", async () => {
+    // Spec (M4): the old "+ Add to group" picker is replaced by an invite. The forward action is now
+    // "Invite to group"; the seeded picker affordance must be gone.
     mockQuery(
       trpc.groups.get,
       makeDetail({ id: "g1", members: [makeMember({ id: "u1", name: "Ada" })] }),
     );
-    const addable: Addable = [
-      { id: "u2", name: "Grace", color: "#C9823F" },
-      { id: "u3", name: "Linus", color: "#7E6BB0" },
-    ];
-    mockQuery(trpc.groups.addableUsers, addable);
 
     mountStack(GroupDetail, {
       initialName: "GroupDetail",
@@ -338,23 +381,17 @@ describe("GroupDetail", () => {
       destinations: [],
     });
 
-    fireEvent.press(await screen.findByText("+ Add to group"));
-
-    // addableUsers is queried for this group, and its results are shown in the picker.
-    await waitFor(() =>
-      expect(trpc.groups.addableUsers.query).toHaveBeenCalledWith({ groupId: "g1" }),
-    );
-    expect(await screen.findByText("Grace")).toBeOnTheScreen();
-    expect(screen.getByText("Linus")).toBeOnTheScreen();
+    expect(await screen.findByText(TITLE_INVITE)).toBeOnTheScreen();
+    expect(screen.queryByText("+ Add to group")).not.toBeOnTheScreen();
   });
 
-  test("picking an addable user calls groups.addMember with that user", async () => {
+  test("opening 'Invite to group' shows the join code and link from inviteByGroup", async () => {
     mockQuery(
       trpc.groups.get,
       makeDetail({ id: "g1", members: [makeMember({ id: "u1", name: "Ada" })] }),
     );
-    mockQuery(trpc.groups.addableUsers, [{ id: "u2", name: "Grace", color: "#C9823F" }]);
-    mockMutation(trpc.groups.addMember, { ok: true });
+    const invite: Invite = { code: "ABCD2345", url: "https://bethere.app/join/ABCD2345" };
+    mockQuery(trpc.groups.inviteByGroup, invite);
 
     mountStack(GroupDetail, {
       initialName: "GroupDetail",
@@ -362,12 +399,16 @@ describe("GroupDetail", () => {
       destinations: [],
     });
 
-    fireEvent.press(await screen.findByText("+ Add to group"));
-    fireEvent.press(await screen.findByText("Grace"));
+    fireEvent.press(await screen.findByText(TITLE_INVITE));
 
+    // The invite is fetched for this group when the sheet opens, and the code is shown grouped for
+    // legibility (ABCD-2345) alongside the shareable link verbatim.
     await waitFor(() =>
-      expect(trpc.groups.addMember.mutate).toHaveBeenCalledWith({ groupId: "g1", userId: "u2" }),
+      expect(trpc.groups.inviteByGroup.query).toHaveBeenCalledWith({ groupId: "g1" }),
     );
+    expect(await screen.findByText("ABCD-2345")).toBeOnTheScreen();
+    expect(screen.getByText(LABEL_JOIN_CODE)).toBeOnTheScreen();
+    expect(screen.getByDisplayValue("https://bethere.app/join/ABCD2345")).toBeOnTheScreen();
   });
 
   test("renaming to a new name calls groups.rename with the trimmed name", async () => {
@@ -471,54 +512,21 @@ describe("GroupDetail", () => {
   });
 
   test("an in-progress rename draft survives an unrelated reload", async () => {
-    // I2: a member add (or any reload) must not clobber a half-typed rename. The draft is seeded from
-    // the server only on the first load; later reloads leave the user's text alone.
+    // The draft is seeded from the server only on the first load; a later reload (a refocus) must not
+    // clobber a half-typed rename.
     mockQuery(trpc.groups.get, makeDetail({ id: "g1", name: "Climbing Crew" }));
-    mockQuery(trpc.groups.addableUsers, [{ id: "u2", name: "Grace", color: "#C9823F" }]);
-    mockMutation(trpc.groups.addMember, { ok: true });
 
-    mountStack(GroupDetail, {
-      initialName: "GroupDetail",
-      params: { groupId: "g1" },
-      destinations: [],
-    });
+    const { refocus } = mountGroupDetailWithRefocus({ groupId: "g1" });
 
     const field = await screen.findByDisplayValue("Climbing Crew");
     fireEvent.changeText(field, "Boulder Buddies");
 
-    // Add a member, which triggers a reload of groups.get (still returning the old name).
-    fireEvent.press(screen.getByText("+ Add to group"));
-    fireEvent.press(await screen.findByText("Grace"));
-    await waitFor(() => expect(trpc.groups.addMember.mutate).toHaveBeenCalled());
+    // A reload fires (the screen regains focus), still returning the old name from the server.
+    await refocus();
 
-    // The unsaved draft is preserved (not reset to the server's "Climbing Crew"), so Save still shows.
+    // The unsaved draft is preserved (not reset to "Climbing Crew"), so Save still shows.
     expect(screen.getByDisplayValue("Boulder Buddies")).toBeOnTheScreen();
     await waitFor(() => expect(screen.getByText("Save")).toBeOnTheScreen());
-  });
-
-  test("a failed add keeps the user in the picker for retry", async () => {
-    // I3: when addMember rejects, the row must NOT be optimistically removed from the picker - the
-    // old code filtered it out unconditionally, hiding a user that was never actually added.
-    mockQuery(
-      trpc.groups.get,
-      makeDetail({ id: "g1", members: [makeMember({ id: "u1", name: "Ada" })] }),
-    );
-    mockQuery(trpc.groups.addableUsers, [{ id: "u2", name: "Grace", color: "#C9823F" }]);
-    mockMutationError(trpc.groups.addMember, new Error("boom"));
-
-    mountStack(GroupDetail, {
-      initialName: "GroupDetail",
-      params: { groupId: "g1" },
-      destinations: [],
-    });
-
-    fireEvent.press(await screen.findByText("+ Add to group"));
-    fireEvent.press(await screen.findByText("Grace"));
-
-    await waitFor(() => expect(trpc.groups.addMember.mutate).toHaveBeenCalled());
-    // The failed add surfaces the error view, and Grace was never removed from the (now hidden) list.
-    expect(await screen.findByText(ERR_NETWORK)).toBeOnTheScreen();
-    expect(trpc.groups.addableUsers.query).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -563,22 +571,21 @@ describe("CreateGroup", () => {
     );
   });
 
-  test("a successful create navigates back to the groups list", async () => {
-    // Spec: after creating, CreateGroup leaves the form (goBack to the list). On success the form is
-    // gone and the list heading is shown again.
+  test("a successful create lands on the new group's invite (GroupDetail, justCreated)", async () => {
+    // Spec (M4): after creating, the creator is taken straight into the new group with its invite
+    // ready to share (replace, so back returns to the list), not just back to the list.
     mockMutation(trpc.groups.create, { id: "g_new" });
 
     mountCreateGroupPushed();
 
-    // From the list, open the create form.
     fireEvent.press(await screen.findByText("New group"));
     const field = await screen.findByPlaceholderText("The Boys");
     fireEvent.changeText(field, "Trivia Night");
     fireEvent.press(screen.getByText("Create group"));
 
-    // Back on the list: the form's name field is gone, the list heading is shown.
-    await waitFor(() => expect(screen.queryByPlaceholderText("The Boys")).not.toBeOnTheScreen());
-    expect(screen.getByText("Your groups")).toBeOnTheScreen();
+    // The form is replaced by the new group, flagged to auto-open its invite sheet.
+    expect(await screen.findByText("stub:GroupDetail")).toBeOnTheScreen();
+    expect(screen.getByText('params:{"groupId":"g_new","justCreated":true}')).toBeOnTheScreen();
   });
 
   test("an empty name does not call groups.create", async () => {

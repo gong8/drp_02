@@ -4,10 +4,17 @@ import DateTimePicker, {
 } from "@react-native-community/datetimepicker";
 import { useState } from "react";
 import { Platform, Pressable, Text, View } from "react-native";
-import { dateStringFrom, shortDayLabel, timeStringFrom } from "../lib/format";
-import { font, ui } from "../theme";
+import {
+  dateStringFrom,
+  parseLocalDate,
+  parseLocalTime,
+  shortDayLabel,
+  shortTimeLabel,
+  timeStringFrom,
+} from "../lib/format";
+import { fieldBox, font, ui } from "../theme";
 import { BottomSheet } from "./BottomSheet";
-import type { DateTimeFieldProps } from "./DateTimeField.types";
+import { type DateTimeFieldProps, DEFAULT_MINUTE_INTERVAL } from "./DateTimeField.types";
 import { HardShadow } from "./HardShadow";
 
 // Themed wrapper around the inbuilt native date/time picker
@@ -35,10 +42,11 @@ export function clampDate(d: Date, min?: Date, max?: Date): Date {
   return ms === d.getTime() ? d : new Date(ms);
 }
 
-// Seed the picker from the current value, falling back to a sensible "now". Parse via numeric
-// components (always local) - never `new Date("...T...")`, which Hermes interprets as UTC. In date
-// mode the result is clamped to [min, max] so the dismiss-commit default always satisfies the
-// picker's own constraints (time mode has no date bounds, so they are not applied there).
+// Seed the picker from the current value, falling back to a sensible "now". Parsing lives in
+// lib/format's parseLocalDate/parseLocalTime (the inverse builders, which keep the "never
+// new Date(string)" invariant in one place). In date mode the result is clamped to [min, max] so
+// the dismiss-commit default always satisfies the picker's own constraints (time mode has no date
+// bounds, so they are not applied there).
 function seed(
   mode: "date" | "time",
   value: string,
@@ -48,58 +56,50 @@ function seed(
 ): Date {
   const now = new Date();
   if (mode === "date") {
-    if (value) {
-      const [y, mo, d] = value.split("-").map(Number);
-      if (![y, mo, d].some((n) => Number.isNaN(n)))
-        return clampDate(new Date(y, mo - 1, d, 12, 0, 0, 0), min, max);
-    }
-    return clampDate(now, min, max);
+    const d = (value && parseLocalDate(value)) || now;
+    return clampDate(d, min, max);
   }
-  if (value) {
-    const [h, mi] = value.split(":").map(Number);
-    if (![h, mi].some((n) => Number.isNaN(n))) {
-      const t = new Date();
-      t.setHours(h, mi, 0, 0);
-      return t;
-    }
-  }
-  return roundUpToInterval(now, interval);
+  return (value && parseLocalTime(value)) || roundUpToInterval(now, interval);
 }
 
-// Friendly trigger label (e.g. "Fri, 5 Jun" / "4:00 PM"); null when unset. Same component-based
-// parse so the label matches the wheel exactly (no timezone-less string parsing).
+// Friendly trigger label (e.g. "Fri, 5 Jun" / "4:00 PM"); null when unset. Same parse contract as
+// the wheel (via lib/format) so the label matches it exactly.
 function displayValue(mode: "date" | "time", value: string): string | null {
   if (!value) return null;
   if (mode === "date") {
-    const [y, mo, d] = value.split("-").map(Number);
-    if ([y, mo, d].some((n) => Number.isNaN(n))) return value;
-    return shortDayLabel(new Date(y, mo - 1, d, 12, 0, 0, 0));
+    const d = parseLocalDate(value);
+    return d ? shortDayLabel(d) : value;
   }
-  const [h, mi] = value.split(":").map(Number);
-  if ([h, mi].some((n) => Number.isNaN(n))) return value;
-  const t = new Date();
-  t.setHours(h, mi, 0, 0);
-  return t.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  const t = parseLocalTime(value);
+  return t ? shortTimeLabel(t) : value;
 }
 
 export function DateTimeField({
   mode,
   value,
   onChange,
-  minuteInterval = 15,
+  minuteInterval = DEFAULT_MINUTE_INTERVAL,
   minimumDate,
   maximumDate,
   bare = false,
   style,
 }: DateTimeFieldProps) {
   const [open, setOpen] = useState(false);
+  // Placeholder seed only - always replaced by openPicker's fresh seed before the sheet shows.
   const [temp, setTemp] = useState<Date>(() =>
     seed(mode, value, minuteInterval, minimumDate, maximumDate),
   );
 
+  // Mode-gated native-picker props, derived once (mirrors DateTimeField.web's `isDate`): the minute
+  // interval applies to time mode, the date bounds to date mode. Used at both the Android and iOS sites.
+  const isDate = mode === "date";
+  const gatedMin = isDate ? minimumDate : undefined;
+  const gatedMax = isDate ? maximumDate : undefined;
+  const gatedInterval = isDate ? undefined : minuteInterval;
+
   const shown = displayValue(mode, value);
   // Shown only on the empty trigger; the picker sheet itself has no redundant title.
-  const placeholder = mode === "date" ? "Pick a date" : "Pick a time";
+  const placeholder = isDate ? "Pick a date" : "Pick a time";
 
   function commit(d: Date) {
     onChange(mode === "date" ? dateStringFrom(d) : timeStringFrom(d));
@@ -113,10 +113,10 @@ export function DateTimeField({
         value: initial,
         mode,
         is24Hour: false,
-        minuteInterval: mode === "time" ? minuteInterval : undefined,
-        minimumDate: mode === "date" ? minimumDate : undefined,
-        maximumDate: mode === "date" ? maximumDate : undefined,
-        display: mode === "date" ? "calendar" : "clock",
+        minuteInterval: gatedInterval,
+        minimumDate: gatedMin,
+        maximumDate: gatedMax,
+        display: isDate ? "calendar" : "clock",
         onChange: (event: DateTimePickerEvent, date?: Date) => {
           if (event.type === "set" && date) commit(date);
         },
@@ -138,12 +138,9 @@ export function DateTimeField({
               paddingVertical: 13,
             }
           : {
+              ...fieldBox,
               flexDirection: "row",
               alignItems: "center",
-              backgroundColor: ui.surface,
-              borderWidth: ui.border,
-              borderColor: ui.ink,
-              borderRadius: ui.rInput,
               paddingHorizontal: 11,
               paddingVertical: 11,
             }
@@ -186,13 +183,13 @@ export function DateTimeField({
             <DateTimePicker
               value={temp}
               mode={mode}
-              display={mode === "date" ? "inline" : "spinner"}
+              display={isDate ? "inline" : "spinner"}
               themeVariant="light"
               accentColor={ui.brand}
               textColor={ui.ink}
-              minimumDate={mode === "date" ? minimumDate : undefined}
-              maximumDate={mode === "date" ? maximumDate : undefined}
-              minuteInterval={mode === "time" ? minuteInterval : undefined}
+              minimumDate={gatedMin}
+              maximumDate={gatedMax}
+              minuteInterval={gatedInterval}
               onChange={(_event: DateTimePickerEvent, date?: Date) => {
                 if (!date) return;
                 // Save live - no Done button. The pink-highlighted selection is the confirmation;

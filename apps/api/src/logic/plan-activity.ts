@@ -1,4 +1,4 @@
-import { pickWinnerOrBestId } from "@bethere/shared";
+import { type CandidateReaction, pickWinnerOrBestId } from "@bethere/shared";
 
 // The concrete shortcut: a plan opens straight into the blind moment (it always happens, contingent
 // false) ONLY when BOTH axes are pinned - nothing left to converge on. The time axis is pinned when
@@ -22,7 +22,7 @@ export function planOpensMoment(
 export function resolveActivity(
   activity: string,
   activityCandidates: { id: string; label: string | null }[],
-  reactions: { candidateId: string; userId: string }[],
+  reactions: CandidateReaction[],
 ): string {
   if (activity.trim() !== "") return activity;
   if (activityCandidates.length === 0) return "";
@@ -37,7 +37,7 @@ export function resolveActivity(
 export function displayActivity(
   activity: string,
   activityCandidates: { id: string; label: string | null }[],
-  reactions: { candidateId: string; userId: string }[],
+  reactions: CandidateReaction[],
 ): string {
   return resolveActivity(activity, activityCandidates, reactions).trim();
 }

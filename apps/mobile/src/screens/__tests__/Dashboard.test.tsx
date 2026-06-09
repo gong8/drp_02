@@ -19,6 +19,7 @@ import { Text } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { mockQuery, mockQueryError, resetTrpcMock } from "../../lib/__mocks__/trpc";
 import { ERR_NETWORK } from "../../lib/copy";
+import type { RouterOutputs } from "../../lib/trpc";
 import { trpc } from "../../lib/trpc";
 import { fireEvent, renderScreen, screen, waitFor } from "../../test/render";
 import { Dashboard } from "../Dashboard";
@@ -27,8 +28,8 @@ beforeEach(resetTrpcMock);
 
 // The exact shape of one events.mine row (apps/api/src/routers/events.ts:763). Tests override only the
 // fields under test; everything else is a sane default so the row always renders.
-type Ev = Awaited<ReturnType<typeof trpc.events.mine.query>>[number];
-type Group = Awaited<ReturnType<typeof trpc.groups.mine.query>>[number];
+type Ev = RouterOutputs["events"]["mine"][number];
+type Group = RouterOutputs["groups"]["mine"][number];
 
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;

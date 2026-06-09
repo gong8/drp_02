@@ -7,7 +7,7 @@ const yes = (userId: string): MomentResponse => ({ userId, kind: "yes" });
 describe("revealGoing", () => {
   it("hides the crowd while the blind moment is still running", () => {
     expect(
-      revealGoing([yes("a")], { momentEndsAtMs: 1000, resolved: false, nowMs: 500 }),
+      revealGoing([yes("a")], { momentEndsAtMs: 1000, terminal: false, nowMs: 500 }),
     ).toBeNull();
   });
 
@@ -15,14 +15,14 @@ describe("revealGoing", () => {
     expect(
       revealGoing([yes("a"), yes("b")], {
         momentEndsAtMs: 1000,
-        resolved: false,
+        terminal: false,
         nowMs: 2000,
       })?.sort(),
     ).toEqual(["a", "b"]);
   });
 
   it("reveals immediately when the plan is already cleared/fizzled", () => {
-    expect(revealGoing([yes("a")], { momentEndsAtMs: 9999, resolved: true, nowMs: 0 })).toEqual([
+    expect(revealGoing([yes("a")], { momentEndsAtMs: 9999, terminal: true, nowMs: 0 })).toEqual([
       "a",
     ]);
   });

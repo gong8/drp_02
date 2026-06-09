@@ -1,61 +1,78 @@
-import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useCallback, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import type { GroupsStackParams } from "../../App";
-import { AccountAvatar } from "../components/AccountAvatar";
-import { ERR_NETWORK } from "../lib/copy";
+import { AccountHeaderButton } from "../components/AccountHeaderButton";
+import {
+  ACTION_CREATE_GROUP,
+  ACTION_JOIN,
+  ACTION_JOIN_WITH_CODE,
+  ERR_NETWORK,
+  LABEL_JOIN_CODE,
+  ONBOARD_NO_GROUPS_BODY,
+  ONBOARD_NO_GROUPS_TITLE,
+  TITLE_NEW_GROUP,
+} from "../lib/copy";
 import { colorFor, initials } from "../lib/format";
+import { CODE_LENGTH, normalizeCode } from "../lib/invite";
+import type { RouterOutputs } from "../lib/trpc";
 import { trpc } from "../lib/trpc";
+import { useFetchOnFocus } from "../lib/useFetchOnFocus";
 import { font, ui } from "../theme";
 import {
   AppText,
   Avatar,
+  BottomSheet,
   Button,
   Card,
   EmptyState,
+  Field,
   ScreenHeader,
   ScreenLoading,
   ScreenScroll,
+  Section,
 } from "../ui";
 
-type Group = Awaited<ReturnType<typeof trpc.groups.mine.query>>[number];
+type Group = RouterOutputs["groups"]["mine"][number];
 type Props = NativeStackScreenProps<GroupsStackParams, "GroupsList">;
 
 export function GroupsList({ navigation }: Props) {
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [joinOpen, setJoinOpen] = useState(false);
+  const [codeDraft, setCodeDraft] = useState("");
 
-  useFocusEffect(
+  useFetchOnFocus(
     useCallback(() => {
-      let active = true;
       trpc.groups.mine
         .query()
         .then((g) => {
-          if (active) {
-            setGroups(g);
-            setError(false);
-          }
+          setGroups(g);
+          setError(false);
         })
-        .catch(() => active && setError(true))
-        .finally(() => active && setLoading(false));
-      return () => {
-        active = false;
-      };
+        .catch(() => setError(true))
+        .finally(() => setLoading(false));
     }, []),
   );
 
   if (loading) return <ScreenLoading />;
 
+  const code = normalizeCode(codeDraft);
+  function submitJoin() {
+    setJoinOpen(false);
+    navigation.navigate("JoinGroup", { code });
+    setCodeDraft("");
+  }
+
+  // The single zero-group onboarding state: only shown when the fetch actually returned no groups (not
+  // when it merely failed - we never tell a user "no groups" over a network error).
+  const showOnboard = !error && groups.length === 0;
+
   const header = (
     <ScreenHeader
       title="Your groups"
-      right={
-        <Pressable onPress={() => navigation.navigate("Account")} hitSlop={8}>
-          <AccountAvatar />
-        </Pressable>
-      }
+      right={<AccountHeaderButton onPress={() => navigation.navigate("Account")} />}
     />
   );
 
@@ -72,9 +89,7 @@ export function GroupsList({ navigation }: Props) {
           <View style={{ flexDirection: "row", alignItems: "center", gap: 11 }}>
             <Avatar initial={initials(g.name)} color={colorFor(g.id)} />
             <View>
-              <Text style={{ fontFamily: font.display, fontSize: 15, color: ui.ink }}>
-                {g.name}
-              </Text>
+              <AppText variant="cardTitle">{g.name}</AppText>
               <AppText variant="caption" style={{ marginTop: 1 }}>
                 {g.memberCount} members
               </AppText>
@@ -87,14 +102,59 @@ export function GroupsList({ navigation }: Props) {
           </View>
         </Card>
       ))}
-      {groups.length === 0 && <EmptyState>No groups yet.</EmptyState>}
 
-      <Button
-        label="New group"
-        variant="primary"
-        onPress={() => navigation.navigate("CreateGroup")}
-        style={{ marginTop: 8 }}
-      />
+      {showOnboard ? (
+        <Card>
+          <AppText variant="title">{ONBOARD_NO_GROUPS_TITLE}</AppText>
+          <AppText variant="captionPara" style={{ marginTop: 6 }}>
+            {ONBOARD_NO_GROUPS_BODY}
+          </AppText>
+          <Button
+            label={ACTION_CREATE_GROUP}
+            variant="primary"
+            onPress={() => navigation.navigate("CreateGroup")}
+            style={{ marginTop: 14 }}
+          />
+          <Button
+            label={ACTION_JOIN_WITH_CODE}
+            variant="outline"
+            onPress={() => setJoinOpen(true)}
+            style={{ marginTop: 10 }}
+          />
+        </Card>
+      ) : (
+        <>
+          <Button
+            label={TITLE_NEW_GROUP}
+            variant="primary"
+            onPress={() => navigation.navigate("CreateGroup")}
+            style={{ marginTop: 8 }}
+          />
+          <Button
+            label={ACTION_JOIN_WITH_CODE}
+            variant="outline"
+            onPress={() => setJoinOpen(true)}
+            style={{ marginTop: 12 }}
+          />
+        </>
+      )}
+
+      <BottomSheet visible={joinOpen} onClose={() => setJoinOpen(false)}>
+        <Section title={ACTION_JOIN_WITH_CODE} size="lg" />
+        <Field
+          label={LABEL_JOIN_CODE}
+          value={codeDraft}
+          onChangeText={(t) => setCodeDraft(normalizeCode(t))}
+          placeholder="ABCDEF12"
+        />
+        <Button
+          label={ACTION_JOIN}
+          variant="primary"
+          disabled={code.length !== CODE_LENGTH}
+          onPress={submitJoin}
+          style={{ marginTop: 16 }}
+        />
+      </BottomSheet>
     </ScreenScroll>
   );
 }

@@ -1,7 +1,11 @@
 import type { ReactNode } from "react";
-import { Pressable, Text, View } from "react-native";
-import { font, ui } from "../theme";
+import { Pressable, View } from "react-native";
+import { ui } from "../theme";
 import { HardShadow } from "./HardShadow";
+import { AppText } from "./Text";
+
+// The back-button / small-icon chrome square (px).
+const BACK_BTN = 32;
 
 // The one header for every screen. With `onBack` it is a detail bar: a back chevron + a compact title
 // (e.g. the meetup name). Without it, the title is the big screen heading. `right` is an optional
@@ -26,13 +30,13 @@ export function ScreenHeader({
       }}
     >
       {onBack ? (
-        <HardShadow radius={9} offset={ui.shadowInput}>
+        <HardShadow radius={ui.rIcon} offset={ui.shadowInput}>
           <Pressable
             onPress={onBack}
             style={{
-              width: 32,
-              height: 32,
-              borderRadius: 9,
+              width: BACK_BTN,
+              height: BACK_BTN,
+              borderRadius: ui.rIcon,
               borderWidth: ui.border,
               borderColor: ui.ink,
               backgroundColor: ui.surface,
@@ -40,28 +44,19 @@ export function ScreenHeader({
               justifyContent: "center",
             }}
           >
-            <Text style={{ fontFamily: font.display, fontSize: 16, color: ui.ink, marginTop: -2 }}>
+            <AppText variant="title" style={{ marginTop: -2 }}>
               {"‹"}
-            </Text>
+            </AppText>
           </Pressable>
         </HardShadow>
       ) : null}
-      <Text
+      <AppText
+        variant={onBack ? "cardTitle" : "screenTitle"}
         numberOfLines={1}
-        style={
-          onBack
-            ? { flexShrink: 1, fontFamily: font.display, fontSize: 15, color: ui.ink }
-            : {
-                flexShrink: 1,
-                fontFamily: font.black,
-                fontSize: 27,
-                letterSpacing: -1,
-                color: ui.ink,
-              }
-        }
+        style={{ flexShrink: 1 }}
       >
         {title}
-      </Text>
+      </AppText>
       {right ? <View style={{ marginLeft: "auto", paddingLeft: 10 }}>{right}</View> : null}
     </View>
   );

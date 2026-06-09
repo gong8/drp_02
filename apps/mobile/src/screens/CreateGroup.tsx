@@ -1,10 +1,9 @@
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useState } from "react";
 import type { GroupsStackParams } from "../../App";
-import { ERR_SAVE } from "../lib/copy";
+import { CREATE_GROUP_NEXT, ERR_SAVE, LABEL_GROUP_NAME, TITLE_NEW_GROUP } from "../lib/copy";
 import { trpc } from "../lib/trpc";
-import { ui } from "../theme";
-import { AppText, Button, Field, ScreenHeader, ScreenScroll } from "../ui";
+import { AppText, Button, Field, FormError, ScreenHeader, ScreenScroll } from "../ui";
 
 type Props = NativeStackScreenProps<GroupsStackParams, "CreateGroup">;
 
@@ -13,12 +12,16 @@ export function CreateGroup({ navigation }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
 
+  const trimmed = name.trim();
+  const canCreate = trimmed !== "" && !busy;
+
   async function create() {
-    if (name.trim() === "" || busy) return;
+    if (!canCreate) return;
     setBusy(true);
     try {
-      await trpc.groups.create.mutate({ name: name.trim() });
-      navigation.goBack();
+      const res = await trpc.groups.create.mutate({ name: trimmed });
+      // Land in the live group with its invite ready to share (replace, so back returns to the list).
+      navigation.replace("GroupDetail", { groupId: res.id, justCreated: true });
     } catch {
       setError(true);
       setBusy(false);
@@ -27,22 +30,18 @@ export function CreateGroup({ navigation }: Props) {
 
   return (
     <ScreenScroll
-      header={<ScreenHeader title="New group" onBack={() => navigation.goBack()} />}
+      header={<ScreenHeader title={TITLE_NEW_GROUP} onBack={() => navigation.goBack()} />}
       avoidKeyboard
     >
-      {error && (
-        <AppText variant="caption" style={{ color: ui.brand, marginBottom: 10 }}>
-          {ERR_SAVE}
-        </AppText>
-      )}
-      <Field label="Group name" value={name} onChangeText={setName} placeholder="The Boys" />
+      {error && <FormError>{ERR_SAVE}</FormError>}
+      <Field label={LABEL_GROUP_NAME} value={name} onChangeText={setName} placeholder="The Boys" />
       <AppText variant="caption" style={{ marginTop: 8 }}>
-        You can add members once it's created.
+        {CREATE_GROUP_NEXT}
       </AppText>
       <Button
         label="Create group"
         variant="primary"
-        disabled={name.trim() === "" || busy}
+        disabled={!canCreate}
         onPress={create}
         style={{ marginTop: 20 }}
       />

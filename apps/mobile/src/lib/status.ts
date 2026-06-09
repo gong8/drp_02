@@ -48,6 +48,8 @@ export function planBucket(e: Bucketable, now: number = Date.now()): Bucket {
   if (
     (e.phase === "collecting" || e.phase === "moment") &&
     e.myStatus !== "declined" &&
+    // `myStatus !== "going"` catches the going-but-past / going-and-fizzled rows that fell through
+    // the first `return "going"` branch above; do not delete it as redundant.
     e.myStatus !== "going" &&
     !isPast(e, now)
   )
@@ -72,11 +74,19 @@ export function activeDeadline(e: Timed): { iso: string | null; label: string } 
   return { iso: null, label: "" };
 }
 
+// One ms-to-deadline read, from the phase's active deadline. Clamped at 0 so a passed deadline never
+// reads negative. Both the dashboard cards and the detail countdown banner share this.
+export function deadlineMs(e: Timed, now: number): number {
+  const iso = activeDeadline(e).iso;
+  return iso ? Math.max(0, new Date(iso).getTime() - now) : 0;
+}
+
+// Parse an ISO timestamp, falling back to a second ISO when the first is null.
+const msOr = (iso: string | null, fallback: string) => new Date(iso ?? fallback).getTime();
+
 // The sort key: a collecting plan sorts by when it resolves (decidesBy); a locked plan by its time.
 function sortTimeMs(e: Timed): number {
-  if (e.phase === "collecting") {
-    return new Date(e.decidesBy ?? e.startsAt).getTime();
-  }
+  if (e.phase === "collecting") return msOr(e.decidesBy, e.startsAt);
   return new Date(e.startsAt).getTime();
 }
 
@@ -108,14 +118,11 @@ export function compareForDisplayAll(
 }
 
 // Action-panel order: ticking moments lead (soonest close first), then collecting plans by deadline.
-export function compareActions(
-  a: Timed & { momentEndsAt: string | null },
-  b: Timed & { momentEndsAt: string | null },
-): number {
+export function compareActions(a: Timed, b: Timed): number {
   const aMoment = a.phase === "moment";
   const bMoment = b.phase === "moment";
   if (aMoment !== bMoment) return aMoment ? -1 : 1;
-  const am = new Date((aMoment ? a.momentEndsAt : a.decidesBy) ?? a.startsAt).getTime();
-  const bm = new Date((bMoment ? b.momentEndsAt : b.decidesBy) ?? b.startsAt).getTime();
+  const am = msOr(activeDeadline(a).iso, a.startsAt);
+  const bm = msOr(activeDeadline(b).iso, b.startsAt);
   return am - bm;
 }

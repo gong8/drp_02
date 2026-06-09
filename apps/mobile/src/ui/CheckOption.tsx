@@ -1,6 +1,6 @@
 import type { ViewStyle } from "react-native";
-import { Pressable, Text, View } from "react-native";
-import { font, ui } from "../theme";
+import { Pressable, View } from "react-native";
+import { ui } from "../theme";
 import { SelectCheck } from "./SelectCheck";
 import { AppText } from "./Text";
 
@@ -46,7 +46,7 @@ export function CheckOption({
     >
       <SelectCheck selected={on} accent={accent} size={22} />
       <View style={{ flex: 1 }}>
-        <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>{label}</Text>
+        <AppText variant="rowLabelSm">{label}</AppText>
         {sub ? (
           <AppText variant="caption" style={{ marginTop: 1 }}>
             {sub}

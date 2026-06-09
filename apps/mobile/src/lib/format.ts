@@ -1,13 +1,13 @@
 import type { PartOfDay } from "@bethere/shared";
+import { plural } from "./copy";
 
 // Zero-pad a small number to two digits ("3" -> "03"); shared by every time/date string builder.
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
-// "...T16:00..." -> "16:00"
-function formatTime(iso: string): string {
-  const d = new Date(iso);
-  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
-}
+// Millisecond magnitudes, single-sourced so every countdown/duration surface shares one set.
+const MIN_MS = 60_000;
+const HOUR_MS = 3_600_000;
+const DAY_MS = 24 * HOUR_MS;
 
 // Build a UTC ISO instant from the picker's local "YYYY-MM-DD" + "HH:mm" strings. Uses the numeric
 // Date constructor (always local time, in every engine) rather than `new Date("YYYY-MM-DDTHH:mm")`:
@@ -27,6 +27,25 @@ export function dateStringFrom(d: Date): string {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
+// Parse the picker's local "YYYY-MM-DD" -> noon-anchored Date (the inverse of dateStringFrom).
+// Numeric constructor, never `new Date(string)`: a string with no offset parses as UTC in Hermes.
+// Noon-anchored to dodge DST midnight edges. null when any component is missing or non-numeric.
+export function parseLocalDate(value: string): Date | null {
+  const [y, mo, d] = value.split("-").map(Number);
+  if ([y, mo, d].some((n) => Number.isNaN(n))) return null;
+  return new Date(y, mo - 1, d, 12, 0, 0, 0);
+}
+
+// Parse the picker's local "HH:mm" -> today-anchored Date (the inverse of timeStringFrom).
+// Numeric components only (always local), never `new Date(string)`. null when invalid.
+export function parseLocalTime(value: string): Date | null {
+  const [h, mi] = value.split(":").map(Number);
+  if ([h, mi].some((n) => Number.isNaN(n))) return null;
+  const t = new Date();
+  t.setHours(h, mi, 0, 0);
+  return t;
+}
+
 // Date -> the picker's local "HH:mm" string (the forward of isoFrom's time half).
 export function timeStringFrom(d: Date): string {
   return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
@@ -43,6 +62,11 @@ export function shortDayLabel(d: Date): string {
   return d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
 }
 
+// Date -> "4:00 PM" short time label (used by DateTimeField).
+export function shortTimeLabel(d: Date): string {
+  return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+
 const AVATAR_COLORS = ["#5F9472", "#C9823F", "#7E6BB0", "#3F7BA8", "#B0654F"] as const;
 
 // Deterministic avatar colour from an id, so a group reads as a distinct circle.
@@ -55,6 +79,12 @@ export function colorFor(id: string): string {
 export function initials(name: string): string {
   const parts = name.trim().split(/\s+/);
   return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase();
+}
+
+// The single-letter initial for a person avatar (distinct from the two-letter `initials` used for
+// group avatars). Presentation-only; Avatar still takes a derived `initial` string.
+export function firstInitial(name: string): string {
+  return name.charAt(0).toUpperCase();
 }
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -73,16 +103,20 @@ const MONTHS_SHORT = [
   "Dec",
 ];
 
+// Shared "Wed 3 Jun" day label - the weekday/day/month half of every slot string.
+const dayLabel = (d: Date) =>
+  `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`;
+
 // "2026-06-03T19:00..." -> "Wed 3 Jun, 19:00" - the compact label for a candidate slot.
 export function formatSlot(iso: string): string {
   const d = new Date(iso);
-  return `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}, ${formatTime(iso)}`;
+  return `${dayLabel(d)}, ${timeStringFrom(d)}`;
 }
 
 // "2026-06-06T19:00..." -> "SAT 6 JUN" - the uppercase day line for the plan-detail time hero.
 export function dayUpper(iso: string): string {
   const d = new Date(iso);
-  return `${WEEKDAYS[d.getDay()].toUpperCase()} ${d.getDate()} ${MONTHS_SHORT[d.getMonth()].toUpperCase()}`;
+  return dayLabel(d).toUpperCase();
 }
 
 // "...T19:00..." -> { time: "7:00", ampm: "PM" } - 12-hour clock split for the time hero.
@@ -101,42 +135,29 @@ export function partOfDayLabel(part: PartOfDay | null | undefined): string {
   return part.charAt(0).toUpperCase() + part.slice(1);
 }
 
-// A live moment countdown: "12:34" under an hour, "3h 04m" / "2d 3h" beyond. Empty once passed.
-export function formatCountdown(ms: number): string {
-  if (ms <= 0) return "0:00";
-  const totalMins = Math.floor(ms / 60000);
-  if (totalMins < 60) {
-    const secs = Math.floor((ms % 60000) / 1000);
-    return `${totalMins}:${pad2(secs)}`;
-  }
-  const hours = Math.floor(totalMins / 60);
-  if (hours < 24) return `${hours}h ${pad2(totalMins % 60)}m`;
-  return `${Math.floor(hours / 24)}d ${hours % 24}h`;
-}
-
 // A bare, verbose duration phrase for the largest whole unit: "2 days", "1 hour", "23 minutes",
 // "under a minute". Returns the duration ALONE (no "left"/"in") so callers compose phase-aware copy,
 // e.g. `${label} in ${formatTimeLeft(ms)}` -> "Voting closes in 2 days". Callers special-case the
 // passed `ms <= 0` themselves to render "Closing now" (this returns the bare "now").
 export function formatTimeLeft(ms: number): string {
   if (ms <= 0) return "now";
-  if (ms >= 86400000) {
-    const n = Math.floor(ms / 86400000);
-    return `${n} day${n !== 1 ? "s" : ""}`;
+  if (ms >= DAY_MS) {
+    const n = Math.floor(ms / DAY_MS);
+    return `${n} ${plural(n, "day")}`;
   }
-  if (ms >= 3600000) {
-    const n = Math.floor(ms / 3600000);
-    return `${n} hour${n !== 1 ? "s" : ""}`;
+  if (ms >= HOUR_MS) {
+    const n = Math.floor(ms / HOUR_MS);
+    return `${n} ${plural(n, "hour")}`;
   }
-  if (ms >= 60000) {
-    const n = Math.floor(ms / 60000);
-    return `${n} minute${n !== 1 ? "s" : ""}`;
+  if (ms >= MIN_MS) {
+    const n = Math.floor(ms / MIN_MS);
+    return `${n} ${plural(n, "minute")}`;
   }
   return "under a minute";
 }
 
 // The "under an hour is hot" threshold, shared by every countdown surface.
-export const HOT_MS = 3_600_000;
+export const HOT_MS = HOUR_MS;
 
 // The standalone time-left phrase shared by the Countdown primitive and the dashboard card footer:
 // "Closing now" once passed, else "<duration> left". One home for the terminal string + wording.

@@ -1,13 +1,29 @@
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Pressable, Text, View, type ViewStyle } from "react-native";
+import { Pressable, View, type ViewStyle } from "react-native";
 import type { MeetupsStackParams } from "../../App";
-import { ANON_SEND_BODY, ANON_SEND_TITLE, ERR_SAVE, NOTE_TOP_PICK, STEP_COPY } from "../lib/copy";
+import {
+  ANON_SEND_BODY,
+  ANON_SEND_TITLE,
+  DEADLINE_VOTING,
+  ERR_SAVE,
+  NOTE_TOP_PICK,
+  plural,
+  STEP_COPY,
+  TITLE_NEW_MEETUP,
+} from "../lib/copy";
 import { formatSlot, isoFrom, splitIso } from "../lib/format";
 import { defaultDecidesByForCandidates, defaultReplyByMs, MOMENT_MS } from "../lib/lock";
-import { EMPTY_PREFILL, type Prefill, prefillFromMeetup, wizardSteps } from "../lib/redo";
+import {
+  EMPTY_PREFILL,
+  type Prefill,
+  prefillFromMeetup,
+  type StepKey,
+  wizardSteps,
+} from "../lib/redo";
+import type { RouterOutputs } from "../lib/trpc";
 import { trpc } from "../lib/trpc";
-import { font, ui } from "../theme";
+import { ui } from "../theme";
 import {
   AppText,
   Button,
@@ -27,8 +43,8 @@ import {
   TextButton,
 } from "../ui";
 
-type Group = Awaited<ReturnType<typeof trpc.groups.mine.query>>[number];
-type PastMeetup = Awaited<ReturnType<typeof trpc.events.pastForGroup.query>>[number];
+type Group = RouterOutputs["groups"]["mine"][number];
+type PastMeetup = RouterOutputs["events"]["pastForGroup"][number];
 type TimeRow = { id: string; date: string; time: string };
 type Props = NativeStackScreenProps<MeetupsStackParams, "CreateWizard">;
 
@@ -45,16 +61,16 @@ export function CreateWizard({ navigation }: Props) {
   // The source-step choice: null = not chosen yet, "fresh" = start blank, otherwise a past-meetup id.
   const [source, setSource] = useState<"fresh" | string | null>(null);
 
-  const STEPS = wizardSteps(pastMeetups.length > 0);
-  const stepKey = STEPS[step];
-  const isLastStep = step === STEPS.length - 1;
+  const steps = wizardSteps(pastMeetups.length > 0);
+  const stepKey = steps[step];
+  const isLastStep = step === steps.length - 1;
   const [location, setLocation] = useState("");
-  const [description, setDescription] = useState("");
+  const [notes, setNotes] = useState("");
   // Activity ("what") candidates - ideas, optional, no names ever shown.
   const [activityChips, setActivityChips] = useState<string[]>([]);
   const [activityDraft, setActivityDraft] = useState("");
   // Time candidates - concrete multi-row date/time rows, optional.
-  const [rows, setRows] = useState<TimeRow[]>([{ id: "t0", date: "", time: "" }]);
+  const [timeRows, setTimeRows] = useState<TimeRow[]>([{ id: "t0", date: "", time: "" }]);
   const nextRowId = useRef(1);
   // Creator locks - both default OFF (open). Decides-by is editable.
   const [lockTimes, setLockTimes] = useState(false);
@@ -71,8 +87,8 @@ export function CreateWizard({ navigation }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
 
-  const updateRow = (id: string, patch: Partial<TimeRow>) =>
-    setRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+  const updateTimeRow = (id: string, patch: Partial<TimeRow>) =>
+    setTimeRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
 
   // Stable across renders (only touches state setters and a ref), so the group-change effect can list
   // it as a dependency without re-running on every render.
@@ -82,9 +98,9 @@ export function CreateWizard({ navigation }: Props) {
     setLockTimes(p.lockTimes);
     setLockActivity(p.lockActivity);
     setLocation(p.location);
-    setDescription(p.description);
+    setNotes(p.description);
     // Time is never carried - reset to a single blank row so the creator sets it fresh.
-    setRows([{ id: "t0", date: "", time: "" }]);
+    setTimeRows([{ id: "t0", date: "", time: "" }]);
     nextRowId.current = 1;
     setDecidesEdit(false);
     setReplyEdit(false);
@@ -124,7 +140,7 @@ export function CreateWizard({ navigation }: Props) {
   // keeping the first), so the preview count / isConcrete / confirm mirror and the submit payload all
   // match what the server actually stores - a slot sent twice in one minute must count once.
   const seenTimeMinutes = new Set<number>();
-  const timeIsos = rows
+  const timeIsos = timeRows
     .map((r) => isoFrom(r.date, r.time))
     .filter((x): x is string => x !== null)
     .filter((iso) => {
@@ -140,16 +156,21 @@ export function CreateWizard({ navigation }: Props) {
     earliestMs != null
       ? new Date(defaultDecidesByForCandidates(earliestMs, Date.now())).toISOString()
       : null;
-  const activityCount = activityChips.length + (activityDraft.trim() ? 1 : 0);
+  const summaryActivities = activityChips.concat(
+    activityDraft.trim() ? [activityDraft.trim()] : [],
+  );
+  const activityCount = summaryActivities.length;
   // You can only lock an axis that has something on it (you can't fix nothing). A lock with no
   // candidate is ignored, so the checkbox is disabled until at least one exists.
   const canLockTimes = timeIsos.length > 0;
   const canLockActivity = activityCount > 0;
   const lockTimesEff = lockTimes && canLockTimes;
   const lockActivityEff = lockActivity && canLockActivity;
+  const timeFixed = timeIsos.length === 1 && lockTimesEff;
+  const activityFixed = lockActivityEff && activityCount <= 1;
   // Concrete shortcut: skip voting only when BOTH axes are pinned - one locked time AND a locked
   // activity. Must match the server's planOpensMoment so the preview never diverges.
-  const isConcrete = timeIsos.length === 1 && lockTimesEff && lockActivityEff && activityCount <= 1;
+  const isConcrete = timeFixed && activityFixed;
 
   const decidesOverrideIso = decidesEdit ? isoFrom(decidesDate, decidesTime) : null;
   // Match the server bounds (events.create): a custom deadline must sit after now AND leave a full
@@ -203,22 +224,21 @@ export function CreateWizard({ navigation }: Props) {
   // call won't do. Each axis reports its candidates plus whether it is locked (fixed) or open to the
   // group; the deadlines mirror decidesToSend/replyToSend (or the shown defaults).
   const groupName = groups.find((g) => g.id === groupId)?.name ?? "";
-  const summaryActivities = activityChips.concat(
-    activityDraft.trim() ? [activityDraft.trim()] : [],
-  );
   const summaryTimes = timeIsos.map(formatSlot);
   const decidesShown = !isConcrete ? (decidesToSend ?? autoDecidesIso) : null;
-  const replyShown = replyToSend ?? autoReplyIso;
+  // reply-by (unlike decides-by) already bakes its default into replyToSend, so no fallback here.
+  const replyShown = replyToSend;
+  const replyLine = replyShown ? `Replies close ${formatSlot(replyShown)}` : null;
   const deadlineLines = isConcrete
-    ? [replyShown ? `Replies close ${formatSlot(replyShown)}` : "We'll pick a sensible deadline"]
+    ? [replyLine ?? "We'll pick a sensible deadline"]
     : earliestMs == null
       ? ["Set once there's a time on the table"]
       : [
-          ...(decidesShown ? [`Voting closes ${formatSlot(decidesShown)}`] : []),
-          ...(replyShown ? [`Replies close ${formatSlot(replyShown)}`] : []),
+          ...(decidesShown ? [`${DEADLINE_VOTING} ${formatSlot(decidesShown)}`] : []),
+          ...(replyLine ? [replyLine] : []),
         ];
 
-  function valid(key: string): boolean {
+  function canAdvance(key: StepKey): boolean {
     switch (key) {
       case "group":
         // Wait for the past-meetups query so the step list is final before leaving this step.
@@ -247,23 +267,21 @@ export function CreateWizard({ navigation }: Props) {
     return next;
   }
 
-  function startEditDecides() {
-    if (autoDecidesIso) {
-      const { date, time } = splitIso(autoDecidesIso);
-      setDecidesDate(date);
-      setDecidesTime(time);
-    }
-    setDecidesEdit(true);
-  }
-
-  function startEditReply() {
-    if (autoReplyIso) {
-      const { date, time } = splitIso(autoReplyIso);
-      setReplyDate(date);
-      setReplyTime(time);
-    }
-    setReplyEdit(true);
-  }
+  // Both deadlines run the same edit/reset machinery: seed the date/time pill from the shown default
+  // when starting an edit, and clear back to the default when reset. The only things that vary are
+  // which auto ISO seeds the edit and which four state setters are written, so build one factory.
+  const decidesHandlers = makeDeadlineHandlers(
+    autoDecidesIso,
+    setDecidesEdit,
+    setDecidesDate,
+    setDecidesTime,
+  );
+  const replyHandlers = makeDeadlineHandlers(
+    autoReplyIso,
+    setReplyEdit,
+    setReplyDate,
+    setReplyTime,
+  );
 
   async function submit() {
     if (busy || !groupId) return;
@@ -272,7 +290,7 @@ export function CreateWizard({ navigation }: Props) {
     try {
       await trpc.events.create.mutate({
         groupId,
-        description: description.trim() || undefined,
+        description: notes.trim() || undefined,
         location: location.trim() || undefined,
         timeCandidates: timeIsos.map((startsAt) => ({ startsAt })),
         activityCandidates: activities.length ? activities : undefined,
@@ -289,7 +307,7 @@ export function CreateWizard({ navigation }: Props) {
   }
 
   function goNext() {
-    if (!valid(stepKey) || busy) return;
+    if (!canGoNext || busy) return;
     if (stepKey === "activities") commitDraftActivity();
     if (isLastStep) submit();
     else setStep(step + 1);
@@ -302,14 +320,15 @@ export function CreateWizard({ navigation }: Props) {
   if (loading) return <ScreenLoading />;
 
   const nextLabel = isLastStep ? "Send to the group" : "Next";
-  const copy = STEP_COPY[stepKey];
+  const stepCopy = STEP_COPY[stepKey];
+  const canGoNext = canAdvance(stepKey);
 
   return (
-    <ScreenScroll header={<ScreenHeader title="New meetup" onBack={goBack} />} avoidKeyboard>
-      <ProgressDots steps={STEPS} index={step} />
+    <ScreenScroll header={<ScreenHeader title={TITLE_NEW_MEETUP} onBack={goBack} />} avoidKeyboard>
+      <ProgressDots steps={steps} index={step} />
       {error && <FormError>{ERR_SAVE}</FormError>}
 
-      <Section title={copy.title} sub={copy.sub} size="lg">
+      <Section title={stepCopy.title} sub={stepCopy.sub} size="lg">
         {stepKey === "group" && (
           <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
             {groups.map((g) => (
@@ -395,25 +414,28 @@ export function CreateWizard({ navigation }: Props) {
 
         {stepKey === "times" && (
           <>
-            {rows.map((r) => (
+            {timeRows.map((r) => (
               <View key={r.id} style={{ position: "relative", marginBottom: 10 }}>
                 <DateTimePill
                   dateValue={r.date}
                   timeValue={r.time}
-                  onDate={(t) => updateRow(r.id, { date: t })}
-                  onTime={(t) => updateRow(r.id, { time: t })}
+                  onDate={(t) => updateTimeRow(r.id, { date: t })}
+                  onTime={(t) => updateTimeRow(r.id, { time: t })}
                   minimumDate={new Date()}
                 />
-                {rows.length > 1 && (
-                  <RemoveDot onPress={() => setRows((rs) => rs.filter((x) => x.id !== r.id))} />
+                {timeRows.length > 1 && (
+                  <RemoveDot onPress={() => setTimeRows((rs) => rs.filter((x) => x.id !== r.id))} />
                 )}
               </View>
             ))}
-            {rows.length < 10 && (
+            {timeRows.length < 10 && (
               <Chip
                 label="+ Add a time"
                 onPress={() =>
-                  setRows((rs) => [...rs, { id: `t${nextRowId.current++}`, date: "", time: "" }])
+                  setTimeRows((rs) => [
+                    ...rs,
+                    { id: `t${nextRowId.current++}`, date: "", time: "" },
+                  ])
                 }
               />
             )}
@@ -440,8 +462,8 @@ export function CreateWizard({ navigation }: Props) {
             <Field
               label="Notes"
               optional
-              value={description}
-              onChangeText={setDescription}
+              value={notes}
+              onChangeText={setNotes}
               placeholder="Come at 6, we'll eat around 8"
               multiline
               style={{ marginTop: 12 }}
@@ -472,12 +494,8 @@ export function CreateWizard({ navigation }: Props) {
                 defaultSub={
                   autoDecidesIso ? NOTE_TOP_PICK : "Add times to set this, or we'll pick a horizon"
                 }
-                onEdit={autoDecidesIso ? startEditDecides : undefined}
-                onUseDefault={() => {
-                  setDecidesEdit(false);
-                  setDecidesDate("");
-                  setDecidesTime("");
-                }}
+                onEdit={autoDecidesIso ? decidesHandlers.startEdit : undefined}
+                onUseDefault={decidesHandlers.useDefault}
               />
             )}
 
@@ -498,12 +516,8 @@ export function CreateWizard({ navigation }: Props) {
                   autoReplyIso ? `Replies close ${formatSlot(autoReplyIso)}` : "A sensible deadline"
                 }
                 defaultSub="Blind until then, then it reveals who's in"
-                onEdit={autoReplyIso ? startEditReply : undefined}
-                onUseDefault={() => {
-                  setReplyEdit(false);
-                  setReplyDate("");
-                  setReplyTime("");
-                }}
+                onEdit={autoReplyIso ? replyHandlers.startEdit : undefined}
+                onUseDefault={replyHandlers.useDefault}
               />
             )}
           </>
@@ -516,28 +530,16 @@ export function CreateWizard({ navigation }: Props) {
               label="What"
               lines={summaryActivities.length ? summaryActivities : ["Open - the group adds ideas"]}
               muted={summaryActivities.length === 0}
-              note={
-                summaryActivities.length === 0
-                  ? undefined
-                  : lockActivityEff
-                    ? "Locked - the group can't add more"
-                    : "Open - the group can add more and vote"
-              }
+              note={axisNote(summaryActivities.length > 0, lockActivityEff)}
             />
             <SummaryItem
               label="When"
               lines={summaryTimes.length ? summaryTimes : ["Open - the group adds times"]}
               muted={summaryTimes.length === 0}
-              note={
-                summaryTimes.length === 0
-                  ? undefined
-                  : lockTimesEff
-                    ? "Locked - the group can't add more"
-                    : "Open - the group can add more and vote"
-              }
+              note={axisNote(summaryTimes.length > 0, lockTimesEff)}
             />
             {location.trim() ? <SummaryItem label="Where" lines={[location.trim()]} /> : null}
-            {description.trim() ? <SummaryItem label="Notes" lines={[description.trim()]} /> : null}
+            {notes.trim() ? <SummaryItem label="Notes" lines={[notes.trim()]} /> : null}
             <SummaryItem label="Deadlines" lines={deadlineLines} />
 
             <View
@@ -549,15 +551,15 @@ export function CreateWizard({ navigation }: Props) {
                 paddingVertical: 13,
               }}
             >
-              <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink, lineHeight: 19 }}>
-                {confirmMirror({
+              <AppText variant="rowLabelSm" style={{ lineHeight: 19 }}>
+                {outcomeSummary({
                   timeCount: timeIsos.length,
                   activityCount,
-                  timeFixed: timeIsos.length === 1 && lockTimesEff,
-                  activityFixed: lockActivityEff && activityCount <= 1,
+                  timeFixed,
+                  activityFixed,
                   firstTimeIso: timeIsos[0] ?? null,
                 })}
-              </Text>
+              </AppText>
               <View
                 style={{ height: 1, backgroundColor: ui.hairline, marginTop: 12, marginBottom: 11 }}
               />
@@ -573,7 +575,7 @@ export function CreateWizard({ navigation }: Props) {
       <Button
         label={nextLabel}
         variant="primary"
-        disabled={!valid(stepKey) || busy}
+        disabled={!canGoNext || busy}
         onPress={goNext}
         style={{ marginTop: 24 }}
       />
@@ -581,7 +583,41 @@ export function CreateWizard({ navigation }: Props) {
   );
 }
 
-function ProgressDots({ steps, index }: { steps: readonly string[]; index: number }) {
+// Confirm-step note shown under a What/When SummaryItem: nothing when the axis has no candidates,
+// otherwise whether the group can still add to that list.
+function axisNote(hasCandidates: boolean, locked: boolean): string | undefined {
+  if (!hasCandidates) return undefined;
+  return locked ? "Locked - the group can't add more" : "Open - the group can add more and vote";
+}
+
+// The shared edit/reset handlers for one deadline editor (decides-by / reply-by). startEdit seeds the
+// date/time pill from the shown default (so editing begins from what the user saw) then enables edit
+// mode; useDefault clears back to the default. The two deadlines differ only in their auto ISO and
+// their four state setters, so both are built from this one factory.
+function makeDeadlineHandlers(
+  autoIso: string | null,
+  setEdit: (b: boolean) => void,
+  setDate: (t: string) => void,
+  setTime: (t: string) => void,
+) {
+  return {
+    startEdit() {
+      if (autoIso) {
+        const { date, time } = splitIso(autoIso);
+        setDate(date);
+        setTime(time);
+      }
+      setEdit(true);
+    },
+    useDefault() {
+      setEdit(false);
+      setDate("");
+      setTime("");
+    },
+  };
+}
+
+function ProgressDots({ steps, index }: { steps: readonly StepKey[]; index: number }) {
   return (
     <View style={{ flexDirection: "row", gap: 6, marginBottom: 16 }}>
       {steps.map((stepKey, i) => (
@@ -690,7 +726,9 @@ function RemoveDot({ onPress }: { onPress: () => void }) {
         justifyContent: "center",
       }}
     >
-      <Text style={{ fontFamily: font.bold, fontSize: 13, lineHeight: 13, color: ui.ink }}>×</Text>
+      <AppText variant="rowLabelSm" style={{ lineHeight: 13 }}>
+        ×
+      </AppText>
     </Pressable>
   );
 }
@@ -733,7 +771,7 @@ function DeadlineField({
 }) {
   return (
     <View style={style}>
-      <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>{heading}</Text>
+      <AppText variant="rowLabelSm">{heading}</AppText>
       {editing ? (
         <Card style={{ marginTop: 8 }}>
           <DateTimePill
@@ -755,7 +793,7 @@ function DeadlineField({
         </Card>
       ) : (
         <Card style={{ marginTop: 8 }}>
-          <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>{defaultLine}</Text>
+          <AppText variant="rowLabelSm">{defaultLine}</AppText>
           <AppText variant="caption" style={{ marginTop: 3 }}>
             {defaultSub}
           </AppText>
@@ -773,7 +811,7 @@ function DeadlineField({
 // The plain-English outcome mirror. Describes each axis by whether it is FIXED (locked to its
 // candidates so there is nothing to vote on) or still being decided, so the preview matches what the
 // server actually does. Both fixed => concrete (skip voting); otherwise the open axis is voted on.
-function confirmMirror({
+function outcomeSummary({
   timeCount,
   activityCount,
   timeFixed,
@@ -788,25 +826,20 @@ function confirmMirror({
 }): string {
   const when = timeFixed && firstTimeIso ? `It's on for ${formatSlot(firstTimeIso)}` : null;
 
+  // activityFixed implies exactly one activity (lockActivityEff implies activityCount > 0).
   if (when) {
-    if (activityFixed) {
-      return activityCount === 1
-        ? `${when}. Activity set - just say who's in.`
-        : `${when}. Just say who's in.`;
-    }
+    if (activityFixed) return `${when}. Activity set - just say who's in.`;
     return `${when}. The group picks what to do, then who's in.`;
   }
 
   const timePart =
     timeCount >= 1
-      ? `Vote on ${timeCount} time${timeCount === 1 ? "" : "s"}`
+      ? `Vote on ${timeCount} ${plural(timeCount, "time")}`
       : "The group suggests times";
   const activityPart = activityFixed
-    ? activityCount === 1
-      ? " (activity set)"
-      : ""
+    ? " (activity set)"
     : activityCount >= 1
-      ? ` and ${activityCount} ${activityCount === 1 ? "activity" : "activities"}`
+      ? ` and ${activityCount} ${plural(activityCount, "activity", "activities")}`
       : " and what to do";
   return `${timePart}${activityPart}, then who's in.`;
 }

@@ -113,7 +113,7 @@ the `bethere-vpc-conn` connector, and the `bethere-rds-sg` security group). Prov
 | API URL | `https://96mgvmgcbj.us-east-1.awsapprunner.com` | `https://wumksaeb3j.us-east-1.awsapprunner.com` |
 | RDS instance | `bethere-db` | `bethere-db-dev` |
 | CD workflow | `.github/workflows/deploy-api.yml` | `.github/workflows/deploy-api-dev.yml` |
-| Vercel web | Production (branch `main`) | Preview (branch `dev`), https://bethere-dev.vercel.app |
+| Vercel web | Production (branch `main`), https://bethere-beta.vercel.app | Preview (branch `dev`), https://bethere-dev.vercel.app |
 
 - dev service ARN:
   `arn:aws:apprunner:us-east-1:208569836255:service/bethere-api-dev/f6c777627a7e473989fe9514709d16c6`
@@ -136,3 +136,33 @@ so every dev deploy auto-updates it. Vercel's auto branch alias
 time, so the **Preview**-scoped Vercel env vars point dev at the dev API:
 `EXPO_PUBLIC_API_URL=https://wumksaeb3j.us-east-1.awsapprunner.com`,
 `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` (same Clerk app as prod), `EXPO_PUBLIC_DEV_AUTH=1`.
+
+## Invite-link origin (M4 group onboarding)
+
+Invite links are `https://<web-origin>/join/<code>`. The origin is resolved with a fallback chain,
+so **nothing is required for the web app** and there is one bake for native:
+
+- **Web (Vercel):** the client falls back to `window.location.origin`, so a build self-adapts -
+  prod web emits `bethere-beta` links, dev web emits `bethere-dev` links. Do NOT set
+  `EXPO_PUBLIC_WEB_URL` in the Vercel env: a fixed value would make one environment emit the other's
+  links.
+- **Native APK:** no `window`, so the prod origin is baked at build time -
+  `EXPO_PUBLIC_WEB_URL=https://bethere-beta.vercel.app` in `.github/workflows/cd.yml` (the APK runs on
+  `main`, so it is always the prod app).
+- **API `PUBLIC_WEB_URL` (optional):** `groups.inviteByGroup` returns a canonical `url` only when this
+  is set on the App Runner service; otherwise it returns `url=null` and the client builds the link
+  from the rules above (so links work regardless). Set it for completeness so a code shared from a
+  native build still carries a server-canonical link. It is a service-level env var (not in the repo;
+  the deploy workflows only push the image), so set it per service:
+
+  ```
+  # prod
+  aws apprunner update-service --region us-east-1 \
+    --service-arn arn:aws:apprunner:us-east-1:208569836255:service/bethere-api/260292b3564d41d6b60e9e2129a0263b \
+    --source-configuration 'ImageRepository={ImageConfiguration={RuntimeEnvironmentVariables={PUBLIC_WEB_URL=https://bethere-beta.vercel.app}}}'
+  # dev: swap the service ARN for bethere-api-dev and the value for https://bethere-dev.vercel.app
+  ```
+
+  (Merge with the service's existing `RuntimeEnvironmentVariables` - App Runner replaces the whole map
+  - or set it in the App Runner console under Configuration -> Environment variables. Either triggers
+  a rolling redeploy.)

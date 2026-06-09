@@ -1,6 +1,13 @@
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { Animated, Easing, Keyboard, Modal, Platform, Pressable, View } from "react-native";
-import { ui } from "../theme";
+import { ui, webColumnMaxWidth } from "../theme";
+
+// RN's Modal renders to a DOM portal at the document root on web, so it escapes the App Shell's
+// centered column and would otherwise span the full browser width. Centre it and cap it to the same
+// column width so the sheet rises inside the phone-width frame, matching the rest of the app.
+const isWeb = Platform.OS === "web";
+
+const FALLBACK_SHEET_H = 600; // px, off-screen start height before onLayout measures the real sheet
 
 // The scrim and the sheet are animated separately: the scrim fades in while only the sheet
 // slides up. Modal's built-in animationType="slide" instead translates the whole tree, which
@@ -74,16 +81,20 @@ export function BottomSheet({
 
   if (!mounted) return null;
 
+  const SHEET_RADIUS = 24;
+
   // Open/close slide, then lifted by the live keyboard height so the lower fields (Notes) and the
   // Save button stay visible while typing. Both operands are native-driven, so the subtract is too.
   const translateY = Animated.subtract(
-    anim.interpolate({ inputRange: [0, 1], outputRange: [sheetH || 600, 0] }),
+    anim.interpolate({ inputRange: [0, 1], outputRange: [sheetH || FALLBACK_SHEET_H, 0] }),
     kb,
   );
 
   return (
     <Modal visible transparent animationType="none" onRequestClose={onClose}>
-      <View style={{ flex: 1, justifyContent: "flex-end" }}>
+      <View
+        style={{ flex: 1, justifyContent: "flex-end", alignItems: isWeb ? "center" : "stretch" }}
+      >
         <Animated.View
           style={{
             position: "absolute",
@@ -101,14 +112,16 @@ export function BottomSheet({
           onLayout={(e) => setSheetH(e.nativeEvent.layout.height)}
           style={{
             transform: [{ translateY }],
+            width: "100%",
+            maxWidth: isWeb ? webColumnMaxWidth : undefined,
             backgroundColor: ui.surface,
             borderTopWidth: ui.border,
             borderLeftWidth: ui.border,
             borderRightWidth: ui.border,
             borderColor: ui.ink,
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
-            padding: 16,
+            borderTopLeftRadius: SHEET_RADIUS,
+            borderTopRightRadius: SHEET_RADIUS,
+            padding: ui.gutter,
             paddingBottom: 28,
           }}
         >

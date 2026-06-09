@@ -33,9 +33,10 @@ export type PastMeetupShell = {
 // by default - the creator just picks a new time (and can untick the lock to reopen it to a vote). A
 // time-only past plan (no named activity) preloads nothing and leaves the lock off.
 export function prefillFromMeetup(m: PastMeetupShell): Prefill {
-  const hasActivity = m.activity.trim() !== "";
+  const activity = m.activity.trim();
+  const hasActivity = activity !== "";
   return {
-    activityChips: hasActivity ? [m.activity.trim()] : [],
+    activityChips: hasActivity ? [activity] : [],
     lockTimes: m.lockTimes,
     lockActivity: hasActivity,
     location: m.location,
@@ -46,8 +47,19 @@ export function prefillFromMeetup(m: PastMeetupShell): Prefill {
 // The wizard steps. The "source" step (start fresh vs use a previous meetup) appears only when the
 // chosen group has past meetups. "details" (location + notes) and "deadlines" (decides-by + reply-by)
 // are separate screens - they are unrelated concerns that were cramped onto one step before.
-export function wizardSteps(hasPast: boolean): string[] {
-  return hasPast
-    ? ["group", "source", "activities", "times", "details", "deadlines", "confirm"]
-    : ["group", "activities", "times", "details", "deadlines", "confirm"];
+// The canonical create-wizard step order - single source for both the StepKey type and the sequence.
+const STEP_ORDER = [
+  "group",
+  "source",
+  "activities",
+  "times",
+  "details",
+  "deadlines",
+  "confirm",
+] as const;
+
+export type StepKey = (typeof STEP_ORDER)[number];
+
+export function wizardSteps(hasPast: boolean): StepKey[] {
+  return STEP_ORDER.filter((s) => s !== "source" || hasPast);
 }

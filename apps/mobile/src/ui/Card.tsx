@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
-import { Pressable, View, type ViewStyle } from "react-native";
+import type { ViewStyle } from "react-native";
 import { ui } from "../theme";
 import { HardShadow } from "./HardShadow";
+import { Tappable } from "./Tappable";
 
 // The bordered, hard-shadow surface. Pass `onPress` to make the whole card tappable (it renders a
 // Pressable internally) so call sites stop wrapping `<Pressable><Card>` by hand.
@@ -34,13 +35,9 @@ export function Card({
   };
   return (
     <HardShadow radius={radius} style={style}>
-      {onPress ? (
-        <Pressable onPress={onPress} disabled={disabled} style={boxStyle}>
-          {children}
-        </Pressable>
-      ) : (
-        <View style={boxStyle}>{children}</View>
-      )}
+      <Tappable onPress={onPress} disabled={disabled} style={boxStyle}>
+        {children}
+      </Tappable>
     </HardShadow>
   );
 }

@@ -1,16 +1,38 @@
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { useCallback, useRef, useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { View } from "react-native";
 import type { GroupsStackParams } from "../../App";
+import {
+  ACTION_COPIED,
+  ACTION_COPY,
+  ACTION_LINK_COPIED,
+  ACTION_SHARE_INVITE,
+  ACTION_TRY_AGAIN,
+  ERR_NETWORK,
+  INVITE_CODE_PENDING,
+  INVITE_HINT,
+  inviteShareText,
+  LABEL_GROUP_NAME,
+  LABEL_INVITE_LINK,
+  LABEL_JOIN_CODE,
+  TITLE_INVITE,
+  welcomeToGroup,
+} from "../lib/copy";
+import { formatCode, joinUrl } from "../lib/invite";
+import { copyToClipboard, shareInvite } from "../lib/share";
+import type { RouterOutputs } from "../lib/trpc";
 import { trpc } from "../lib/trpc";
+import { useBusyAction } from "../lib/useBusyAction";
 import { useFetchOnFocus } from "../lib/useFetchOnFocus";
-import { font, ui } from "../theme";
+import { ui } from "../theme";
 import {
   AppText,
+  Band,
   BottomSheet,
   Button,
   Card,
   DetailError,
+  EmptyState,
   Field,
   FieldLabel,
   PersonRow,
@@ -21,9 +43,21 @@ import {
   TextButton,
 } from "../ui";
 
-type Detail = NonNullable<Awaited<ReturnType<typeof trpc.groups.get.query>>>;
-type Addable = Awaited<ReturnType<typeof trpc.groups.addableUsers.query>>;
+type Detail = NonNullable<RouterOutputs["groups"]["get"]>;
+type Invite = RouterOutputs["groups"]["inviteByGroup"];
 type Props = NativeStackScreenProps<GroupsStackParams, "GroupDetail">;
+
+// Run a side effect exactly once, the first time `active` becomes true - e.g. a one-shot route param
+// that should fire only after data has loaded, then be cleared. Owns its own once-guard ref.
+function useConsumeParam(active: boolean, onConsume: () => void) {
+  const done = useRef(false);
+  useEffect(() => {
+    if (active && !done.current) {
+      done.current = true;
+      onConsume();
+    }
+  }, [active, onConsume]);
+}
 
 export function GroupDetail({ route, navigation }: Props) {
   const { groupId } = route.params;
@@ -32,10 +66,11 @@ export function GroupDetail({ route, navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
-  const [addOpen, setAddOpen] = useState(false);
-  const [addable, setAddable] = useState<Addable>([]);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  // A one-time welcome band after joining via an invite.
+  const [welcome, setWelcome] = useState(false);
   // Whether the name field has been seeded from the server yet. We seed only on the first successful
-  // load so a later reload (e.g. after adding a member) cannot clobber an in-progress rename draft.
+  // load so a later reload (e.g. after renaming) cannot clobber an in-progress rename draft.
   const seededName = useRef(false);
 
   const load = useCallback(() => {
@@ -55,30 +90,20 @@ export function GroupDetail({ route, navigation }: Props) {
 
   useFetchOnFocus(load);
 
-  async function run(fn: () => Promise<unknown>): Promise<boolean> {
-    if (busy) return false;
-    setBusy(true);
-    setError(false);
-    try {
-      await fn();
-      await load();
-      return true;
-    } catch {
-      setError(true);
-      return false;
-    } finally {
-      setBusy(false);
-    }
-  }
+  // Land-on-invite after creating the group: open the sheet once the group has loaded, then clear the
+  // flag so a refocus does not reopen it.
+  useConsumeParam(!!route.params?.justCreated && !!data, () => {
+    setInviteOpen(true);
+    navigation.setParams({ justCreated: undefined });
+  });
 
-  async function openAdd() {
-    try {
-      setAddable(await trpc.groups.addableUsers.query({ groupId }));
-      setAddOpen(true);
-    } catch {
-      setError(true);
-    }
-  }
+  // One-time welcome band after joining via an invite.
+  useConsumeParam(!!route.params?.justJoined && !!data, () => {
+    setWelcome(true);
+    navigation.setParams({ justJoined: undefined });
+  });
+
+  const runAction = useBusyAction({ busy, setBusy, setError, load });
 
   if (loading) return <ScreenLoading />;
   if (error || !data)
@@ -94,8 +119,16 @@ export function GroupDetail({ route, navigation }: Props) {
 
   return (
     <ScreenScroll header={<ScreenHeader title={data.name} onBack={() => navigation.goBack()} />}>
+      {welcome ? (
+        <Band style={{ marginBottom: 16 }}>
+          <AppText variant="title" style={{ color: ui.onInk }}>
+            {welcomeToGroup(data.name)}
+          </AppText>
+        </Band>
+      ) : null}
+
       <Field
-        label="Group name"
+        label={LABEL_GROUP_NAME}
         value={nameDraft}
         onChangeText={setNameDraft}
         right={
@@ -104,7 +137,7 @@ export function GroupDetail({ route, navigation }: Props) {
               label="Save"
               disabled={busy}
               onPress={() =>
-                run(() => trpc.groups.rename.mutate({ id: groupId, name: nameDraft.trim() }))
+                runAction(() => trpc.groups.rename.mutate({ id: groupId, name: nameDraft.trim() }))
               }
             />
           ) : undefined
@@ -123,63 +156,150 @@ export function GroupDetail({ route, navigation }: Props) {
             index={i}
             avatarSize={28}
             right={
-              <View style={{ marginLeft: "auto" }}>
-                <TextButton
-                  label="×"
-                  tone="muted"
-                  disabled={busy}
-                  onPress={() =>
-                    run(() => trpc.groups.removeMember.mutate({ groupId, userId: m.id }))
-                  }
-                />
-              </View>
+              <TextButton
+                label="×"
+                tone="muted"
+                disabled={busy}
+                onPress={() =>
+                  runAction(() => trpc.groups.removeMember.mutate({ groupId, userId: m.id }))
+                }
+              />
             }
           />
         ))}
       </Card>
 
       <Button
-        label="+ Add to group"
-        variant="outline"
-        onPress={openAdd}
+        label={TITLE_INVITE}
+        variant="primary"
+        onPress={() => setInviteOpen(true)}
         style={{ marginTop: 16 }}
       />
 
-      <BottomSheet visible={addOpen} onClose={() => setAddOpen(false)}>
-        <Section title="Add to group" size="lg" />
-        <ScrollView style={{ maxHeight: 280 }} showsVerticalScrollIndicator={false}>
-          {addable.map((u) => (
-            <PersonRow
-              key={u.id}
-              name={u.name}
-              color={u.color}
-              index={0}
-              divided={false}
-              padding={9}
-              onPress={async () => {
-                // Only drop the user from the picker once the add actually succeeded; on failure the
-                // row must stay so it can be retried. Re-derive the list from the server so the picker
-                // reflects post-add reality rather than an optimistic guess.
-                const ok = await run(() => trpc.groups.addMember.mutate({ groupId, userId: u.id }));
-                if (ok) setAddable(await trpc.groups.addableUsers.query({ groupId }));
-              }}
-              right={
-                <Text
-                  style={{
-                    marginLeft: "auto",
-                    fontFamily: font.display,
-                    fontSize: 16,
-                    color: ui.brand,
-                  }}
-                >
-                  +
-                </Text>
-              }
-            />
-          ))}
-          {addable.length === 0 && <AppText variant="caption">Everyone's already in.</AppText>}
-        </ScrollView>
-      </BottomSheet>
+      <InviteSheet
+        groupId={groupId}
+        groupName={data.name}
+        visible={inviteOpen}
+        onClose={() => setInviteOpen(false)}
+      />
     </ScreenScroll>
+  );
+}
+
+// The invite bottom sheet: lazily fetches the group's invite the first time it opens, then shows the
+// join code, the canonical link, and a share action (each with a transient "Copied" confirmation), or
+// an error+retry / pending surface. Self-contained - it owns the invite fetch and copy state.
+function InviteSheet({
+  groupId,
+  groupName,
+  visible,
+  onClose,
+}: {
+  groupId: string;
+  groupName: string;
+  visible: boolean;
+  onClose: () => void;
+}) {
+  const [invite, setInvite] = useState<Invite | null>(null);
+  // The invite fetch failed (vs still loading); drives an error+retry surface in the sheet.
+  const [inviteError, setInviteError] = useState(false);
+  // Which invite control most recently confirmed a copy (label swaps to "Copied" for ~1.5s).
+  const [copied, setCopied] = useState<null | "code" | "link" | "share">(null);
+
+  // Fetch the group's invite (member-gated; the viewer is a member, so it resolves). Shared by the
+  // open effect and the retry button.
+  const loadInvite = useCallback(() => {
+    setInviteError(false);
+    trpc.groups.inviteByGroup
+      .query({ groupId })
+      .then((inv) => setInvite(inv))
+      .catch(() => setInviteError(true));
+  }, [groupId]);
+
+  // Lazily fetch the invite the first time the sheet opens. Kept off the focus load so opening a group
+  // never pays for an invite query.
+  useEffect(() => {
+    if (visible && !invite) loadInvite();
+  }, [visible, invite, loadInvite]);
+
+  function flash(which: "code" | "link" | "share") {
+    setCopied(which);
+    setTimeout(() => setCopied(null), 1500);
+  }
+
+  // Prefer the server-built link (canonical, from PUBLIC_WEB_URL); fall back to one built client-side.
+  const inviteLink = invite ? (invite.url ?? joinUrl(invite.code)) : null;
+
+  async function copyCode() {
+    if (!invite) return;
+    await copyToClipboard(invite.code);
+    flash("code");
+  }
+  async function copyLink() {
+    if (!inviteLink) return;
+    await copyToClipboard(inviteLink);
+    flash("link");
+  }
+  async function share() {
+    if (!inviteLink) return;
+    const { copied: didCopy } = await shareInvite(inviteShareText(groupName), inviteLink);
+    if (didCopy) flash("share");
+  }
+
+  return (
+    <BottomSheet visible={visible} onClose={onClose}>
+      <Section title={TITLE_INVITE} size="lg" sub={INVITE_HINT} />
+      {invite ? (
+        <>
+          <Card tone={ui.tint}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <FieldLabel tone="muted">{LABEL_JOIN_CODE}</FieldLabel>
+              <View style={{ marginLeft: "auto" }}>
+                <TextButton
+                  label={copied === "code" ? ACTION_COPIED : ACTION_COPY}
+                  onPress={copyCode}
+                />
+              </View>
+            </View>
+            <AppText
+              variant="screenTitle"
+              mono
+              style={{ fontSize: 34, letterSpacing: 4, marginTop: 4 }}
+            >
+              {formatCode(invite.code)}
+            </AppText>
+          </Card>
+
+          <Field
+            label={LABEL_INVITE_LINK}
+            value={inviteLink ?? ""}
+            editable={false}
+            right={
+              <TextButton
+                label={copied === "link" ? ACTION_COPIED : ACTION_COPY}
+                onPress={copyLink}
+              />
+            }
+            style={{ marginTop: 14 }}
+          />
+
+          <Button
+            label={copied === "share" ? ACTION_LINK_COPIED : ACTION_SHARE_INVITE}
+            variant="primary"
+            onPress={share}
+            style={{ marginTop: 16 }}
+          />
+        </>
+      ) : inviteError ? (
+        <Card>
+          <AppText variant="caption">{ERR_NETWORK}</AppText>
+          <View style={{ marginTop: 8, alignItems: "flex-start" }}>
+            <TextButton label={ACTION_TRY_AGAIN} onPress={loadInvite} />
+          </View>
+        </Card>
+      ) : (
+        <EmptyState inCard>{INVITE_CODE_PENDING}</EmptyState>
+      )}
+    </BottomSheet>
   );
 }

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Text, TextInput, View, type ViewStyle } from "react-native";
-import { font, ui } from "../theme";
+import { fieldBox, font, ui } from "../theme";
 import { FieldLabel } from "./FieldLabel";
 import { HardShadow } from "./HardShadow";
 
@@ -38,12 +38,9 @@ export function Field({
       <HardShadow radius={ui.rInput} offset={ui.shadowInput}>
         <View
           style={{
+            ...fieldBox,
             flexDirection: "row",
             alignItems: "center",
-            backgroundColor: ui.surface,
-            borderWidth: ui.border,
-            borderColor: ui.ink,
-            borderRadius: ui.rInput,
             paddingHorizontal: 11,
           }}
         >

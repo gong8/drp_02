@@ -3,6 +3,7 @@ import {
   type Bucketable,
   compareForDisplay,
   compareForDisplayAll,
+  deadlineMs,
   isActionRequired,
   isPast,
   planBucket,
@@ -88,6 +89,14 @@ test("activeDeadline maps phase to the right field + label", () => {
     label: "Voting closes",
   });
   expect(activeDeadline(plan({ phase: "cleared" })).iso).toBeNull();
+});
+
+test("deadlineMs: clamped ms to the active phase's deadline, 0 when none or already passed", () => {
+  expect(deadlineMs(plan({ phase: "moment", momentEndsAt: SOON }), NOW)).toBe(3_600_000);
+  expect(deadlineMs(plan({ phase: "collecting", decidesBy: SOON }), NOW)).toBe(3_600_000);
+  expect(deadlineMs(plan({ phase: "cleared" }), NOW)).toBe(0);
+  // A past deadline clamps to 0, never negative.
+  expect(deadlineMs(plan({ phase: "moment", momentEndsAt: PAST }), NOW)).toBe(0);
 });
 
 test("compareForDisplay: upcoming soonest-first, then past most-recent-first", () => {

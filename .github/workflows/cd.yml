@@ -35,6 +35,10 @@ jobs:
     env:
       # Bake the live backend URL into the APK (EXPO_PUBLIC_* is inlined at build time).
       EXPO_PUBLIC_API_URL: https://96mgvmgcbj.us-east-1.awsapprunner.com
+      # The production web origin, baked in so the native app builds correct invite-share links
+      # (https://bethere-beta.vercel.app/join/<code>) - native has no window.location to fall back
+      # on. This APK is the prod app (cd.yml runs on main), so it points at the prod web domain.
+      EXPO_PUBLIC_WEB_URL: https://bethere-beta.vercel.app
       # Clerk publishable key for real Google sign-in in the APK (safe to expose; it is a
       # publishable key). Stored as a repo secret.
       EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY }}

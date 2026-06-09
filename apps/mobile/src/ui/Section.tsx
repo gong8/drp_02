@@ -34,10 +34,7 @@ export function Section({
         {title}
       </Text>
       {sub ? (
-        <AppText
-          variant="caption"
-          style={{ marginTop: 6, marginBottom: lg ? 14 : 10, lineHeight: 18 }}
-        >
+        <AppText variant="captionPara" style={{ marginTop: 6, marginBottom: lg ? 14 : 10 }}>
           {sub}
         </AppText>
       ) : lg ? (

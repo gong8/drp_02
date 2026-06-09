@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
-  type CandidateReactionInput,
+  type CandidateReaction,
   pickWinnerOrBestId,
   pickWinningCandidate,
   tallyCandidates,
 } from "./candidates.js";
 
-const react = (candidateId: string, userId: string): CandidateReactionInput => ({
+const react = (candidateId: string, userId: string): CandidateReaction => ({
   candidateId,
   userId,
 });

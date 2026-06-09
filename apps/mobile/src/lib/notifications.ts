@@ -1,13 +1,14 @@
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
+import { planLabel } from "./copy";
 import { formatSlot } from "./format";
-import type { trpc } from "./trpc"; // type-only: server code is never bundled
+import type { RouterOutputs } from "./trpc"; // type-only: server code is never bundled
 
 // The dashboard payload fields a reminder needs - a compiler-enforced subset of an events.mine row.
 // Deriving via Pick<> keeps the subset honest (a renamed/dropped field breaks the build) and gives
 // phase/myStatus their real pgEnum / MyStatus unions, so a literal typo fails typecheck.
 export type ReminderEvent = Pick<
-  Awaited<ReturnType<typeof trpc.events.mine.query>>[number],
+  RouterOutputs["events"]["mine"][number],
   | "id"
   | "activity"
   | "groupName"
@@ -83,21 +84,17 @@ export async function syncReminders(events: ReminderEvent[]): Promise<void> {
       if (e.myStatus === "declined") continue; // opted out / not coming - no pings
 
       if (e.phase === "collecting" && e.decidesBy) {
-        const decideMs = new Date(e.decidesBy).getTime();
-        if (!e.iReacted && decideMs - DECIDE_LEAD_MS > now) {
-          await schedule(
-            new Date(decideMs - DECIDE_LEAD_MS),
+        if (!e.iReacted) {
+          await scheduleLead(
+            e.decidesBy,
+            DECIDE_LEAD_MS,
+            now,
             "Decides soon",
-            `"${e.activity || e.groupName}" decides ${formatSlot(e.decidesBy)} - tap what you're keen on.`,
+            `"${planLabel(e)}" decides ${formatSlot(e.decidesBy)} - tap what you're keen on.`,
           );
         }
-        if (decideMs > now) {
-          await schedule(
-            new Date(decideMs),
-            "Who's in?",
-            `"${e.activity || e.groupName}" just opened for the moment - say if you're in.`,
-          );
-        }
+        const decideMs = new Date(e.decidesBy).getTime();
+        if (decideMs > now) await scheduleMomentOpen(e, new Date(decideMs));
       }
 
       if (e.phase === "moment" && e.myStatus === "awaiting" && e.momentEndsAt) {
@@ -108,11 +105,7 @@ export async function syncReminders(events: ReminderEvent[]): Promise<void> {
         if (!e.iResponded && e.momentStartsAt) {
           const startedMs = new Date(e.momentStartsAt).getTime();
           if (now - startedMs >= 0 && now - startedMs <= MOMENT_OPEN_WINDOW_MS) {
-            await schedule(
-              new Date(now),
-              "Who's in?",
-              `"${e.activity || e.groupName}" just opened for the moment - say if you're in.`,
-            );
+            await scheduleMomentOpen(e, new Date(now));
           }
         }
         await scheduleLead(
@@ -120,7 +113,7 @@ export async function syncReminders(events: ReminderEvent[]): Promise<void> {
           RSVP_LEAD_MS,
           now,
           "RSVP closing",
-          `"${e.activity || e.groupName}" - are you in? Closing soon.`,
+          `"${planLabel(e)}" - are you in? Closing soon.`,
         );
       }
     }
@@ -132,6 +125,17 @@ export async function syncReminders(events: ReminderEvent[]): Promise<void> {
   }
 }
 
+// The "just opened for the moment" ping, fired from both the collecting branch (at the decides-by
+// instant) and the moment re-arm branch (at now). Naming the content once keeps the two intentionally
+// identical re-arm paths from drifting (see the MOMENT_OPEN_WINDOW_MS comment for why both exist).
+async function scheduleMomentOpen(e: ReminderEvent, date: Date): Promise<void> {
+  await scheduleAt(
+    date,
+    "Who's in?",
+    `"${planLabel(e)}" just opened for the moment - say if you're in.`,
+  );
+}
+
 // Schedule a "fires leadMs before iso" reminder, but only if that lead time is still in the future.
 async function scheduleLead(
   iso: string,
@@ -141,10 +145,10 @@ async function scheduleLead(
   body: string,
 ): Promise<void> {
   const at = new Date(iso).getTime() - leadMs;
-  if (at > now) await schedule(new Date(at), title, body);
+  if (at > now) await scheduleAt(new Date(at), title, body);
 }
 
-async function schedule(date: Date, title: string, body: string): Promise<void> {
+async function scheduleAt(date: Date, title: string, body: string): Promise<void> {
   await Notifications.scheduleNotificationAsync({
     content: { title, body },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date },

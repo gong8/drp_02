@@ -13,10 +13,10 @@ import {
   countdownLabel,
   dateStringFrom,
   dayUpper,
-  formatCountdown,
   formatSlot,
   formatTimeLeft,
   isoFrom,
+  shortTimeLabel,
   splitIso,
   timeStringFrom,
 } from "../format";
@@ -117,41 +117,6 @@ describe("clock12", () => {
   test("minutes are zero-padded to two digits", () => {
     const iso = new Date(2026, 5, 3, 13, 7).toISOString();
     expect(clock12(iso)).toEqual({ time: "1:07", ampm: "PM" });
-  });
-});
-
-// ---------------------------------------------------------------------------
-// formatCountdown: live moment countdown branches
-// ---------------------------------------------------------------------------
-
-describe("formatCountdown", () => {
-  test("under an hour shows mm:ss with zero-padded seconds", () => {
-    // 3 minutes 5 seconds.
-    expect(formatCountdown(3 * 60000 + 5000)).toBe("3:05");
-  });
-
-  test("just under a minute shows 0 minutes and the seconds", () => {
-    // 45 seconds.
-    expect(formatCountdown(45000)).toBe("0:45");
-  });
-
-  test("between 1 hour and 24 hours shows 'Hh MMm' with zero-padded minutes", () => {
-    // 3 hours 4 minutes.
-    expect(formatCountdown(3 * 3600000 + 4 * 60000)).toBe("3h 04m");
-  });
-
-  test("at exactly 24 hours switches to 'Dd Hh'", () => {
-    expect(formatCountdown(24 * 3600000)).toBe("1d 0h");
-  });
-
-  test("beyond a day shows 'Dd Hh'", () => {
-    // 2 days 3 hours.
-    expect(formatCountdown(2 * 86400000 + 3 * 3600000)).toBe("2d 3h");
-  });
-
-  test("zero or past returns 0:00", () => {
-    expect(formatCountdown(0)).toBe("0:00");
-    expect(formatCountdown(-5000)).toBe("0:00");
   });
 });
 
@@ -263,5 +228,17 @@ describe("dateStringFrom / timeStringFrom", () => {
     const iso = isoFrom(dateStringFrom(d), timeStringFrom(d));
     if (iso === null) throw new Error("isoFrom returned null for a valid date/time");
     expect(new Date(iso).getTime()).toBe(d.getTime());
+  });
+});
+
+// ---------------------------------------------------------------------------
+// shortTimeLabel: locale-tolerant hour:minute label for the DateTimeField trigger
+// ---------------------------------------------------------------------------
+
+describe("shortTimeLabel", () => {
+  test("returns a non-empty hour:minute string for a known Date", () => {
+    const label = shortTimeLabel(new Date(2026, 5, 3, 16, 0));
+    expect(label).toMatch(/\d/);
+    expect(label).toContain(":");
   });
 });

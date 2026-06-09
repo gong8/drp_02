@@ -8,7 +8,7 @@
 // The native date/time picker (DateTimePill -> DateTimeField -> @react-native-community/datetimepicker)
 // is replaced by a deterministic stand-in: each mounted pill registers its onDate/onTime callbacks in
 // `pillInstances`, so a test sets a concrete date/time by calling them inside act(). This keeps the
-// REAL wizard logic under test (isoFrom, defaultDecidesByForCandidates, MOMENT_MS, confirmMirror) while
+// REAL wizard logic under test (isoFrom, defaultDecidesByForCandidates, MOMENT_MS, outcomeSummary) while
 // removing the only nondeterministic, hard-to-drive native surface.
 
 jest.mock("../../lib/trpc");
@@ -37,6 +37,7 @@ import { cleanup } from "@testing-library/react-native";
 import type { MeetupsStackParams } from "../../../App";
 import { mockMutation, mockQuery, resetTrpcMock } from "../../lib/__mocks__/trpc";
 import { defaultDecidesByForCandidates, defaultReplyByMs, MOMENT_MS } from "../../lib/lock";
+import type { RouterOutputs } from "../../lib/trpc";
 import { trpc } from "../../lib/trpc";
 import {
   act,
@@ -64,16 +65,10 @@ beforeEach(() => {
 const GROUPS = [{ id: "g1", name: "The Crew" }] as const;
 
 // Build the group/past mocks. By default a group with no cleared plans (no source step).
-function mockBaseline(past: Awaited<ReturnType<typeof trpc.events.pastForGroup.query>> = []) {
-  mockQuery(
-    trpc.groups.mine,
-    GROUPS as unknown as Awaited<ReturnType<typeof trpc.groups.mine.query>>,
-  );
+function mockBaseline(past: RouterOutputs["events"]["pastForGroup"] = []) {
+  mockQuery(trpc.groups.mine, GROUPS as unknown as RouterOutputs["groups"]["mine"]);
   mockQuery(trpc.events.pastForGroup, past);
-  mockMutation(
-    trpc.events.create,
-    undefined as unknown as Awaited<ReturnType<typeof trpc.events.create.mutate>>,
-  );
+  mockMutation(trpc.events.create, undefined as unknown as RouterOutputs["events"]["create"]);
   // The shared resetTrpcMock does not reliably clear THIS fn's call history across tests (the manual
   // mock is loaded under two specifiers, so its reset runs on a different module instance). Clear the
   // create mutate explicitly per test so a call-count assertion measures only this test's submit.
@@ -166,7 +161,7 @@ async function advanceTo(
   expect(await screen.findByText("Ready to send?")).toBeOnTheScreen();
 }
 
-// ---- confirmMirror: agrees with the server's concrete-shortcut rule -----------------------------
+// ---- outcomeSummary: agrees with the server's concrete-shortcut rule ----------------------------
 
 describe("confirm summary matches the time x activity x lock matrix", () => {
   test("both axes open: the group votes on time and what to do", async () => {

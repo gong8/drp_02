@@ -1,7 +1,10 @@
 import type { ReactNode } from "react";
-import { Pressable, Text, View, type ViewStyle } from "react-native";
-import { font, ui } from "../theme";
+import { View, type ViewStyle } from "react-native";
+import { firstInitial } from "../lib/format";
+import { ui } from "../theme";
 import { Avatar } from "./Avatar";
+import { Tappable } from "./Tappable";
+import { AppText } from "./Text";
 
 // An avatar + bold-name list row, shared by the group roster, the "who's in" reveal, and the two
 // member pickers. `index` drives the top divider (the first row has none) when `divided`; pass
@@ -12,6 +15,7 @@ export function PersonRow({
   color,
   index,
   right,
+  rightAlign = true,
   padding = 11,
   avatarSize = 26,
   divided = true,
@@ -22,6 +26,7 @@ export function PersonRow({
   color: string;
   index: number;
   right?: ReactNode;
+  rightAlign?: boolean;
   padding?: number;
   avatarSize?: number;
   divided?: boolean;
@@ -38,16 +43,20 @@ export function PersonRow({
   };
   const inner = (
     <>
-      <Avatar initial={name.charAt(0).toUpperCase()} color={color} size={avatarSize} />
-      <Text style={{ fontFamily: font.bold, fontSize: 13, color: ui.ink }}>{name}</Text>
-      {right}
+      <Avatar initial={firstInitial(name)} color={color} size={avatarSize} />
+      <AppText variant="rowLabelSm">{name}</AppText>
+      {right != null ? (
+        rightAlign ? (
+          <View style={{ marginLeft: "auto" }}>{right}</View>
+        ) : (
+          right
+        )
+      ) : null}
     </>
   );
-  return onPress ? (
-    <Pressable onPress={onPress} style={[rowStyle, style]}>
+  return (
+    <Tappable onPress={onPress} style={[rowStyle, style]}>
       {inner}
-    </Pressable>
-  ) : (
-    <View style={[rowStyle, style]}>{inner}</View>
+    </Tappable>
   );
 }

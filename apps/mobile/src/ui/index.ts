@@ -24,5 +24,6 @@ export { ScreenScroll } from "./ScreenScroll";
 export { Section } from "./Section";
 export { Segmented } from "./Segmented";
 export { SelectCheck } from "./SelectCheck";
+export { Tappable } from "./Tappable";
 export { AppText } from "./Text";
 export { TextButton } from "./TextButton";

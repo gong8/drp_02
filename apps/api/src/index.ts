@@ -1,6 +1,4 @@
 import "dotenv/config";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
 import { fastifyTRPCPlugin } from "@trpc/server/adapters/fastify";
@@ -9,8 +7,9 @@ import { migrate } from "drizzle-orm/node-postgres/migrator";
 import Fastify from "fastify";
 import { isAuthorizedReset } from "./admin/reset-auth.js";
 import { db } from "./db/client.js";
+import { migrationsFolder } from "./db/paths.js";
 import { reseedDemo, seedDemoIfEmpty } from "./db/seed.js";
-import { logger } from "./logger.js";
+import { logger, scoped } from "./logger.js";
 import { appRouter } from "./router.js";
 import { createContext } from "./trpc.js";
 
@@ -40,7 +39,7 @@ const server = Fastify({
 server.addHook("onResponse", (req, reply, done) => {
   const ms = Math.round(reply.elapsedTime);
   req.log.info(
-    { scope: "http", method: req.method, url: req.url, statusCode: reply.statusCode, ms },
+    { ...scoped("http"), method: req.method, url: req.url, statusCode: reply.statusCode, ms },
     `${req.method} ${req.url} ${reply.statusCode} ${ms}ms`,
   );
   done();
@@ -78,9 +77,9 @@ server.post("/admin/reseed", async (req, reply) => {
   if (!isAuthorizedReset(provided, process.env.ADMIN_RESET_TOKEN)) {
     return reply.code(403).send({ error: "forbidden" });
   }
-  req.log.warn({ scope: "admin" }, "admin reseed invoked");
+  req.log.warn(scoped("admin"), "admin reseed invoked");
   await reseedDemo();
-  req.log.warn({ scope: "admin" }, "admin reseed completed");
+  req.log.warn(scoped("admin"), "admin reseed completed");
   return { ok: true as const };
 });
 
@@ -91,7 +90,7 @@ server.post("/admin/reseed", async (req, reply) => {
 // confirm the deploy succeeded, then set it back to false. See docs/runbook-deploy.md.
 if (process.env.DB_RESET_ON_BOOT === "true") {
   server.log.warn(
-    { scope: "boot" },
+    scoped("boot"),
     "DB_RESET_ON_BOOT=true: dropping and recreating the public schema (DESTRUCTIVE)",
   );
   await db.execute(sql`DROP SCHEMA public CASCADE`);
@@ -101,25 +100,22 @@ if (process.env.DB_RESET_ON_BOOT === "true") {
   // Drizzle keeps its migration journal in a separate "drizzle" schema; drop it too, or
   // migrate() below sees the baseline as already applied and never rebuilds the tables.
   await db.execute(sql`DROP SCHEMA IF EXISTS drizzle CASCADE`);
-  server.log.warn({ scope: "boot" }, "public + drizzle schemas reset; migrations will rebuild");
+  server.log.warn(scoped("boot"), "public + drizzle schemas reset; migrations will rebuild");
 }
 
 // Apply schema migrations on boot so a fresh (e.g. RDS) database is ready without a
 // separate step. The committed Drizzle migrations live next to this file.
-await migrate(db, {
-  migrationsFolder: join(dirname(fileURLToPath(import.meta.url)), "db/migrations"),
-});
-server.log.info({ scope: "boot" }, "migrations applied");
+await migrate(db, { migrationsFolder });
+server.log.info(scoped("boot"), "migrations applied");
 
 // SEED_ON_BOOT: "reset" (default, local dev) wipes + reseeds a clean demo each boot;
 // "if-empty" (live backend) seeds only a fresh DB; "off" skips seeding.
 const seedMode = process.env.SEED_ON_BOOT ?? "reset";
-if (seedMode === "reset") {
-  await reseedDemo();
-  server.log.info({ scope: "boot" }, "seeded demo data (reset)");
-} else if (seedMode === "if-empty") {
-  await seedDemoIfEmpty();
-  server.log.info({ scope: "boot" }, "seeded demo data (if-empty)");
+if (seedMode === "reset") await reseedDemo();
+else if (seedMode === "if-empty") await seedDemoIfEmpty();
+// One log carrying the mode as a structured field instead of baking it into the message.
+if (seedMode !== "off") {
+  server.log.info({ ...scoped("boot"), seedMode }, "seeded demo data");
 }
 
 const port = envInt("PORT", 3000);
@@ -129,12 +125,19 @@ const port = envInt("PORT", 3000);
 // shows; errors (>= warn) still surface if the bind fails.
 const restoreLevel = server.log.level;
 server.log.level = "warn";
+let listening = false;
 try {
   await server.listen({ port, host: "0.0.0.0" });
-  server.log.level = restoreLevel;
-  server.log.info({ scope: "boot", port }, `API listening on http://localhost:${port}`);
+  listening = true;
 } catch (err) {
-  server.log.level = restoreLevel;
-  server.log.error({ scope: "boot", err }, "failed to start");
+  // Still at warn level here, but error >= warn so this line prints regardless.
+  server.log.error({ ...scoped("boot"), err }, "failed to start");
   process.exit(1);
+} finally {
+  server.log.level = restoreLevel;
+}
+// Fires after the restore so the info line is not suppressed by the temporary warn level.
+// process.exit(1) in the catch means we only reach here on a successful listen.
+if (listening) {
+  server.log.info({ ...scoped("boot"), port }, `API listening on http://localhost:${port}`);
 }

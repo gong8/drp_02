@@ -42,6 +42,16 @@ export type Timescale = z.infer<typeof Timescale>;
 export const PlanPhase = z.enum(["collecting", "moment", "cleared", "fizzled"]);
 export type PlanPhase = z.infer<typeof PlanPhase>;
 
+// Text-length bounds for a plan's editable text fields, single-sourced so create, addCandidate, and
+// update all validate against the same caps (raise one here and every path follows in lockstep).
+const ACTIVITY_MAX = 80;
+const LOCATION_MAX = 120;
+const DESCRIPTION_MAX = 500;
+
+// The activity-text rule, single-sourced so addCandidate and create validate identically (mirrors
+// the GroupName pattern). The create array additionally trims; see CreateEventInput.
+export const ActivityText = z.string().min(1).max(ACTIVITY_MAX);
+
 // One time candidate the wizard sends: a concrete instant plus an optional part-of-day hint (the
 // wizard resolves part-of-day chips to concrete days CLIENT-side, so the server only sees instants).
 export const TimeCandidateInput = z.object({
@@ -56,10 +66,10 @@ export type TimeCandidateInput = z.infer<typeof TimeCandidateInput>;
 // `replyBy` closes the blind yes/no/"I'll go if" window, then reveals + resolves. `quorum` defaults.
 export const CreateEventInput = z.object({
   groupId: z.string(),
-  description: z.string().max(500).optional(),
-  location: z.string().max(120).optional(),
+  description: z.string().max(DESCRIPTION_MAX).optional(),
+  location: z.string().max(LOCATION_MAX).optional(),
   timeCandidates: z.array(TimeCandidateInput).max(10).optional(),
-  activityCandidates: z.array(z.string().trim().min(1).max(80)).max(10).optional(),
+  activityCandidates: z.array(z.string().trim().min(1).max(ACTIVITY_MAX)).max(10).optional(),
   lockTimes: z.boolean().optional().default(false),
   lockActivity: z.boolean().optional().default(false),
   decidesBy: Instant.optional(),
@@ -86,7 +96,7 @@ export const AddCandidateInput = ByEvent.extend({
   kind: CandidateKind,
   startsAt: Instant.optional(),
   partOfDay: PartOfDay.optional(),
-  text: z.string().min(1).max(80).optional(),
+  text: ActivityText.optional(),
 });
 export type AddCandidateInput = z.infer<typeof AddCandidateInput>;
 
@@ -112,20 +122,18 @@ export type LockInput = z.infer<typeof LockInput>;
 export const FieldEdit = z.object({ from: z.string(), to: z.string() });
 export type FieldEdit = z.infer<typeof FieldEdit>;
 
+// A FieldEdit whose `to` value is length-capped, with a field-specific message.
+const boundedFieldEdit = (max: number, message: string) =>
+  FieldEdit.refine((f) => f.to.length <= max, { message });
+
 // Network boundary for events.update - ANY member edits a plan's text metadata (activity/location/notes)
 // before it is cleared/fizzled. Each field is an optional CAS; an omitted field is left untouched.
 // Anonymous, like every other write. The `to` length bounds mirror create (activity/location 80/120,
 // description 500); empty is allowed (an empty activity clears the name so it re-derives from the winning candidate, empty location/notes clears).
 export const UpdateEventInput = ByEvent.extend({
-  activity: FieldEdit.refine((f) => f.to.length <= 80, {
-    message: "activity is too long",
-  }).optional(),
-  location: FieldEdit.refine((f) => f.to.length <= 120, {
-    message: "location is too long",
-  }).optional(),
-  description: FieldEdit.refine((f) => f.to.length <= 500, {
-    message: "notes are too long",
-  }).optional(),
+  activity: boundedFieldEdit(ACTIVITY_MAX, "activity is too long").optional(),
+  location: boundedFieldEdit(LOCATION_MAX, "location is too long").optional(),
+  description: boundedFieldEdit(DESCRIPTION_MAX, "notes are too long").optional(),
 });
 export type UpdateEventInput = z.infer<typeof UpdateEventInput>;
 
@@ -138,10 +146,8 @@ export const RespondInput = ByEvent.extend({
 });
 export type RespondInput = z.infer<typeof RespondInput>;
 
-// Network boundary for events.resolve - resolve the moment at (or after) its deadline. Just an
-// `{ eventId }` envelope, so it aliases the shared ByEvent base.
-export const ResolveInput = ByEvent;
-export type ResolveInput = z.infer<typeof ResolveInput>;
+// events.resolve and events.unrespond are bare `{ eventId }` envelopes, so both reuse the shared
+// ByEvent base directly.
 
 // The group-name rule, single-sourced so create and rename validate identically.
 export const GroupName = z.string().min(1).max(60);
@@ -158,10 +164,26 @@ export type RenameGroupInput = z.infer<typeof RenameGroupInput>;
 export const ByIdInput = z.object({ id: z.string() });
 export type ByIdInput = z.infer<typeof ByIdInput>;
 
-// Shared `{ groupId }` envelope (groups.addableUsers).
+// Shared `{ groupId }` envelope for the group-scoped queries (groups.addableUsers,
+// groups.inviteByGroup, events.pastForGroup).
 export const ByGroupInput = z.object({ groupId: z.string() });
 export type ByGroupInput = z.infer<typeof ByGroupInput>;
 
 // Shared `{ groupId, userId }` ref for membership mutations (groups.addMember / removeMember).
 export const GroupMemberRef = z.object({ groupId: z.string(), userId: z.string() });
 export type GroupMemberRef = z.infer<typeof GroupMemberRef>;
+
+// Network boundary for groups.joinByCode - a caller redeems a group's invite code to join it. The
+// raw code is normalized server-side (see normalizeInviteCode), so we accept any reasonable string
+// here and let an unknown code surface as NOT_FOUND rather than rejecting odd casing/dashes upfront.
+export const JoinByCodeInput = z.object({ code: z.string().min(1).max(40) });
+export type JoinByCodeInput = z.infer<typeof JoinByCodeInput>;
+
+// A person's editable display name (M4 onboarding). Trimmed; single-sourced so every path that
+// writes a name validates identically. Shown in rosters, so it must be non-empty.
+export const DisplayName = z.string().trim().min(1).max(40);
+
+// Network boundary for users.updateProfile - the signed-in user sets their own display name so real
+// names (not the "Member" default) show in group rosters.
+export const UpdateProfileInput = z.object({ name: DisplayName });
+export type UpdateProfileInput = z.infer<typeof UpdateProfileInput>;

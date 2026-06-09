@@ -4,12 +4,20 @@ import {
   ByIdInput,
   CreateGroupInput,
   GroupMemberRef,
+  JoinByCodeInput,
+  normalizeInviteCode,
   RenameGroupInput,
 } from "@bethere/shared";
 import { TRPCError } from "@trpc/server";
-import { and, eq, inArray, notInArray } from "drizzle-orm";
+import { and, count, eq, inArray, notInArray } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { FALLBACK_GROUP_NAME } from "../db/groups.js";
+import {
+  FALLBACK_GROUP_NAME,
+  freshInviteCode,
+  getGroupNames,
+  inviteUrlFor,
+  memberIdsOf,
+} from "../db/groups.js";
 import {
   candidateReactions,
   eventOptOuts,
@@ -19,16 +27,18 @@ import {
   responses,
   users,
 } from "../db/schema.js";
-import { getUserCard } from "../db/users.js";
+import { fallbackUserCard, getUserCards, userCardFromRow } from "../db/users.js";
 import { protectedProcedure, router } from "../trpc.js";
 import { requireMember } from "./events.js";
 
-async function memberIdsOf(groupId: string): Promise<string[]> {
-  const rows = await db
-    .select({ userId: groupMembers.userId })
-    .from(groupMembers)
-    .where(eq(groupMembers.groupId, groupId));
-  return rows.map((r) => r.userId);
+async function resolveGroupByCode(rawCode: string) {
+  const code = normalizeInviteCode(rawCode);
+  if (!code) throw new TRPCError({ code: "BAD_REQUEST", message: "Enter an invite code" });
+  const [group] = await db.select().from(groups).where(eq(groups.inviteCode, code)).limit(1);
+  if (!group) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "That code does not match a group" });
+  }
+  return group;
 }
 
 export const groupsRouter = router({
@@ -39,17 +49,22 @@ export const groupsRouter = router({
       .from(groupMembers)
       .where(eq(groupMembers.userId, ctx.userId));
 
-    return Promise.all(
-      memberships.map(async (m) => {
-        const [group] = await db.select().from(groups).where(eq(groups.id, m.groupId));
-        const members = await memberIdsOf(m.groupId);
-        return {
-          id: m.groupId,
-          name: group?.name ?? FALLBACK_GROUP_NAME,
-          memberCount: members.length,
-        };
-      }),
-    );
+    const groupIds = memberships.map((m) => m.groupId);
+    if (groupIds.length === 0) return [];
+
+    const nameMap = await getGroupNames(groupIds);
+    const countRows = await db
+      .select({ groupId: groupMembers.groupId, n: count() })
+      .from(groupMembers)
+      .where(inArray(groupMembers.groupId, groupIds))
+      .groupBy(groupMembers.groupId);
+    const countMap = new Map(countRows.map((r) => [r.groupId, Number(r.n)]));
+
+    return memberships.map((m) => ({
+      id: m.groupId,
+      name: nameMap.get(m.groupId) ?? FALLBACK_GROUP_NAME,
+      memberCount: countMap.get(m.groupId) ?? 0,
+    }));
   }),
 
   // One group with its full member roster (id, name, avatar colour).
@@ -58,10 +73,8 @@ export const groupsRouter = router({
     if (!group) return null;
     await requireMember(input.id, ctx.userId);
     const ids = await memberIdsOf(input.id);
-    const members = [];
-    for (const id of ids) {
-      members.push(await getUserCard(id));
-    }
+    const cardMap = await getUserCards(ids);
+    const members = ids.map((id) => cardMap.get(id) ?? fallbackUserCard(id));
     return { id: group.id, name: group.name, members };
   }),
 
@@ -69,18 +82,63 @@ export const groupsRouter = router({
   addableUsers: protectedProcedure.input(ByGroupInput).query(async ({ ctx, input }) => {
     await requireMember(input.groupId, ctx.userId);
     const ids = await memberIdsOf(input.groupId);
-    const rows = await (ids.length
-      ? db.select().from(users).where(notInArray(users.id, ids))
-      : db.select().from(users));
-    return rows.map((u) => ({ id: u.id, name: u.name, color: u.avatarColor }));
+    const rows = await db.select().from(users).where(notInArray(users.id, ids));
+    return rows.map(userCardFromRow);
   }),
 
-  // Create a group and add the creator as its first member.
+  // Create a group and add the creator as its first member. Mints the group's shareable invite code.
   create: protectedProcedure.input(CreateGroupInput).mutation(async ({ ctx, input }) => {
     const id = `g_${randomUUID()}`;
-    await db.insert(groups).values({ id, name: input.name });
+    const inviteCode = await freshInviteCode();
+    await db.insert(groups).values({ id, name: input.name, inviteCode });
     await db.insert(groupMembers).values({ groupId: id, userId: ctx.userId });
     return { id };
+  }),
+
+  // The shareable invite for a group: its code plus a fully-qualified link when a public web origin
+  // is configured (PUBLIC_WEB_URL). Member-gated - only people already in the group can fetch, and
+  // thus share, the invite. The client builds its own link from the code when `url` is null.
+  inviteByGroup: protectedProcedure.input(ByGroupInput).query(async ({ ctx, input }) => {
+    await requireMember(input.groupId, ctx.userId);
+    const [group] = await db.select().from(groups).where(eq(groups.id, input.groupId)).limit(1);
+    if (!group) throw new TRPCError({ code: "NOT_FOUND", message: "group not found" });
+    return { code: group.inviteCode, url: inviteUrlFor(group.inviteCode) };
+  }),
+
+  // Preview the group a code resolves to WITHOUT joining - powers the JoinGroup confirm step
+  // ("Join <name>? N members"). Authed (the join flow is only reachable signed in) but NOT
+  // member-gated: holding the code is the invitation. Reveals only the group name + size, never
+  // member names (anonymity is preserved until you are actually in the roster).
+  previewByCode: protectedProcedure.input(JoinByCodeInput).query(async ({ input }) => {
+    const group = await resolveGroupByCode(input.code);
+    const [tally] = await db
+      .select({ n: count() })
+      .from(groupMembers)
+      .where(eq(groupMembers.groupId, group.id));
+    return { groupId: group.id, name: group.name, memberCount: Number(tally?.n ?? 0) };
+  }),
+
+  // Redeem a group's invite code to join it (M4 onboarding). Surface-agnostic: the same path serves
+  // a tapped web link, a typed code, or (later) a native deep link. Idempotent - re-joining is a
+  // no-op that still resolves the group so the client can route there, and reports `alreadyMember`
+  // so the UI can say "you're already in" instead of "welcome". For any real caller the membership
+  // FK holds: Clerk users are upserted in createContext and the seeded dev user u_dev exists. (A
+  // deliberately spoofed, unseeded x-user-id under DEV_AUTH_BYPASS is the only gap - dev-only.)
+  joinByCode: protectedProcedure.input(JoinByCodeInput).mutation(async ({ ctx, input }) => {
+    const group = await resolveGroupByCode(input.code);
+    const [existing] = await db
+      .select({ userId: groupMembers.userId })
+      .from(groupMembers)
+      .where(and(eq(groupMembers.groupId, group.id), eq(groupMembers.userId, ctx.userId)))
+      .limit(1);
+    const alreadyMember = !!existing;
+    if (!alreadyMember) {
+      await db
+        .insert(groupMembers)
+        .values({ groupId: group.id, userId: ctx.userId })
+        .onConflictDoNothing();
+    }
+    return { groupId: group.id, name: group.name, alreadyMember };
   }),
 
   rename: protectedProcedure.input(RenameGroupInput).mutation(async ({ ctx, input }) => {
@@ -127,22 +185,10 @@ export const groupsRouter = router({
         .where(eq(events.groupId, input.groupId));
       const eventIds = eventRows.map((e) => e.id);
       if (eventIds.length > 0) {
-        await tx
-          .delete(candidateReactions)
-          .where(
-            and(
-              eq(candidateReactions.userId, input.userId),
-              inArray(candidateReactions.eventId, eventIds),
-            ),
-          );
-        await tx
-          .delete(responses)
-          .where(and(eq(responses.userId, input.userId), inArray(responses.eventId, eventIds)));
-        await tx
-          .delete(eventOptOuts)
-          .where(
-            and(eq(eventOptOuts.userId, input.userId), inArray(eventOptOuts.eventId, eventIds)),
-          );
+        // Same (userId, eventIds) purge across all three vote tables, written once.
+        for (const t of [candidateReactions, responses, eventOptOuts]) {
+          await tx.delete(t).where(and(eq(t.userId, input.userId), inArray(t.eventId, eventIds)));
+        }
       }
 
       await tx

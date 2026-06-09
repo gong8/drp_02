@@ -28,7 +28,7 @@ export function Chip({
           paddingHorizontal: 13,
         }}
       >
-        <Text style={{ fontFamily: font.bold, fontSize: 12, color: selected ? "#fff" : ui.ink }}>
+        <Text style={{ fontFamily: font.bold, fontSize: 12, color: selected ? ui.onInk : ui.ink }}>
           {label}
         </Text>
       </Pressable>
