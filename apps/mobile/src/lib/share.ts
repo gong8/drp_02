@@ -36,8 +36,7 @@ export async function shareInvite(text: string, url: string): Promise<{ copied: 
 
   try {
     // iOS honours `url`; Android only reads `message`, so the URL rides along in the message too.
-    const result = await Share.share({ message: `${text} ${url}`, url });
-    if (result.action === Share.dismissedAction) return { copied: false };
+    await Share.share({ message: `${text} ${url}`, url });
     return { copied: false };
   } catch {
     await copyToClipboard(url);
