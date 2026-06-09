@@ -37,7 +37,7 @@ import {
   responses,
 } from "../db/schema.js";
 import type { UserCard } from "../db/users.js";
-import { FALLBACK_AVATAR_COLOR, FALLBACK_USER_NAME, getUserCards } from "../db/users.js";
+import { fallbackUserCard, getUserCards } from "../db/users.js";
 import { msLeft } from "../format.js";
 import { shapePastMeetups } from "../logic/past-meetups.js";
 import { displayActivity, planOpensMoment, resolveActivity } from "../logic/plan-activity.js";
@@ -446,8 +446,7 @@ async function loadEventBundle(
     reactions: (id) => reactMap.get(id) ?? [],
     optOuts: (id) => optMap.get(id) ?? new Set(),
     groupName: (id) => groupNameMap.get(id) ?? FALLBACK_GROUP_NAME,
-    userCard: (id) =>
-      userCardMap.get(id) ?? { id, name: FALLBACK_USER_NAME, color: FALLBACK_AVATAR_COLOR },
+    userCard: (id) => userCardMap.get(id) ?? fallbackUserCard(id),
     hasUser: (id) => userCardMap.has(id),
   };
 }

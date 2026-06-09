@@ -41,6 +41,12 @@ export async function getUserCards(ids: string[]): Promise<Map<string, UserCard>
   return out;
 }
 
+// Card for a member id with no users row (deleted / never-seeded), built from the sentinels. The
+// missing-row shape lives here so callers resolving a getUserCards map have one place to fall back to.
+export function fallbackUserCard(id: string): UserCard {
+  return { id, name: FALLBACK_USER_NAME, color: FALLBACK_AVATAR_COLOR };
+}
+
 // Project an existing users row to the avatar card shape. No fallback - these rows always exist
 // (callers pass rows they just read from the users table); getUserCard handles the missing-row case.
 export function userCardFromRow(u: { id: string; name: string; avatarColor: string }): UserCard {

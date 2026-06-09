@@ -21,12 +21,7 @@ import {
   responses,
   users,
 } from "../db/schema.js";
-import {
-  FALLBACK_AVATAR_COLOR,
-  FALLBACK_USER_NAME,
-  getUserCards,
-  userCardFromRow,
-} from "../db/users.js";
+import { fallbackUserCard, getUserCards, userCardFromRow } from "../db/users.js";
 import { protectedProcedure, router } from "../trpc.js";
 import { requireMember } from "./events.js";
 
@@ -85,9 +80,7 @@ export const groupsRouter = router({
     await requireMember(input.id, ctx.userId);
     const ids = await memberIdsOf(input.id);
     const cardMap = await getUserCards(ids);
-    const members = ids.map(
-      (id) => cardMap.get(id) ?? { id, name: FALLBACK_USER_NAME, color: FALLBACK_AVATAR_COLOR },
-    );
+    const members = ids.map((id) => cardMap.get(id) ?? fallbackUserCard(id));
     return { id: group.id, name: group.name, members };
   }),
 
