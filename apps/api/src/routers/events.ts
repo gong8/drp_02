@@ -9,11 +9,8 @@ import {
   type CandidateReaction,
   CreateEventInput,
   clears,
-  defaultDecidesByForCandidates,
-  defaultReplyByMs,
   isTerminalPhase,
   LockInput,
-  MOMENT_MS,
   type MomentResponse,
   type PartOfDay,
   pickWinnerOrBestId,
@@ -40,6 +37,8 @@ import {
 import type { UserCard } from "../db/users.js";
 import { fallbackUserCard, getUserCards } from "../db/users.js";
 import { msLeft } from "../format.js";
+import { activityKey, normalizeCreateCandidates, startMinute } from "../logic/create-candidates.js";
+import { resolveCreateDeadlines, resolveMomentEnd } from "../logic/event-schedule.js";
 import { shapePastMeetups } from "../logic/past-meetups.js";
 import { displayActivity, planOpensMoment, resolveActivity } from "../logic/plan-activity.js";
 import { protectedProcedure, router } from "../trpc.js";
@@ -109,14 +108,6 @@ async function candidatesFor(eventId: string): Promise<(typeof eventCandidates.$
 const isTimeCand = (c: typeof eventCandidates.$inferSelect) =>
   c.kind === "time" && c.startsAt != null;
 
-const MINUTE_MS = 60_000;
-// The minute bucket a time falls in. create and addCandidate collapse times to the same minute (the
-// wizard's granularity), so a slot sent twice - or at HH:MM:30 vs HH:MM:00 - stays one row.
-const startMinute = (d: Date) => Math.floor(d.getTime() / MINUTE_MS);
-// The case-insensitive dedupe key for an activity label. create and addCandidate must agree on it so
-// the same name added either way collapses to one row (keeping the both-axes-pinned moment shortcut).
-const activityKey = (s: string) => s.trim().toLowerCase();
-
 // The creator lock-readiness rule: a winning time candidate exists at the given quorum.
 function isReadyToLock(timeIds: string[], reactions: CandidateReaction[], quorum: number): boolean {
   return pickWinningCandidate(timeIds, reactions, quorum) !== null;
@@ -127,6 +118,47 @@ function activityCandidateInputs(cands: (typeof eventCandidates.$inferSelect)[])
   return cands.filter((c) => c.kind === "activity").map((c) => ({ id: c.id, label: c.label }));
 }
 
+// Single-pass aggregation of the public +1 count per candidate plus the caller's own reacted set.
+// PURE; who reacted is never surfaced - only the count and the caller's own membership.
+function reactionCountsFor(
+  reactions: CandidateReaction[],
+  userId: string,
+): { countBy: Map<string, number>; myReactedIds: Set<string> } {
+  const countBy = new Map<string, number>();
+  const myReactedIds = new Set<string>();
+  for (const r of reactions) {
+    countBy.set(r.candidateId, (countBy.get(r.candidateId) ?? 0) + 1);
+    if (r.userId === userId) myReactedIds.add(r.candidateId);
+  }
+  return { countBy, myReactedIds };
+}
+
+// Project candidate rows into get()'s wire shape: time candidates in their existing display order (NO
+// re-sort - candidatesFor/the bundle already ordered them), activity candidates by +1 count desc. PURE.
+function projectCandidates(
+  cands: (typeof eventCandidates.$inferSelect)[],
+  countBy: Map<string, number>,
+  myReactedIds: Set<string>,
+) {
+  const timeCandidates = cands.filter(isTimeCand).map((c) => ({
+    id: c.id,
+    startsAt: (c.startsAt as Date).toISOString(),
+    partOfDay: c.partOfDay,
+    count: countBy.get(c.id) ?? 0,
+    mine: myReactedIds.has(c.id),
+  }));
+  const activityCandidates = cands
+    .filter((c) => c.kind === "activity")
+    .map((c) => ({
+      id: c.id,
+      text: c.label ?? "",
+      count: countBy.get(c.id) ?? 0,
+      mine: myReactedIds.has(c.id),
+    }))
+    .sort((a, b) => b.count - a.count);
+  return { timeCandidates, activityCandidates };
+}
+
 // Maps an EventRow into revealGoing's opts; see revealGoing for the blind-until-end rule.
 function goingFromRow(e: EventRow, resp: MomentResponse[]): string[] | null {
   return revealGoing(resp, {
@@ -134,17 +166,6 @@ function goingFromRow(e: EventRow, resp: MomentResponse[]): string[] | null {
     terminal: isTerminalPhase(e.phase),
     nowMs: Date.now(),
   });
-}
-
-// When the blind moment ends: the creator's "reply by" if set, else the default (one-day-capped from
-// the open, to the event). Clamped to leave a real window after the moment starts and to never run
-// past the event itself; if the event is already here, fall back to a full short window so there is
-// always a moment to answer (and we never reveal before anyone could respond).
-function resolveMomentEnd(openMs: number, eventMs: number, replyByMs: number | null): Date {
-  if (eventMs <= openMs) return new Date(openMs + MOMENT_MS);
-  const wanted = replyByMs ?? defaultReplyByMs(openMs, eventMs);
-  const floor = openMs + Math.min(MOMENT_MS, eventMs - openMs);
-  return new Date(Math.min(eventMs, Math.max(wanted, floor)));
 }
 
 // Fizzle a plan: persist the silent dead-end (and resolve it) then mirror onto the in-memory row so
@@ -209,6 +230,18 @@ async function clearMyResponse(
   await handle
     .delete(responses)
     .where(and(eq(responses.eventId, eventId), eq(responses.userId, userId)));
+}
+
+// Drop the caller's +1s across every candidate on this plan (opting out clears them, dropping the
+// caller from the tally/quorum). Idempotent; pass a tx handle to enlist in a wrapping transaction.
+async function clearMyReactions(
+  eventId: string,
+  userId: string,
+  handle: DbOrTx = db,
+): Promise<void> {
+  await handle
+    .delete(candidateReactions)
+    .where(and(eq(candidateReactions.eventId, eventId), eq(candidateReactions.userId, userId)));
 }
 
 // Lazily settle a moment whose countdown has ended (no scheduler): clears if quorum is met, else
@@ -482,61 +515,15 @@ export const eventsRouter = router({
     await requireMember(input.groupId, ctx.userId);
     const id = `e_${randomUUID()}`;
 
-    const timeInputs = input.timeCandidates ?? [];
-    const activityInputs = input.activityCandidates ?? [];
-
     const nowMs = Date.now();
-    const sortedTimeInputs = timeInputs
-      .map((t, i) => ({
-        id: `${id}_t${i + 1}`,
-        kind: "time" as const,
-        startsAt: new Date(t.startsAt),
-        partOfDay: t.partOfDay ?? null,
-        label: null,
-      }))
-      // Drop genuinely invalid date strings, but a valid time in the past is a hard error: it would
-      // give a collecting plan an already-expired default decides-by (an immediate silent self-fizzle).
-      // Mirrors addCandidate's future check + the explicit decides-by guard.
-      .filter((c) => !Number.isNaN(c.startsAt.getTime()))
-      .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
-    if (sortedTimeInputs.some((c) => c.startsAt.getTime() <= nowMs)) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "a time candidate must be in the future",
-      });
-    }
-    // Collapse candidates that land in the same minute (the wizard's granularity), keeping the
-    // earliest. A single intended slot sent twice must stay one row - otherwise it splits +1
-    // momentum and defeats the concrete-moment shortcut (planOpensMoment needs exactly one time).
-    // This mirrors addCandidate's minute dedupe so create and add agree.
-    const seenMinutes = new Set<number>();
-    const timeCands = sortedTimeInputs.filter((c) => {
-      const minute = startMinute(c.startsAt);
-      if (seenMinutes.has(minute)) return false;
-      seenMinutes.add(minute);
-      return true;
-    });
-
-    // Trim each label, drop any empty-after-trim (no whitespace-only plan names), and dedupe
-    // case-insensitively keeping the first occurrence - mirroring addCandidate's key. Two labels that
-    // collapse to one row keep the both-axes-pinned moment shortcut intact for duplicate activities.
-    const seenActivityKeys = new Set<string>();
-    const activityCands = activityInputs
-      .map((text) => text.trim())
-      .filter((text) => {
-        if (text === "") return false;
-        const key = activityKey(text);
-        if (seenActivityKeys.has(key)) return false;
-        seenActivityKeys.add(key);
-        return true;
-      })
-      .map((text, i) => ({
-        id: `${id}_a${i + 1}`,
-        kind: "activity" as const,
-        startsAt: null,
-        partOfDay: null,
-        label: text,
-      }));
+    // Shape, validate, and dedupe the two candidate lists (pure; mirrors addCandidate's minute /
+    // activity-key dedupe and throws on a past time). create then derives anchors + deadlines below.
+    const { timeCands, activityCands } = normalizeCreateCandidates(
+      id,
+      input.timeCandidates ?? [],
+      input.activityCandidates ?? [],
+      nowMs,
+    );
 
     // You can only lock an axis that has at least one candidate - locking nothing would just leave a
     // plan that can never converge (a locked, empty time axis can never get a time and silently fizzles).
@@ -578,49 +565,18 @@ export const eventsRouter = router({
 
     const momentStartsAt = opensMoment ? new Date() : null;
 
-    // Collecting plans converge by a fixed deadline ("Decides by"), then auto-pick the winner. The
-    // creator may override it; the override must sit after now and leave the blind moment room before
-    // the time window. With no time candidates we only have activities, so any future deadline is fine.
-    let decidesBy: Date | null = null;
-    if (!opensMoment) {
-      if (input.decidesBy) {
-        const t = new Date(input.decidesBy);
-        const tooLate = timeCands.length > 0 && t.getTime() > earliestMs - MOMENT_MS;
-        if (Number.isNaN(t.getTime()) || t.getTime() <= nowMs || tooLate) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "decides-by must be after now and leave room before the plan's window",
-          });
-        }
-        decidesBy = t;
-      } else {
-        decidesBy = new Date(defaultDecidesByForCandidates(earliestMs, nowMs));
-      }
-    }
-
-    // Reply-by: when the blind RSVP window closes (then it reveals + resolves). Editable; defaulted at
-    // lock when unset. Must sit after the vote closes (or now, for a concrete plan) and no later than
-    // the earliest event time. Loose plans (no times yet) have no editor; it defaults at lock.
-    let replyBy: Date | null = null;
-    if (input.replyBy) {
-      const t = new Date(input.replyBy);
-      const floorMs = decidesBy ? decidesBy.getTime() : nowMs;
-      const tooLate = timeCands.length > 0 && t.getTime() > earliestMs;
-      if (Number.isNaN(t.getTime()) || t.getTime() <= floorMs || tooLate) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "reply-by must be after the vote closes and no later than the event",
-        });
-      }
-      replyBy = t;
-    }
-
-    // The concrete shortcut opens the blind moment now and runs until reply-by (default one-day-capped,
-    // to the event). Otherwise the moment opens later, at the lock.
-    const momentEndsAt: Date | null = opensMoment
-      ? resolveMomentEnd(nowMs, earliestMs, replyBy?.getTime() ?? null)
-      : null;
-    const respondByAt = momentEndsAt ?? new Date(lastMs);
+    // Derive both deadlines + the moment window from the anchors (pure; validates the custom
+    // decides-by/reply-by and throws BAD_REQUEST on a bad one). momentStartsAt/startsAt stay here -
+    // they read a fresh clock / the chosen anchor.
+    const { decidesBy, replyBy, momentEndsAt, respondByAt } = resolveCreateDeadlines(
+      opensMoment,
+      earliestMs,
+      lastMs,
+      timeCands.length > 0,
+      input.decidesBy,
+      input.replyBy,
+      nowMs,
+    );
 
     await db.insert(events).values({
       id,
@@ -692,14 +648,7 @@ export const eventsRouter = router({
     const e = await loadEvent(input.eventId, ctx.userId);
     await settleAndRequirePhase(e, "collecting", "plan is not collecting");
     if (input.out) {
-      await db
-        .delete(candidateReactions)
-        .where(
-          and(
-            eq(candidateReactions.eventId, input.eventId),
-            eq(candidateReactions.userId, ctx.userId),
-          ),
-        );
+      await clearMyReactions(input.eventId, ctx.userId);
       await db
         .insert(eventOptOuts)
         .values({ eventId: input.eventId, userId: ctx.userId })
@@ -847,21 +796,23 @@ export const eventsRouter = router({
 
       const set: Partial<typeof events.$inferInsert> = {};
       const conflicts: { field: string; current: string }[] = [];
-      // activity/location are non-null strings; description is nullable, so treat its current as "".
-      if (input.activity) {
-        if (e.activity === input.activity.from) set.activity = input.activity.to;
-        else conflicts.push({ field: "activity", current: e.activity });
-      }
-      if (input.location) {
-        if (e.location === input.location.from) set.location = input.location.to;
-        else conflicts.push({ field: "location", current: e.location });
-      }
-      if (input.description) {
-        const current = e.description ?? "";
-        if (current === input.description.from) {
-          set.description = input.description.to === "" ? null : input.description.to;
-        } else conflicts.push({ field: "description", current });
-      }
+      // One compare-and-set per editable field: write `to` only if the loaded `from` still equals the
+      // current value, else report a conflict carrying the now-current value. `write` maps the new
+      // value onto the column (description clears "" -> null; activity/location are non-null strings).
+      // The cast narrows the dynamically-keyed write to these three string-ish columns.
+      const applyCas = (
+        field: "activity" | "location" | "description",
+        edit: { from: string; to: string } | undefined,
+        current: string,
+        write: (v: string) => string | null = (v) => v,
+      ) => {
+        if (!edit) return;
+        if (current === edit.from) (set as Record<string, string | null>)[field] = write(edit.to);
+        else conflicts.push({ field, current });
+      };
+      applyCas("activity", input.activity, e.activity);
+      applyCas("location", input.location, e.location);
+      applyCas("description", input.description, e.description ?? "", (v) => (v === "" ? null : v));
 
       const applied = Object.keys(set);
       if (applied.length > 0) {
@@ -988,38 +939,16 @@ export const eventsRouter = router({
     const reactions = bundle.reactions(e.id);
     // Public per-candidate +1 counts (momentum) for BOTH kinds; who reacted is never returned, only
     // the count and whether the caller themselves reacted.
-    const countBy = new Map<string, number>();
-    const myReactedIds = new Set<string>();
-    for (const r of reactions) {
-      countBy.set(r.candidateId, (countBy.get(r.candidateId) ?? 0) + 1);
-      if (r.userId === ctx.userId) myReactedIds.add(r.candidateId);
-    }
-    const timeCandidates = cands.filter(isTimeCand).map((c) => ({
-      id: c.id,
-      startsAt: (c.startsAt as Date).toISOString(),
-      partOfDay: c.partOfDay,
-      count: countBy.get(c.id) ?? 0,
-      mine: myReactedIds.has(c.id),
-    }));
-    const activityCandidates = cands
-      .filter((c) => c.kind === "activity")
-      .map((c) => ({
-        id: c.id,
-        text: c.label ?? "",
-        count: countBy.get(c.id) ?? 0,
-        mine: myReactedIds.has(c.id),
-      }))
-      .sort((a, b) => b.count - a.count);
+    const { countBy, myReactedIds } = reactionCountsFor(reactions, ctx.userId);
+    const { timeCandidates, activityCandidates } = projectCandidates(cands, countBy, myReactedIds);
 
     const timeIds = timeCandidates.map((c) => c.id);
     const readyToLock =
       isCreator && e.phase === "collecting" && isReadyToLock(timeIds, reactions, e.quorum);
 
-    const members: { id: string; name: string }[] = [];
-    for (const id of memberIds) {
-      if (id === ctx.userId) continue;
-      members.push({ id, name: bundle.userCard(id).name });
-    }
+    const members = memberIds
+      .filter((id) => id !== ctx.userId)
+      .map((id) => ({ id, name: bundle.userCard(id).name }));
 
     const showCrowd = revealed !== null && e.phase !== "fizzled";
     const going = showCrowd ? revealed.map((id) => bundle.userCard(id)) : [];

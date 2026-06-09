@@ -13,11 +13,10 @@ import { maintenanceUrl, testDbName } from "./pg-config.js";
 
 const dbName = testDbName();
 
-// Exposed so harness.ts knows which DB to create/drop and which server to connect to for the
-// maintenance (CREATE/DROP DATABASE) statements, which cannot run against the DB being created.
-// Connection coordinates live in pg-config.ts; we just derive the per-DB DATABASE_URL here.
+// Exposed so harness.ts knows which DB to create/drop. The maintenance-server coordinates live in
+// pg-config.ts (maintenance-db.ts imports maintenanceUrl from there directly); here we only derive
+// the per-DB DATABASE_URL the app under test binds to.
 process.env.TEST_DB_NAME = dbName;
-process.env.TEST_PG_MAINTENANCE_URL = maintenanceUrl;
 
 process.env.DATABASE_URL = maintenanceUrl.replace(/\/drp$/, `/${dbName}`);
 // Local docker Postgres speaks plaintext; force the client off TLS regardless of inherited env.

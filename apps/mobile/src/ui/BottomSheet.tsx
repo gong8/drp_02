@@ -1,6 +1,11 @@
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { Animated, Easing, Keyboard, Modal, Platform, Pressable, View } from "react-native";
-import { ui } from "../theme";
+import { ui, webColumnMaxWidth } from "../theme";
+
+// RN's Modal renders to a DOM portal at the document root on web, so it escapes the App Shell's
+// centered column and would otherwise span the full browser width. Centre it and cap it to the same
+// column width so the sheet rises inside the phone-width frame, matching the rest of the app.
+const isWeb = Platform.OS === "web";
 
 const FALLBACK_SHEET_H = 600; // px, off-screen start height before onLayout measures the real sheet
 
@@ -87,7 +92,9 @@ export function BottomSheet({
 
   return (
     <Modal visible transparent animationType="none" onRequestClose={onClose}>
-      <View style={{ flex: 1, justifyContent: "flex-end" }}>
+      <View
+        style={{ flex: 1, justifyContent: "flex-end", alignItems: isWeb ? "center" : "stretch" }}
+      >
         <Animated.View
           style={{
             position: "absolute",
@@ -105,6 +112,8 @@ export function BottomSheet({
           onLayout={(e) => setSheetH(e.nativeEvent.layout.height)}
           style={{
             transform: [{ translateY }],
+            width: "100%",
+            maxWidth: isWeb ? webColumnMaxWidth : undefined,
             backgroundColor: ui.surface,
             borderTopWidth: ui.border,
             borderLeftWidth: ui.border,

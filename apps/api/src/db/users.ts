@@ -22,11 +22,7 @@ export type UserCard = { id: string; name: string; color: string };
 // Read a user's avatar card, falling back to the sentinels above when the row is missing.
 export async function getUserCard(id: string): Promise<UserCard> {
   const [u] = await db.select().from(users).where(eq(users.id, id));
-  return {
-    id,
-    name: u?.name ?? FALLBACK_USER_NAME,
-    color: u?.avatarColor ?? FALLBACK_AVATAR_COLOR,
-  };
+  return u ? userCardFromRow(u) : fallbackUserCard(id);
 }
 
 // Bulk version of getUserCard: resolve many avatar cards in ONE inArray query, returning a

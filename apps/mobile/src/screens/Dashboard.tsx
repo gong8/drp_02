@@ -30,7 +30,7 @@ import {
 } from "../lib/status";
 import type { RouterOutputs } from "../lib/trpc";
 import { trpc } from "../lib/trpc";
-import { useLiveClock } from "../lib/useLiveClock";
+import { POLL_MS, useLiveClock } from "../lib/useLiveClock";
 import { font, ui } from "../theme";
 import {
   AppText,
@@ -223,7 +223,7 @@ export function Dashboard({ navigation }: Props) {
           .catch(() => active && setError(true))
           .finally(() => active && setLoading(false));
       fetchAll();
-      const poll = setInterval(fetchAll, 5000);
+      const poll = setInterval(fetchAll, POLL_MS);
       return () => {
         active = false;
         clearInterval(poll);

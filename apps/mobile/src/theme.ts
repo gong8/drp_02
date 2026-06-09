@@ -24,6 +24,10 @@ export const ui = {
   shadowInput: 3, // tighter hard offset for inputs, chips, and small pressables
 } as const;
 
+// Max width of the centered app column on desktop web (native renders full-bleed, no column).
+// Shared by the App Shell wrapper and the BottomSheet so both cap to the same phone-width column.
+export const webColumnMaxWidth = 480;
+
 export const font = {
   display: "Archivo_800ExtraBold",
   black: "Archivo_900Black",

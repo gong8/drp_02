@@ -97,14 +97,14 @@ export function caller(userId: string | null) {
 // ----- data factories (direct inserts; never rely on the procedures under test for setup) -----
 
 export async function makeUser(
-  over: { id?: string; name?: string; avatarColor?: string; email?: string | null } = {},
+  over: { name?: string; avatarColor?: string } = {},
 ): Promise<string> {
-  const id = over.id ?? `u_${randomUUID()}`;
+  const id = `u_${randomUUID()}`;
   await db.insert(users).values({
     id,
     name: over.name ?? `User ${id.slice(2, 8)}`,
     avatarColor: over.avatarColor ?? "#4f46e5",
-    email: over.email ?? null,
+    email: null,
   });
   return id;
 }
@@ -150,27 +150,14 @@ export async function insertEvent(over: EventOverrides): Promise<string> {
   return id;
 }
 
-export async function insertTimeCandidate(
-  eventId: string,
-  startsAt: Date,
-  over: {
-    id?: string;
-    partOfDay?: NonNullable<(typeof eventCandidates.$inferInsert)["partOfDay"]>;
-  } = {},
-): Promise<string> {
-  const id = over.id ?? `c_${randomUUID()}`;
-  await db
-    .insert(eventCandidates)
-    .values({ id, eventId, kind: "time", startsAt, partOfDay: over.partOfDay ?? null });
+export async function insertTimeCandidate(eventId: string, startsAt: Date): Promise<string> {
+  const id = `c_${randomUUID()}`;
+  await db.insert(eventCandidates).values({ id, eventId, kind: "time", startsAt, partOfDay: null });
   return id;
 }
 
-export async function insertActivityCandidate(
-  eventId: string,
-  label: string,
-  over: { id?: string } = {},
-): Promise<string> {
-  const id = over.id ?? `c_${randomUUID()}`;
+export async function insertActivityCandidate(eventId: string, label: string): Promise<string> {
+  const id = `c_${randomUUID()}`;
   await db.insert(eventCandidates).values({ id, eventId, kind: "activity", label });
   return id;
 }

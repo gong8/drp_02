@@ -13,7 +13,8 @@ import { Platform } from "react-native";
 // Mirrors INVITE_CODE_LENGTH in @bethere/shared.
 export const CODE_LENGTH = 8;
 
-// Display a code grouped for legibility (ABCD-EF12). Mirrors formatInviteCode in @bethere/shared.
+// Display a code grouped for legibility (ABCD-EF12). Mobile-only display formatting - shared has no
+// format helper (since DRP-52 only normalize + the length/alphabet constants are mirrored).
 export function formatCode(code: string): string {
   const c = code.toUpperCase();
   return c.length <= 4 ? c : `${c.slice(0, 4)}-${c.slice(4)}`;
