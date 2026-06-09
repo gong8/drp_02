@@ -547,9 +547,7 @@ export function EventDetail({ route, navigation }: Props) {
       {data.phase === "fizzled" && (
         <View style={{ marginTop: 16 }}>
           <Card>
-            <Text style={{ fontFamily: font.display, fontSize: 15, color: ui.ink }}>
-              {DIDNT_COME_TOGETHER}
-            </Text>
+            <AppText variant="cardTitle">{DIDNT_COME_TOGETHER}</AppText>
             <AppText variant="caption" style={{ marginTop: 6, lineHeight: 18 }}>
               Not enough people in. Suggest another anytime.
             </AppText>

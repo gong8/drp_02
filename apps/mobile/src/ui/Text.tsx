@@ -4,11 +4,20 @@ import { font, ui } from "../theme";
 // The single typographic vocabulary. Every recurring font+size+color recipe lives here as a named
 // variant so the same "muted 11 caption" / "display 16 title" is never
 // re-typed inline. Pass `style` to tweak (e.g. colour, margins); pass `mono` for tabular figures.
-type Variant = "screenTitle" | "title" | "rowLabel" | "rowLabelSm" | "body" | "caption";
+type Variant =
+  | "screenTitle"
+  | "title"
+  | "cardTitle"
+  | "rowLabel"
+  | "rowLabelSm"
+  | "body"
+  | "caption";
 
 const V: Record<Variant, TextStyle> = {
   screenTitle: { fontFamily: font.black, fontSize: 27, letterSpacing: -1, color: ui.ink },
   title: { fontFamily: font.display, fontSize: 16, color: ui.ink },
+  // The display-15 heading on a card (group-name row, fizzled-card title); 1px under `title`.
+  cardTitle: { fontFamily: font.display, fontSize: 15, color: ui.ink },
   // The bold list-row label shared by the vote rows and the wizard's added-activity rows.
   rowLabel: { fontFamily: font.bold, fontSize: 14, color: ui.ink },
   // The bold-13 list-row label shared by DeadlineField, RemoveDot, PersonRow, and CheckOption.

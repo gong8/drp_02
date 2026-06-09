@@ -99,9 +99,7 @@ export function GroupsList({ navigation }: Props) {
           <View style={{ flexDirection: "row", alignItems: "center", gap: 11 }}>
             <Avatar initial={initials(g.name)} color={colorFor(g.id)} />
             <View>
-              <Text style={{ fontFamily: font.display, fontSize: 15, color: ui.ink }}>
-                {g.name}
-              </Text>
+              <AppText variant="cardTitle">{g.name}</AppText>
               <AppText variant="caption" style={{ marginTop: 1 }}>
                 {g.memberCount} members
               </AppText>
