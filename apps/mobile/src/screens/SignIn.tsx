@@ -1,37 +1,16 @@
-import { useSSO } from "@clerk/clerk-expo";
-import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
-import { useState } from "react";
-import { Platform, Text, View } from "react-native";
-import { useDevAuth } from "../lib/auth";
+import { Text, View } from "react-native";
 import { devAuthEnabled } from "../lib/clerk";
+import { useSignInActions } from "../lib/useSignInActions";
 import { font, ui } from "../theme";
 import { Button, ScreenBackground } from "../ui";
 
-// Completes any pending OAuth redirect (web/native handoff back into the app).
+// Completes any pending OAuth redirect (web/native handoff back into the app). App always imports
+// this module, so this runs on the redirect landing page even when JoinMeetup, not SignIn, is shown.
 WebBrowser.maybeCompleteAuthSession();
 
 export function SignIn() {
-  const { startSSOFlow } = useSSO();
-  const { signInDev } = useDevAuth();
-  const [busy, setBusy] = useState(false);
-
-  const onGoogle = async () => {
-    setBusy(true);
-    try {
-      const { createdSessionId, setActive } = await startSSOFlow({
-        strategy: "oauth_google",
-        // Web defaults to current path; native must use the app scheme.
-        redirectUrl:
-          Platform.OS === "web" ? undefined : AuthSession.makeRedirectUri({ scheme: "bethere" }),
-      });
-      if (createdSessionId && setActive) await setActive({ session: createdSessionId });
-    } catch (err) {
-      console.error("sign-in failed", JSON.stringify(err));
-    } finally {
-      setBusy(false);
-    }
-  };
+  const { onGoogle, signInDev, busy } = useSignInActions();
 
   return (
     <ScreenBackground>
