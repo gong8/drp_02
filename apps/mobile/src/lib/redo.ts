@@ -47,24 +47,19 @@ export function prefillFromMeetup(m: PastMeetupShell): Prefill {
 // The wizard steps. The "source" step (start fresh vs use a previous meetup) appears only when the
 // chosen group has past meetups. "details" (location + notes) and "deadlines" (decides-by + reply-by)
 // are separate screens - they are unrelated concerns that were cramped onto one step before.
-export type StepKey =
-  | "group"
-  | "source"
-  | "activities"
-  | "times"
-  | "details"
-  | "deadlines"
-  | "confirm";
+// The canonical create-wizard step order - single source for both the StepKey type and the sequence.
+const STEP_ORDER = [
+  "group",
+  "source",
+  "activities",
+  "times",
+  "details",
+  "deadlines",
+  "confirm",
+] as const;
+
+export type StepKey = (typeof STEP_ORDER)[number];
 
 export function wizardSteps(hasPast: boolean): StepKey[] {
-  const STEPS: StepKey[] = [
-    "group",
-    "source",
-    "activities",
-    "times",
-    "details",
-    "deadlines",
-    "confirm",
-  ];
-  return STEPS.filter((s) => s !== "source" || hasPast);
+  return STEP_ORDER.filter((s) => s !== "source" || hasPast);
 }
