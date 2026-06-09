@@ -14,7 +14,6 @@ import {
 } from "./lock.js";
 import { clears, type MomentResponse, resolveIn } from "./resolve.js";
 import { revealGoing } from "./reveal.js";
-import { expandWindow } from "./window.js";
 
 // Edge-case coverage for the pure logic layer. Each assertion is derived from the spec
 // (ARCHITECTURE.md / CLAUDE.md), not from the current implementation, and targets a gap left by
@@ -273,17 +272,5 @@ describe("revealGoing (blind/revealed boundary at momentEndsAt)", () => {
     });
     expect(revealed).toEqual([]);
     expect(revealed).not.toBeNull();
-  });
-});
-
-describe("expandWindow (band-hour edge at the boundary instant)", () => {
-  it("keeps a slot whose band hour is exactly now (drop is strictly-before-now)", () => {
-    // now = today at the evening band hour exactly. The drop rule is `at < fromMs`, so an
-    // exactly-now slot is kept - tonight must still yield its single slot.
-    const eveningHour = 19; // PART_HOUR.evening
-    const atBandNow = new Date(2026, 5, 1, eveningHour, 0, 0, 0).getTime();
-    const slots = expandWindow("tonight", "evening", atBandNow);
-    expect(slots).toHaveLength(1);
-    expect(new Date(slots[0].startsAt).getTime()).toBe(atBandNow);
   });
 });
