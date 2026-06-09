@@ -118,6 +118,47 @@ function activityCandidateInputs(cands: (typeof eventCandidates.$inferSelect)[])
   return cands.filter((c) => c.kind === "activity").map((c) => ({ id: c.id, label: c.label }));
 }
 
+// Single-pass aggregation of the public +1 count per candidate plus the caller's own reacted set.
+// PURE; who reacted is never surfaced - only the count and the caller's own membership.
+function reactionCountsFor(
+  reactions: CandidateReaction[],
+  userId: string,
+): { countBy: Map<string, number>; myReactedIds: Set<string> } {
+  const countBy = new Map<string, number>();
+  const myReactedIds = new Set<string>();
+  for (const r of reactions) {
+    countBy.set(r.candidateId, (countBy.get(r.candidateId) ?? 0) + 1);
+    if (r.userId === userId) myReactedIds.add(r.candidateId);
+  }
+  return { countBy, myReactedIds };
+}
+
+// Project candidate rows into get()'s wire shape: time candidates in their existing display order (NO
+// re-sort - candidatesFor/the bundle already ordered them), activity candidates by +1 count desc. PURE.
+function projectCandidates(
+  cands: (typeof eventCandidates.$inferSelect)[],
+  countBy: Map<string, number>,
+  myReactedIds: Set<string>,
+) {
+  const timeCandidates = cands.filter(isTimeCand).map((c) => ({
+    id: c.id,
+    startsAt: (c.startsAt as Date).toISOString(),
+    partOfDay: c.partOfDay,
+    count: countBy.get(c.id) ?? 0,
+    mine: myReactedIds.has(c.id),
+  }));
+  const activityCandidates = cands
+    .filter((c) => c.kind === "activity")
+    .map((c) => ({
+      id: c.id,
+      text: c.label ?? "",
+      count: countBy.get(c.id) ?? 0,
+      mine: myReactedIds.has(c.id),
+    }))
+    .sort((a, b) => b.count - a.count);
+  return { timeCandidates, activityCandidates };
+}
+
 // Maps an EventRow into revealGoing's opts; see revealGoing for the blind-until-end rule.
 function goingFromRow(e: EventRow, resp: MomentResponse[]): string[] | null {
   return revealGoing(resp, {
@@ -891,38 +932,16 @@ export const eventsRouter = router({
     const reactions = bundle.reactions(e.id);
     // Public per-candidate +1 counts (momentum) for BOTH kinds; who reacted is never returned, only
     // the count and whether the caller themselves reacted.
-    const countBy = new Map<string, number>();
-    const myReactedIds = new Set<string>();
-    for (const r of reactions) {
-      countBy.set(r.candidateId, (countBy.get(r.candidateId) ?? 0) + 1);
-      if (r.userId === ctx.userId) myReactedIds.add(r.candidateId);
-    }
-    const timeCandidates = cands.filter(isTimeCand).map((c) => ({
-      id: c.id,
-      startsAt: (c.startsAt as Date).toISOString(),
-      partOfDay: c.partOfDay,
-      count: countBy.get(c.id) ?? 0,
-      mine: myReactedIds.has(c.id),
-    }));
-    const activityCandidates = cands
-      .filter((c) => c.kind === "activity")
-      .map((c) => ({
-        id: c.id,
-        text: c.label ?? "",
-        count: countBy.get(c.id) ?? 0,
-        mine: myReactedIds.has(c.id),
-      }))
-      .sort((a, b) => b.count - a.count);
+    const { countBy, myReactedIds } = reactionCountsFor(reactions, ctx.userId);
+    const { timeCandidates, activityCandidates } = projectCandidates(cands, countBy, myReactedIds);
 
     const timeIds = timeCandidates.map((c) => c.id);
     const readyToLock =
       isCreator && e.phase === "collecting" && isReadyToLock(timeIds, reactions, e.quorum);
 
-    const members: { id: string; name: string }[] = [];
-    for (const id of memberIds) {
-      if (id === ctx.userId) continue;
-      members.push({ id, name: bundle.userCard(id).name });
-    }
+    const members = memberIds
+      .filter((id) => id !== ctx.userId)
+      .map((id) => ({ id, name: bundle.userCard(id).name }));
 
     const showCrowd = revealed !== null && e.phase !== "fizzled";
     const going = showCrowd ? revealed.map((id) => bundle.userCard(id)) : [];
