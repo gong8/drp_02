@@ -116,7 +116,7 @@ export function GroupsList({ navigation }: Props) {
       {showOnboard ? (
         <Card>
           <AppText variant="title">{ONBOARD_NO_GROUPS_TITLE}</AppText>
-          <AppText variant="caption" style={{ marginTop: 6, lineHeight: 18 }}>
+          <AppText variant="captionPara" style={{ marginTop: 6 }}>
             {ONBOARD_NO_GROUPS_BODY}
           </AppText>
           <Button

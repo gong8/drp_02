@@ -125,7 +125,7 @@ export function JoinGroup({ route, navigation }: Props) {
         <Card>
           <AppText variant="title">{notFound ? JOIN_NOT_FOUND_TITLE : ERR_NETWORK}</AppText>
           {notFound ? (
-            <AppText variant="caption" style={{ marginTop: 6, lineHeight: 18 }}>
+            <AppText variant="captionPara" style={{ marginTop: 6 }}>
               {JOIN_NOT_FOUND_BODY}
             </AppText>
           ) : null}

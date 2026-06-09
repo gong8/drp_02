@@ -11,7 +11,8 @@ type Variant =
   | "rowLabel"
   | "rowLabelSm"
   | "body"
-  | "caption";
+  | "caption"
+  | "captionPara";
 
 const V: Record<Variant, TextStyle> = {
   screenTitle: { fontFamily: font.black, fontSize: 27, letterSpacing: -1, color: ui.ink },
@@ -23,7 +24,10 @@ const V: Record<Variant, TextStyle> = {
   // The bold-13 list-row label shared by DeadlineField, RemoveDot, PersonRow, and CheckOption.
   rowLabelSm: { fontFamily: font.bold, fontSize: 13, color: ui.ink },
   body: { fontFamily: font.medium, fontSize: 13, color: ui.ink, lineHeight: 19 },
+  // Tight single-line caption (labels, hints).
   caption: { fontFamily: font.medium, fontSize: 11, color: ui.muted, lineHeight: 16 },
+  // Same caption, looser line-height for multi-line paragraph body copy.
+  captionPara: { fontFamily: font.medium, fontSize: 11, color: ui.muted, lineHeight: 18 },
 };
 
 export function AppText({

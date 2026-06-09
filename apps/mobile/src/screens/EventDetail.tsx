@@ -505,7 +505,7 @@ export function EventDetail({ route, navigation }: Props) {
             {data.location ? ` · ${data.location}` : ""}
           </AppText>
           {data.description ? (
-            <AppText variant="caption" style={{ marginTop: 8, lineHeight: 18 }}>
+            <AppText variant="captionPara" style={{ marginTop: 8 }}>
               {data.description}
             </AppText>
           ) : null}
@@ -548,7 +548,7 @@ export function EventDetail({ route, navigation }: Props) {
         <View style={{ marginTop: 16 }}>
           <Card>
             <AppText variant="cardTitle">{DIDNT_COME_TOGETHER}</AppText>
-            <AppText variant="caption" style={{ marginTop: 6, lineHeight: 18 }}>
+            <AppText variant="captionPara" style={{ marginTop: 6 }}>
               Not enough people in. Suggest another anytime.
             </AppText>
           </Card>
@@ -835,9 +835,7 @@ function MomentView({
         <>
           <StatusHeading>{lockedHeading}</StatusHeading>
           <Card>
-            <AppText variant="caption" style={{ lineHeight: 18 }}>
-              Locked in. Revealed at close.
-            </AppText>
+            <AppText variant="captionPara">Locked in. Revealed at close.</AppText>
           </Card>
           <Button
             label="Change"

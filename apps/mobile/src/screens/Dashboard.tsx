@@ -296,7 +296,7 @@ export function Dashboard({ navigation }: Props) {
       {!error && !hasGroups && (
         <Card>
           <AppText variant="title">No groups yet</AppText>
-          <AppText variant="caption" style={{ marginTop: 6, lineHeight: 18 }}>
+          <AppText variant="captionPara" style={{ marginTop: 6 }}>
             You need a group before you can plan a meetup. Create one to start.
           </AppText>
           <Button
