@@ -6,11 +6,13 @@ import { Pressable, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
 import { AccountAvatar } from "../components/AccountAvatar";
 import {
+  ACTION_CREATE_GROUP,
   actionsRequiredLabel,
   candidateCountLabel,
   DIDNT_COME_TOGETHER,
   ERR_NETWORK,
   goingCountLabel,
+  ONBOARD_NO_GROUPS_TITLE,
   planLabel,
   TITLE_NEW_MEETUP,
 } from "../lib/copy";
@@ -295,12 +297,12 @@ export function Dashboard({ navigation }: Props) {
 
       {!error && !hasGroups && (
         <Card>
-          <AppText variant="title">No groups yet</AppText>
+          <AppText variant="title">{ONBOARD_NO_GROUPS_TITLE}</AppText>
           <AppText variant="captionPara" style={{ marginTop: 6 }}>
             You need a group before you can plan a meetup. Create one to start.
           </AppText>
           <Button
-            label="Create a group"
+            label={ACTION_CREATE_GROUP}
             variant="primary"
             style={{ marginTop: 14 }}
             onPress={() => navigation.getParent()?.navigate("Groups", { screen: "CreateGroup" })}
