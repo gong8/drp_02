@@ -174,6 +174,18 @@ async function clearOptOut(eventId: string, userId: string, handle: DbOrTx = db)
     .where(and(eq(eventOptOuts.eventId, eventId), eq(eventOptOuts.userId, userId)));
 }
 
+// Drop the caller's RSVP row. respond replaces it before inserting the new answer; unrespond uses it
+// to return the caller to un-answered. Idempotent; pass a tx handle to enlist in a wrapping transaction.
+async function clearMyResponse(
+  eventId: string,
+  userId: string,
+  handle: DbOrTx = db,
+): Promise<void> {
+  await handle
+    .delete(responses)
+    .where(and(eq(responses.eventId, eventId), eq(responses.userId, userId)));
+}
+
 // Lazily settle a moment whose countdown has ended (no scheduler): clears if quorum is met, else
 // fizzles - but a non-contingent (exact) plan always happens, so it clears regardless. Mutates the
 // in-memory row and persists, so reads converge the lifecycle on their own.
@@ -1058,9 +1070,7 @@ export const eventsRouter = router({
   respond: protectedProcedure.input(RespondInput).mutation(async ({ ctx, input }) => {
     const e = await loadEvent(input.eventId, ctx.userId);
     await settleAndRequirePhase(e, "moment", "the moment is not open");
-    await db
-      .delete(responses)
-      .where(and(eq(responses.eventId, input.eventId), eq(responses.userId, ctx.userId)));
+    await clearMyResponse(input.eventId, ctx.userId);
     await db.insert(responses).values({
       id: randomUUID(),
       eventId: input.eventId,
@@ -1078,9 +1088,7 @@ export const eventsRouter = router({
   unrespond: protectedProcedure.input(ByEvent).mutation(async ({ ctx, input }) => {
     const e = await loadEvent(input.eventId, ctx.userId);
     await settleAndRequirePhase(e, "moment", "the moment is not open");
-    await db
-      .delete(responses)
-      .where(and(eq(responses.eventId, input.eventId), eq(responses.userId, ctx.userId)));
+    await clearMyResponse(input.eventId, ctx.userId);
     return { ok: true as const };
   }),
 
