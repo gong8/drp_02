@@ -25,7 +25,7 @@ import {
 import { TRPCError } from "@trpc/server";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { FALLBACK_GROUP_NAME, getGroupNames, memberIdsOf } from "../db/groups.js";
+import { FALLBACK_GROUP_NAME, getGroupNames, meetupUrlFor, memberIdsOf } from "../db/groups.js";
 import {
   candidateReactions,
   eventCandidates,
@@ -41,7 +41,7 @@ import { activityKey, normalizeCreateCandidates, startMinute } from "../logic/cr
 import { resolveCreateDeadlines, resolveMomentEnd } from "../logic/event-schedule.js";
 import { shapePastMeetups } from "../logic/past-meetups.js";
 import { displayActivity, planOpensMoment, resolveActivity } from "../logic/plan-activity.js";
-import { protectedProcedure, router } from "../trpc.js";
+import { protectedProcedure, publicProcedure, router } from "../trpc.js";
 
 type EventRow = typeof events.$inferSelect;
 type MyStatus = "reacting" | "awaiting" | "going" | "declined";
@@ -992,6 +992,66 @@ export const eventsRouter = router({
       members,
       going,
     };
+  }),
+
+  // Preview the meetup a share token resolves to WITHOUT joining - powers the public JoinMeetup
+  // landing ("You're invited to <activity> with <group>") shown BEFORE sign-in. PUBLIC (not even
+  // authed): the link is the invitation, so a logged-out web visitor can see what they were sent.
+  // The token is the (unguessable, v4-UUID) event id. Reveals ONLY the shell - activity label, group
+  // name, phase, anchor time, candidate count - and NEVER a voter/creator identity or the IN crowd.
+  // Read-only: it does NOT settle the lifecycle (no caller scope, and an unauth bot must not write).
+  previewByToken: publicProcedure.input(ByEvent).query(async ({ input }) => {
+    const [e] = await db.select().from(events).where(eq(events.id, input.eventId));
+    if (!e)
+      throw new TRPCError({ code: "NOT_FOUND", message: "That link does not match a meetup" });
+    const groupName = (await getGroupNames([e.groupId])).get(e.groupId) ?? FALLBACK_GROUP_NAME;
+    const cands = await candidatesFor(e.id);
+    const reactions = await reactionsFor(e.id);
+    return {
+      eventId: e.id,
+      // Collecting plans have no fixed activity yet; show the leading candidate (or blank, the client
+      // falls back) so the card stays meaningful. displayActivity is count-based - it leaks no names.
+      activity: displayActivity(e.activity, activityCandidateInputs(cands), reactions),
+      groupName,
+      phase: e.phase,
+      // The chosen time once a moment/cleared plan exists; a placeholder while collecting (the client
+      // keys off `phase` and shows "help pick a time" rather than the placeholder).
+      startsAt: e.startsAt.toISOString(),
+      candidateCount: cands.length,
+    };
+  }),
+
+  // Redeem a meetup's share token to join its group and land on the plan. This iteration a joiner
+  // becomes a NORMAL group member (ephemeral plan-only guests are a later iteration). Idempotent -
+  // a re-open, or an existing member tapping their own link, is a no-op that still resolves the
+  // eventId/groupId so the client routes to the plan, and reports `alreadyMember` so the UI can skip
+  // a "welcome". Mirrors groups.joinByCode (same membership-FK caveat for a spoofed dev x-user-id).
+  joinByToken: protectedProcedure.input(ByEvent).mutation(async ({ ctx, input }) => {
+    const [e] = await db.select().from(events).where(eq(events.id, input.eventId));
+    if (!e)
+      throw new TRPCError({ code: "NOT_FOUND", message: "That link does not match a meetup" });
+    const [existing] = await db
+      .select({ userId: groupMembers.userId })
+      .from(groupMembers)
+      .where(and(eq(groupMembers.groupId, e.groupId), eq(groupMembers.userId, ctx.userId)))
+      .limit(1);
+    const alreadyMember = !!existing;
+    if (!alreadyMember) {
+      await db
+        .insert(groupMembers)
+        .values({ groupId: e.groupId, userId: ctx.userId })
+        .onConflictDoNothing();
+    }
+    return { eventId: e.id, groupId: e.groupId, alreadyMember };
+  }),
+
+  // The shareable link for a plan: a fully-qualified URL when PUBLIC_WEB_URL is set, plus the bare
+  // token (the event id) so the client can build its own link otherwise. Member-gated via loadEvent
+  // (NOT_FOUND before FORBIDDEN), mirroring groups.inviteByGroup - only someone in the meetup's group
+  // can mint, and thus share, the link.
+  shareLink: protectedProcedure.input(ByEvent).query(async ({ ctx, input }) => {
+    const e = await loadEvent(input.eventId, ctx.userId);
+    return { token: e.id, url: meetupUrlFor(e.id) };
   }),
 
   // Record (or replace) this user's commitment during the moment.

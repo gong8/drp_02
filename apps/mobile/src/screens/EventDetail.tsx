@@ -1,19 +1,36 @@
 import type { UpdateEventInput } from "@bethere/shared";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { useCallback, useRef, useState } from "react";
-import { Text, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Platform, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
 import {
+  ACTION_COPIED,
+  ACTION_COPY,
+  ACTION_GET_APP,
+  ACTION_LINK_COPIED,
+  ACTION_NOT_NOW,
+  ACTION_SHARE_INVITE,
+  ACTION_TRY_AGAIN,
   COND_MODE,
   DIDNT_COME_TOGETHER,
+  ERR_NETWORK,
   ERR_SAVE,
+  GET_APP_BODY,
+  GET_APP_TITLE,
+  INVITE_CODE_PENDING,
+  LABEL_INVITE_LINK,
+  meetupShareText,
   NOTE_BLIND,
   NOTE_TOP_PICK,
   planLabel,
+  SHARE_MEETUP_HINT,
   statusLabel,
+  TITLE_SHARE_MEETUP,
 } from "../lib/copy";
 import { clock12, dayUpper } from "../lib/format";
+import { meetupUrl } from "../lib/meetup";
+import { copyToClipboard, shareInvite } from "../lib/share";
 import { activeDeadline, deadlineMs, isLive, isTerminal, type Phase } from "../lib/status";
 import type { RouterOutputs } from "../lib/trpc";
 import { trpc } from "../lib/trpc";
@@ -26,6 +43,7 @@ import {
   Button,
   Card,
   DetailError,
+  EmptyState,
   Field,
   FieldLabel,
   PersonRow,
@@ -55,6 +73,10 @@ export function EventDetail({ route, navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
+  // Share-this-meetup sheet (the /m/<token> link). Auto-opened once when landing straight after
+  // creating the plan (shareOnLand), so the creator's next step is to share the link.
+  const [shareOpen, setShareOpen] = useState(false);
+  const sharePrompted = useRef(false);
 
   // moment conditional sheet
   const [reanswering, setReanswering] = useState(false);
@@ -90,6 +112,16 @@ export function EventDetail({ route, navigation }: Props) {
 
   // Busy-guarded mutate-then-reload runner shared by lock/addCandidate/answer/changeAnswer.
   const runAction = useBusyAction({ busy, setBusy, setError, load });
+
+  // Landing straight after creating the plan: open the share sheet once the plan has loaded, then
+  // clear the flag so a refocus does not reopen it (the create-meetup-first -> share-one-link flow).
+  useEffect(() => {
+    if (route.params?.shareOnLand && data && !sharePrompted.current) {
+      sharePrompted.current = true;
+      setShareOpen(true);
+      navigation.setParams({ shareOnLand: undefined });
+    }
+  }, [route.params?.shareOnLand, data, navigation]);
 
   // The 1s ticker drives both live countdowns - the moment reveal countdown and the collecting
   // decidesBy countdown - so run it during either timed phase (predicate below: moment OR collecting).
@@ -409,6 +441,14 @@ export function EventDetail({ route, navigation }: Props) {
           style={{ marginTop: 14 }}
         />
       </BottomSheet>
+
+      <PlanShareSheet
+        eventId={eventId}
+        activity={data.activity}
+        groupName={data.groupName}
+        visible={shareOpen}
+        onClose={() => setShareOpen(false)}
+      />
     </>
   );
 
@@ -424,6 +464,15 @@ export function EventDetail({ route, navigation }: Props) {
       {data.phase === "moment" && <CountdownBanner label={label} ms={ms} note={NOTE_BLIND} />}
 
       <PlanHeaderCard data={data} canEdit={isLive(data)} onEdit={openEditSheet} />
+
+      {data.phase !== "fizzled" && (
+        <Button
+          label={TITLE_SHARE_MEETUP}
+          variant="outline"
+          onPress={() => setShareOpen(true)}
+          style={{ marginTop: 14 }}
+        />
+      )}
 
       {data.phase === "collecting" && (
         <CollectingView
@@ -467,7 +516,136 @@ export function EventDetail({ route, navigation }: Props) {
           </Card>
         </View>
       )}
+
+      {Platform.OS === "web" &&
+        data.phase !== "fizzled" &&
+        (data.myStatus === "going" || data.myStatus === "declined") && <GetAppNudge />}
     </ScreenScroll>
+  );
+}
+
+// The share-this-meetup sheet: lazily fetches the plan's /m/<token> link the first time it opens, then
+// shows the canonical link (copy) and a share action, or an error+retry / pending surface. Mirrors
+// GroupDetail's InviteSheet but for a single plan rather than a group invite.
+function PlanShareSheet({
+  eventId,
+  activity,
+  groupName,
+  visible,
+  onClose,
+}: {
+  eventId: string;
+  activity: string;
+  groupName: string;
+  visible: boolean;
+  onClose: () => void;
+}) {
+  const [link, setLink] = useState<string | null>(null);
+  const [shareError, setShareError] = useState(false);
+  const [copied, setCopied] = useState<null | "link" | "share">(null);
+
+  // Fetch the plan's share link (member-gated; the viewer is a member). Prefer the server-built
+  // canonical URL (PUBLIC_WEB_URL); fall back to one built client-side from the token.
+  const loadLink = useCallback(() => {
+    setShareError(false);
+    trpc.events.shareLink
+      .query({ eventId })
+      .then((s) => setLink(s.url ?? meetupUrl(s.token)))
+      .catch(() => setShareError(true));
+  }, [eventId]);
+
+  // Lazily fetch the link the first time the sheet opens (kept off the focus load).
+  useEffect(() => {
+    if (visible && link === null) loadLink();
+  }, [visible, link, loadLink]);
+
+  function flash(which: "link" | "share") {
+    setCopied(which);
+    setTimeout(() => setCopied(null), 1500);
+  }
+  async function copyLink() {
+    if (!link) return;
+    await copyToClipboard(link);
+    flash("link");
+  }
+  async function share() {
+    if (!link) return;
+    const { copied: didCopy } = await shareInvite(meetupShareText(activity, groupName), link);
+    if (didCopy) flash("share");
+  }
+
+  return (
+    <BottomSheet visible={visible} onClose={onClose}>
+      <Section title={TITLE_SHARE_MEETUP} size="lg" sub={SHARE_MEETUP_HINT} />
+      {link ? (
+        <>
+          <Field
+            label={LABEL_INVITE_LINK}
+            value={link}
+            editable={false}
+            right={
+              <TextButton
+                label={copied === "link" ? ACTION_COPIED : ACTION_COPY}
+                onPress={copyLink}
+              />
+            }
+          />
+          <Button
+            label={copied === "share" ? ACTION_LINK_COPIED : ACTION_SHARE_INVITE}
+            variant="primary"
+            onPress={share}
+            style={{ marginTop: 16 }}
+          />
+        </>
+      ) : shareError ? (
+        <Card>
+          <AppText variant="caption">{ERR_NETWORK}</AppText>
+          <View style={{ marginTop: 8, alignItems: "flex-start" }}>
+            <TextButton label={ACTION_TRY_AGAIN} onPress={loadLink} />
+          </View>
+        </Card>
+      ) : (
+        <EmptyState inCard>{INVITE_CODE_PENDING}</EmptyState>
+      )}
+    </BottomSheet>
+  );
+}
+
+// The web user's download URL (env-gated): there is no public App Store listing yet, so the nudge is
+// hidden unless a destination is configured. localStorage remembers a dismissal so it shows once.
+const APP_DOWNLOAD_URL = process.env.EXPO_PUBLIC_APP_DOWNLOAD_URL?.trim();
+const GET_APP_DISMISS_KEY = "bethere.getAppDismissed";
+
+// A dismissible "get the app" card shown to a WEB user after they have responded - web users get no
+// notifications yet, so this is the retention hook back into the (push-capable) app. Renders nothing
+// on native or when no download URL is configured; gating happens BEFORE any hook so the native path
+// never touches browser globals (the GetAppCard child owns the dismissed state, web-only).
+function GetAppNudge() {
+  if (Platform.OS !== "web" || !APP_DOWNLOAD_URL) return null;
+  return <GetAppCard url={APP_DOWNLOAD_URL} />;
+}
+
+function GetAppCard({ url }: { url: string }) {
+  const [dismissed, setDismissed] = useState(
+    () => typeof localStorage !== "undefined" && localStorage.getItem(GET_APP_DISMISS_KEY) === "1",
+  );
+  if (dismissed) return null;
+  const dismiss = () => {
+    if (typeof localStorage !== "undefined") localStorage.setItem(GET_APP_DISMISS_KEY, "1");
+    setDismissed(true);
+  };
+  const getApp = () => {
+    if (typeof window !== "undefined") window.open(url, "_blank");
+  };
+  return (
+    <Card style={{ marginTop: 16 }}>
+      <AppText variant="cardTitle">{GET_APP_TITLE}</AppText>
+      <AppText variant="captionPara" style={{ marginTop: 6 }}>
+        {GET_APP_BODY}
+      </AppText>
+      <Button label={ACTION_GET_APP} variant="primary" onPress={getApp} style={{ marginTop: 12 }} />
+      <Button label={ACTION_NOT_NOW} variant="ghost" onPress={dismiss} style={{ marginTop: 8 }} />
+    </Card>
   );
 }
 

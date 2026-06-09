@@ -28,7 +28,7 @@ import {
   users,
 } from "../db/schema.js";
 import { fallbackUserCard, getUserCards, userCardFromRow } from "../db/users.js";
-import { protectedProcedure, router } from "../trpc.js";
+import { protectedProcedure, publicProcedure, router } from "../trpc.js";
 import { requireMember } from "./events.js";
 
 async function resolveGroupByCode(rawCode: string) {
@@ -106,10 +106,11 @@ export const groupsRouter = router({
   }),
 
   // Preview the group a code resolves to WITHOUT joining - powers the JoinGroup confirm step
-  // ("Join <name>? N members"). Authed (the join flow is only reachable signed in) but NOT
-  // member-gated: holding the code is the invitation. Reveals only the group name + size, never
-  // member names (anonymity is preserved until you are actually in the roster).
-  previewByCode: protectedProcedure.input(JoinByCodeInput).query(async ({ input }) => {
+  // ("Join <name>? N members") AND the public OG unfurl card for a /join/<code> link. PUBLIC and NOT
+  // member-gated: holding the code is the invitation (same trust model as events.previewByToken), so
+  // an unauthenticated link scraper / a signed-out visitor can resolve it. Reveals only the group name
+  // + size, never member names (anonymity is preserved until you are actually in the roster).
+  previewByCode: publicProcedure.input(JoinByCodeInput).query(async ({ input }) => {
     const group = await resolveGroupByCode(input.code);
     const [tally] = await db
       .select({ n: count() })

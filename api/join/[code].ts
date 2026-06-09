@@ -1,0 +1,29 @@
+// Vercel Function: per-group OpenGraph card for a group invite link `/join/<code>`. Same pattern as
+// api/m/[id].ts (returns the SPA shell with a per-group large-image card spliced into <head>; the SPA
+// then client-routes /join/<code> to JoinGroup). Fetches the PUBLIC groups.previewByCode over HTTPS.
+
+import { cardImageUrl, fetchShell, fetchTrpc, headTags, htmlResponse } from "../_lib/og";
+
+type GroupPreview = { groupId: string; name: string; memberCount: number };
+
+export async function GET(request: Request): Promise<Response> {
+  const url = new URL(request.url);
+  const code = url.pathname.split("/").filter(Boolean).pop() ?? "";
+  const canonicalUrl = `${url.origin}/join/${code}`;
+
+  const g = await fetchTrpc<GroupPreview>("groups.previewByCode", { code });
+  const title = g ? `Join ${g.name} on BeThere` : "Join your group on BeThere";
+  const members = g ? `${g.memberCount} member${g.memberCount === 1 ? "" : "s"}` : "";
+  const subtitle = members
+    ? `${members} - plan real meetups together`
+    : "Plan real meetups together";
+  const description = `${subtitle}. No app to download.`;
+  const image = cardImageUrl(url.origin, title, subtitle);
+
+  const shell = await fetchShell(url.origin);
+  return htmlResponse(
+    shell,
+    headTags({ title, description, url: canonicalUrl, image }),
+    canonicalUrl,
+  );
+}

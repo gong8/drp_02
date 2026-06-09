@@ -1,9 +1,13 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "pnpm --filter @bethere/mobile build:web",
+  "buildCommand": "pnpm --filter @bethere/mobile build:web && node apps/mobile/scripts/inject-og.mjs",
   "outputDirectory": "apps/mobile/dist",
   "installCommand": "pnpm install --frozen-lockfile",
   "framework": null,
   "ignoreCommand": "[ \"$VERCEL_GIT_COMMIT_REF\" != \"main\" ] && [ \"$VERCEL_GIT_COMMIT_REF\" != \"dev\" ]",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/m/:id", "destination": "/api/m/:id" },
+    { "source": "/join/:code", "destination": "/api/join/:code" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }

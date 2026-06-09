@@ -166,3 +166,39 @@ so **nothing is required for the web app** and there is one bake for native:
   (Merge with the service's existing `RuntimeEnvironmentVariables` - App Runner replaces the whole map
   - or set it in the App Runner console under Configuration -> Environment variables. Either triggers
   a rolling redeploy.)
+
+## Share links + rich OG unfurl cards (DRP-56)
+
+Meetup links are `https://<web-origin>/m/<eventId>`; group invite links are `.../join/<code>`. The web
+origin resolves with the usual fallback chain (`window.location.origin` on web; `PUBLIC_WEB_URL` makes
+`events.shareLink` / `groups.inviteByGroup` return a canonical `url`), so set the API `PUBLIC_WEB_URL`
+above for completeness.
+
+So a pasted link unfurls as a **rich, branded large-image card** in chats, there are three **Vercel
+Functions** (the SPA is a static export with no per-route `<head>`):
+
+- `api/m/[id].ts` (rewrite `/m/:id`) - fetches the public `events.previewByToken` and renders a
+  per-meetup card ("You're invited to bowling - Fri 12 Jun, with The Boys").
+- `api/join/[code].ts` (rewrite `/join/:code`) - fetches the public `groups.previewByCode` and renders
+  a per-group card ("Join The Boys on BeThere - 5 members").
+- `api/og.ts` (`/api/og?title=&subtitle=`, edge) - renders the actual **1200x630 PNG** card image via
+  `@vercel/og` (on-brand gradient + wordmark); the two Functions above reference it as `og:image`.
+
+Every other route gets a generic baseline card injected into `dist/index.html` at build time by
+`apps/mobile/scripts/inject-og.mjs` (wired into the `buildCommand`); the per-meetup/per-group Functions
+override it with their own card.
+
+The `m`/`join` Functions fetch the public previews over HTTPS, so they need the API base as a
+**runtime** Vercel env var (the `EXPO_PUBLIC_*` build vars are inlined into the SPA and invisible to a
+Function):
+
+- **`OG_API_URL`** - set per Vercel environment: Production = the prod API
+  (`https://96mgvmgcbj.us-east-1.awsapprunner.com`), Preview = the dev API
+  (`https://wumksaeb3j.us-east-1.awsapprunner.com`). Falls back to `EXPO_PUBLIC_API_URL` if unset.
+  (Without it the cards still render, just generic - "You're invited on BeThere" - with the real time
+  and group name missing.)
+
+After deploying, validate by pasting a real `/m/<id>` and `/join/<code>` link into an unfurl debugger
+(opengraph.xyz) or a chat app, and open `/api/og?title=Test&subtitle=Hi` directly to confirm the image
+renders. If a Function misbehaves it is isolated: removing its `rewrites` entry reverts that path to
+the normal SPA catch-all (links still work, only the rich card is lost).

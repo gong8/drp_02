@@ -43,6 +43,16 @@ export function inviteUrlFor(code: string): string | null {
   return `${base.replace(/\/+$/, "")}/join/${code}`;
 }
 
+// The full shareable URL for a single meetup, or null when no public web origin is configured. The
+// path (`m/:token`, the event id doubles as the unguessable token) mirrors the mobile linking config
+// so the same link previews on web and deep-links a native build later. The client falls back to its
+// own origin when this is null.
+export function meetupUrlFor(eventId: string): string | null {
+  const base = process.env.PUBLIC_WEB_URL?.trim();
+  if (!base) return null;
+  return `${base.replace(/\/+$/, "")}/m/${eventId}`;
+}
+
 // Resolve many group names in ONE inArray query, returning a Map<groupId, name>. Callers read names
 // via the map (with FALLBACK_GROUP_NAME for missing rows), avoiding a per-row SELECT. An empty id
 // list issues no query and returns an empty map.

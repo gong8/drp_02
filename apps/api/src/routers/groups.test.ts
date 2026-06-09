@@ -615,11 +615,15 @@ test("previewByCode rejects an unknown code with NOT_FOUND", async () => {
   );
 });
 
-test("previewByCode requires authentication", async () => {
-  await assert.rejects(
-    () => caller(null).groups.previewByCode({ code: "ABCD2345" }),
-    (e: unknown) => e instanceof TRPCError && e.code === "UNAUTHORIZED",
-  );
+test("previewByCode is public: an unauthenticated caller can resolve a code (for the OG card)", async () => {
+  const owner = await makeUser();
+  const { id } = await caller(owner).groups.create({ name: "Crew" });
+  const code = await inviteCodeOf(id);
+
+  // Callable signed-out - the link scraper / a logged-out visitor holds only the code.
+  const preview = await caller(null).groups.previewByCode({ code });
+  assert.equal(preview.groupId, id);
+  assert.equal(preview.name, "Crew");
 });
 
 // ----- joinByCode -----

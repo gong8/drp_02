@@ -68,7 +68,7 @@ const GROUPS = [{ id: "g1", name: "The Crew" }] as const;
 function mockBaseline(past: RouterOutputs["events"]["pastForGroup"] = []) {
   mockQuery(trpc.groups.mine, GROUPS as unknown as RouterOutputs["groups"]["mine"]);
   mockQuery(trpc.events.pastForGroup, past);
-  mockMutation(trpc.events.create, undefined as unknown as RouterOutputs["events"]["create"]);
+  mockMutation(trpc.events.create, { id: "e1" } satisfies RouterOutputs["events"]["create"]);
   // The shared resetTrpcMock does not reliably clear THIS fn's call history across tests (the manual
   // mock is loaded under two specifiers, so its reset runs on a different module instance). Clear the
   // create mutate explicitly per test so a call-count assertion measures only this test's submit.
@@ -576,10 +576,34 @@ describe("the redo source step", () => {
   });
 });
 
+// ---- inline create-group on the group step ------------------------------------------------------
+
+describe("creating a group inline", () => {
+  test("the group step creates a new group inline and selects it", async () => {
+    mockBaseline();
+    mockMutation(trpc.groups.create, { id: "g2" } satisfies RouterOutputs["groups"]["create"]);
+    await landOnGroupStep();
+
+    // Open the inline sheet, name a group, and create it - no navigation away from the wizard.
+    fireEvent.press(screen.getByText("+ New group"));
+    const field = await screen.findByPlaceholderText("The Boys");
+    fireEvent.changeText(field, "Bowling Buddies");
+    await act(async () => {
+      fireEvent.press(screen.getByText("Create group"));
+    });
+
+    await waitFor(() =>
+      expect(trpc.groups.create.mutate).toHaveBeenCalledWith({ name: "Bowling Buddies" }),
+    );
+    // The new group appears as a chip (selected), so the wizard proceeds with it.
+    expect(await screen.findByText("Bowling Buddies")).toBeOnTheScreen();
+  });
+});
+
 // ---- submit: assembles the input and navigates --------------------------------------------------
 
 describe("submitting the plan", () => {
-  test("a concrete plan calls events.create with the assembled input then navigates to Dashboard", async () => {
+  test("a concrete plan calls events.create with the assembled input then lands on the new plan", async () => {
     mockBaseline();
     await landOnGroupStep();
     const { date, time } = futureParts(7);
@@ -613,12 +637,12 @@ describe("submitting the plan", () => {
     expect(Math.abs(sentMs - picked)).toBeLessThan(60_000);
   });
 
-  test("submitting resets the navigation stack to the Dashboard", async () => {
+  test("submitting resets the stack to land on the new plan with the share sheet", async () => {
     mockBaseline();
     // Render with a spy `navigation` so we can assert the post-submit navigation. The wizard reads no
     // route.params and uses only plain useEffect (no useNavigation/useFocusEffect), so a direct render
-    // with a stub navigation prop is faithful. The one-screen test stack cannot actually route to
-    // "Dashboard", so we verify the intent (reset called with that route) rather than the routed UI.
+    // with a stub navigation prop is faithful. The one-screen test stack cannot actually route
+    // away, so we verify the intent (reset called with the right routes) rather than the routed UI.
     const reset = jest.fn();
     const goBack = jest.fn();
     const props = {
@@ -635,8 +659,14 @@ describe("submitting the plan", () => {
     });
 
     await waitFor(() => expect(trpc.events.create.mutate).toHaveBeenCalledTimes(1));
-    // The wizard navigates away by resetting the stack to a single Dashboard route.
-    expect(reset).toHaveBeenCalledWith({ index: 0, routes: [{ name: "Dashboard" }] });
+    // The wizard resets onto the new plan (Dashboard underneath) with the share sheet auto-opening.
+    expect(reset).toHaveBeenCalledWith({
+      index: 1,
+      routes: [
+        { name: "Dashboard" },
+        { name: "EventDetail", params: { eventId: "e1", shareOnLand: true } },
+      ],
+    });
   });
 
   test("a collecting plan leaves decides-by to the server default but sends the shown reply-by", async () => {

@@ -126,6 +126,8 @@ export const ONBOARD_NO_GROUPS_BODY =
   "Start a group and invite your people, or join one with a code.";
 export const ACTION_CREATE_GROUP = "Create a group";
 export const CREATE_GROUP_NEXT = "You'll get a link to share right after.";
+// The inline "+ New group" affordance in the create-meetup wizard's group step.
+export const ACTION_NEW_GROUP = "+ New group";
 
 // Editable display name (Account).
 export const LABEL_DISPLAY_NAME = "Display name";
@@ -150,4 +152,50 @@ export function welcomeToGroup(name: string): string {
 // The OS-share / web-share body: `Join "The Boys" on BeThere.` (the URL is passed separately).
 export function inviteShareText(name: string): string {
   return `Join "${name}" on BeThere.`;
+}
+
+// ----- DRP-56: meetup share link (the web-first conversion funnel) -----
+
+// JoinMeetup public preview (shown BEFORE sign-in, when someone opens a /m/<token> link).
+export const MEETUP_INVITE_TITLE = "You're invited";
+export const MEETUP_NO_APP = "No app to download.";
+export const MEETUP_PREVIEW_PICK_TIME = "Help pick a time";
+export const ACTION_VIEW_MEETUP = "View the meetup";
+export const ACTION_JOINING_MEETUP = "Joining...";
+export const MEETUP_NOT_FOUND_TITLE = "Meetup not found";
+export const MEETUP_NOT_FOUND_BODY = "This meetup link isn't valid anymore.";
+
+// In-app-browser escape hatch (WhatsApp/Instagram/etc. block Google sign-in).
+export const MEETUP_OPEN_IN_BROWSER_TITLE = "Open in your browser to join";
+export const MEETUP_OPEN_IN_BROWSER_BODY =
+  "Sign-in won't work inside this chat app. Open this link in Safari or Chrome to continue.";
+export const ACTION_OPEN_IN_BROWSER = "Open in browser";
+export const ACTION_COPY_LINK = "Copy link";
+
+// Plan share sheet (EventDetail "Share this meetup").
+export const TITLE_SHARE_MEETUP = "Share this meetup";
+export const SHARE_MEETUP_HINT = "Anyone with the link can join and respond.";
+
+// Post-response retention nudge (web only - web users get no notifications yet).
+export const GET_APP_TITLE = "Get BeThere for reminders";
+export const GET_APP_BODY = "We'll nudge you when it's your turn to vote or RSVP.";
+export const ACTION_GET_APP = "Get the app";
+
+// "Join The Boys & respond" - the single primary CTA on the public meetup preview.
+export function joinAndRespond(groupName: string): string {
+  return `Join ${groupName} & respond`;
+}
+
+// "You're invited to bowling" - the meetup preview headline once an activity is known. Falls back to
+// the bare MEETUP_INVITE_TITLE when the activity is still blank (a collecting plan with no candidate).
+export function meetupInviteHeadline(activity: string): string {
+  const a = activity.trim();
+  return a ? `You're invited to ${a}` : MEETUP_INVITE_TITLE;
+}
+
+// The OS-share / web-share body for a meetup: `bowling with The Boys - respond on BeThere.` (the URL
+// rides separately). Falls back to the group when there is no activity name yet.
+export function meetupShareText(activity: string, groupName: string): string {
+  const a = activity.trim();
+  return a ? `${a} with ${groupName} - respond on BeThere.` : `Respond to ${groupName} on BeThere.`;
 }

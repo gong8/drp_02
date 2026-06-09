@@ -23,6 +23,7 @@ import { colorFor, initials } from "../lib/format";
 import { CODE_LENGTH, normalizeCode } from "../lib/invite";
 import type { RouterOutputs } from "../lib/trpc";
 import { trpc } from "../lib/trpc";
+import { trpcErrorCode } from "../lib/trpcError";
 import { useFetchOnFocus } from "../lib/useFetchOnFocus";
 import {
   AppText,
@@ -39,18 +40,6 @@ import {
 type Preview = RouterOutputs["groups"]["previewByCode"];
 type Props = NativeStackScreenProps<GroupsStackParams, "JoinGroup">;
 type Phase = "idle" | "checking" | "confirm" | "joining" | "error";
-
-// Pull the tRPC error code (e.g. NOT_FOUND) off a client error, if present.
-function trpcErrorCode(e: unknown): string | undefined {
-  if (e && typeof e === "object" && "data" in e) {
-    const data = (e as { data?: unknown }).data;
-    if (data && typeof data === "object" && "code" in data) {
-      const code = (data as { code?: unknown }).code;
-      if (typeof code === "string") return code;
-    }
-  }
-  return undefined;
-}
 
 // The single join funnel: the landing for a tapped invite link, the GroupsList paste sheet, and the
 // post-sign-in resume. It previews the group a code resolves to, the user confirms, then joins.
