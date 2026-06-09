@@ -30,3 +30,12 @@ export const font = {
   medium: "Inter_500Medium",
   bold: "Inter_700Bold",
 } as const;
+
+// The bordered input-surface frame shared by Field, DateTimeField, and DateTimePill. Style-only;
+// each site spreads it and layers its own layout (direction/alignment/padding) on top.
+export const fieldBox = {
+  backgroundColor: ui.surface,
+  borderWidth: ui.border,
+  borderColor: ui.ink,
+  borderRadius: ui.rInput,
+} as const;

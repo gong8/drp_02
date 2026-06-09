@@ -1,5 +1,5 @@
 import { View, type ViewStyle } from "react-native";
-import { ui } from "../theme";
+import { fieldBox, ui } from "../theme";
 import { DateTimeField } from "./DateTimeField";
 import { DEFAULT_MINUTE_INTERVAL, type MinuteInterval } from "./DateTimeField.types";
 import { HardShadow } from "./HardShadow";
@@ -30,12 +30,9 @@ export function DateTimePill({
     <HardShadow radius={ui.rInput} offset={ui.shadowInput} style={style}>
       <View
         style={{
+          ...fieldBox,
           flexDirection: "row",
           alignItems: "stretch",
-          backgroundColor: ui.surface,
-          borderWidth: ui.border,
-          borderColor: ui.ink,
-          borderRadius: ui.rInput,
           overflow: "hidden",
         }}
       >

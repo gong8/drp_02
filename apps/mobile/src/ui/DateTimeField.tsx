@@ -12,7 +12,7 @@ import {
   shortTimeLabel,
   timeStringFrom,
 } from "../lib/format";
-import { font, ui } from "../theme";
+import { fieldBox, font, ui } from "../theme";
 import { BottomSheet } from "./BottomSheet";
 import { type DateTimeFieldProps, DEFAULT_MINUTE_INTERVAL } from "./DateTimeField.types";
 import { HardShadow } from "./HardShadow";
@@ -131,12 +131,9 @@ export function DateTimeField({
               paddingVertical: 13,
             }
           : {
+              ...fieldBox,
               flexDirection: "row",
               alignItems: "center",
-              backgroundColor: ui.surface,
-              borderWidth: ui.border,
-              borderColor: ui.ink,
-              borderRadius: ui.rInput,
               paddingHorizontal: 11,
               paddingVertical: 11,
             }
