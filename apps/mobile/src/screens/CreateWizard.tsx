@@ -165,9 +165,11 @@ export function CreateWizard({ navigation }: Props) {
   const canLockActivity = activityCount > 0;
   const lockTimesEff = lockTimes && canLockTimes;
   const lockActivityEff = lockActivity && canLockActivity;
+  const timeFixed = timeIsos.length === 1 && lockTimesEff;
+  const activityFixed = lockActivityEff && activityCount <= 1;
   // Concrete shortcut: skip voting only when BOTH axes are pinned - one locked time AND a locked
   // activity. Must match the server's planOpensMoment so the preview never diverges.
-  const isConcrete = timeIsos.length === 1 && lockTimesEff && lockActivityEff && activityCount <= 1;
+  const isConcrete = timeFixed && activityFixed;
 
   const decidesOverrideIso = decidesEdit ? isoFrom(decidesDate, decidesTime) : null;
   // Match the server bounds (events.create): a custom deadline must sit after now AND leave a full
@@ -225,13 +227,14 @@ export function CreateWizard({ navigation }: Props) {
   const decidesShown = !isConcrete ? (decidesToSend ?? autoDecidesIso) : null;
   // reply-by (unlike decides-by) already bakes its default into replyToSend, so no fallback here.
   const replyShown = replyToSend;
+  const replyLine = replyShown ? `Replies close ${formatSlot(replyShown)}` : null;
   const deadlineLines = isConcrete
-    ? [replyShown ? `Replies close ${formatSlot(replyShown)}` : "We'll pick a sensible deadline"]
+    ? [replyLine ?? "We'll pick a sensible deadline"]
     : earliestMs == null
       ? ["Set once there's a time on the table"]
       : [
           ...(decidesShown ? [`Voting closes ${formatSlot(decidesShown)}`] : []),
-          ...(replyShown ? [`Replies close ${formatSlot(replyShown)}`] : []),
+          ...(replyLine ? [replyLine] : []),
         ];
 
   function canAdvance(key: StepKey): boolean {
@@ -551,8 +554,8 @@ export function CreateWizard({ navigation }: Props) {
                 {outcomeSummary({
                   timeCount: timeIsos.length,
                   activityCount,
-                  timeFixed: timeIsos.length === 1 && lockTimesEff,
-                  activityFixed: lockActivityEff && activityCount <= 1,
+                  timeFixed,
+                  activityFixed,
                   firstTimeIso: timeIsos[0] ?? null,
                 })}
               </AppText>
@@ -822,8 +825,7 @@ function outcomeSummary({
 }): string {
   const when = timeFixed && firstTimeIso ? `It's on for ${formatSlot(firstTimeIso)}` : null;
 
-  // Caller wires activityFixed = lockActivityEff && activityCount <= 1, and
-  // lockActivityEff implies activityCount > 0, so activityFixed implies exactly one activity.
+  // activityFixed implies exactly one activity (lockActivityEff implies activityCount > 0).
   if (when) {
     if (activityFixed) return `${when}. Activity set - just say who's in.`;
     return `${when}. The group picks what to do, then who's in.`;
