@@ -81,6 +81,12 @@ export function initials(name: string): string {
   return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase();
 }
 
+// The single-letter initial for a person avatar (distinct from the two-letter `initials` used for
+// group avatars). Presentation-only; Avatar still takes a derived `initial` string.
+export function firstInitial(name: string): string {
+  return name.charAt(0).toUpperCase();
+}
+
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS_SHORT = [
   "Jan",

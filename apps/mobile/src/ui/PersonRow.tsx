@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Pressable, View, type ViewStyle } from "react-native";
+import { firstInitial } from "../lib/format";
 import { ui } from "../theme";
 import { Avatar } from "./Avatar";
 import { AppText } from "./Text";
@@ -41,7 +42,7 @@ export function PersonRow({
   };
   const inner = (
     <>
-      <Avatar initial={name.charAt(0).toUpperCase()} color={color} size={avatarSize} />
+      <Avatar initial={firstInitial(name)} color={color} size={avatarSize} />
       <AppText variant="rowLabelSm">{name}</AppText>
       {right != null ? (
         rightAlign ? (

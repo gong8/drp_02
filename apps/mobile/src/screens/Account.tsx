@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import { View } from "react-native";
 import { useDevAuth } from "../lib/auth";
 import { ERR_SAVE, LABEL_DISPLAY_NAME, NAME_HINT, PLACEHOLDER_DISPLAY_NAME } from "../lib/copy";
+import { firstInitial } from "../lib/format";
 import { trpc } from "../lib/trpc";
 import { useFetchOnFocus } from "../lib/useFetchOnFocus";
 import { ui } from "../theme";
@@ -95,7 +96,7 @@ export function Account() {
       {saveError && <FormError>{ERR_SAVE}</FormError>}
       <Card style={{ marginBottom: 20 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-          <Avatar initial={shownName.charAt(0).toUpperCase()} color={ui.brand} size={44} />
+          <Avatar initial={firstInitial(shownName)} color={ui.brand} size={44} />
           <View style={{ flex: 1 }}>
             <AppText variant="title">{shownName}</AppText>
             {email ? (
