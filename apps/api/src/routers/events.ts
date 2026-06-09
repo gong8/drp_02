@@ -82,6 +82,23 @@ const byStartsAtThenNullsLast = (a: { startsAt: Date | null }, b: { startsAt: Da
   (a.startsAt?.getTime() ?? Number.POSITIVE_INFINITY) -
   (b.startsAt?.getTime() ?? Number.POSITIVE_INFINITY);
 
+// Group rows into a Map<key, values[]> in row order, projecting each row to its value. The list-map
+// idiom (get-or-[], push, set) that loadEventBundle's per-event reads share.
+function groupBy<T, K, V>(
+  rows: readonly T[],
+  keyOf: (r: T) => K,
+  toValue: (r: T) => V,
+): Map<K, V[]> {
+  const out = new Map<K, V[]>();
+  for (const r of rows) {
+    const key = keyOf(r);
+    const list = out.get(key) ?? [];
+    list.push(toValue(r));
+    out.set(key, list);
+  }
+  return out;
+}
+
 async function candidatesFor(eventId: string): Promise<(typeof eventCandidates.$inferSelect)[]> {
   const rows = await db.select().from(eventCandidates).where(eq(eventCandidates.eventId, eventId));
   return rows.sort(byStartsAtThenNullsLast);
@@ -417,28 +434,17 @@ async function loadEventBundle(
           db.select().from(eventOptOuts).where(inArray(eventOptOuts.eventId, ids)),
         ]);
 
-  const respMap = new Map<string, MomentResponse[]>();
-  for (const r of respRows) {
-    const list = respMap.get(r.eventId) ?? [];
-    list.push(toMomentResponse(r));
-    respMap.set(r.eventId, list);
-  }
-  const candMap = new Map<string, (typeof eventCandidates.$inferSelect)[]>();
-  for (const c of candRows) {
-    const list = candMap.get(c.eventId) ?? [];
-    list.push(c);
-    candMap.set(c.eventId, list);
-  }
+  const respMap = groupBy(respRows, (r) => r.eventId, toMomentResponse);
+  const candMap = groupBy(
+    candRows,
+    (c) => c.eventId,
+    (c) => c,
+  );
   // Candidate display order shared with candidatesFor: startsAt asc, nulls (activities) last.
   for (const list of candMap.values()) {
     list.sort(byStartsAtThenNullsLast);
   }
-  const reactMap = new Map<string, CandidateReaction[]>();
-  for (const r of reactRows) {
-    const list = reactMap.get(r.eventId) ?? [];
-    list.push(toReaction(r));
-    reactMap.set(r.eventId, list);
-  }
+  const reactMap = groupBy(reactRows, (r) => r.eventId, toReaction);
   const optMap = new Map<string, Set<string>>();
   for (const o of optRows) {
     const set = optMap.get(o.eventId) ?? new Set<string>();

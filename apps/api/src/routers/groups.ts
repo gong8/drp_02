@@ -185,22 +185,10 @@ export const groupsRouter = router({
         .where(eq(events.groupId, input.groupId));
       const eventIds = eventRows.map((e) => e.id);
       if (eventIds.length > 0) {
-        await tx
-          .delete(candidateReactions)
-          .where(
-            and(
-              eq(candidateReactions.userId, input.userId),
-              inArray(candidateReactions.eventId, eventIds),
-            ),
-          );
-        await tx
-          .delete(responses)
-          .where(and(eq(responses.userId, input.userId), inArray(responses.eventId, eventIds)));
-        await tx
-          .delete(eventOptOuts)
-          .where(
-            and(eq(eventOptOuts.userId, input.userId), inArray(eventOptOuts.eventId, eventIds)),
-          );
+        // Same (userId, eventIds) purge across all three vote tables, written once.
+        for (const t of [candidateReactions, responses, eventOptOuts]) {
+          await tx.delete(t).where(and(eq(t.userId, input.userId), inArray(t.eventId, eventIds)));
+        }
       }
 
       await tx
