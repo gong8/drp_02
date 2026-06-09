@@ -122,7 +122,7 @@ export function compareActions(a: Timed, b: Timed): number {
   const aMoment = a.phase === "moment";
   const bMoment = b.phase === "moment";
   if (aMoment !== bMoment) return aMoment ? -1 : 1;
-  const am = msOr(aMoment ? a.momentEndsAt : a.decidesBy, a.startsAt);
-  const bm = msOr(bMoment ? b.momentEndsAt : b.decidesBy, b.startsAt);
+  const am = msOr(activeDeadline(a).iso, a.startsAt);
+  const bm = msOr(activeDeadline(b).iso, b.startsAt);
   return am - bm;
 }
