@@ -166,3 +166,22 @@ so **nothing is required for the web app** and there is one bake for native:
   (Merge with the service's existing `RuntimeEnvironmentVariables` - App Runner replaces the whole map
   - or set it in the App Runner console under Configuration -> Environment variables. Either triggers
   a rolling redeploy.)
+
+## Meetup share links + OG unfurl card (DRP-56)
+
+Meetup links are `https://<web-origin>/m/<eventId>`. The web origin resolves with the same fallback
+chain as invite links (`window.location.origin` on web; `PUBLIC_WEB_URL` makes `events.shareLink`
+return a canonical `url`), so set the API `PUBLIC_WEB_URL` above for completeness.
+
+The per-meetup OpenGraph card (so a `/m/<id>` link unfurls as a rich card in chats) is a **Vercel
+Function** at `api/m/[id].ts`, wired by the `/m/:id -> /api/m/:id` rewrite in `vercel.json`. It fetches
+the public `events.previewByToken` over HTTPS, so it needs the API base as a **runtime** Vercel env
+var (the `EXPO_PUBLIC_*` build vars are inlined into the SPA bundle and are not visible to a Function):
+
+- **`OG_API_URL`** - set per Vercel environment: Production = the prod API
+  (`https://96mgvmgcbj.us-east-1.awsapprunner.com`), Preview = the dev API
+  (`https://wumksaeb3j.us-east-1.awsapprunner.com`). It falls back to `EXPO_PUBLIC_API_URL` if unset.
+
+After deploying, validate by pasting a real `/m/<id>` link into an unfurl debugger (opengraph.xyz) or
+a chat app. If the Function misbehaves, it is isolated: removing the first `rewrites` entry reverts
+`/m/*` to the normal SPA catch-all (links still work, only the rich card is lost).
