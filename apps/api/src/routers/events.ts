@@ -40,6 +40,7 @@ import {
 import type { UserCard } from "../db/users.js";
 import { fallbackUserCard, getUserCards } from "../db/users.js";
 import { msLeft } from "../format.js";
+import { activityKey, normalizeCreateCandidates, startMinute } from "../logic/create-candidates.js";
 import { shapePastMeetups } from "../logic/past-meetups.js";
 import { displayActivity, planOpensMoment, resolveActivity } from "../logic/plan-activity.js";
 import { protectedProcedure, router } from "../trpc.js";
@@ -108,14 +109,6 @@ async function candidatesFor(eventId: string): Promise<(typeof eventCandidates.$
 // at the value level, so the `as Date` casts on the filtered rows downstream stay valid.
 const isTimeCand = (c: typeof eventCandidates.$inferSelect) =>
   c.kind === "time" && c.startsAt != null;
-
-const MINUTE_MS = 60_000;
-// The minute bucket a time falls in. create and addCandidate collapse times to the same minute (the
-// wizard's granularity), so a slot sent twice - or at HH:MM:30 vs HH:MM:00 - stays one row.
-const startMinute = (d: Date) => Math.floor(d.getTime() / MINUTE_MS);
-// The case-insensitive dedupe key for an activity label. create and addCandidate must agree on it so
-// the same name added either way collapses to one row (keeping the both-axes-pinned moment shortcut).
-const activityKey = (s: string) => s.trim().toLowerCase();
 
 // The creator lock-readiness rule: a winning time candidate exists at the given quorum.
 function isReadyToLock(timeIds: string[], reactions: CandidateReaction[], quorum: number): boolean {
@@ -482,61 +475,15 @@ export const eventsRouter = router({
     await requireMember(input.groupId, ctx.userId);
     const id = `e_${randomUUID()}`;
 
-    const timeInputs = input.timeCandidates ?? [];
-    const activityInputs = input.activityCandidates ?? [];
-
     const nowMs = Date.now();
-    const sortedTimeInputs = timeInputs
-      .map((t, i) => ({
-        id: `${id}_t${i + 1}`,
-        kind: "time" as const,
-        startsAt: new Date(t.startsAt),
-        partOfDay: t.partOfDay ?? null,
-        label: null,
-      }))
-      // Drop genuinely invalid date strings, but a valid time in the past is a hard error: it would
-      // give a collecting plan an already-expired default decides-by (an immediate silent self-fizzle).
-      // Mirrors addCandidate's future check + the explicit decides-by guard.
-      .filter((c) => !Number.isNaN(c.startsAt.getTime()))
-      .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
-    if (sortedTimeInputs.some((c) => c.startsAt.getTime() <= nowMs)) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "a time candidate must be in the future",
-      });
-    }
-    // Collapse candidates that land in the same minute (the wizard's granularity), keeping the
-    // earliest. A single intended slot sent twice must stay one row - otherwise it splits +1
-    // momentum and defeats the concrete-moment shortcut (planOpensMoment needs exactly one time).
-    // This mirrors addCandidate's minute dedupe so create and add agree.
-    const seenMinutes = new Set<number>();
-    const timeCands = sortedTimeInputs.filter((c) => {
-      const minute = startMinute(c.startsAt);
-      if (seenMinutes.has(minute)) return false;
-      seenMinutes.add(minute);
-      return true;
-    });
-
-    // Trim each label, drop any empty-after-trim (no whitespace-only plan names), and dedupe
-    // case-insensitively keeping the first occurrence - mirroring addCandidate's key. Two labels that
-    // collapse to one row keep the both-axes-pinned moment shortcut intact for duplicate activities.
-    const seenActivityKeys = new Set<string>();
-    const activityCands = activityInputs
-      .map((text) => text.trim())
-      .filter((text) => {
-        if (text === "") return false;
-        const key = activityKey(text);
-        if (seenActivityKeys.has(key)) return false;
-        seenActivityKeys.add(key);
-        return true;
-      })
-      .map((text, i) => ({
-        id: `${id}_a${i + 1}`,
-        kind: "activity" as const,
-        startsAt: null,
-        partOfDay: null,
-        label: text,
-      }));
+    // Shape, validate, and dedupe the two candidate lists (pure; mirrors addCandidate's minute /
+    // activity-key dedupe and throws on a past time). create then derives anchors + deadlines below.
+    const { timeCands, activityCands } = normalizeCreateCandidates(
+      id,
+      input.timeCandidates ?? [],
+      input.activityCandidates ?? [],
+      nowMs,
+    );
 
     // You can only lock an axis that has at least one candidate - locking nothing would just leave a
     // plan that can never converge (a locked, empty time axis can never get a time and silently fizzles).
