@@ -288,7 +288,7 @@ export function CreateWizard({ navigation }: Props) {
     setBusy(true);
     const activities = commitDraftActivity();
     try {
-      await trpc.events.create.mutate({
+      const created = await trpc.events.create.mutate({
         groupId,
         description: notes.trim() || undefined,
         location: location.trim() || undefined,
@@ -299,7 +299,15 @@ export function CreateWizard({ navigation }: Props) {
         decidesBy: decidesToSend,
         replyBy: replyToSend,
       });
-      navigation.reset({ index: 0, routes: [{ name: "Dashboard" }] });
+      // Land on the new plan with the share sheet auto-opening (create-the-meetup-first ->
+      // share-one-link); back from it lands on the dashboard, not this spent wizard.
+      navigation.reset({
+        index: 1,
+        routes: [
+          { name: "Dashboard" },
+          { name: "EventDetail", params: { eventId: created.id, shareOnLand: true } },
+        ],
+      });
     } catch {
       setError(true);
       setBusy(false);

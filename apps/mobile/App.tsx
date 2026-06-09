@@ -35,7 +35,8 @@ import { WebBackdrop } from "./src/ui/WebBackdrop";
 // and gets a real back button - there is no Account tab anymore.
 export type MeetupsStackParams = {
   Dashboard: undefined;
-  EventDetail: { eventId: string };
+  // shareOnLand: opened straight after creating the plan (auto-opens the share-this-meetup sheet).
+  EventDetail: { eventId: string; shareOnLand?: boolean };
   CreateWizard: undefined;
   // The authed landing for a tapped meetup share link (/m/:token); previews the plan then joins.
   JoinMeetup: { token?: string };
