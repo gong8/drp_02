@@ -1,6 +1,6 @@
 # BeThere
 
-A group meetup-coordination app. A creator sends one plan to a group; the group publicly +1s candidate **times** and **activities** (no names shown - it's the group's), then the plan runs a blind timed **moment** where members RSVP **yes / no / "I'll go if [people]"**, and either clears (it's on) or quietly fizzles. A per-user dashboard groups plans by **Reacting / Awaiting / Going / Declined**, and groups support membership CRUD. Built as a pnpm monorepo: an Expo mobile client talking to a Fastify + tRPC backend over a shared, end-to-end-typed API.
+A group meetup-coordination app. A creator sends one plan to a group; the group publicly +1s candidate **times** and **activities** (no names shown - it's the group's), then the plan runs a blind timed **moment** where members RSVP **yes / no / "I'll go if [people]"**, and either clears (it's on) or quietly fizzles. A per-user dashboard sorts plans into **Going / Open / Done**, and groups support membership CRUD and invite-link joins. Built as a pnpm monorepo: an Expo mobile client talking to a Fastify + tRPC backend over a shared, end-to-end-typed API.
 
 ## How a plan works
 
@@ -17,7 +17,7 @@ Plans are editable and repeatable. Any member can fix a live plan's name, locati
 
 ## Structure
 
-- `apps/mobile` - Expo / React Native client (TypeScript)
+- `apps/mobile` - Expo / React Native client (TypeScript), running on iOS, Android, and the web (`react-native-web`)
 - `apps/api` - Fastify + tRPC backend (Drizzle + Postgres)
 - `packages/shared` - shared Zod schemas and types (the single source of truth for the API contract)
 - `archive/` - the original standalone loose-availability prototype, excluded from the build; its ideas were folded back into the current unified suggest flow
@@ -39,9 +39,10 @@ Expo SDK 54 · React Navigation · tRPC v11 · Zod · Drizzle ORM · Postgres ·
 corepack enable pnpm
 pnpm install
 cp apps/api/.env.example apps/api/.env
+cp apps/mobile/.env.example apps/mobile/.env
 ```
 
-The defaults in `.env.example` run the API fully locally: a Dockerized Postgres and a spoofable dev user (`DEV_AUTH_BYPASS=1`), so no Clerk keys are needed for local development.
+The API runs fully locally on the defaults: a Dockerized Postgres and a spoofable dev user (`DEV_AUTH_BYPASS=1`), so it needs no Clerk keys. The mobile client still needs a Clerk **publishable** key (`EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` in `apps/mobile/.env`) to boot, even when you use the dev-bypass sign-in button.
 
 ## Running
 
@@ -49,6 +50,10 @@ The defaults in `.env.example` run the API fully locally: a Dockerized Postgres 
 pnpm db:up          # start local Postgres (host port 5433)
 pnpm dev:api        # start the Fastify + tRPC server (http://localhost:3000); reseeds demo data on boot
 pnpm dev:mobile     # start the Expo dev server (scan the QR with Expo Go)
+
+# Or one command that starts Postgres + the API + Expo together, against the local db:
+pnpm phone          # preview on a physical phone via Expo Go (wires Expo to your LAN IP)
+pnpm web            # preview in a browser (Expo web, dev-bypass auth on)
 ```
 
 ## Test & typecheck
@@ -57,6 +62,7 @@ pnpm dev:mobile     # start the Expo dev server (scan the QR with Expo Go)
 pnpm lint           # biome check (pnpm format to auto-fix)
 pnpm typecheck      # typecheck across the workspace
 pnpm test           # run tests across the workspace
+pnpm quality        # fail on banned escape hatches (as any, @ts-ignore, biome-ignore, ...)
 pnpm check          # all of the above in one go
 ```
 
@@ -66,6 +72,7 @@ Run `pnpm check` before opening any PR.
 
 - Branching and contribution workflow: [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - Specs, plans, mockups, and runbooks: [`docs/`](docs/)
+- Deployment and live URLs (web on Vercel, API on AWS App Runner): [`docs/runbook-deploy.md`](docs/runbook-deploy.md)
 - Guidance for AI coding agents in this repo: [`CLAUDE.md`](CLAUDE.md)
 </content>
 </invoke>
