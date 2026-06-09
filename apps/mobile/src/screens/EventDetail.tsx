@@ -68,7 +68,7 @@ export function EventDetail({ route, navigation }: Props) {
 
   // moment conditional sheet
   const [reanswering, setReanswering] = useState(false);
-  const [sheet, setSheet] = useState(false);
+  const [condSheet, setCondSheet] = useState(false);
   const [condModeLabel, setCondModeLabel] = useState<CondModeLabel>(COND_MODE.any);
   const [condPicked, setCondPicked] = useState<string[]>([]);
 
@@ -78,7 +78,7 @@ export function EventDetail({ route, navigation }: Props) {
   const [editActivity, setEditActivity] = useState("");
   const [editLocation, setEditLocation] = useState("");
   const [editNotes, setEditNotes] = useState("");
-  const [editStatus, setEditStatus] = useState("");
+  const [editMessage, setEditMessage] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
   const phaseRef = useRef<string>("");
   // Keys that freeze poll-driven setData while an optimistic mutation is in flight: candidate ids for
@@ -224,7 +224,7 @@ export function EventDetail({ route, navigation }: Props) {
     setEditActivity(data.activityRaw);
     setEditLocation(data.location);
     setEditNotes(data.description ?? "");
-    setEditStatus("");
+    setEditMessage("");
     setEditSheet(true);
   }
 
@@ -280,7 +280,7 @@ export function EventDetail({ route, navigation }: Props) {
       return;
     }
     setSavingEdit(true);
-    setEditStatus("");
+    setEditMessage("");
     trpc.events.update
       .mutate({ eventId: data.id, ...patch })
       .then((res) => {
@@ -303,13 +303,13 @@ export function EventDetail({ route, navigation }: Props) {
           }
           return next;
         });
-        setEditStatus("Updated by someone else - review and save again.");
+        setEditMessage("Updated by someone else - review and save again.");
         // A partial save (some fields applied, the rest conflicted) leaves the applied fields stale
         // in `data` until the next poll, so reload to surface them now while the sheet stays open.
         if (res.applied.length > 0) return load();
       })
       .catch(() => {
-        setEditStatus(`${ERR_SAVE} This meetup may have closed.`);
+        setEditMessage(`${ERR_SAVE} This meetup may have closed.`);
         return load();
       })
       .finally(() => setSavingEdit(false));
@@ -338,7 +338,7 @@ export function EventDetail({ route, navigation }: Props) {
 
   const sheets = (
     <>
-      <BottomSheet visible={sheet} onClose={() => setSheet(false)}>
+      <BottomSheet visible={condSheet} onClose={() => setCondSheet(false)}>
         <Section title="Go if these people are in" size="lg" />
         <Segmented
           options={[COND_MODE.any, COND_MODE.all] as const}
@@ -373,7 +373,7 @@ export function EventDetail({ route, navigation }: Props) {
           variant="primary"
           disabled={!condPicked.length || busy}
           onPress={() => {
-            setSheet(false);
+            setCondSheet(false);
             answer("conditional", {
               mode: condModeLabel === COND_MODE.all ? "all" : "any",
               targetIds: condPicked,
@@ -411,9 +411,9 @@ export function EventDetail({ route, navigation }: Props) {
           multiline
           style={{ marginTop: 12 }}
         />
-        {editStatus ? (
+        {editMessage ? (
           <AppText variant="caption" style={{ color: ui.brand, marginTop: 12, lineHeight: 16 }}>
-            {editStatus}
+            {editMessage}
           </AppText>
         ) : null}
         <Button
@@ -534,7 +534,7 @@ export function EventDetail({ route, navigation }: Props) {
           onNo={() => answer("no")}
           onConditional={() => {
             setCondPicked([]);
-            setSheet(true);
+            setCondSheet(true);
           }}
         />
       )}
