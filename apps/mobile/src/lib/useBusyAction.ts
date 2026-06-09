@@ -15,7 +15,7 @@ type BusyActionDeps = {
 // screen's own busy/error/load state, so a screen adopts it without moving where that state lives.
 // Returns a memoized `runAction(fn)`; each handler becomes `runAction(() => trpc.x.mutate(...))`.
 // A handler that needs to run extra work in the same busy window (e.g. EventDetail's
-// `setEditing(false)` before reload) passes an async `fn` that does it after the mutation, before
+// `setReanswering(false)` before reload) passes an async `fn` that does it after the mutation, before
 // `load()` runs - the original ordering is preserved.
 export function useBusyAction(deps: BusyActionDeps): (fn: () => Promise<unknown>) => Promise<void> {
   const { busy, setBusy, setError, load } = deps;

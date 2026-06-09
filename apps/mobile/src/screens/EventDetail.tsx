@@ -68,7 +68,7 @@ export function EventDetail({ route, navigation }: Props) {
   const [busy, setBusy] = useState(false);
 
   // moment conditional sheet
-  const [editing, setEditing] = useState(false);
+  const [reanswering, setReanswering] = useState(false);
   const [sheet, setSheet] = useState(false);
   const [condModeLabel, setCondModeLabel] = useState<CondModeLabel>("At least one");
   const [condPicked, setCondPicked] = useState<string[]>([]);
@@ -204,7 +204,7 @@ export function EventDetail({ route, navigation }: Props) {
   ) {
     return runAction(async () => {
       await trpc.events.respond.mutate(cond ? { eventId, kind, cond } : { eventId, kind });
-      setEditing(false);
+      setReanswering(false);
     });
   }
 
@@ -213,7 +213,7 @@ export function EventDetail({ route, navigation }: Props) {
   function changeAnswer() {
     return runAction(async () => {
       await trpc.events.unrespond.mutate({ eventId });
-      setEditing(true);
+      setReanswering(true);
     });
   }
 
@@ -528,8 +528,8 @@ export function EventDetail({ route, navigation }: Props) {
         <MomentView
           data={data}
           busy={busy}
-          editing={editing}
-          onEdit={changeAnswer}
+          reanswering={reanswering}
+          onChangeAnswer={changeAnswer}
           statusLine={statusLabel(data.myStatus)}
           onYes={() => answer("yes")}
           onNo={() => answer("no")}
@@ -792,8 +792,8 @@ function AddTime({
 function MomentView({
   data,
   busy,
-  editing,
-  onEdit,
+  reanswering,
+  onChangeAnswer,
   statusLine,
   onYes,
   onNo,
@@ -801,14 +801,14 @@ function MomentView({
 }: {
   data: Detail;
   busy: boolean;
-  editing: boolean;
-  onEdit: () => void;
+  reanswering: boolean;
+  onChangeAnswer: () => void;
   statusLine: string;
   onYes: () => void;
   onNo: () => void;
   onConditional: () => void;
 }) {
-  const showAnswer = editing || !data.myResponse;
+  const showAnswer = reanswering || !data.myResponse;
   // A blind conditional reads as "awaiting" server-side (we cannot resolve it without leaking), so
   // give the committed-conditional case its own heading instead of the misleading "Awaiting...".
   const lockedHeading =
@@ -845,7 +845,7 @@ function MomentView({
             label="Change"
             variant="outline"
             disabled={busy}
-            onPress={onEdit}
+            onPress={onChangeAnswer}
             style={{ marginTop: 12 }}
           />
         </>
