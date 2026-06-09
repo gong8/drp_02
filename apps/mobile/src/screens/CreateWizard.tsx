@@ -526,25 +526,13 @@ export function CreateWizard({ navigation }: Props) {
               label="What"
               lines={summaryActivities.length ? summaryActivities : ["Open - the group adds ideas"]}
               muted={summaryActivities.length === 0}
-              note={
-                summaryActivities.length === 0
-                  ? undefined
-                  : lockActivityEff
-                    ? "Locked - the group can't add more"
-                    : "Open - the group can add more and vote"
-              }
+              note={axisNote(summaryActivities.length > 0, lockActivityEff)}
             />
             <SummaryItem
               label="When"
               lines={summaryTimes.length ? summaryTimes : ["Open - the group adds times"]}
               muted={summaryTimes.length === 0}
-              note={
-                summaryTimes.length === 0
-                  ? undefined
-                  : lockTimesEff
-                    ? "Locked - the group can't add more"
-                    : "Open - the group can add more and vote"
-              }
+              note={axisNote(summaryTimes.length > 0, lockTimesEff)}
             />
             {location.trim() ? <SummaryItem label="Where" lines={[location.trim()]} /> : null}
             {notes.trim() ? <SummaryItem label="Notes" lines={[notes.trim()]} /> : null}
@@ -589,6 +577,13 @@ export function CreateWizard({ navigation }: Props) {
       />
     </ScreenScroll>
   );
+}
+
+// Confirm-step note shown under a What/When SummaryItem: nothing when the axis has no candidates,
+// otherwise whether the group can still add to that list.
+function axisNote(hasCandidates: boolean, locked: boolean): string | undefined {
+  if (!hasCandidates) return undefined;
+  return locked ? "Locked - the group can't add more" : "Open - the group can add more and vote";
 }
 
 // The shared edit/reset handlers for one deadline editor (decides-by / reply-by). startEdit seeds the
