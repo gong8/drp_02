@@ -319,11 +319,6 @@ export function EventDetail({ route, navigation }: Props) {
   // phase, and activeDeadline owns the same phase->label mapping the dashboard cards consume.
   const ms = deadlineMs(data, now);
   const { label } = activeDeadline(data);
-  // The chosen time, shown as a hero banner once a slot is locked (moment/cleared); collecting has
-  // no single time yet.
-  const heroIso = data.chosenStartsAt && data.phase !== "collecting" ? data.chosenStartsAt : null;
-  const heroClock = heroIso ? clock12(heroIso) : null;
-  const canEditDetails = isLive(data);
   const activityEditable = data.phase === "moment" || data.phase === "cleared";
 
   const sheets = (
@@ -428,78 +423,7 @@ export function EventDetail({ route, navigation }: Props) {
       )}
       {data.phase === "moment" && <CountdownBanner label={label} ms={ms} note={NOTE_BLIND} />}
 
-      <Card padding={0}>
-        {heroIso && heroClock ? (
-          <View
-            style={{
-              paddingHorizontal: 16,
-              paddingTop: 14,
-              paddingBottom: 12,
-              borderBottomWidth: ui.border,
-              borderBottomColor: ui.ink,
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-            }}
-          >
-            <View>
-              <FieldLabel tone="muted" style={{ letterSpacing: 1 }}>
-                {dayUpper(heroIso)}
-              </FieldLabel>
-              <View style={{ flexDirection: "row", alignItems: "flex-end", marginTop: 3 }}>
-                <Text
-                  style={{ fontFamily: font.display, fontSize: 34, lineHeight: 36, color: ui.ink }}
-                >
-                  {heroClock.time}
-                </Text>
-                <Text
-                  style={{
-                    fontFamily: font.bold,
-                    fontSize: 16,
-                    color: ui.muted,
-                    marginLeft: 5,
-                    marginBottom: 3,
-                  }}
-                >
-                  {heroClock.ampm}
-                </Text>
-              </View>
-            </View>
-            {data.phase === "cleared" ? <StatusPill label="It's on" /> : null}
-          </View>
-        ) : null}
-        <View style={{ paddingHorizontal: 16, paddingTop: heroIso ? 14 : 16, paddingBottom: 16 }}>
-          <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
-            <Text
-              style={{
-                flex: 1,
-                fontFamily: font.display,
-                fontSize: 24,
-                letterSpacing: -0.5,
-                color: ui.ink,
-              }}
-            >
-              {planLabel(data)}
-            </Text>
-            {canEditDetails && (
-              <TextButton
-                label="Edit"
-                onPress={openEditSheet}
-                style={{ fontSize: 12, marginLeft: 10, marginTop: 4 }}
-              />
-            )}
-          </View>
-          <AppText variant="caption" style={{ marginTop: 4 }}>
-            {data.groupName}
-            {data.location ? ` · ${data.location}` : ""}
-          </AppText>
-          {data.description ? (
-            <AppText variant="captionPara" style={{ marginTop: 8 }}>
-              {data.description}
-            </AppText>
-          ) : null}
-        </View>
-      </Card>
+      <PlanHeaderCard data={data} canEdit={isLive(data)} onEdit={openEditSheet} />
 
       {data.phase === "collecting" && (
         <CollectingView
@@ -544,5 +468,94 @@ export function EventDetail({ route, navigation }: Props) {
         </View>
       )}
     </ScreenScroll>
+  );
+}
+
+// The plan's header card: a chosen-time hero banner once a slot is locked (moment/cleared; collecting
+// has no single time yet), then the plan title, group/location line, notes, and an Edit affordance.
+function PlanHeaderCard({
+  data,
+  canEdit,
+  onEdit,
+}: {
+  data: Detail;
+  canEdit: boolean;
+  onEdit: () => void;
+}) {
+  const heroIso = data.chosenStartsAt && data.phase !== "collecting" ? data.chosenStartsAt : null;
+  const heroClock = heroIso ? clock12(heroIso) : null;
+  return (
+    <Card padding={0}>
+      {heroIso && heroClock ? (
+        <View
+          style={{
+            paddingHorizontal: 16,
+            paddingTop: 14,
+            paddingBottom: 12,
+            borderBottomWidth: ui.border,
+            borderBottomColor: ui.ink,
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+          }}
+        >
+          <View>
+            <FieldLabel tone="muted" style={{ letterSpacing: 1 }}>
+              {dayUpper(heroIso)}
+            </FieldLabel>
+            <View style={{ flexDirection: "row", alignItems: "flex-end", marginTop: 3 }}>
+              <Text
+                style={{ fontFamily: font.display, fontSize: 34, lineHeight: 36, color: ui.ink }}
+              >
+                {heroClock.time}
+              </Text>
+              <Text
+                style={{
+                  fontFamily: font.bold,
+                  fontSize: 16,
+                  color: ui.muted,
+                  marginLeft: 5,
+                  marginBottom: 3,
+                }}
+              >
+                {heroClock.ampm}
+              </Text>
+            </View>
+          </View>
+          {data.phase === "cleared" ? <StatusPill label="It's on" /> : null}
+        </View>
+      ) : null}
+      <View style={{ paddingHorizontal: 16, paddingTop: heroIso ? 14 : 16, paddingBottom: 16 }}>
+        <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
+          <Text
+            style={{
+              flex: 1,
+              fontFamily: font.display,
+              fontSize: 24,
+              letterSpacing: -0.5,
+              color: ui.ink,
+            }}
+          >
+            {planLabel(data)}
+          </Text>
+          {canEdit && (
+            <TextButton
+              label="Edit"
+              onPress={onEdit}
+              style={{ fontSize: 12, marginLeft: 10, marginTop: 4 }}
+            />
+          )}
+        </View>
+        <AppText variant="caption" style={{ marginTop: 4 }}>
+          {data.groupName}
+          {data.location ? ` · ${data.location}` : ""}
+        </AppText>
+        {data.description ? (
+          <AppText variant="captionPara" style={{ marginTop: 8 }}>
+            {data.description}
+          </AppText>
+        ) : null}
+      </View>
+    </Card>
   );
 }
