@@ -11,7 +11,7 @@ import {
 import { TRPCError } from "@trpc/server";
 import { and, count, eq, inArray, notInArray } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { FALLBACK_GROUP_NAME, freshInviteCode, inviteUrlFor } from "../db/groups.js";
+import { FALLBACK_GROUP_NAME, freshInviteCode, inviteUrlFor, memberIdsOf } from "../db/groups.js";
 import {
   candidateReactions,
   eventOptOuts,
@@ -24,14 +24,6 @@ import {
 import { fallbackUserCard, getUserCards, userCardFromRow } from "../db/users.js";
 import { protectedProcedure, router } from "../trpc.js";
 import { requireMember } from "./events.js";
-
-async function memberIdsOf(groupId: string): Promise<string[]> {
-  const rows = await db
-    .select({ userId: groupMembers.userId })
-    .from(groupMembers)
-    .where(eq(groupMembers.groupId, groupId));
-  return rows.map((r) => r.userId);
-}
 
 async function resolveGroupByCode(rawCode: string) {
   const code = normalizeInviteCode(rawCode);

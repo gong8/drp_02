@@ -2,7 +2,7 @@ import { randomInt } from "node:crypto";
 import { INVITE_ALPHABET, INVITE_CODE_LENGTH } from "@bethere/shared";
 import { eq, inArray } from "drizzle-orm";
 import { db } from "./client.js";
-import { groups } from "./schema.js";
+import { groupMembers, groups } from "./schema.js";
 
 // Shown for a plan/roster whose group row is missing, so reads never surface a blank name.
 export const FALLBACK_GROUP_NAME = "Group";
@@ -58,4 +58,14 @@ export async function getGroupNames(ids: string[]): Promise<Map<string, string>>
   const rows = await db.select().from(groups).where(inArray(groups.id, ids));
   for (const g of rows) out.set(g.id, g.name);
   return out;
+}
+
+// The user ids of a group's members, in row order. The single source for this membership-id query,
+// shared by groupsRouter (get / addableUsers) and events.get.
+export async function memberIdsOf(groupId: string): Promise<string[]> {
+  const rows = await db
+    .select({ userId: groupMembers.userId })
+    .from(groupMembers)
+    .where(eq(groupMembers.groupId, groupId));
+  return rows.map((r) => r.userId);
 }

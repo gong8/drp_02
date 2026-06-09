@@ -27,7 +27,7 @@ import {
 import { TRPCError } from "@trpc/server";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { FALLBACK_GROUP_NAME, getGroupNames } from "../db/groups.js";
+import { FALLBACK_GROUP_NAME, getGroupNames, memberIdsOf } from "../db/groups.js";
 import {
   candidateReactions,
   eventCandidates,
@@ -977,14 +977,8 @@ export const eventsRouter = router({
 
     // Members are a membership query (not in the bundle); read them first so their uids join the
     // bundle's batched user-card query alongside the revealed crowd.
-    const memberRows = await db
-      .select({ userId: groupMembers.userId })
-      .from(groupMembers)
-      .where(eq(groupMembers.groupId, e.groupId));
-    const bundle = await loadEventBundle(
-      [e],
-      memberRows.map((m) => m.userId),
-    );
+    const memberIds = await memberIdsOf(e.groupId);
+    const bundle = await loadEventBundle([e], memberIds);
 
     const { resp, revealed, isCreator, iOptedOut, myStatus } = derivePlanView(
       e,
@@ -1024,9 +1018,9 @@ export const eventsRouter = router({
       isCreator && e.phase === "collecting" && isReadyToLock(timeIds, reactions, e.quorum);
 
     const members: { id: string; name: string }[] = [];
-    for (const row of memberRows) {
-      if (row.userId === ctx.userId) continue;
-      members.push({ id: row.userId, name: bundle.userCard(row.userId).name });
+    for (const id of memberIds) {
+      if (id === ctx.userId) continue;
+      members.push({ id, name: bundle.userCard(id).name });
     }
 
     const showCrowd = revealed !== null && e.phase !== "fizzled";
