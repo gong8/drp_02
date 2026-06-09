@@ -1,4 +1,10 @@
-import type { Conditional } from "@bethere/shared";
+import {
+  CandidateKind,
+  type Conditional,
+  PartOfDay,
+  PlanPhase,
+  ResponseKind,
+} from "@bethere/shared";
 import {
   boolean,
   integer,
@@ -14,14 +20,16 @@ import {
 // Frozen legacy: written on every plan but never read; `phase` is the live lifecycle source of
 // truth. Slated for removal in a dedicated migration.
 export const eventStatusEnum = pgEnum("event_status", ["open", "resolved"]);
-export const responseKindEnum = pgEnum("response_kind", ["yes", "no", "conditional"]);
+// The four live enums below are driven from the shared z.enum single source (schemas.ts), so the
+// DB enum and the network/mobile enum can never drift. Value sets and order match 1:1.
+export const responseKindEnum = pgEnum("response_kind", ResponseKind.options);
 
 // Plan lifecycle: a plan collects reactions -> opens a blind moment -> cleared / fizzled.
-export const planPhaseEnum = pgEnum("plan_phase", ["collecting", "moment", "cleared", "fizzled"]);
+export const planPhaseEnum = pgEnum("plan_phase", PlanPhase.options);
 // Rough time-of-day band hint for a TIME candidate.
-export const partOfDayEnum = pgEnum("part_of_day", ["morning", "afternoon", "evening", "late"]);
+export const partOfDayEnum = pgEnum("part_of_day", PartOfDay.options);
 // Which list a candidate sits on: a concrete TIME, or a free-text ACTIVITY (what/where, fused).
-export const candidateKindEnum = pgEnum("candidate_kind", ["time", "activity"]);
+export const candidateKindEnum = pgEnum("candidate_kind", CandidateKind.options);
 
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
