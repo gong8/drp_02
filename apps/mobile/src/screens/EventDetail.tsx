@@ -20,7 +20,7 @@ import { activeDeadline, deadlineMs, isLive, isTerminal, type Phase } from "../l
 import type { RouterOutputs } from "../lib/trpc";
 import { trpc } from "../lib/trpc";
 import { useBusyAction } from "../lib/useBusyAction";
-import { TICK_MS, useLiveClock } from "../lib/useLiveClock";
+import { POLL_MS, TICK_MS, useLiveClock } from "../lib/useLiveClock";
 import { font, ui } from "../theme";
 import {
   AddComposer,
@@ -114,7 +114,7 @@ export function EventDetail({ route, navigation }: Props) {
       // Poll while the plan is live so the tally, countdown and reveal converge without a refresh.
       const poll = setInterval(() => {
         if (active && !isTerminal({ phase: phaseRef.current as Phase })) load();
-      }, 5000);
+      }, POLL_MS);
       return () => {
         active = false;
         clearInterval(poll);
