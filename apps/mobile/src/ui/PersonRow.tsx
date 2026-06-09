@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
-import { Pressable, View, type ViewStyle } from "react-native";
+import { View, type ViewStyle } from "react-native";
 import { firstInitial } from "../lib/format";
 import { ui } from "../theme";
 import { Avatar } from "./Avatar";
+import { Tappable } from "./Tappable";
 import { AppText } from "./Text";
 
 // An avatar + bold-name list row, shared by the group roster, the "who's in" reveal, and the two
@@ -53,11 +54,9 @@ export function PersonRow({
       ) : null}
     </>
   );
-  return onPress ? (
-    <Pressable onPress={onPress} style={[rowStyle, style]}>
+  return (
+    <Tappable onPress={onPress} style={[rowStyle, style]}>
       {inner}
-    </Pressable>
-  ) : (
-    <View style={[rowStyle, style]}>{inner}</View>
+    </Tappable>
   );
 }
