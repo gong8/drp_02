@@ -90,9 +90,16 @@ export function DateTimeField({
     seed(mode, value, minuteInterval, minimumDate, maximumDate),
   );
 
+  // Mode-gated native-picker props, derived once (mirrors DateTimeField.web's `isDate`): the minute
+  // interval applies to time mode, the date bounds to date mode. Used at both the Android and iOS sites.
+  const isDate = mode === "date";
+  const gatedMin = isDate ? minimumDate : undefined;
+  const gatedMax = isDate ? maximumDate : undefined;
+  const gatedInterval = isDate ? undefined : minuteInterval;
+
   const shown = displayValue(mode, value);
   // Shown only on the empty trigger; the picker sheet itself has no redundant title.
-  const placeholder = mode === "date" ? "Pick a date" : "Pick a time";
+  const placeholder = isDate ? "Pick a date" : "Pick a time";
 
   function commit(d: Date) {
     onChange(mode === "date" ? dateStringFrom(d) : timeStringFrom(d));
@@ -106,10 +113,10 @@ export function DateTimeField({
         value: initial,
         mode,
         is24Hour: false,
-        minuteInterval: mode === "time" ? minuteInterval : undefined,
-        minimumDate: mode === "date" ? minimumDate : undefined,
-        maximumDate: mode === "date" ? maximumDate : undefined,
-        display: mode === "date" ? "calendar" : "clock",
+        minuteInterval: gatedInterval,
+        minimumDate: gatedMin,
+        maximumDate: gatedMax,
+        display: isDate ? "calendar" : "clock",
         onChange: (event: DateTimePickerEvent, date?: Date) => {
           if (event.type === "set" && date) commit(date);
         },
@@ -176,13 +183,13 @@ export function DateTimeField({
             <DateTimePicker
               value={temp}
               mode={mode}
-              display={mode === "date" ? "inline" : "spinner"}
+              display={isDate ? "inline" : "spinner"}
               themeVariant="light"
               accentColor={ui.brand}
               textColor={ui.ink}
-              minimumDate={mode === "date" ? minimumDate : undefined}
-              maximumDate={mode === "date" ? maximumDate : undefined}
-              minuteInterval={mode === "time" ? minuteInterval : undefined}
+              minimumDate={gatedMin}
+              maximumDate={gatedMax}
+              minuteInterval={gatedInterval}
               onChange={(_event: DateTimePickerEvent, date?: Date) => {
                 if (!date) return;
                 // Save live - no Done button. The pink-highlighted selection is the confirmation;
