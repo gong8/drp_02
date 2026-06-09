@@ -634,26 +634,16 @@ export const eventsRouter = router({
       .where(eq(eventCandidates.id, input.candidateId));
     if (!cand || cand.eventId !== input.eventId) throw new TRPCError({ code: "NOT_FOUND" });
 
-    const mine = await db
-      .select()
-      .from(candidateReactions)
-      .where(
-        and(
-          eq(candidateReactions.eventId, input.eventId),
-          eq(candidateReactions.candidateId, input.candidateId),
-          eq(candidateReactions.userId, ctx.userId),
-        ),
-      );
+    // Identity of the caller's reaction row on this candidate; the existence read and the delete
+    // must target the same row, so spell it once.
+    const mineWhere = and(
+      eq(candidateReactions.eventId, input.eventId),
+      eq(candidateReactions.candidateId, input.candidateId),
+      eq(candidateReactions.userId, ctx.userId),
+    );
+    const mine = await db.select().from(candidateReactions).where(mineWhere);
     if (mine.length > 0) {
-      await db
-        .delete(candidateReactions)
-        .where(
-          and(
-            eq(candidateReactions.eventId, input.eventId),
-            eq(candidateReactions.candidateId, input.candidateId),
-            eq(candidateReactions.userId, ctx.userId),
-          ),
-        );
+      await db.delete(candidateReactions).where(mineWhere);
       return { reacted: false as const };
     }
     // The +1 and the opt-out clear are one unit (a +1 rejoins anyone who had opted out - mutual
