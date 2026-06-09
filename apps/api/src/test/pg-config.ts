@@ -2,9 +2,9 @@
 // once (with the docker-compose defaults) and derive the maintenance DSN + per-process DB-name
 // convention from them. Changing the docker port means editing the TEST_PG_PORT default HERE only.
 //
-// This module deliberately does NOT read TEST_PG_MAINTENANCE_URL / TEST_DB_NAME, so it stands on
-// its own for the clean.ts path, which is launched WITHOUT preloading env.ts. env.ts remains the
-// sole owner of TEST_DB_NAME / TEST_PG_MAINTENANCE_URL / DATABASE_URL for the app under test.
+// This module deliberately does NOT read TEST_DB_NAME, so it stands on its own for the clean.ts
+// path, which is launched WITHOUT preloading env.ts. env.ts remains the sole owner of TEST_DB_NAME
+// / DATABASE_URL for the app under test.
 
 const host = process.env.TEST_PG_HOST ?? "localhost";
 const port = process.env.TEST_PG_PORT ?? "5433";
