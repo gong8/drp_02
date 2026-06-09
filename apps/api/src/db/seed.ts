@@ -11,7 +11,7 @@ import {
   responses,
   users,
 } from "./schema.js";
-import { candId, DEMO_USERS, dayAt, GROUPS, PLANS } from "./seed-data.js";
+import { candId, DEMO_USERS, dayAt, GROUPS, PLANS, timeStarts } from "./seed-data.js";
 
 async function insertDemoData(): Promise<void> {
   for (const u of DEMO_USERS) {
@@ -30,18 +30,14 @@ async function insertDemoData(): Promise<void> {
     }
   }
   for (const p of PLANS) {
-    const timeCands = p.candidates.filter((c) => c.kind === "time" && c.startsAt);
-    const sorted = [...timeCands].sort(
-      (a, b) => (a.startsAt as Date).getTime() - (b.startsAt as Date).getTime(),
-    );
+    const sorted = timeStarts(p.candidates); // Date[], ascending
     const chosen = p.chosenSuffix
       ? p.candidates.find((c) => c.suffix === p.chosenSuffix)
       : undefined;
     // A still-collecting untitled plan has no chosen slot yet; anchor on its earliest time candidate
     // and fall back to decidesBy for the respond-by horizon.
-    const startsAt = chosen?.startsAt ?? sorted[0]?.startsAt ?? p.decidesBy ?? dayAt(2, 19);
-    const respondByAt =
-      p.momentEndsAt ?? sorted[sorted.length - 1]?.startsAt ?? p.decidesBy ?? startsAt;
+    const startsAt = chosen?.startsAt ?? sorted[0] ?? p.decidesBy ?? dayAt(2, 19);
+    const respondByAt = p.momentEndsAt ?? sorted[sorted.length - 1] ?? p.decidesBy ?? startsAt;
 
     await db.insert(events).values({
       id: p.id,

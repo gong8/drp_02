@@ -227,6 +227,15 @@ export function candId(planId: string, suffix: string): string {
   return `${planId}_${suffix}`;
 }
 
+// The start times of a plan's TIME candidates, ascending. The single justified `as Date` cast
+// lives here: TS does not narrow startsAt?: Date through the `kind === "time" && c.startsAt` filter.
+export function timeStarts(candidates: Cand[]): Date[] {
+  return candidates
+    .filter((c) => c.kind === "time" && c.startsAt)
+    .map((c) => c.startsAt as Date)
+    .sort((a, b) => a.getTime() - b.getTime());
+}
+
 // Pure structural checks on the demo data: referential integrity + model coherence. Runs without a
 // DB so unit tests (and a quick local sanity check) catch a stale reference the moment it appears.
 export function seedIntegrityErrors(
@@ -287,11 +296,9 @@ export function seedIntegrityErrors(
     if (p.phase === "collecting" && p.chosenSuffix) {
       errors.push(`plan ${p.id}: collecting plan should not have a chosenSuffix`);
     }
-    const startTimes = p.candidates
-      .filter((c) => c.kind === "time" && c.startsAt)
-      .map((c) => (c.startsAt as Date).getTime());
-    if (p.decidesBy && startTimes.length > 0) {
-      const earliest = Math.min(...startTimes);
+    const starts = timeStarts(p.candidates);
+    if (p.decidesBy && starts.length > 0) {
+      const earliest = starts[0].getTime(); // sorted ascending => earliest
       if (p.decidesBy.getTime() > earliest)
         errors.push(`plan ${p.id}: decidesBy is after the earliest time candidate`);
     }
