@@ -160,6 +160,10 @@ export const GroupName = z.string().min(1).max(60);
 export const CreateGroupInput = z.object({ name: GroupName });
 export type CreateGroupInput = z.infer<typeof CreateGroupInput>;
 
+// Crystallize a meetup's roster into a new permanent group (DRP-62 "make a group from this").
+export const CreateGroupFromEventInput = z.object({ eventId: z.string(), name: GroupName });
+export type CreateGroupFromEventInput = z.infer<typeof CreateGroupFromEventInput>;
+
 // Network boundary for groups.rename - reuses the shared GroupName rule.
 export const RenameGroupInput = z.object({ id: z.string(), name: GroupName });
 export type RenameGroupInput = z.infer<typeof RenameGroupInput>;
