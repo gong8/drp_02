@@ -1,6 +1,6 @@
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Pressable, View, type ViewStyle } from "react-native";
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { Pressable, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
 import {
   ACTION_NEW_GROUP,
@@ -8,7 +8,6 @@ import {
   ANON_SEND_TITLE,
   DEADLINE_RSVP,
   DEADLINE_VOTING,
-  DEADLINES_SUB_CONCRETE,
   ERR_SAVE,
   LABEL_GROUP_NAME,
   plural,
@@ -181,6 +180,9 @@ export function CreateWizard({ navigation }: Props) {
   // Concrete shortcut: skip voting only when BOTH axes are pinned - one locked time AND a locked
   // activity. Must match the server's planOpensMoment so the preview never diverges.
   const isConcrete = timeFixed && activityFixed;
+  // What the vote decides, stated precisely on the deadlines timeline: a pinned axis is out of the
+  // vote ("the time" / "what to do"); an open pair is the full "when and what".
+  const voteSubject = timeFixed ? "what to do" : activityFixed ? "the time" : "when and what";
 
   const decidesOverrideIso = decidesEdit ? isoFrom(decidesDate, decidesTime) : null;
   // Match the server bounds (events.create): a custom deadline must sit after now AND leave a full
@@ -359,9 +361,6 @@ export function CreateWizard({ navigation }: Props) {
 
   const nextLabel = isLastStep ? "Send to the group" : "Next";
   const stepCopy = STEP_COPY[stepKey];
-  // A concrete plan has no voting round, so the deadlines step shows only the RSVP card - swap the
-  // two-stage sub for the RSVP-only one.
-  const stepSub = stepKey === "deadlines" && isConcrete ? DEADLINES_SUB_CONCRETE : stepCopy.sub;
   const canGoNext = canAdvance(stepKey);
 
   return (
@@ -369,7 +368,7 @@ export function CreateWizard({ navigation }: Props) {
       <ProgressDots steps={steps} index={step} />
       {error && <FormError>{ERR_SAVE}</FormError>}
 
-      <Section title={stepCopy.title} sub={stepSub} size="lg">
+      <Section title={stepCopy.title} sub={stepCopy.sub} size="lg">
         {stepKey === "group" && (
           <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
             {groups.map((g) => (
@@ -512,55 +511,72 @@ export function CreateWizard({ navigation }: Props) {
 
         {stepKey === "deadlines" && (
           <>
+            <TimelineStage step={1} heading="You send it">
+              <AppText variant="captionPara" style={{ marginTop: 4 }}>
+                {isConcrete
+                  ? "It goes to the group anonymously - the time and activity are set."
+                  : `It goes to the group anonymously. They vote on ${voteSubject}.`}
+              </AppText>
+            </TimelineStage>
+
             {!isConcrete && (
-              <DeadlineField
-                heading={DEADLINE_VOTING}
-                editing={decidesEdit}
-                date={decidesDate}
-                time={decidesTime}
-                onDate={setDecidesDate}
-                onTime={setDecidesTime}
-                minimumDate={new Date()}
-                invalid={decidesInvalid}
-                invalidNote={
-                  decidesPastNow
-                    ? "Voting has to close in the future."
-                    : "Voting has to close at least an hour before your earliest time."
-                }
-                defaultLine={autoDecidesIso ? formatSlot(autoDecidesIso) : "Picked automatically"}
-                defaultSub={
-                  autoDecidesIso
-                    ? "The group's top pick wins, then RSVPs open."
-                    : "Add a time and you can set this yourself."
-                }
-                onEdit={autoDecidesIso ? decidesHandlers.startEdit : undefined}
-                onUseDefault={decidesHandlers.useDefault}
-              />
+              <TimelineStage step={2} heading={DEADLINE_VOTING}>
+                <DeadlineField
+                  editing={decidesEdit}
+                  date={decidesDate}
+                  time={decidesTime}
+                  onDate={setDecidesDate}
+                  onTime={setDecidesTime}
+                  minimumDate={new Date()}
+                  invalid={decidesInvalid}
+                  invalidNote={
+                    decidesPastNow
+                      ? "Voting has to close in the future."
+                      : "Voting has to close at least an hour before your earliest time."
+                  }
+                  defaultLine={autoDecidesIso ? formatSlot(autoDecidesIso) : "Picked automatically"}
+                  defaultSub={
+                    autoDecidesIso
+                      ? timeFixed
+                        ? "The most-voted activity wins - your meetup is locked in."
+                        : "The most-voted time wins - your meetup is locked in."
+                      : "Add a time and you can set this yourself."
+                  }
+                  onEdit={autoDecidesIso ? decidesHandlers.startEdit : undefined}
+                  onUseDefault={decidesHandlers.useDefault}
+                />
+              </TimelineStage>
             )}
 
-            {earliestMs != null && (
-              <DeadlineField
-                style={{ marginTop: isConcrete ? 0 : 18 }}
-                heading={DEADLINE_RSVP}
-                editing={replyEdit}
-                date={replyDate}
-                time={replyTime}
-                onDate={setReplyDate}
-                onTime={setReplyTime}
-                minimumDate={new Date(replyFloorMs)}
-                maximumDate={new Date(earliestMs)}
-                invalid={replyInvalid}
-                invalidNote={
-                  isConcrete
-                    ? "RSVPs have to close in the future, by your meetup time."
-                    : "RSVPs have to close after voting ends, by your earliest time."
-                }
-                defaultLine={autoReplyIso ? formatSlot(autoReplyIso) : "Picked automatically"}
-                defaultSub="Answers stay hidden until then - then everyone sees who's in."
-                onEdit={autoReplyIso ? replyHandlers.startEdit : undefined}
-                onUseDefault={replyHandlers.useDefault}
-              />
-            )}
+            <TimelineStage step={isConcrete ? 2 : 3} last heading={DEADLINE_RSVP}>
+              {earliestMs != null ? (
+                <DeadlineField
+                  editing={replyEdit}
+                  date={replyDate}
+                  time={replyTime}
+                  onDate={setReplyDate}
+                  onTime={setReplyTime}
+                  minimumDate={new Date(replyFloorMs)}
+                  maximumDate={new Date(earliestMs)}
+                  invalid={replyInvalid}
+                  invalidNote={
+                    isConcrete
+                      ? "RSVPs have to close in the future, by your meetup time."
+                      : "RSVPs have to close after voting ends, by your earliest time."
+                  }
+                  defaultLine={autoReplyIso ? formatSlot(autoReplyIso) : "Picked automatically"}
+                  defaultSub={
+                    'Everyone answers "in or out" in secret - revealed at close: you see who\'s in.'
+                  }
+                  onEdit={autoReplyIso ? replyHandlers.startEdit : undefined}
+                  onUseDefault={replyHandlers.useDefault}
+                />
+              ) : (
+                <AppText variant="captionPara" style={{ marginTop: 4 }}>
+                  Once a time is locked, everyone answers "in or out" in secret - revealed at close.
+                </AppText>
+              )}
+            </TimelineStage>
           </>
         )}
 
@@ -791,11 +807,59 @@ function RemoveDot({ onPress }: { onPress: () => void }) {
   );
 }
 
-// One deadline editor (decides-by / reply-by): a heading over a default-mode Card (the chosen line +
-// a sub + an optional "Change") or an edit-mode Card (a date/time pill + an optional invalid note + a
-// "Use default"). The two deadlines on the deadlines step are the same shape, so they share this.
-function DeadlineField({
+// One stage on the deadlines timeline: a numbered ink dot and a connecting rail on the left, the
+// stage heading and content on the right. The rail draws the meetup's lifecycle top-to-bottom
+// (you send it -> voting closes -> RSVP closes), so a first-time creator reads the sequence
+// directly instead of inferring it from two unrelated-looking cards.
+function TimelineStage({
+  step,
   heading,
+  last = false,
+  children,
+}: {
+  step: number;
+  heading: string;
+  last?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <View style={{ flexDirection: "row" }}>
+      <View style={{ alignItems: "center", marginRight: 12 }}>
+        <View
+          style={{
+            width: 24,
+            height: 24,
+            borderRadius: ui.rPill,
+            borderWidth: 1.5,
+            borderColor: ui.ink,
+            backgroundColor: ui.ink,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <AppText variant="rowLabelSm" style={{ color: ui.onInk, lineHeight: 15 }}>
+            {step}
+          </AppText>
+        </View>
+        {!last && (
+          <View style={{ flex: 1, width: 1.5, backgroundColor: ui.ink, marginVertical: 3 }} />
+        )}
+      </View>
+      <View style={{ flex: 1, paddingBottom: last ? 0 : 20 }}>
+        <AppText variant="rowLabel" style={{ marginTop: 2 }}>
+          {heading}
+        </AppText>
+        {children}
+      </View>
+    </View>
+  );
+}
+
+// One deadline editor on a timeline stage: a default-mode Card (the chosen line + a sub + an
+// optional "Change") or an edit-mode Card (a date/time pill + an optional invalid note + a
+// "Use default"). The two deadline stages are the same shape, so they share this; the stage above
+// provides the heading.
+function DeadlineField({
   editing,
   date,
   time,
@@ -809,9 +873,7 @@ function DeadlineField({
   defaultSub,
   onEdit,
   onUseDefault,
-  style,
 }: {
-  heading: string;
   editing: boolean;
   date: string;
   time: string;
@@ -825,44 +887,38 @@ function DeadlineField({
   defaultSub: string;
   onEdit?: () => void;
   onUseDefault: () => void;
-  style?: ViewStyle;
 }) {
-  return (
-    <View style={style}>
-      <AppText variant="rowLabelSm">{heading}</AppText>
-      {editing ? (
-        <Card style={{ marginTop: 8 }}>
-          <DateTimePill
-            dateValue={date}
-            timeValue={time}
-            onDate={onDate}
-            onTime={onTime}
-            minimumDate={minimumDate}
-            maximumDate={maximumDate}
-          />
-          {invalid && (
-            <AppText variant="caption" style={{ color: ui.brand, marginTop: 8 }}>
-              {invalidNote}
-            </AppText>
-          )}
-          <View style={{ flexDirection: "row", marginTop: 12 }}>
-            <Button size="sm" variant="outline" label="Use default" onPress={onUseDefault} />
-          </View>
-        </Card>
-      ) : (
-        <Card style={{ marginTop: 8 }}>
-          <AppText variant="rowLabelSm">{defaultLine}</AppText>
-          <AppText variant="caption" style={{ marginTop: 3 }}>
-            {defaultSub}
-          </AppText>
-          {onEdit && (
-            <View style={{ flexDirection: "row", marginTop: 10 }}>
-              <Button size="sm" variant="outline" label="Change" onPress={onEdit} />
-            </View>
-          )}
-        </Card>
+  return editing ? (
+    <Card style={{ marginTop: 8 }}>
+      <DateTimePill
+        dateValue={date}
+        timeValue={time}
+        onDate={onDate}
+        onTime={onTime}
+        minimumDate={minimumDate}
+        maximumDate={maximumDate}
+      />
+      {invalid && (
+        <AppText variant="caption" style={{ color: ui.brand, marginTop: 8 }}>
+          {invalidNote}
+        </AppText>
       )}
-    </View>
+      <View style={{ flexDirection: "row", marginTop: 12 }}>
+        <Button size="sm" variant="outline" label="Use default" onPress={onUseDefault} />
+      </View>
+    </Card>
+  ) : (
+    <Card style={{ marginTop: 8 }}>
+      <AppText variant="rowLabelSm">{defaultLine}</AppText>
+      <AppText variant="caption" style={{ marginTop: 3 }}>
+        {defaultSub}
+      </AppText>
+      {onEdit && (
+        <View style={{ flexDirection: "row", marginTop: 10 }}>
+          <Button size="sm" variant="outline" label="Change" onPress={onEdit} />
+        </View>
+      )}
+    </Card>
   );
 }
 

@@ -461,23 +461,35 @@ describe("a decides-by in the past is invalid", () => {
   });
 });
 
-// ---- the deadlines step speaks the voting/RSVP vocabulary (DRP-58) -------------------------------
+// ---- the deadlines step tells the full story (DRP-58 / DRP-60) -----------------------------------
 
-describe("the deadlines step names each deadline unambiguously", () => {
-  test("an open plan shows 'Voting closes' and 'RSVP closes' with their consequences", async () => {
+describe("the deadlines step reads as a timeline a first-timer can follow", () => {
+  test("an open plan narrates send -> voting closes -> RSVP closes, with clean default times", async () => {
     mockBaseline();
     await landOnGroupStep();
     const { date, time } = futureParts(10);
     await advanceTo("deadlines", { onTimes: () => setPill(0, date, time) });
 
-    // The same labels the live banners use (DEADLINE_VOTING / DEADLINE_RSVP), each card stating
-    // what happens at that instant - the feedback was that "Decides by" / "Reply by" said neither.
+    // Stage 1: what sending does (anonymity + what the group votes on).
+    expect(screen.getByText("You send it")).toBeOnTheScreen();
+    expect(
+      screen.getByText("It goes to the group anonymously. They vote on when and what."),
+    ).toBeOnTheScreen();
+    // Stage 2: the voting deadline in the live banners' vocabulary, plus its consequence - the
+    // feedback was that "Decides by" said neither what decides nor what happens.
     expect(screen.getByText("Voting closes")).toBeOnTheScreen();
-    expect(screen.getByText("The group's top pick wins, then RSVPs open.")).toBeOnTheScreen();
+    expect(
+      screen.getByText("The most-voted time wins - your meetup is locked in."),
+    ).toBeOnTheScreen();
+    // Stage 3: the RSVP deadline and the blind-then-reveal rule.
     expect(screen.getByText("RSVP closes")).toBeOnTheScreen();
     expect(
-      screen.getByText("Answers stay hidden until then - then everyone sees who's in."),
+      screen.getByText(
+        'Everyone answers "in or out" in secret - revealed at close: you see who\'s in.',
+      ),
     ).toBeOnTheScreen();
+    // Both default deadlines read as chosen times - floored to :00/:30, never a "13:03".
+    expect(screen.getAllByText(/:(00|30)$/)).toHaveLength(2);
   });
 });
 
