@@ -14,7 +14,9 @@ import * as mobileLock from "../lock";
 
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
-const now = 1_000_000_000_000; // a fixed reference instant; real wall-clock is not used
+// A fixed reference instant ON a half-hour boundary (multiple of 30min); real wall-clock is not
+// used. Alignment keeps the whole-hour spec expectations untouched by the half-hour flooring.
+const now = 999_999_000_000;
 
 // Spec-defined constants (a "moment" is one hour; a day is 24 of them).
 const SPEC_MOMENT_MS = 60 * 60 * 1000;
@@ -122,6 +124,24 @@ describe("defaultDecidesByForCandidates (mobile mirror)", () => {
         expect(mobileLock.defaultDecidesByForCandidates(earliest, now, moment)).toBe(
           sharedLock.defaultDecidesByForCandidates(earliest, now, moment),
         );
+      }
+    }
+  });
+
+  it("floors a misaligned default to the half hour, identically to the shared copy", () => {
+    // Spec: defaults read as chosen times - floored to a half-hour boundary when there is room.
+    // Sweep misaligned creation instants (:07, :20, :44-style) across the gap range.
+    for (const offset of [7, 20, 44]) {
+      const offNow = now + offset * 60 * 1000;
+      for (const gap of GAP_HOURS) {
+        if (gap <= 0) continue;
+        const earliest = offNow + gap * HOUR;
+        const t = mobileLock.defaultDecidesByForCandidates(earliest, offNow);
+        expect(t).toBe(sharedLock.defaultDecidesByForCandidates(earliest, offNow));
+        // Either on a clean boundary, or kept exact because flooring would cross now.
+        if (t % (30 * 60 * 1000) !== 0) {
+          expect(t - (t % (30 * 60 * 1000))).toBeLessThanOrEqual(offNow);
+        }
       }
     }
   });
