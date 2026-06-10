@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import {
   AddCandidateInput,
+  AddGroupInput,
   addCandidateHorizon,
   ByEvent,
   ByGroupInput,
@@ -1092,6 +1093,21 @@ export const eventsRouter = router({
   shareLink: protectedProcedure.input(ByEvent).query(async ({ ctx, input }) => {
     const e = await loadEvent(input.eventId, ctx.userId);
     return { token: e.id, url: meetupUrlFor(e.id) };
+  }),
+
+  // Attach another whole group to a meetup (cross-group). Caller must be in the meetup's roster
+  // (loadEvent) AND a member of the group being added - you can only bring in groups you belong to.
+  // Idempotent; attaching the origin group is a no-op (its members are already the base roster).
+  addGroup: protectedProcedure.input(AddGroupInput).mutation(async ({ ctx, input }) => {
+    const e = await loadEvent(input.eventId, ctx.userId);
+    await requireMember(input.groupId, ctx.userId);
+    if (input.groupId !== e.groupId) {
+      await db
+        .insert(eventGroups)
+        .values({ eventId: e.id, groupId: input.groupId })
+        .onConflictDoNothing();
+    }
+    return { ok: true as const };
   }),
 
   // Record (or replace) this user's commitment during the moment.

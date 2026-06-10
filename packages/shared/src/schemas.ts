@@ -84,6 +84,10 @@ export type CreateEventInput = z.infer<typeof CreateEventInput>;
 export const ByEvent = z.object({ eventId: z.string() });
 export type ByEvent = z.infer<typeof ByEvent>;
 
+// Attach another whole group to a meetup (DRP-62 cross-group). The caller must belong to the group.
+export const AddGroupInput = ByEvent.extend({ groupId: z.string() });
+export type AddGroupInput = z.infer<typeof AddGroupInput>;
+
 // Network boundary for events.toggleReaction - ONE public +1 toggle on a single candidate of EITHER
 // kind. Inserting/removing the caller's row; counts are public during collecting (momentum).
 export const ToggleReactionInput = ByEvent.extend({ candidateId: z.string() });

@@ -181,3 +181,53 @@ test("joinByToken is idempotent and a no-op for someone already in the roster", 
     .where(eq(eventParticipants.eventId, eventId));
   assert.equal(parts.length, 0, "an existing member is not duplicated as a participant");
 });
+
+test("events.addGroup attaches a group the caller belongs to and grows the roster", async () => {
+  const creator = await makeUser();
+  const climber = await makeUser();
+  const origin = await makeGroup([creator], "The Boys");
+  const climbers = await makeGroup([creator, climber], "Climbers");
+  const eventId = await insertEvent({
+    groupId: origin,
+    createdByUserId: creator,
+    activity: "Bowling",
+  });
+
+  await caller(creator).events.addGroup({ eventId, groupId: climbers });
+
+  const rows = await db.select().from(eventGroups).where(eq(eventGroups.eventId, eventId));
+  assert.ok(rows.some((r) => r.groupId === climbers));
+  const view = await caller(creator).events.get({ id: eventId });
+  assert.ok(view?.members.some((m) => m.id === climber));
+});
+
+test("events.addGroup rejects a group the caller does NOT belong to", async () => {
+  const creator = await makeUser();
+  const other = await makeUser();
+  const origin = await makeGroup([creator], "The Boys");
+  const climbers = await makeGroup([other], "Climbers"); // creator not in it
+  const eventId = await insertEvent({
+    groupId: origin,
+    createdByUserId: creator,
+    activity: "Bowling",
+  });
+
+  await assert.rejects(() => caller(creator).events.addGroup({ eventId, groupId: climbers }));
+});
+
+test("events.addGroup is idempotent and a no-op for the origin group", async () => {
+  const creator = await makeUser();
+  const origin = await makeGroup([creator], "The Boys");
+  const climbers = await makeGroup([creator], "Climbers");
+  const eventId = await insertEvent({
+    groupId: origin,
+    createdByUserId: creator,
+    activity: "Bowling",
+  });
+
+  await caller(creator).events.addGroup({ eventId, groupId: origin }); // origin -> no row
+  await caller(creator).events.addGroup({ eventId, groupId: climbers });
+  await caller(creator).events.addGroup({ eventId, groupId: climbers }); // dup -> no error
+  const rows = await db.select().from(eventGroups).where(eq(eventGroups.eventId, eventId));
+  assert.equal(rows.length, 1);
+});
