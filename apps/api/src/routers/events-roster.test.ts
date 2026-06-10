@@ -254,3 +254,40 @@ test("a roster member via an attached group can edit the plan (events.update is 
   assert.ok(res.applied.includes("location"), "location should be applied");
   assert.deepEqual(res.conflicts, [], "no conflicts expected");
 });
+
+test("events.create folds additional groups into the meetup (compose at creation)", async () => {
+  const creator = await makeUser();
+  const climber = await makeUser();
+  const origin = await makeGroup([creator], "The Boys");
+  const climbers = await makeGroup([creator, climber], "Climbers");
+
+  const created = await caller(creator).events.create({
+    groupId: origin,
+    additionalGroupIds: [climbers],
+  });
+
+  const rows = await db.select().from(eventGroups).where(eq(eventGroups.eventId, created.id));
+  assert.ok(
+    rows.some((r) => r.groupId === climbers),
+    "the additional group is attached",
+  );
+  const view = await caller(creator).events.get({ id: created.id });
+  assert.ok(
+    view?.members.some((m) => m.id === climber),
+    "its members are in the roster",
+  );
+});
+
+test("events.create rejects an additional group the creator is not in (no orphan event)", async () => {
+  const creator = await makeUser();
+  const other = await makeUser();
+  const origin = await makeGroup([creator], "The Boys");
+  const climbers = await makeGroup([other], "Climbers"); // creator not in it
+
+  await assert.rejects(() =>
+    caller(creator).events.create({ groupId: origin, additionalGroupIds: [climbers] }),
+  );
+  // The membership check runs before the event insert, so no event row was created.
+  const all = await caller(creator).events.mine();
+  assert.equal(all.length, 0, "a rejected create leaves no event");
+});

@@ -66,6 +66,9 @@ export type TimeCandidateInput = z.infer<typeof TimeCandidateInput>;
 // `replyBy` closes the blind yes/no/"I'll go if" window, then reveals + resolves. `quorum` defaults.
 export const CreateEventInput = z.object({
   groupId: z.string(),
+  // Additional groups to fold into this meetup's audience at creation (cross-group). The creator must
+  // belong to each; the roster is the live union of all of them plus the origin group (DRP-62).
+  additionalGroupIds: z.array(z.string()).max(20).optional(),
   description: z.string().max(DESCRIPTION_MAX).optional(),
   location: z.string().max(LOCATION_MAX).optional(),
   timeCandidates: z.array(TimeCandidateInput).max(10).optional(),

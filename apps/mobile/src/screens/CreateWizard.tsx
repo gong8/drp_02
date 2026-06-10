@@ -56,7 +56,11 @@ export function CreateWizard({ navigation }: Props) {
   const [step, setStep] = useState(0);
 
   const [groups, setGroups] = useState<Group[]>([]);
-  const [groupId, setGroupId] = useState<string | null>(null);
+  // Ordered selection of groups to invite. The FIRST is the meetup's "home" (origin) group - it drives
+  // the redo step and the plan's group label - and any others are folded in as attached groups so the
+  // roster is the union of everyone (DRP-62). Compose the whole audience here, at creation.
+  const [groupIds, setGroupIds] = useState<string[]>([]);
+  const originGroupId = groupIds[0] ?? null;
   // Inline "create a group" without leaving the meetup flow (the group step's "+ New group" chip):
   // creating one appends it to the list and selects it, so the wizard continues with it preselected.
   const [newGroupOpen, setNewGroupOpen] = useState(false);
@@ -120,30 +124,30 @@ export function CreateWizard({ navigation }: Props) {
       .query()
       .then((mine) => {
         setGroups(mine);
-        if (mine[0]) setGroupId(mine[0].id);
+        if (mine[0]) setGroupIds([mine[0].id]);
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
-  // When the chosen group changes, refresh its redo list and drop any clone/source from the previous
-  // group (the source step is only meaningful for the currently selected group). applyPrefill is
-  // useCallback-stable, so effectively this re-runs only when groupId changes.
+  // When the HOME (origin) group changes, refresh its redo list and drop any clone/source from the
+  // previous group (the source step is only meaningful for the home group). applyPrefill is
+  // useCallback-stable, so effectively this re-runs only when the home group changes.
   useEffect(() => {
-    if (!groupId) return;
+    if (!originGroupId) return;
     let active = true;
     setSource(null);
     setPastLoaded(false);
     applyPrefill(EMPTY_PREFILL);
     trpc.events.pastForGroup
-      .query({ groupId })
+      .query({ groupId: originGroupId })
       .then((m) => active && setPastMeetups(m))
       .catch(() => active && setPastMeetups([]))
       .finally(() => active && setPastLoaded(true));
     return () => {
       active = false;
     };
-  }, [groupId, applyPrefill]);
+  }, [originGroupId, applyPrefill]);
 
   // Dedupe by minute exactly as the server does (events.create collapses same-minute candidates,
   // keeping the first), so the preview count / isConcrete / confirm mirror and the submit payload all
@@ -235,7 +239,7 @@ export function CreateWizard({ navigation }: Props) {
   // same derived values the submit payload uses, so the summary can never claim something the create
   // call won't do. Each axis reports its candidates plus whether it is locked (fixed) or open to the
   // group; the deadlines mirror decidesToSend/replyToSend (or the shown defaults).
-  const groupName = groups.find((g) => g.id === groupId)?.name ?? "";
+  const groupName = groups.find((g) => g.id === originGroupId)?.name ?? "";
   const summaryTimes = timeIsos.map(formatSlot);
   const decidesShown = !isConcrete ? (decidesToSend ?? autoDecidesIso) : null;
   // reply-by (unlike decides-by) already bakes its default into replyToSend, so no fallback here.
@@ -254,7 +258,7 @@ export function CreateWizard({ navigation }: Props) {
     switch (key) {
       case "group":
         // Wait for the past-meetups query so the step list is final before leaving this step.
-        return !!groupId && pastLoaded;
+        return groupIds.length > 0 && pastLoaded;
       case "source":
         return source !== null;
       case "deadlines":
@@ -296,12 +300,13 @@ export function CreateWizard({ navigation }: Props) {
   );
 
   async function submit() {
-    if (busy || !groupId) return;
+    if (busy || !originGroupId) return;
     setBusy(true);
     const activities = commitDraftActivity();
     try {
       const created = await trpc.events.create.mutate({
-        groupId,
+        groupId: originGroupId,
+        additionalGroupIds: groupIds.slice(1).length ? groupIds.slice(1) : undefined,
         description: notes.trim() || undefined,
         location: location.trim() || undefined,
         timeCandidates: timeIsos.map((startsAt) => ({ startsAt })),
@@ -326,8 +331,8 @@ export function CreateWizard({ navigation }: Props) {
     }
   }
 
-  // Create a group inline from the group step, then select it (no navigation away - the wizard state
-  // is preserved). Setting groupId triggers the group-change effect, which loads the new group's (empty)
+  // Create a group inline from the group step, then add it to the selection (no navigation away - the
+  // wizard state is preserved). If it becomes the home group, the group-change effect loads its (empty)
   // redo list and resolves pastLoaded so the step can advance.
   async function createNewGroup() {
     const trimmed = newGroupName.trim();
@@ -336,7 +341,7 @@ export function CreateWizard({ navigation }: Props) {
     try {
       const res = await trpc.groups.create.mutate({ name: trimmed });
       setGroups((gs) => [...gs, { id: res.id, name: trimmed, memberCount: 1 }]);
-      setGroupId(res.id);
+      setGroupIds((ids) => (ids.includes(res.id) ? ids : [...ids, res.id]));
       setNewGroupName("");
       setNewGroupOpen(false);
     } catch {
@@ -375,8 +380,12 @@ export function CreateWizard({ navigation }: Props) {
               <Chip
                 key={g.id}
                 label={g.name}
-                selected={groupId === g.id}
-                onPress={() => setGroupId(g.id)}
+                selected={groupIds.includes(g.id)}
+                onPress={() =>
+                  setGroupIds((ids) =>
+                    ids.includes(g.id) ? ids.filter((x) => x !== g.id) : [...ids, g.id],
+                  )
+                }
               />
             ))}
             <Chip label={ACTION_NEW_GROUP} selected={false} onPress={() => setNewGroupOpen(true)} />

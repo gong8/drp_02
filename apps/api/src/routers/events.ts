@@ -534,6 +534,13 @@ export const eventsRouter = router({
   // candidate that the creator locks opens the blind moment immediately; everything else collects.
   create: protectedProcedure.input(CreateEventInput).mutation(async ({ ctx, input }) => {
     await requireMember(input.groupId, ctx.userId);
+    // Additional groups to fold in (cross-group, DRP-62). Dedupe + drop the origin, and validate
+    // membership UP FRONT (before inserting the event) so a group the creator isn't in rejects the
+    // whole create cleanly instead of leaving an orphan event. The rows are attached after the insert.
+    const extraGroupIds = [...new Set(input.additionalGroupIds ?? [])].filter(
+      (gid) => gid !== input.groupId,
+    );
+    for (const gid of extraGroupIds) await requireMember(gid, ctx.userId);
     const id = `e_${randomUUID()}`;
 
     const nowMs = Date.now();
@@ -622,6 +629,10 @@ export const eventsRouter = router({
       momentEndsAt,
     });
     await insertCandidates(id, [...timeCands, ...activityCands]);
+    // Attach the (already membership-validated) additional groups now that the event row exists.
+    for (const gid of extraGroupIds) {
+      await db.insert(eventGroups).values({ eventId: id, groupId: gid }).onConflictDoNothing();
+    }
     // TODO push: notify group members "a plan went out - what works?" / "you're in a moment".
     return { id };
   }),

@@ -78,7 +78,7 @@ export function statusLabel(s: MyStatus): string {
 
 // Wizard step titles + subs, keyed by the step key from lib/redo.ts. Terse; one table = one voice.
 export const STEP_COPY: Record<StepKey, { title: string; sub?: string }> = {
-  group: { title: "Who's it for?" },
+  group: { title: "Who's it for?", sub: "Pick one or more groups - everyone's invited." },
   source: { title: "Start from", sub: "Reuse a past meetup, or start fresh." },
   activities: { title: "What do you fancy?", sub: "Optional - the group can add more." },
   times: { title: "When could it be?", sub: "Optional - the group votes." },
