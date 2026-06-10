@@ -939,12 +939,13 @@ export const eventsRouter = router({
   get: protectedProcedure.input(ByIdInput).query(async ({ ctx, input }) => {
     const [e] = await db.select().from(events).where(eq(events.id, input.id));
     if (!e) return null;
-    await requireInRoster(e.id, e.groupId, ctx.userId);
+    // Members are a membership query (not in the bundle); read them first so their uids join the
+    // bundle's batched user-card query alongside the revealed crowd. The roster doubles as the gate
+    // (one read, not two): a non-roster caller is refused BEFORE settle, so no settle is triggered.
+    const memberIds = await rosterUserIds(e.id, e.groupId);
+    if (!memberIds.includes(ctx.userId)) throw new TRPCError({ code: "FORBIDDEN" });
     await settleLifecycle(e);
 
-    // Members are a membership query (not in the bundle); read them first so their uids join the
-    // bundle's batched user-card query alongside the revealed crowd.
-    const memberIds = await rosterUserIds(e.id, e.groupId);
     const bundle = await loadEventBundle([e], memberIds);
 
     const { resp, revealed, isCreator, iOptedOut, myStatus } = derivePlanView(

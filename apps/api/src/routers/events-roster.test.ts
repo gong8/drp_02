@@ -31,7 +31,11 @@ test("events.get members is the union of origin group, attached group, and parti
   const guest = await makeUser();
   const origin = await makeGroup([creator], "The Boys");
   const other = await makeGroup([groupB], "Climbers");
-  const eventId = await insertEvent({ groupId: origin, createdByUserId: creator, activity: "Bowling" });
+  const eventId = await insertEvent({
+    groupId: origin,
+    createdByUserId: creator,
+    activity: "Bowling",
+  });
 
   await db.insert(eventGroups).values({ eventId, groupId: other });
   await db.insert(eventParticipants).values({ eventId, userId: guest });
@@ -47,7 +51,11 @@ test("a member of an attached group, added AFTER attach, appears in the roster (
   const creator = await makeUser();
   const other = await makeGroup([], "Climbers");
   const origin = await makeGroup([creator], "The Boys");
-  const eventId = await insertEvent({ groupId: origin, createdByUserId: creator, activity: "Bowling" });
+  const eventId = await insertEvent({
+    groupId: origin,
+    createdByUserId: creator,
+    activity: "Bowling",
+  });
   await db.insert(eventGroups).values({ eventId, groupId: other });
 
   const lateJoiner = await makeUser();
@@ -62,7 +70,11 @@ test("an ad-hoc participant (not in any group) can read the plan - the gate admi
   const creator = await makeUser();
   const guest = await makeUser();
   const origin = await makeGroup([creator], "The Boys");
-  const eventId = await insertEvent({ groupId: origin, createdByUserId: creator, activity: "Bowling" });
+  const eventId = await insertEvent({
+    groupId: origin,
+    createdByUserId: creator,
+    activity: "Bowling",
+  });
   await db.insert(eventParticipants).values({ eventId, userId: guest });
 
   const view = await caller(guest).events.get({ id: eventId });
@@ -73,7 +85,11 @@ test("a stranger (not in the roster) is FORBIDDEN from reading the plan", async 
   const creator = await makeUser();
   const stranger = await makeUser();
   const origin = await makeGroup([creator], "The Boys");
-  const eventId = await insertEvent({ groupId: origin, createdByUserId: creator, activity: "Bowling" });
+  const eventId = await insertEvent({
+    groupId: origin,
+    createdByUserId: creator,
+    activity: "Bowling",
+  });
 
   await assert.rejects(() => caller(stranger).events.get({ id: eventId }));
   // sanity: the row exists and the gate is what rejects
