@@ -519,6 +519,7 @@ export function EventDetail({ route, navigation }: Props) {
         defaultName={data.activity || "New group"}
         onClose={() => setMakeGroupSheet(false)}
         onCreated={(groupId) => {
+          if (!navigationRef.isReady()) return;
           navigationRef.navigate("Groups", {
             screen: "GroupDetail",
             params: { groupId, justCreated: true },

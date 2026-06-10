@@ -23,9 +23,11 @@ export function AddGroupSheet({
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Lazily load the user's groups the first time the sheet opens.
+  // Reload the user's groups each time the sheet opens. Clearing `groups` first shows the loading
+  // state and guarantees a freshly-joined group appears instead of a stale list from a prior open.
   useEffect(() => {
     if (!visible) return;
+    setGroups(null);
     setError(null);
     trpc.groups.mine
       .query()
@@ -66,7 +68,7 @@ export function AddGroupSheet({
         <AppText variant="caption">Loading your groups...</AppText>
       ) : null}
       {groups?.length === 0 ? (
-        <AppText variant="caption">You are not in any other groups.</AppText>
+        <AppText variant="caption">You have no groups to add.</AppText>
       ) : null}
       {groups?.map((g) => (
         <Row key={g.id}>
