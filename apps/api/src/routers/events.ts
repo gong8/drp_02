@@ -35,7 +35,9 @@ import {
 import {
   candidateReactions,
   eventCandidates,
+  eventGroups,
   eventOptOuts,
+  eventParticipants,
   events,
   groupMembers,
   responses,
@@ -847,9 +849,32 @@ export const eventsRouter = router({
       .from(groupMembers)
       .where(eq(groupMembers.userId, ctx.userId));
     const groupIds = memberships.map((m) => m.groupId);
-    if (groupIds.length === 0) return [];
 
-    const rows = await db.select().from(events).where(inArray(events.groupId, groupIds));
+    // A plan is "mine" if I am in its roster: its origin group is one of mine, OR it has an attached
+    // group of mine, OR I am an ad-hoc participant. Collect the ids in JS to avoid empty-inArray edges.
+    const originRows = groupIds.length
+      ? await db.select({ id: events.id }).from(events).where(inArray(events.groupId, groupIds))
+      : [];
+    const attachedRows = groupIds.length
+      ? await db
+          .select({ eventId: eventGroups.eventId })
+          .from(eventGroups)
+          .where(inArray(eventGroups.groupId, groupIds))
+      : [];
+    const participantRows = await db
+      .select({ eventId: eventParticipants.eventId })
+      .from(eventParticipants)
+      .where(eq(eventParticipants.userId, ctx.userId));
+    const ids = [
+      ...new Set([
+        ...originRows.map((r) => r.id),
+        ...attachedRows.map((r) => r.eventId),
+        ...participantRows.map((r) => r.eventId),
+      ]),
+    ];
+    if (ids.length === 0) return [];
+
+    const rows = await db.select().from(events).where(inArray(events.id, ids));
     // Settle each row first (it writes the events row and is phase-ordered), drop the silent fizzles,
     // then bulk-load the surviving rows' read data in a fixed handful of batched queries.
     for (const e of rows) await settleLifecycle(e);

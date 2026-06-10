@@ -96,3 +96,40 @@ test("a stranger (not in the roster) is FORBIDDEN from reading the plan", async 
   const [row] = await db.select().from(eventGroups).where(eq(eventGroups.eventId, eventId));
   assert.equal(row, undefined);
 });
+
+test("events.mine includes plans where I am only an ad-hoc participant", async () => {
+  const creator = await makeUser();
+  const guest = await makeUser();
+  const origin = await makeGroup([creator], "The Boys");
+  const eventId = await insertEvent({
+    groupId: origin,
+    createdByUserId: creator,
+    activity: "Bowling",
+  });
+  await db.insert(eventParticipants).values({ eventId, userId: guest });
+
+  const mine = await caller(guest).events.mine();
+  assert.ok(
+    mine.some((p) => p.id === eventId),
+    "guest should see the plan on their dashboard",
+  );
+});
+
+test("events.mine includes plans where I am only via a non-origin attached group", async () => {
+  const creator = await makeUser();
+  const climber = await makeUser();
+  const origin = await makeGroup([creator], "The Boys");
+  const climbers = await makeGroup([climber], "Climbers");
+  const eventId = await insertEvent({
+    groupId: origin,
+    createdByUserId: creator,
+    activity: "Bowling",
+  });
+  await db.insert(eventGroups).values({ eventId, groupId: climbers });
+
+  const mine = await caller(climber).events.mine();
+  assert.ok(
+    mine.some((p) => p.id === eventId),
+    "attached-group member should see the plan",
+  );
+});
