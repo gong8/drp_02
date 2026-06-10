@@ -200,7 +200,11 @@ function AddActivity({ busy, onAdd }: { busy: boolean; onAdd: (text: string) => 
 }
 
 // Inline concrete time entry through the shared AddComposer, bounded to a sensible horizon from the
-// existing candidate spread. De-duped by minute server-side.
+// existing candidate spread. De-duped by minute server-side. The pill's min/max only bound the DATE
+// half - the combined date+time can still land outside the server's accept window (after decides-by,
+// within the horizon), e.g. the minimum date with a clock time before the deadline's. So mirror the
+// server's two reject rules (events.addCandidate) here: an out-of-range pick disables Add and names
+// the actual boundary, instead of submitting and failing.
 function AddTime({
   busy,
   data,
@@ -216,12 +220,21 @@ function AddTime({
 
   const times = data.timeCandidates.map((c: TimeCand) => new Date(c.startsAt).getTime());
   const decideMs = data.decidesBy ? new Date(data.decidesBy).getTime() : Date.now();
+  const horizonMs = times.length
+    ? addCandidateHorizon(Math.min(...times), Math.max(...times))
+    : null;
   const addMinDate = new Date(Math.max(Date.now(), decideMs));
-  const addMaxDate = new Date(
-    times.length
-      ? addCandidateHorizon(Math.min(...times), Math.max(...times))
-      : decideMs + 14 * 24 * 60 * 60 * 1000,
-  );
+  const addMaxDate = new Date(horizonMs ?? decideMs + 14 * 24 * 60 * 60 * 1000);
+
+  const newMs = newIso ? new Date(newIso).getTime() : null;
+  const invalidNote =
+    newMs == null
+      ? null
+      : data.decidesBy && newMs <= new Date(data.decidesBy).getTime()
+        ? `Voting closes ${formatSlot(data.decidesBy)} - pick a time after that.`
+        : horizonMs != null && newMs > horizonMs
+          ? `That's past this meetup's window - the latest is ${formatSlot(new Date(horizonMs).toISOString())}.`
+          : null;
 
   const reset = () => {
     setNewDate("");
@@ -231,7 +244,7 @@ function AddTime({
     <AddComposer
       triggerLabel="+ add a time"
       busy={busy}
-      canSubmit={!!newIso}
+      canSubmit={!!newIso && !invalidNote}
       onSubmit={() => {
         if (newIso) onAdd(newIso);
         reset();
@@ -246,6 +259,11 @@ function AddTime({
         minimumDate={addMinDate}
         maximumDate={addMaxDate}
       />
+      {invalidNote ? (
+        <AppText variant="caption" style={{ color: ui.brand, marginTop: 8 }}>
+          {invalidNote}
+        </AppText>
+      ) : null}
     </AddComposer>
   );
 }

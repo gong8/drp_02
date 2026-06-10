@@ -5,6 +5,22 @@
 
 jest.mock("../../lib/trpc");
 
+// Replace the native date/time picker with a deterministic stand-in (the CreateWizard test's
+// pattern): each mounted pill registers its onDate/onTime callbacks in `mockPillInstances`, so a
+// test sets a concrete date+time by calling them inside act(). Only the AddTime composer mounts one
+// here, so the rest of the suite is unaffected.
+jest.mock("../../ui/DateTimePill", () => {
+  const React = require("react");
+  const { View } = require("react-native");
+  return {
+    DateTimePill: (props: { onDate: (next: string) => void; onTime: (next: string) => void }) => {
+      mockPillInstances.push({ onDate: props.onDate, onTime: props.onTime });
+      return React.createElement(View, { accessibilityLabel: "datetimepill" });
+    },
+  };
+});
+
+import { TRPCClientError } from "@trpc/client";
 import {
   mockMutation,
   mockMutationError,
@@ -13,8 +29,11 @@ import {
 } from "../../lib/__mocks__/trpc";
 import type { RouterOutputs } from "../../lib/trpc";
 import { trpc } from "../../lib/trpc";
-import { fireEvent, renderScreen, screen, waitFor } from "../../test/render";
+import { act, fireEvent, renderScreen, screen, waitFor } from "../../test/render";
 import { EventDetail } from "../EventDetail";
+
+type PillHandle = { onDate: (next: string) => void; onTime: (next: string) => void };
+const mockPillInstances: PillHandle[] = [];
 
 // The exact shape events.get returns (NonNullable so optional null fields are part of the type).
 type Detail = NonNullable<RouterOutputs["events"]["get"]>;
@@ -93,7 +112,17 @@ function momentDetail(over: Partial<Detail> = {}): Detail {
   };
 }
 
-beforeEach(resetTrpcMock);
+beforeEach(() => {
+  resetTrpcMock();
+  mockPillInstances.length = 0;
+});
+
+// The picker's local "YYYY-MM-DD" for a day N days out (the date half the mocked pill records).
+function dateParts(daysAhead: number): string {
+  const d = new Date(Date.now() + daysAhead * 24 * 60 * 60 * 1000);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
 
 describe("EventDetail - collecting view (public counts, no names)", () => {
   test("renders each candidate's public +1 count", async () => {
@@ -216,6 +245,55 @@ describe("EventDetail - add controls gated by the lock flags", () => {
     renderScreen(EventDetail, { eventId: "e1" });
     await screen.findByText("Bowling");
     expect(screen.queryByText("+ add a time")).toBeNull();
+  });
+});
+
+// The server rejects a time at/before decides-by or past the horizon; the screen must catch the
+// predictable cases BEFORE submitting and survive the race cases without blanking (DRP-59 - adding
+// a time used to swap the whole screen for the full-screen error).
+describe("EventDetail - adding a time is bounded and fails gracefully", () => {
+  function openAddTime() {
+    fireEvent.press(screen.getByText("+ add a time"));
+  }
+
+  test("a pick before voting closes disables Add and names the boundary, without calling the server", async () => {
+    mockQuery(trpc.events.get, collectingDetail());
+    renderScreen(EventDetail, { eventId: "e1" });
+    await screen.findByText("Bowling");
+    openAddTime();
+
+    // decidesBy is 7 days out; a 2-days-out pick is inside the voting window, so it can't be a slot.
+    act(() => mockPillInstances[0].onDate(dateParts(2)));
+    act(() => mockPillInstances[0].onTime("12:00"));
+
+    expect(
+      await screen.findByText(/^Voting closes .+ - pick a time after that\.$/),
+    ).toBeOnTheScreen();
+    expect(screen.getByText("Add")).toBeDisabled();
+    expect(trpc.events.addCandidate.mutate).not.toHaveBeenCalled();
+  });
+
+  test("a server reject surfaces as an inline line and the vote board stays (no full-screen error)", async () => {
+    mockQuery(trpc.events.get, collectingDetail());
+    // The race the composer cannot pre-validate: the deadline passed mid-compose.
+    mockMutationError(trpc.events.addCandidate, new TRPCClientError("plan is not collecting"));
+    renderScreen(EventDetail, { eventId: "e1" });
+    await screen.findByText("Bowling");
+    openAddTime();
+
+    // A pick the client-side bounds accept: 8 days out, between decidesBy (+7d) and the horizon (+9d).
+    act(() => mockPillInstances[0].onDate(dateParts(8)));
+    act(() => mockPillInstances[0].onTime("19:00"));
+    await act(async () => {
+      fireEvent.press(screen.getByText("Add"));
+    });
+
+    expect(
+      await screen.findByText("Voting just closed - this meetup has moved on."),
+    ).toBeOnTheScreen();
+    // The loaded screen survives: the board is still up, not the full-screen error.
+    expect(screen.getByText("Bowling")).toBeOnTheScreen();
+    expect(screen.queryByText("Couldn't reach the server.")).toBeNull();
   });
 });
 

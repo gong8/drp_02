@@ -1,6 +1,7 @@
 import type { UpdateEventInput } from "@bethere/shared";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { TRPCClientError } from "@trpc/client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Platform, Text, View } from "react-native";
 import type { MeetupsStackParams } from "../../App";
@@ -46,6 +47,7 @@ import {
   EmptyState,
   Field,
   FieldLabel,
+  FormError,
   PersonRow,
   ScreenHeader,
   ScreenLoading,
@@ -67,12 +69,27 @@ type Props = NativeStackScreenProps<MeetupsStackParams, "EventDetail">;
 // to a single candidate id) so a refetch cannot clobber its optimistic state.
 const OPTOUT_PENDING = "__optout__";
 
+// Friendly lines for events.addCandidate rejects, matched on the server's reject messages
+// (apps/api/src/routers/events.ts addCandidate). The composer validates the predictable cases before
+// submitting, so these mostly cover races; anything unrecognized falls back to the canonical error.
+function addRejectLine(err: unknown): string {
+  const msg = err instanceof TRPCClientError ? err.message : "";
+  if (msg.includes("not collecting")) return "Voting just closed - this meetup has moved on.";
+  if (msg.includes("decides-by")) return "That time is before voting closes - pick a later one.";
+  if (msg.includes("window")) return "That time is past this meetup's window.";
+  if (msg.includes("locked")) return "That list just got locked - vote on what's there.";
+  return ERR_SAVE;
+}
+
 export function EventDetail({ route, navigation }: Props) {
   const { eventId } = route.params;
   const [data, setData] = useState<Detail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
+  // A failed MUTATION surfaces here, as an inline line over the loaded screen - never through
+  // `error`, whose full-screen DetailError is for load failures. See runAction below.
+  const [actionError, setActionError] = useState("");
   // Share-this-meetup sheet (the /m/<token> link). Auto-opened once when landing straight after
   // creating the plan (shareOnLand), so the creator's next step is to share the link.
   const [shareOpen, setShareOpen] = useState(false);
@@ -110,8 +127,26 @@ export function EventDetail({ route, navigation }: Props) {
       .finally(() => setLoading(false));
   }, [eventId]);
 
-  // Busy-guarded mutate-then-reload runner shared by lock/addCandidate/answer/changeAnswer.
-  const runAction = useBusyAction({ busy, setBusy, setError, load });
+  // Busy-guarded mutate-then-reload runner shared by lock/addCandidate/answer/changeAnswer. A failed
+  // mutation shows inline and reloads to reconcile (the plan may simply have moved on under us, e.g.
+  // voting closed mid-compose) - it must never blank the loaded screen with the full-screen error.
+  const failInline = useCallback(
+    (failed: boolean) => {
+      if (!failed) return;
+      setActionError(ERR_SAVE);
+      void load();
+    },
+    [load],
+  );
+  const busyAction = useBusyAction({ busy, setBusy, setError: failInline, load });
+  // Each new action clears the previous inline error, so a stale message never outlives the attempt.
+  const runAction = useCallback(
+    (fn: () => Promise<unknown>) => {
+      setActionError("");
+      return busyAction(fn);
+    },
+    [busyAction],
+  );
 
   // Landing straight after creating the plan: open the share sheet once the plan has loaded, then
   // clear the flag so a refocus does not reopen it (the create-meetup-first -> share-one-link flow).
@@ -210,13 +245,27 @@ export function EventDetail({ route, navigation }: Props) {
   }
 
   // Add a candidate while collecting (server +1s it for the author); refetch so it shows. Kind-gated
-  // server-side: a time when lockTimes / an activity when lockActivity is FORBIDDEN (UI hides the add).
+  // server-side: a time when lockTimes / an activity when lockActivity is FORBIDDEN (UI hides the
+  // add), and AddTime pre-validates the window rules, so a reject here is a race - the deadline
+  // passing or the window shifting mid-compose. Catching it INSIDE the action swaps the friendly
+  // line in for ERR_SAVE while the runner still reloads, so the screen reconciles (e.g. flips to the
+  // moment view) instead of erroring.
+  function addCandidate(
+    input: { kind: "time"; startsAt: string } | { kind: "activity"; text: string },
+  ) {
+    return runAction(() =>
+      trpc.events.addCandidate.mutate({ eventId, ...input }).catch((err: unknown) => {
+        setActionError(addRejectLine(err));
+      }),
+    );
+  }
+
   function addTime(startsAt: string) {
-    return runAction(() => trpc.events.addCandidate.mutate({ eventId, kind: "time", startsAt }));
+    return addCandidate({ kind: "time", startsAt });
   }
 
   function addActivity(text: string) {
-    return runAction(() => trpc.events.addCandidate.mutate({ eventId, kind: "activity", text }));
+    return addCandidate({ kind: "activity", text });
   }
 
   function answer(
@@ -462,6 +511,8 @@ export function EventDetail({ route, navigation }: Props) {
         <CountdownBanner label={label} ms={ms} note={NOTE_TOP_PICK} />
       )}
       {data.phase === "moment" && <CountdownBanner label={label} ms={ms} note={NOTE_BLIND} />}
+
+      {actionError ? <FormError>{actionError}</FormError> : null}
 
       <PlanHeaderCard data={data} canEdit={isLive(data)} onEdit={openEditSheet} />
 
