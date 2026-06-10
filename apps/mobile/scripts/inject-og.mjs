@@ -7,7 +7,28 @@
 // it from VERCEL_URL (set at build on Vercel) and fall back to a relative path locally (where it is
 // never scraped anyway).
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+
+// Copy the app's brand TTFs into dist/fonts so the OG image Function (api/og.ts) can fetch them
+// same-origin and render the card in Archivo/Inter (matching the app). Best-effort: the Function
+// falls back to its default font if a file is missing, so a copy failure never breaks the build.
+const FONTS = [
+  "@expo-google-fonts/archivo/800ExtraBold/Archivo_800ExtraBold.ttf",
+  "@expo-google-fonts/inter/500Medium/Inter_500Medium.ttf",
+];
+const fontsDir = new URL("../dist/fonts/", import.meta.url);
+try {
+  mkdirSync(fontsDir, { recursive: true });
+  for (const rel of FONTS) {
+    const src = new URL(`../../../node_modules/${rel}`, import.meta.url);
+    const dest = new URL(rel.split("/").pop(), fontsDir);
+    if (existsSync(src)) copyFileSync(src, dest);
+    else console.warn(`inject-og: brand font missing, OG card will use the default font: ${rel}`);
+  }
+  console.log("inject-og: copied brand fonts to dist/fonts");
+} catch (err) {
+  console.warn("inject-og: font copy failed (OG card will use the default font):", err?.message);
+}
 
 const file = new URL("../dist/index.html", import.meta.url);
 const TITLE = "BeThere";
