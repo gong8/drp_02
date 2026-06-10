@@ -25,7 +25,13 @@ import {
 import { TRPCError } from "@trpc/server";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { FALLBACK_GROUP_NAME, getGroupNames, meetupUrlFor, memberIdsOf } from "../db/groups.js";
+import {
+  FALLBACK_GROUP_NAME,
+  getGroupNames,
+  isInRoster,
+  meetupUrlFor,
+  rosterUserIds,
+} from "../db/groups.js";
 import {
   candidateReactions,
   eventCandidates,
@@ -361,13 +367,25 @@ export async function requireMember(groupId: string, userId: string): Promise<vo
   if (m.length === 0) throw new TRPCError({ code: "FORBIDDEN" });
 }
 
+// Caller must be in the meetup's ROSTER (origin group, an attached group, or an ad-hoc participant).
+// The event-scoped analogue of requireMember; used by loadEvent and events.get.
+export async function requireInRoster(
+  eventId: string,
+  originGroupId: string,
+  userId: string,
+): Promise<void> {
+  if (!(await isInRoster(eventId, originGroupId, userId))) {
+    throw new TRPCError({ code: "FORBIDDEN" });
+  }
+}
+
 // Load an event for a member-scoped mutation: fetch by id, 404 if missing, then assert membership.
 // The shared head of the NOT_FOUND mutations (toggleReaction/setOptOut/addCandidate/lock/respond/
 // unrespond/resolve); the null-returning read (events.get) keeps its own preamble.
 async function loadEvent(eventId: string, userId: string): Promise<EventRow> {
   const [e] = await db.select().from(events).where(eq(events.id, eventId));
   if (!e) throw new TRPCError({ code: "NOT_FOUND" });
-  await requireMember(e.groupId, userId);
+  await requireInRoster(e.id, e.groupId, userId);
   return e;
 }
 
@@ -921,12 +939,12 @@ export const eventsRouter = router({
   get: protectedProcedure.input(ByIdInput).query(async ({ ctx, input }) => {
     const [e] = await db.select().from(events).where(eq(events.id, input.id));
     if (!e) return null;
-    await requireMember(e.groupId, ctx.userId);
+    await requireInRoster(e.id, e.groupId, ctx.userId);
     await settleLifecycle(e);
 
     // Members are a membership query (not in the bundle); read them first so their uids join the
     // bundle's batched user-card query alongside the revealed crowd.
-    const memberIds = await memberIdsOf(e.groupId);
+    const memberIds = await rosterUserIds(e.id, e.groupId);
     const bundle = await loadEventBundle([e], memberIds);
 
     const { resp, revealed, isCreator, iOptedOut, myStatus } = derivePlanView(
