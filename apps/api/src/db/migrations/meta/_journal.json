@@ -78,6 +78,13 @@
       "when": 1780500005000,
       "tag": "0010_group_invite_code",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1780500006000,
+      "tag": "0011_adhoc_cross_group_meetups",
+      "breakpoints": true
     }
   ]
 }

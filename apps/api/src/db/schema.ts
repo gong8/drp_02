@@ -168,3 +168,34 @@ export const responses = pgTable(
   },
   (t) => ({ eventUser: uniqueIndex("responses_event_user_unique").on(t.eventId, t.userId) }),
 );
+
+// Additional whole groups attached to a meetup beyond its origin group (events.groupId). A meetup's
+// roster is the LIVE union of all attached groups' members (origin + these) plus ad-hoc
+// participants, recomputed on read - so a new member of any attached group flows in automatically.
+export const eventGroups = pgTable(
+  "event_groups",
+  {
+    eventId: text("event_id")
+      .notNull()
+      .references(() => events.id),
+    groupId: text("group_id")
+      .notNull()
+      .references(() => groups.id),
+  },
+  (t) => ({ pk: primaryKey({ columns: [t.eventId, t.groupId] }) }),
+);
+
+// Individuals invited to a single meetup (friends-of-friends) who joined via the meetup link.
+// Ephemeral and plan-scoped: they are NOT members of any group and never appear in "My Groups".
+export const eventParticipants = pgTable(
+  "event_participants",
+  {
+    eventId: text("event_id")
+      .notNull()
+      .references(() => events.id),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id),
+  },
+  (t) => ({ pk: primaryKey({ columns: [t.eventId, t.userId] }) }),
+);
