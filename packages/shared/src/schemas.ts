@@ -84,6 +84,10 @@ export type CreateEventInput = z.infer<typeof CreateEventInput>;
 export const ByEvent = z.object({ eventId: z.string() });
 export type ByEvent = z.infer<typeof ByEvent>;
 
+// Attach another whole group to a meetup (DRP-62 cross-group). The caller must belong to the group.
+export const AddGroupInput = ByEvent.extend({ groupId: z.string() });
+export type AddGroupInput = z.infer<typeof AddGroupInput>;
+
 // Network boundary for events.toggleReaction - ONE public +1 toggle on a single candidate of EITHER
 // kind. Inserting/removing the caller's row; counts are public during collecting (momentum).
 export const ToggleReactionInput = ByEvent.extend({ candidateId: z.string() });
@@ -155,6 +159,10 @@ export const GroupName = z.string().min(1).max(60);
 // Network boundary for groups.create.
 export const CreateGroupInput = z.object({ name: GroupName });
 export type CreateGroupInput = z.infer<typeof CreateGroupInput>;
+
+// Crystallize a meetup's roster into a new permanent group (DRP-62 "make a group from this").
+export const CreateGroupFromEventInput = z.object({ eventId: z.string(), name: GroupName });
+export type CreateGroupFromEventInput = z.infer<typeof CreateGroupFromEventInput>;
 
 // Network boundary for groups.rename - reuses the shared GroupName rule.
 export const RenameGroupInput = z.object({ id: z.string(), name: GroupName });

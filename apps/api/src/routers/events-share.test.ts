@@ -17,6 +17,7 @@ import assert from "node:assert/strict";
 import { after, before, beforeEach, test } from "node:test";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
+import { eventParticipants } from "../db/schema.js";
 import {
   caller,
   db,
@@ -99,7 +100,7 @@ test("previewByToken rejects an unknown token with NOT_FOUND", async () => {
 
 // ----- joinByToken -----
 
-test("joinByToken adds a non-member to the meetup's group", async () => {
+test("joinByToken adds a non-member as an ad-hoc participant, NOT a group member", async () => {
   const owner = await makeUser();
   const joiner = await makeUser();
   const groupId = await makeGroup([owner]);
@@ -109,7 +110,17 @@ test("joinByToken adds a non-member to the meetup's group", async () => {
   assert.equal(res.eventId, eventId);
   assert.equal(res.groupId, groupId);
   assert.equal(res.alreadyMember, false);
-  assert.equal(await membershipRowCount(groupId, joiner), 1);
+
+  // The joiner is added to event_participants (this meetup only), NOT to group_members.
+  const parts = await db
+    .select()
+    .from(eventParticipants)
+    .where(eq(eventParticipants.eventId, eventId));
+  assert.ok(
+    parts.some((p) => p.userId === joiner),
+    "joiner has an eventParticipants row",
+  );
+  assert.equal(await membershipRowCount(groupId, joiner), 0, "joiner must NOT be in the group");
 });
 
 test("joinByToken is idempotent and reports alreadyMember for an existing member", async () => {
@@ -119,7 +130,13 @@ test("joinByToken is idempotent and reports alreadyMember for an existing member
 
   const res = await caller(owner).events.joinByToken({ eventId });
   assert.equal(res.alreadyMember, true);
-  assert.equal(await membershipRowCount(groupId, owner), 1);
+  // An existing group member is not duplicated as a participant row.
+  const parts = await db
+    .select()
+    .from(eventParticipants)
+    .where(eq(eventParticipants.eventId, eventId));
+  assert.equal(parts.length, 0, "existing member must not get a participant row");
+  assert.equal(await membershipRowCount(groupId, owner), 1, "group membership is unchanged");
 });
 
 test("joinByToken rejects an unknown token with NOT_FOUND and adds nobody", async () => {

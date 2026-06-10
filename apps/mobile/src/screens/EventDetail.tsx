@@ -4,7 +4,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { TRPCClientError } from "@trpc/client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Platform, Text, View } from "react-native";
-import type { MeetupsStackParams } from "../../App";
+import { type MeetupsStackParams, navigationRef } from "../../App";
 import {
   ACTION_COPIED,
   ACTION_COPY,
@@ -58,6 +58,8 @@ import {
   StatusPill,
   TextButton,
 } from "../ui";
+import { AddGroupSheet } from "./event-detail/AddGroupSheet";
+import { MakeGroupSheet } from "./event-detail/MakeGroupSheet";
 import { CollectingView, CountdownBanner, MomentView, RevealView } from "./event-detail/PhaseViews";
 
 type Detail = NonNullable<RouterOutputs["events"]["get"]>;
@@ -94,6 +96,11 @@ export function EventDetail({ route, navigation }: Props) {
   // creating the plan (shareOnLand), so the creator's next step is to share the link.
   const [shareOpen, setShareOpen] = useState(false);
   const sharePrompted = useRef(false);
+
+  // Group-composition sheets: add an existing group to this meetup, or crystallize its roster
+  // into a new permanent group. Separate booleans so only one can be open at a time.
+  const [addGroupSheet, setAddGroupSheet] = useState(false);
+  const [makeGroupSheet, setMakeGroupSheet] = useState(false);
 
   // moment conditional sheet
   const [reanswering, setReanswering] = useState(false);
@@ -498,6 +505,27 @@ export function EventDetail({ route, navigation }: Props) {
         visible={shareOpen}
         onClose={() => setShareOpen(false)}
       />
+
+      <AddGroupSheet
+        visible={addGroupSheet}
+        eventId={eventId}
+        onClose={() => setAddGroupSheet(false)}
+        onAdded={load}
+      />
+
+      <MakeGroupSheet
+        visible={makeGroupSheet}
+        eventId={eventId}
+        defaultName={data.activity || "New group"}
+        onClose={() => setMakeGroupSheet(false)}
+        onCreated={(groupId) => {
+          if (!navigationRef.isReady()) return;
+          navigationRef.navigate("Groups", {
+            screen: "GroupDetail",
+            params: { groupId, justCreated: true },
+          });
+        }}
+      />
     </>
   );
 
@@ -522,6 +550,24 @@ export function EventDetail({ route, navigation }: Props) {
           variant="outline"
           onPress={() => setShareOpen(true)}
           style={{ marginTop: 14 }}
+        />
+      )}
+
+      {data.phase !== "fizzled" && data.phase !== "cleared" && (
+        <Button
+          label="Add a group"
+          variant="outline"
+          onPress={() => setAddGroupSheet(true)}
+          style={{ marginTop: 10 }}
+        />
+      )}
+
+      {data.phase === "cleared" && (
+        <Button
+          label="Make a group from this"
+          variant="outline"
+          onPress={() => setMakeGroupSheet(true)}
+          style={{ marginTop: 10 }}
         />
       )}
 

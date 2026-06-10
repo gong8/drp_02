@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import {
   AddCandidateInput,
+  AddGroupInput,
   addCandidateHorizon,
   ByEvent,
   ByGroupInput,
@@ -25,11 +26,19 @@ import {
 import { TRPCError } from "@trpc/server";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { FALLBACK_GROUP_NAME, getGroupNames, meetupUrlFor, memberIdsOf } from "../db/groups.js";
+import {
+  FALLBACK_GROUP_NAME,
+  getGroupNames,
+  isInRoster,
+  meetupUrlFor,
+  rosterUserIds,
+} from "../db/groups.js";
 import {
   candidateReactions,
   eventCandidates,
+  eventGroups,
   eventOptOuts,
+  eventParticipants,
   events,
   groupMembers,
   responses,
@@ -361,13 +370,25 @@ export async function requireMember(groupId: string, userId: string): Promise<vo
   if (m.length === 0) throw new TRPCError({ code: "FORBIDDEN" });
 }
 
+// Caller must be in the meetup's ROSTER (origin group, an attached group, or an ad-hoc participant).
+// The event-scoped analogue of requireMember; used by loadEvent and events.get.
+export async function requireInRoster(
+  eventId: string,
+  originGroupId: string,
+  userId: string,
+): Promise<void> {
+  if (!(await isInRoster(eventId, originGroupId, userId))) {
+    throw new TRPCError({ code: "FORBIDDEN" });
+  }
+}
+
 // Load an event for a member-scoped mutation: fetch by id, 404 if missing, then assert membership.
 // The shared head of the NOT_FOUND mutations (toggleReaction/setOptOut/addCandidate/lock/respond/
 // unrespond/resolve); the null-returning read (events.get) keeps its own preamble.
 async function loadEvent(eventId: string, userId: string): Promise<EventRow> {
   const [e] = await db.select().from(events).where(eq(events.id, eventId));
   if (!e) throw new TRPCError({ code: "NOT_FOUND" });
-  await requireMember(e.groupId, userId);
+  await requireInRoster(e.id, e.groupId, userId);
   return e;
 }
 
@@ -781,7 +802,7 @@ export const eventsRouter = router({
     return db.transaction(async (tx) => {
       const [e] = await tx.select().from(events).where(eq(events.id, input.eventId)).for("update");
       if (!e) throw new TRPCError({ code: "NOT_FOUND" });
-      await requireMember(e.groupId, ctx.userId);
+      await requireInRoster(e.id, e.groupId, ctx.userId);
       if (isTerminalPhase(e.phase)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "this plan is final" });
       }
@@ -829,9 +850,32 @@ export const eventsRouter = router({
       .from(groupMembers)
       .where(eq(groupMembers.userId, ctx.userId));
     const groupIds = memberships.map((m) => m.groupId);
-    if (groupIds.length === 0) return [];
 
-    const rows = await db.select().from(events).where(inArray(events.groupId, groupIds));
+    // A plan is "mine" if I am in its roster: its origin group is one of mine, OR it has an attached
+    // group of mine, OR I am an ad-hoc participant. Collect the ids in JS to avoid empty-inArray edges.
+    const originRows = groupIds.length
+      ? await db.select({ id: events.id }).from(events).where(inArray(events.groupId, groupIds))
+      : [];
+    const attachedRows = groupIds.length
+      ? await db
+          .select({ eventId: eventGroups.eventId })
+          .from(eventGroups)
+          .where(inArray(eventGroups.groupId, groupIds))
+      : [];
+    const participantRows = await db
+      .select({ eventId: eventParticipants.eventId })
+      .from(eventParticipants)
+      .where(eq(eventParticipants.userId, ctx.userId));
+    const ids = [
+      ...new Set([
+        ...originRows.map((r) => r.id),
+        ...attachedRows.map((r) => r.eventId),
+        ...participantRows.map((r) => r.eventId),
+      ]),
+    ];
+    if (ids.length === 0) return [];
+
+    const rows = await db.select().from(events).where(inArray(events.id, ids));
     // Settle each row first (it writes the events row and is phase-ordered), drop the silent fizzles,
     // then bulk-load the surviving rows' read data in a fixed handful of batched queries.
     for (const e of rows) await settleLifecycle(e);
@@ -921,12 +965,13 @@ export const eventsRouter = router({
   get: protectedProcedure.input(ByIdInput).query(async ({ ctx, input }) => {
     const [e] = await db.select().from(events).where(eq(events.id, input.id));
     if (!e) return null;
-    await requireMember(e.groupId, ctx.userId);
+    // Members are a membership query (not in the bundle); read them first so their uids join the
+    // bundle's batched user-card query alongside the revealed crowd. The roster doubles as the gate
+    // (one read, not two): a non-roster caller is refused BEFORE settle, so no settle is triggered.
+    const memberIds = await rosterUserIds(e.id, e.groupId);
+    if (!memberIds.includes(ctx.userId)) throw new TRPCError({ code: "FORBIDDEN" });
     await settleLifecycle(e);
 
-    // Members are a membership query (not in the bundle); read them first so their uids join the
-    // bundle's batched user-card query alongside the revealed crowd.
-    const memberIds = await memberIdsOf(e.groupId);
     const bundle = await loadEventBundle([e], memberIds);
 
     const { resp, revealed, isCreator, iOptedOut, myStatus } = derivePlanView(
@@ -1021,28 +1066,24 @@ export const eventsRouter = router({
     };
   }),
 
-  // Redeem a meetup's share token to join its group and land on the plan. This iteration a joiner
-  // becomes a NORMAL group member (ephemeral plan-only guests are a later iteration). Idempotent -
-  // a re-open, or an existing member tapping their own link, is a no-op that still resolves the
-  // eventId/groupId so the client routes to the plan, and reports `alreadyMember` so the UI can skip
-  // a "welcome". Mirrors groups.joinByCode (same membership-FK caveat for a spoofed dev x-user-id).
+  // Redeem a meetup's share token to join THIS meetup only as an ad-hoc participant - NOT the group.
+  // Idempotent: already in the roster (origin/attached group or an existing participant) is a no-op
+  // that still resolves the eventId/groupId so the client routes to the plan, and reports
+  // `alreadyMember` so the UI can skip a "welcome".
   joinByToken: protectedProcedure.input(ByEvent).mutation(async ({ ctx, input }) => {
     const [e] = await db.select().from(events).where(eq(events.id, input.eventId));
     if (!e)
       throw new TRPCError({ code: "NOT_FOUND", message: "That link does not match a meetup" });
-    const [existing] = await db
-      .select({ userId: groupMembers.userId })
-      .from(groupMembers)
-      .where(and(eq(groupMembers.groupId, e.groupId), eq(groupMembers.userId, ctx.userId)))
-      .limit(1);
-    const alreadyMember = !!existing;
-    if (!alreadyMember) {
+    // The link adds you to THIS meetup only (an ad-hoc participant), never to the group. Idempotent:
+    // already in the roster (origin/attached group or an existing participant) is a no-op.
+    const already = await isInRoster(e.id, e.groupId, ctx.userId);
+    if (!already) {
       await db
-        .insert(groupMembers)
-        .values({ groupId: e.groupId, userId: ctx.userId })
+        .insert(eventParticipants)
+        .values({ eventId: e.id, userId: ctx.userId })
         .onConflictDoNothing();
     }
-    return { eventId: e.id, groupId: e.groupId, alreadyMember };
+    return { eventId: e.id, groupId: e.groupId, alreadyMember: already };
   }),
 
   // The shareable link for a plan: a fully-qualified URL when PUBLIC_WEB_URL is set, plus the bare
@@ -1052,6 +1093,21 @@ export const eventsRouter = router({
   shareLink: protectedProcedure.input(ByEvent).query(async ({ ctx, input }) => {
     const e = await loadEvent(input.eventId, ctx.userId);
     return { token: e.id, url: meetupUrlFor(e.id) };
+  }),
+
+  // Attach another whole group to a meetup (cross-group). Caller must be in the meetup's roster
+  // (loadEvent) AND a member of the group being added - you can only bring in groups you belong to.
+  // Idempotent; attaching the origin group is a no-op (its members are already the base roster).
+  addGroup: protectedProcedure.input(AddGroupInput).mutation(async ({ ctx, input }) => {
+    const e = await loadEvent(input.eventId, ctx.userId);
+    await requireMember(input.groupId, ctx.userId);
+    if (input.groupId !== e.groupId) {
+      await db
+        .insert(eventGroups)
+        .values({ eventId: e.id, groupId: input.groupId })
+        .onConflictDoNothing();
+    }
+    return { ok: true as const };
   }),
 
   // Record (or replace) this user's commitment during the moment.
