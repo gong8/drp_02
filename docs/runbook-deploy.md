@@ -177,12 +177,19 @@ above for completeness.
 So a pasted link unfurls as a **rich, branded large-image card** in chats, there are three **Vercel
 Functions** (the SPA is a static export with no per-route `<head>`):
 
-- `api/m/[id].ts` (rewrite `/m/:id`) - fetches the public `events.previewByToken` and renders a
-  per-meetup card ("You're invited to bowling - Fri 12 Jun, with The Boys").
-- `api/join/[code].ts` (rewrite `/join/:code`) - fetches the public `groups.previewByCode` and renders
-  a per-group card ("Join The Boys on BeThere - 5 members").
+- `api/m.ts` (rewrite `/m/:id -> /api/m?id=:id`) - fetches the public `events.previewByToken` and
+  renders a per-meetup card ("You're invited to bowling - Fri 12 Jun, with The Boys").
+- `api/join.ts` (rewrite `/join/:code -> /api/join?code=:code`) - fetches the public
+  `groups.previewByCode` and renders a per-group card ("Join The Boys on BeThere - 5 members").
 - `api/og.ts` (`/api/og?title=&subtitle=`, edge) - renders the actual **1200x630 PNG** card image via
   `@vercel/og` (on-brand gradient + wordmark); the two Functions above reference it as `og:image`.
+
+> **GOTCHA (verified live):** under this project's `framework: null` + custom `outputDirectory` config,
+> Vercel only registers **flat/static** `api/*.ts` Functions - a **dynamic-segment** file like
+> `api/m/[id].ts` is NOT registered and its path silently falls through to the SPA catch-all (the link
+> unfurls as the generic baseline card). So the Functions are static files and the rewrites pass the
+> path param as a query (`?id=`/`?code=`). Also: all three Functions must use a `export default`
+> handler (a named `export function GET` is a Next.js convention and does not register here).
 
 Every other route gets a generic baseline card injected into `dist/index.html` at build time by
 `apps/mobile/scripts/inject-og.mjs` (wired into the `buildCommand`); the per-meetup/per-group Functions
