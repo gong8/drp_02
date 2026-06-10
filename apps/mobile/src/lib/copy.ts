@@ -83,9 +83,13 @@ export const STEP_COPY: Record<StepKey, { title: string; sub?: string }> = {
   activities: { title: "What do you fancy?", sub: "Optional - the group can add more." },
   times: { title: "When could it be?", sub: "Optional - the group votes." },
   details: { title: "Where & notes", sub: "All optional." },
-  deadlines: { title: "Deadlines", sub: "When voting and replies close." },
+  deadlines: { title: "Deadlines", sub: "First the group votes, then everyone RSVPs yes or no." },
   confirm: { title: "Ready to send?" },
 };
+
+// The deadlines-step sub for a CONCRETE plan (time + activity both pinned): there is no voting round,
+// only the RSVP deadline shows, so the two-stage sub above would mislead.
+export const DEADLINES_SUB_CONCRETE = "When yes/no replies are due.";
 
 // Recurring screen titles + labels (>=2 screens each).
 export const TITLE_NEW_MEETUP = "New meetup";

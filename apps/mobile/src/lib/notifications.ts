@@ -89,8 +89,8 @@ export async function syncReminders(events: ReminderEvent[]): Promise<void> {
             e.decidesBy,
             DECIDE_LEAD_MS,
             now,
-            "Decides soon",
-            `"${planLabel(e)}" decides ${formatSlot(e.decidesBy)} - tap what you're keen on.`,
+            "Voting closes soon",
+            `Voting on "${planLabel(e)}" closes ${formatSlot(e.decidesBy)} - tap what you're keen on.`,
           );
         }
         const decideMs = new Date(e.decidesBy).getTime();

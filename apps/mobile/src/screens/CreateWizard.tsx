@@ -6,10 +6,11 @@ import {
   ACTION_NEW_GROUP,
   ANON_SEND_BODY,
   ANON_SEND_TITLE,
+  DEADLINE_RSVP,
   DEADLINE_VOTING,
+  DEADLINES_SUB_CONCRETE,
   ERR_SAVE,
   LABEL_GROUP_NAME,
-  NOTE_TOP_PICK,
   plural,
   STEP_COPY,
   TITLE_NEW_GROUP,
@@ -237,7 +238,7 @@ export function CreateWizard({ navigation }: Props) {
   const decidesShown = !isConcrete ? (decidesToSend ?? autoDecidesIso) : null;
   // reply-by (unlike decides-by) already bakes its default into replyToSend, so no fallback here.
   const replyShown = replyToSend;
-  const replyLine = replyShown ? `Replies close ${formatSlot(replyShown)}` : null;
+  const replyLine = replyShown ? `${DEADLINE_RSVP} ${formatSlot(replyShown)}` : null;
   const deadlineLines = isConcrete
     ? [replyLine ?? "We'll pick a sensible deadline"]
     : earliestMs == null
@@ -358,6 +359,9 @@ export function CreateWizard({ navigation }: Props) {
 
   const nextLabel = isLastStep ? "Send to the group" : "Next";
   const stepCopy = STEP_COPY[stepKey];
+  // A concrete plan has no voting round, so the deadlines step shows only the RSVP card - swap the
+  // two-stage sub for the RSVP-only one.
+  const stepSub = stepKey === "deadlines" && isConcrete ? DEADLINES_SUB_CONCRETE : stepCopy.sub;
   const canGoNext = canAdvance(stepKey);
 
   return (
@@ -365,7 +369,7 @@ export function CreateWizard({ navigation }: Props) {
       <ProgressDots steps={steps} index={step} />
       {error && <FormError>{ERR_SAVE}</FormError>}
 
-      <Section title={stepCopy.title} sub={stepCopy.sub} size="lg">
+      <Section title={stepCopy.title} sub={stepSub} size="lg">
         {stepKey === "group" && (
           <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
             {groups.map((g) => (
@@ -510,7 +514,7 @@ export function CreateWizard({ navigation }: Props) {
           <>
             {!isConcrete && (
               <DeadlineField
-                heading="Decides by"
+                heading={DEADLINE_VOTING}
                 editing={decidesEdit}
                 date={decidesDate}
                 time={decidesTime}
@@ -520,14 +524,14 @@ export function CreateWizard({ navigation }: Props) {
                 invalid={decidesInvalid}
                 invalidNote={
                   decidesPastNow
-                    ? "The deadline has to be in the future."
-                    : "It has to decide at least an hour before your earliest time."
+                    ? "Voting has to close in the future."
+                    : "Voting has to close at least an hour before your earliest time."
                 }
-                defaultLine={
-                  autoDecidesIso ? `Decides ${formatSlot(autoDecidesIso)}` : "A sensible deadline"
-                }
+                defaultLine={autoDecidesIso ? formatSlot(autoDecidesIso) : "Picked automatically"}
                 defaultSub={
-                  autoDecidesIso ? NOTE_TOP_PICK : "Add times to set this, or we'll pick a horizon"
+                  autoDecidesIso
+                    ? "The group's top pick wins, then RSVPs open."
+                    : "Add a time and you can set this yourself."
                 }
                 onEdit={autoDecidesIso ? decidesHandlers.startEdit : undefined}
                 onUseDefault={decidesHandlers.useDefault}
@@ -537,7 +541,7 @@ export function CreateWizard({ navigation }: Props) {
             {earliestMs != null && (
               <DeadlineField
                 style={{ marginTop: isConcrete ? 0 : 18 }}
-                heading="Reply by"
+                heading={DEADLINE_RSVP}
                 editing={replyEdit}
                 date={replyDate}
                 time={replyTime}
@@ -546,11 +550,13 @@ export function CreateWizard({ navigation }: Props) {
                 minimumDate={new Date(replyFloorMs)}
                 maximumDate={new Date(earliestMs)}
                 invalid={replyInvalid}
-                invalidNote="Replies close after voting ends and no later than your earliest time."
-                defaultLine={
-                  autoReplyIso ? `Replies close ${formatSlot(autoReplyIso)}` : "A sensible deadline"
+                invalidNote={
+                  isConcrete
+                    ? "RSVPs have to close in the future, by your meetup time."
+                    : "RSVPs have to close after voting ends, by your earliest time."
                 }
-                defaultSub="Blind until then, then it reveals who's in"
+                defaultLine={autoReplyIso ? formatSlot(autoReplyIso) : "Picked automatically"}
+                defaultSub="Answers stay hidden until then - then everyone sees who's in."
                 onEdit={autoReplyIso ? replyHandlers.startEdit : undefined}
                 onUseDefault={replyHandlers.useDefault}
               />
