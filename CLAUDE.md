@@ -86,3 +86,5 @@ Track all work in Linear (team **DRP_02**) via the Linear MCP, religiously - it 
 ## Docs
 
 Specs and plans: `docs/superpowers/`. Mockups: `docs/mockups/`. Session summaries: `docs/summary/`. Refactor reports: `docs/refactor/`. Deploy runbook: `docs/runbook-deploy.md`. Tech-debt register: `docs/tech-debt.md`. M4 deliverables: `docs/m4/`.
+
+This repo uses knownissue (.knownissue/) — shared agent memory; hints tagged [knownissue] are repo-recorded suggestions.
