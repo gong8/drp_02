@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import { LABEL_CANT_MAKE_IT, NO_NAMES } from "../../lib/copy";
 import { formatSlot, isoFrom, partOfDayLabel } from "../../lib/format";
@@ -65,6 +65,7 @@ export function CollectingView({
   onLock,
   onAddTime,
   onAddActivity,
+  onComposingChange,
 }: {
   data: Detail;
   busy: boolean;
@@ -73,7 +74,15 @@ export function CollectingView({
   onLock: (candidateId?: string) => void;
   onAddTime: (startsAt: string) => void;
   onAddActivity: (text: string) => void;
+  // Reports whether either inline add-composer (time or activity) is open, so the screen can hide a
+  // sticky CTA while the user is mid-compose.
+  onComposingChange?: (composing: boolean) => void;
 }) {
+  const [timeOpen, setTimeOpen] = useState(false);
+  const [activityOpen, setActivityOpen] = useState(false);
+  useEffect(() => {
+    onComposingChange?.(timeOpen || activityOpen);
+  }, [timeOpen, activityOpen, onComposingChange]);
   return (
     <View style={{ marginTop: 16 }}>
       {(data.activityCandidates.length > 0 || !data.lockActivity) && (
@@ -87,7 +96,9 @@ export function CollectingView({
               onPress={() => onToggleReaction(c.id)}
             />
           ))}
-          {!data.lockActivity && <AddActivity busy={busy} onAdd={onAddActivity} />}
+          {!data.lockActivity && (
+            <AddActivity busy={busy} onAdd={onAddActivity} onToggle={setActivityOpen} />
+          )}
         </Section>
       )}
 
@@ -102,7 +113,9 @@ export function CollectingView({
               onPress={() => onToggleReaction(c.id)}
             />
           ))}
-          {!data.lockTimes && <AddTime busy={busy} data={data} onAdd={onAddTime} />}
+          {!data.lockTimes && (
+            <AddTime busy={busy} data={data} onAdd={onAddTime} onToggle={setTimeOpen} />
+          )}
         </Section>
       )}
 
@@ -175,13 +188,22 @@ function VoteRow({
 }
 
 // Inline free-text activity entry through the shared AddComposer (one add affordance for both lists).
-function AddActivity({ busy, onAdd }: { busy: boolean; onAdd: (text: string) => void }) {
+function AddActivity({
+  busy,
+  onAdd,
+  onToggle,
+}: {
+  busy: boolean;
+  onAdd: (text: string) => void;
+  onToggle?: (open: boolean) => void;
+}) {
   const [text, setText] = useState("");
   return (
     <AddComposer
       triggerLabel="+ add an activity"
       busy={busy}
       canSubmit={!!text.trim()}
+      onToggle={onToggle}
       onSubmit={() => {
         const t = text.trim();
         if (t) onAdd(t);
@@ -209,10 +231,12 @@ function AddTime({
   busy,
   data,
   onAdd,
+  onToggle,
 }: {
   busy: boolean;
   data: Detail;
   onAdd: (startsAt: string) => void;
+  onToggle?: (open: boolean) => void;
 }) {
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("");
@@ -245,6 +269,7 @@ function AddTime({
       triggerLabel="+ add a time"
       busy={busy}
       canSubmit={!!newIso && !invalidNote}
+      onToggle={onToggle}
       onSubmit={() => {
         if (newIso) onAdd(newIso);
         reset();

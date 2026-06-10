@@ -102,6 +102,10 @@ export function EventDetail({ route, navigation }: Props) {
   const [addGroupSheet, setAddGroupSheet] = useState(false);
   const [makeGroupSheet, setMakeGroupSheet] = useState(false);
 
+  // Whether an inline add-time/add-activity composer is open (reported up by CollectingView). The
+  // sticky share bar hides while the user is mid-compose so it never sits over the open composer.
+  const [composing, setComposing] = useState(false);
+
   // moment conditional sheet
   const [reanswering, setReanswering] = useState(false);
   const [condSheet, setCondSheet] = useState(false);
@@ -409,6 +413,13 @@ export function EventDetail({ route, navigation }: Props) {
   const { label } = activeDeadline(data);
   const activityEditable = data.phase === "moment" || data.phase === "cleared";
 
+  // The sticky bottom "Share this meetup" bar stays put except on a fizzled plan, and hides whenever
+  // the user is mid-flow - any open sheet or an inline add-time/add-activity composer - so it never
+  // covers what they're doing.
+  const busyComposing =
+    editSheet || condSheet || addGroupSheet || makeGroupSheet || shareOpen || composing;
+  const showShareBar = data.phase !== "fizzled" && !busyComposing;
+
   const sheets = (
     <>
       <BottomSheet visible={condSheet} onClose={() => setCondSheet(false)}>
@@ -496,6 +507,15 @@ export function EventDetail({ route, navigation }: Props) {
           onPress={saveEdit}
           style={{ marginTop: 14 }}
         />
+        {/* Audience tweak, tucked into the edit sheet: bring in another whole group after the fact. */}
+        <TextButton
+          label="+ Add a group"
+          onPress={() => {
+            setEditSheet(false);
+            setAddGroupSheet(true);
+          }}
+          style={{ marginTop: 16 }}
+        />
       </BottomSheet>
 
       <PlanShareSheet
@@ -533,7 +553,30 @@ export function EventDetail({ route, navigation }: Props) {
     <ScreenScroll
       header={<ScreenHeader title={data.activity || "Meetup"} onBack={() => navigation.goBack()} />}
       bottomPad={28}
-      footer={sheets}
+      footer={
+        <>
+          {showShareBar && (
+            <View
+              style={{
+                paddingHorizontal: ui.gutter,
+                paddingTop: 12,
+                paddingBottom: 16,
+                backgroundColor: ui.surface,
+                borderTopWidth: ui.border,
+                borderTopColor: ui.ink,
+              }}
+            >
+              <Button
+                label={TITLE_SHARE_MEETUP}
+                variant="primary"
+                size="lg"
+                onPress={() => setShareOpen(true)}
+              />
+            </View>
+          )}
+          {sheets}
+        </>
+      }
     >
       {data.phase === "collecting" && data.decidesBy && (
         <CountdownBanner label={label} ms={ms} note={NOTE_TOP_PICK} />
@@ -544,30 +587,12 @@ export function EventDetail({ route, navigation }: Props) {
 
       <PlanHeaderCard data={data} canEdit={isLive(data)} onEdit={openEditSheet} />
 
-      {data.phase !== "fizzled" && (
-        <Button
-          label={TITLE_SHARE_MEETUP}
-          variant="outline"
-          onPress={() => setShareOpen(true)}
-          style={{ marginTop: 14 }}
-        />
-      )}
-
-      {data.phase !== "fizzled" && data.phase !== "cleared" && (
-        <Button
-          label="Add a group"
-          variant="outline"
-          onPress={() => setAddGroupSheet(true)}
-          style={{ marginTop: 10 }}
-        />
-      )}
-
       {data.phase === "cleared" && (
         <Button
           label="Make a group from this"
           variant="outline"
           onPress={() => setMakeGroupSheet(true)}
-          style={{ marginTop: 10 }}
+          style={{ marginTop: 14 }}
         />
       )}
 
@@ -580,6 +605,7 @@ export function EventDetail({ route, navigation }: Props) {
           onLock={lock}
           onAddTime={addTime}
           onAddActivity={addActivity}
+          onComposingChange={setComposing}
         />
       )}
 

@@ -14,6 +14,7 @@ export function AddComposer({
   canSubmit,
   onSubmit,
   onCancel,
+  onToggle,
   busy = false,
   children,
 }: {
@@ -21,14 +22,21 @@ export function AddComposer({
   canSubmit: boolean;
   onSubmit: () => void;
   onCancel?: () => void;
+  // Reports open/closed so a parent can react to "the user is mid-compose" (e.g. hide a sticky CTA).
+  onToggle?: (open: boolean) => void;
   busy?: boolean;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  // Flip open AND notify the parent in one place, so every entry/exit path stays in sync.
+  const setOpenAndReport = (next: boolean) => {
+    setOpen(next);
+    onToggle?.(next);
+  };
   if (!open) {
     return (
       <Pressable
-        onPress={() => setOpen(true)}
+        onPress={() => setOpenAndReport(true)}
         style={{
           alignItems: "center",
           paddingVertical: 11,
@@ -53,7 +61,7 @@ export function AddComposer({
           disabled={!canSubmit || busy}
           onPress={() => {
             onSubmit();
-            setOpen(false);
+            setOpenAndReport(false);
           }}
         />
         <Button
@@ -62,7 +70,7 @@ export function AddComposer({
           label="Cancel"
           onPress={() => {
             onCancel?.();
-            setOpen(false);
+            setOpenAndReport(false);
           }}
         />
       </View>
