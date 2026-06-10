@@ -2,6 +2,7 @@ import type { UpdateEventInput } from "@bethere/shared";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { TRPCClientError } from "@trpc/client";
+import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Platform, Text, View } from "react-native";
 import { type MeetupsStackParams, navigationRef } from "../../App";
@@ -552,27 +553,25 @@ export function EventDetail({ route, navigation }: Props) {
   return (
     <ScreenScroll
       header={<ScreenHeader title={data.activity || "Meetup"} onBack={() => navigation.goBack()} />}
-      bottomPad={28}
+      bottomPad={showShareBar ? 104 : 28}
       footer={
         <>
           {showShareBar && (
-            <View
+            <LinearGradient
+              colors={["transparent", ui.gradient[1]]}
+              pointerEvents="box-none"
               style={{
+                position: "absolute",
+                left: 0,
+                right: 0,
+                bottom: 0,
                 paddingHorizontal: ui.gutter,
-                paddingTop: 12,
-                paddingBottom: 16,
-                backgroundColor: ui.surface,
-                borderTopWidth: ui.border,
-                borderTopColor: ui.ink,
+                paddingTop: 34,
+                paddingBottom: 18,
               }}
             >
-              <Button
-                label={TITLE_SHARE_MEETUP}
-                variant="primary"
-                size="lg"
-                onPress={() => setShareOpen(true)}
-              />
-            </View>
+              <Button label={TITLE_SHARE_MEETUP} size="lg" onPress={() => setShareOpen(true)} />
+            </LinearGradient>
           )}
           {sheets}
         </>
