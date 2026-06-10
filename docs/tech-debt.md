@@ -155,3 +155,13 @@ components (the Hermes parse bug is already fixed). Same posture as the existing
 
 Mark: Only focus on core features this week
 Sooyoung: Have you considered onboarding?
+
+## groups.removeMember purge is origin-group-only (attached-group votes not cleared)
+
+**Logged:** 2026-06-10 · **Area:** `apps/api` · **Severity:** low (mid-collecting edge only)
+
+**What:** `groups.removeMember` deletes a removed user's reactions, responses, and opt-outs for events where the group is the ORIGIN (`events.groupId = groupId`). Votes on meetups where the group is ATTACHED via `event_groups` are not purged on removal (DRP-62 cross-group edge; only relevant during a live collecting round). Similarly, `removeGroup`/un-invite does not purge votes for the detached group's members.
+
+**Why it's acceptable for now:** mid-collecting removal of an attached-group member is a rare, edge-case scenario during supervised demo sessions; stale votes do not affect correctness (winner selection uses current members only) and will not be visible after the plan locks.
+
+**When to fix:** revisit alongside a proper `removeGroup`/un-invite flow - the purge should cover both origin and attached-group membership paths.

@@ -9,7 +9,11 @@ import {
 
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
-const now = 1_000_000_000_000; // a fixed reference instant
+const HALF_HOUR = 30 * 60 * 1000;
+// A fixed reference instant ON a half-hour boundary (a multiple of 30min), so whole-hour-offset
+// expectations are untouched by the defaults' half-hour flooring; the flooring itself is asserted
+// separately with a misaligned now below.
+const now = 999_999_000_000;
 
 describe("defaultDecidesByForCandidates", () => {
   it("caps the notice lead at one day for far-out options", () => {
@@ -36,6 +40,25 @@ describe("defaultDecidesByForCandidates", () => {
   it("falls back to a clamped midpoint when the slot is too close for the lead", () => {
     const earliest = now + 30 * 60 * 1000; // 30 min out
     expect(defaultDecidesByForCandidates(earliest, now)).toBe(now + 15 * 60 * 1000);
+  });
+
+  it("floors a misaligned default to the half hour, so it reads as a chosen time", () => {
+    // Created at a 13:07-style instant: the exact lead would land at :07 too; the default must
+    // land on a half-hour boundary in the same neighborhood (within 30min below the exact lead).
+    const offNow = now + 7 * 60 * 1000;
+    const earliest = offNow + 3 * DAY_MS;
+    const t = defaultDecidesByForCandidates(earliest, offNow);
+    expect(t % HALF_HOUR).toBe(0);
+    expect(t).toBeGreaterThan(earliest - DAY_MS - HALF_HOUR);
+    expect(t).toBeLessThanOrEqual(earliest - DAY_MS);
+  });
+
+  it("skips the flooring when it would cross now (correctness beats prettiness)", () => {
+    // now sits 20min past a boundary and the ideal only 5min later: flooring would land before
+    // now, so the exact instant is kept.
+    const offNow = now + 20 * 60 * 1000;
+    const earliest = offNow + 65 * 60 * 1000; // lead floors to 1h -> ideal = offNow + 5min
+    expect(defaultDecidesByForCandidates(earliest, offNow)).toBe(offNow + 5 * 60 * 1000);
   });
 });
 

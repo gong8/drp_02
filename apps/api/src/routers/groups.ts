@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import {
   ByGroupInput,
   ByIdInput,
+  CreateGroupFromEventInput,
   CreateGroupInput,
   GroupMemberRef,
   JoinByCodeInput,
@@ -16,7 +17,9 @@ import {
   freshInviteCode,
   getGroupNames,
   inviteUrlFor,
+  isInRoster,
   memberIdsOf,
+  rosterUserIds,
 } from "../db/groups.js";
 import {
   candidateReactions,
@@ -28,7 +31,7 @@ import {
   users,
 } from "../db/schema.js";
 import { fallbackUserCard, getUserCards, userCardFromRow } from "../db/users.js";
-import { protectedProcedure, router } from "../trpc.js";
+import { protectedProcedure, publicProcedure, router } from "../trpc.js";
 import { requireMember } from "./events.js";
 
 async function resolveGroupByCode(rawCode: string) {
@@ -95,6 +98,30 @@ export const groupsRouter = router({
     return { id };
   }),
 
+  // Crystallize a meetup's roster (origin members + attached groups + ad-hoc participants) into a new
+  // permanent group - the mirror of "redo a past meetup". Caller must be in the roster. Mints an
+  // invite code like create; seeds group_members with everyone on the meetup.
+  createFromEvent: protectedProcedure
+    .input(CreateGroupFromEventInput)
+    .mutation(async ({ ctx, input }) => {
+      const [e] = await db.select().from(events).where(eq(events.id, input.eventId)).limit(1);
+      if (!e) throw new TRPCError({ code: "NOT_FOUND", message: "meetup not found" });
+      if (!(await isInRoster(e.id, e.groupId, ctx.userId))) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      const roster = await rosterUserIds(e.id, e.groupId);
+      const id = `g_${randomUUID()}`;
+      const inviteCode = await freshInviteCode();
+      await db.insert(groups).values({ id, name: input.name, inviteCode });
+      if (roster.length > 0) {
+        await db
+          .insert(groupMembers)
+          .values(roster.map((userId) => ({ groupId: id, userId })))
+          .onConflictDoNothing();
+      }
+      return { id };
+    }),
+
   // The shareable invite for a group: its code plus a fully-qualified link when a public web origin
   // is configured (PUBLIC_WEB_URL). Member-gated - only people already in the group can fetch, and
   // thus share, the invite. The client builds its own link from the code when `url` is null.
@@ -106,10 +133,11 @@ export const groupsRouter = router({
   }),
 
   // Preview the group a code resolves to WITHOUT joining - powers the JoinGroup confirm step
-  // ("Join <name>? N members"). Authed (the join flow is only reachable signed in) but NOT
-  // member-gated: holding the code is the invitation. Reveals only the group name + size, never
-  // member names (anonymity is preserved until you are actually in the roster).
-  previewByCode: protectedProcedure.input(JoinByCodeInput).query(async ({ input }) => {
+  // ("Join <name>? N members") AND the public OG unfurl card for a /join/<code> link. PUBLIC and NOT
+  // member-gated: holding the code is the invitation (same trust model as events.previewByToken), so
+  // an unauthenticated link scraper / a signed-out visitor can resolve it. Reveals only the group name
+  // + size, never member names (anonymity is preserved until you are actually in the roster).
+  previewByCode: publicProcedure.input(JoinByCodeInput).query(async ({ input }) => {
     const group = await resolveGroupByCode(input.code);
     const [tally] = await db
       .select({ n: count() })

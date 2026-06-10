@@ -37,7 +37,9 @@ const ifAny = (userId: string, ...targetIds: string[]): MomentResponse => ({
 });
 
 const HOUR = MOMENT_MS;
-const now = 1_000_000_000_000;
+// On a half-hour boundary (a multiple of 30min), so the deadline defaults' half-hour flooring is a
+// no-op for the whole-hour offsets these boundary tests use.
+const now = 999_999_000_000;
 
 describe("pickWinningCandidate (quorum/winner interplay)", () => {
   it("returns null until any candidate reaches quorum, even with momentum", () => {

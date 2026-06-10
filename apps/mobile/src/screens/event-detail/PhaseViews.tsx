@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import { LABEL_CANT_MAKE_IT, NO_NAMES } from "../../lib/copy";
 import { formatSlot, isoFrom, partOfDayLabel } from "../../lib/format";
@@ -65,6 +65,7 @@ export function CollectingView({
   onLock,
   onAddTime,
   onAddActivity,
+  onComposingChange,
 }: {
   data: Detail;
   busy: boolean;
@@ -73,7 +74,15 @@ export function CollectingView({
   onLock: (candidateId?: string) => void;
   onAddTime: (startsAt: string) => void;
   onAddActivity: (text: string) => void;
+  // Reports whether either inline add-composer (time or activity) is open, so the screen can hide a
+  // sticky CTA while the user is mid-compose.
+  onComposingChange?: (composing: boolean) => void;
 }) {
+  const [timeOpen, setTimeOpen] = useState(false);
+  const [activityOpen, setActivityOpen] = useState(false);
+  useEffect(() => {
+    onComposingChange?.(timeOpen || activityOpen);
+  }, [timeOpen, activityOpen, onComposingChange]);
   return (
     <View style={{ marginTop: 16 }}>
       {(data.activityCandidates.length > 0 || !data.lockActivity) && (
@@ -87,7 +96,9 @@ export function CollectingView({
               onPress={() => onToggleReaction(c.id)}
             />
           ))}
-          {!data.lockActivity && <AddActivity busy={busy} onAdd={onAddActivity} />}
+          {!data.lockActivity && (
+            <AddActivity busy={busy} onAdd={onAddActivity} onToggle={setActivityOpen} />
+          )}
         </Section>
       )}
 
@@ -102,7 +113,9 @@ export function CollectingView({
               onPress={() => onToggleReaction(c.id)}
             />
           ))}
-          {!data.lockTimes && <AddTime busy={busy} data={data} onAdd={onAddTime} />}
+          {!data.lockTimes && (
+            <AddTime busy={busy} data={data} onAdd={onAddTime} onToggle={setTimeOpen} />
+          )}
         </Section>
       )}
 
@@ -175,13 +188,22 @@ function VoteRow({
 }
 
 // Inline free-text activity entry through the shared AddComposer (one add affordance for both lists).
-function AddActivity({ busy, onAdd }: { busy: boolean; onAdd: (text: string) => void }) {
+function AddActivity({
+  busy,
+  onAdd,
+  onToggle,
+}: {
+  busy: boolean;
+  onAdd: (text: string) => void;
+  onToggle?: (open: boolean) => void;
+}) {
   const [text, setText] = useState("");
   return (
     <AddComposer
       triggerLabel="+ add an activity"
       busy={busy}
       canSubmit={!!text.trim()}
+      onToggle={onToggle}
       onSubmit={() => {
         const t = text.trim();
         if (t) onAdd(t);
@@ -200,15 +222,21 @@ function AddActivity({ busy, onAdd }: { busy: boolean; onAdd: (text: string) => 
 }
 
 // Inline concrete time entry through the shared AddComposer, bounded to a sensible horizon from the
-// existing candidate spread. De-duped by minute server-side.
+// existing candidate spread. De-duped by minute server-side. The pill's min/max only bound the DATE
+// half - the combined date+time can still land outside the server's accept window (after decides-by,
+// within the horizon), e.g. the minimum date with a clock time before the deadline's. So mirror the
+// server's two reject rules (events.addCandidate) here: an out-of-range pick disables Add and names
+// the actual boundary, instead of submitting and failing.
 function AddTime({
   busy,
   data,
   onAdd,
+  onToggle,
 }: {
   busy: boolean;
   data: Detail;
   onAdd: (startsAt: string) => void;
+  onToggle?: (open: boolean) => void;
 }) {
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("");
@@ -216,12 +244,21 @@ function AddTime({
 
   const times = data.timeCandidates.map((c: TimeCand) => new Date(c.startsAt).getTime());
   const decideMs = data.decidesBy ? new Date(data.decidesBy).getTime() : Date.now();
+  const horizonMs = times.length
+    ? addCandidateHorizon(Math.min(...times), Math.max(...times))
+    : null;
   const addMinDate = new Date(Math.max(Date.now(), decideMs));
-  const addMaxDate = new Date(
-    times.length
-      ? addCandidateHorizon(Math.min(...times), Math.max(...times))
-      : decideMs + 14 * 24 * 60 * 60 * 1000,
-  );
+  const addMaxDate = new Date(horizonMs ?? decideMs + 14 * 24 * 60 * 60 * 1000);
+
+  const newMs = newIso ? new Date(newIso).getTime() : null;
+  const invalidNote =
+    newMs == null
+      ? null
+      : data.decidesBy && newMs <= new Date(data.decidesBy).getTime()
+        ? `Voting closes ${formatSlot(data.decidesBy)} - pick a time after that.`
+        : horizonMs != null && newMs > horizonMs
+          ? `That's past this meetup's window - the latest is ${formatSlot(new Date(horizonMs).toISOString())}.`
+          : null;
 
   const reset = () => {
     setNewDate("");
@@ -231,7 +268,8 @@ function AddTime({
     <AddComposer
       triggerLabel="+ add a time"
       busy={busy}
-      canSubmit={!!newIso}
+      canSubmit={!!newIso && !invalidNote}
+      onToggle={onToggle}
       onSubmit={() => {
         if (newIso) onAdd(newIso);
         reset();
@@ -246,6 +284,11 @@ function AddTime({
         minimumDate={addMinDate}
         maximumDate={addMaxDate}
       />
+      {invalidNote ? (
+        <AppText variant="caption" style={{ color: ui.brand, marginTop: 8 }}>
+          {invalidNote}
+        </AppText>
+      ) : null}
     </AddComposer>
   );
 }

@@ -1,19 +1,38 @@
 import type { UpdateEventInput } from "@bethere/shared";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { useCallback, useRef, useState } from "react";
-import { Text, View } from "react-native";
-import type { MeetupsStackParams } from "../../App";
+import { TRPCClientError } from "@trpc/client";
+import { LinearGradient } from "expo-linear-gradient";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Platform, Text, View } from "react-native";
+import { type MeetupsStackParams, navigationRef } from "../../App";
 import {
+  ACTION_COPIED,
+  ACTION_COPY,
+  ACTION_GET_APP,
+  ACTION_LINK_COPIED,
+  ACTION_NOT_NOW,
+  ACTION_SHARE_INVITE,
+  ACTION_TRY_AGAIN,
   COND_MODE,
   DIDNT_COME_TOGETHER,
+  ERR_NETWORK,
   ERR_SAVE,
+  GET_APP_BODY,
+  GET_APP_TITLE,
+  INVITE_CODE_PENDING,
+  LABEL_INVITE_LINK,
+  meetupShareText,
   NOTE_BLIND,
   NOTE_TOP_PICK,
   planLabel,
+  SHARE_MEETUP_HINT,
   statusLabel,
+  TITLE_SHARE_MEETUP,
 } from "../lib/copy";
 import { clock12, dayUpper } from "../lib/format";
+import { meetupUrl } from "../lib/meetup";
+import { copyToClipboard, shareInvite } from "../lib/share";
 import { activeDeadline, deadlineMs, isLive, isTerminal, type Phase } from "../lib/status";
 import type { RouterOutputs } from "../lib/trpc";
 import { trpc } from "../lib/trpc";
@@ -26,8 +45,10 @@ import {
   Button,
   Card,
   DetailError,
+  EmptyState,
   Field,
   FieldLabel,
+  FormError,
   PersonRow,
   ScreenHeader,
   ScreenLoading,
@@ -38,6 +59,8 @@ import {
   StatusPill,
   TextButton,
 } from "../ui";
+import { AddGroupSheet } from "./event-detail/AddGroupSheet";
+import { MakeGroupSheet } from "./event-detail/MakeGroupSheet";
 import { CollectingView, CountdownBanner, MomentView, RevealView } from "./event-detail/PhaseViews";
 
 type Detail = NonNullable<RouterOutputs["events"]["get"]>;
@@ -49,12 +72,40 @@ type Props = NativeStackScreenProps<MeetupsStackParams, "EventDetail">;
 // to a single candidate id) so a refetch cannot clobber its optimistic state.
 const OPTOUT_PENDING = "__optout__";
 
+// Friendly lines for events.addCandidate rejects, matched on the server's reject messages
+// (apps/api/src/routers/events.ts addCandidate). The composer validates the predictable cases before
+// submitting, so these mostly cover races; anything unrecognized falls back to the canonical error.
+function addRejectLine(err: unknown): string {
+  const msg = err instanceof TRPCClientError ? err.message : "";
+  if (msg.includes("not collecting")) return "Voting just closed - this meetup has moved on.";
+  if (msg.includes("decides-by")) return "That time is before voting closes - pick a later one.";
+  if (msg.includes("window")) return "That time is past this meetup's window.";
+  if (msg.includes("locked")) return "That list just got locked - vote on what's there.";
+  return ERR_SAVE;
+}
+
 export function EventDetail({ route, navigation }: Props) {
   const { eventId } = route.params;
   const [data, setData] = useState<Detail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
+  // A failed MUTATION surfaces here, as an inline line over the loaded screen - never through
+  // `error`, whose full-screen DetailError is for load failures. See runAction below.
+  const [actionError, setActionError] = useState("");
+  // Share-this-meetup sheet (the /m/<token> link). Auto-opened once when landing straight after
+  // creating the plan (shareOnLand), so the creator's next step is to share the link.
+  const [shareOpen, setShareOpen] = useState(false);
+  const sharePrompted = useRef(false);
+
+  // Group-composition sheets: add an existing group to this meetup, or crystallize its roster
+  // into a new permanent group. Separate booleans so only one can be open at a time.
+  const [addGroupSheet, setAddGroupSheet] = useState(false);
+  const [makeGroupSheet, setMakeGroupSheet] = useState(false);
+
+  // Whether an inline add-time/add-activity composer is open (reported up by CollectingView). The
+  // sticky share bar hides while the user is mid-compose so it never sits over the open composer.
+  const [composing, setComposing] = useState(false);
 
   // moment conditional sheet
   const [reanswering, setReanswering] = useState(false);
@@ -88,8 +139,36 @@ export function EventDetail({ route, navigation }: Props) {
       .finally(() => setLoading(false));
   }, [eventId]);
 
-  // Busy-guarded mutate-then-reload runner shared by lock/addCandidate/answer/changeAnswer.
-  const runAction = useBusyAction({ busy, setBusy, setError, load });
+  // Busy-guarded mutate-then-reload runner shared by lock/addCandidate/answer/changeAnswer. A failed
+  // mutation shows inline and reloads to reconcile (the plan may simply have moved on under us, e.g.
+  // voting closed mid-compose) - it must never blank the loaded screen with the full-screen error.
+  const failInline = useCallback(
+    (failed: boolean) => {
+      if (!failed) return;
+      setActionError(ERR_SAVE);
+      void load();
+    },
+    [load],
+  );
+  const busyAction = useBusyAction({ busy, setBusy, setError: failInline, load });
+  // Each new action clears the previous inline error, so a stale message never outlives the attempt.
+  const runAction = useCallback(
+    (fn: () => Promise<unknown>) => {
+      setActionError("");
+      return busyAction(fn);
+    },
+    [busyAction],
+  );
+
+  // Landing straight after creating the plan: open the share sheet once the plan has loaded, then
+  // clear the flag so a refocus does not reopen it (the create-meetup-first -> share-one-link flow).
+  useEffect(() => {
+    if (route.params?.shareOnLand && data && !sharePrompted.current) {
+      sharePrompted.current = true;
+      setShareOpen(true);
+      navigation.setParams({ shareOnLand: undefined });
+    }
+  }, [route.params?.shareOnLand, data, navigation]);
 
   // The 1s ticker drives both live countdowns - the moment reveal countdown and the collecting
   // decidesBy countdown - so run it during either timed phase (predicate below: moment OR collecting).
@@ -178,13 +257,27 @@ export function EventDetail({ route, navigation }: Props) {
   }
 
   // Add a candidate while collecting (server +1s it for the author); refetch so it shows. Kind-gated
-  // server-side: a time when lockTimes / an activity when lockActivity is FORBIDDEN (UI hides the add).
+  // server-side: a time when lockTimes / an activity when lockActivity is FORBIDDEN (UI hides the
+  // add), and AddTime pre-validates the window rules, so a reject here is a race - the deadline
+  // passing or the window shifting mid-compose. Catching it INSIDE the action swaps the friendly
+  // line in for ERR_SAVE while the runner still reloads, so the screen reconciles (e.g. flips to the
+  // moment view) instead of erroring.
+  function addCandidate(
+    input: { kind: "time"; startsAt: string } | { kind: "activity"; text: string },
+  ) {
+    return runAction(() =>
+      trpc.events.addCandidate.mutate({ eventId, ...input }).catch((err: unknown) => {
+        setActionError(addRejectLine(err));
+      }),
+    );
+  }
+
   function addTime(startsAt: string) {
-    return runAction(() => trpc.events.addCandidate.mutate({ eventId, kind: "time", startsAt }));
+    return addCandidate({ kind: "time", startsAt });
   }
 
   function addActivity(text: string) {
-    return runAction(() => trpc.events.addCandidate.mutate({ eventId, kind: "activity", text }));
+    return addCandidate({ kind: "activity", text });
   }
 
   function answer(
@@ -321,6 +414,13 @@ export function EventDetail({ route, navigation }: Props) {
   const { label } = activeDeadline(data);
   const activityEditable = data.phase === "moment" || data.phase === "cleared";
 
+  // The sticky bottom "Share this meetup" bar stays put except on a fizzled plan, and hides whenever
+  // the user is mid-flow - any open sheet or an inline add-time/add-activity composer - so it never
+  // covers what they're doing.
+  const busyComposing =
+    editSheet || condSheet || addGroupSheet || makeGroupSheet || shareOpen || composing;
+  const showShareBar = data.phase !== "fizzled" && !busyComposing;
+
   const sheets = (
     <>
       <BottomSheet visible={condSheet} onClose={() => setCondSheet(false)}>
@@ -408,22 +508,92 @@ export function EventDetail({ route, navigation }: Props) {
           onPress={saveEdit}
           style={{ marginTop: 14 }}
         />
+        {/* Audience tweak, tucked into the edit sheet: bring in another whole group after the fact. */}
+        <TextButton
+          label="+ Add a group"
+          onPress={() => {
+            setEditSheet(false);
+            setAddGroupSheet(true);
+          }}
+          style={{ marginTop: 16 }}
+        />
       </BottomSheet>
+
+      <PlanShareSheet
+        eventId={eventId}
+        activity={data.activity}
+        groupName={data.groupName}
+        visible={shareOpen}
+        onClose={() => setShareOpen(false)}
+      />
+
+      <AddGroupSheet
+        visible={addGroupSheet}
+        eventId={eventId}
+        onClose={() => setAddGroupSheet(false)}
+        onAdded={load}
+      />
+
+      <MakeGroupSheet
+        visible={makeGroupSheet}
+        eventId={eventId}
+        defaultName={data.activity || "New group"}
+        onClose={() => setMakeGroupSheet(false)}
+        onCreated={(groupId) => {
+          if (!navigationRef.isReady()) return;
+          navigationRef.navigate("Groups", {
+            screen: "GroupDetail",
+            params: { groupId, justCreated: true },
+          });
+        }}
+      />
     </>
   );
 
   return (
     <ScreenScroll
       header={<ScreenHeader title={data.activity || "Meetup"} onBack={() => navigation.goBack()} />}
-      bottomPad={28}
-      footer={sheets}
+      bottomPad={showShareBar ? 104 : 28}
+      footer={
+        <>
+          {showShareBar && (
+            <LinearGradient
+              colors={["transparent", ui.gradient[1]]}
+              pointerEvents="box-none"
+              style={{
+                position: "absolute",
+                left: 0,
+                right: 0,
+                bottom: 0,
+                paddingHorizontal: ui.gutter,
+                paddingTop: 34,
+                paddingBottom: 18,
+              }}
+            >
+              <Button label={TITLE_SHARE_MEETUP} size="lg" onPress={() => setShareOpen(true)} />
+            </LinearGradient>
+          )}
+          {sheets}
+        </>
+      }
     >
       {data.phase === "collecting" && data.decidesBy && (
         <CountdownBanner label={label} ms={ms} note={NOTE_TOP_PICK} />
       )}
       {data.phase === "moment" && <CountdownBanner label={label} ms={ms} note={NOTE_BLIND} />}
 
+      {actionError ? <FormError>{actionError}</FormError> : null}
+
       <PlanHeaderCard data={data} canEdit={isLive(data)} onEdit={openEditSheet} />
+
+      {data.phase === "cleared" && (
+        <Button
+          label="Make a group from this"
+          variant="outline"
+          onPress={() => setMakeGroupSheet(true)}
+          style={{ marginTop: 14 }}
+        />
+      )}
 
       {data.phase === "collecting" && (
         <CollectingView
@@ -434,6 +604,7 @@ export function EventDetail({ route, navigation }: Props) {
           onLock={lock}
           onAddTime={addTime}
           onAddActivity={addActivity}
+          onComposingChange={setComposing}
         />
       )}
 
@@ -467,7 +638,136 @@ export function EventDetail({ route, navigation }: Props) {
           </Card>
         </View>
       )}
+
+      {Platform.OS === "web" &&
+        data.phase !== "fizzled" &&
+        (data.myStatus === "going" || data.myStatus === "declined") && <GetAppNudge />}
     </ScreenScroll>
+  );
+}
+
+// The share-this-meetup sheet: lazily fetches the plan's /m/<token> link the first time it opens, then
+// shows the canonical link (copy) and a share action, or an error+retry / pending surface. Mirrors
+// GroupDetail's InviteSheet but for a single plan rather than a group invite.
+function PlanShareSheet({
+  eventId,
+  activity,
+  groupName,
+  visible,
+  onClose,
+}: {
+  eventId: string;
+  activity: string;
+  groupName: string;
+  visible: boolean;
+  onClose: () => void;
+}) {
+  const [link, setLink] = useState<string | null>(null);
+  const [shareError, setShareError] = useState(false);
+  const [copied, setCopied] = useState<null | "link" | "share">(null);
+
+  // Fetch the plan's share link (member-gated; the viewer is a member). Prefer the server-built
+  // canonical URL (PUBLIC_WEB_URL); fall back to one built client-side from the token.
+  const loadLink = useCallback(() => {
+    setShareError(false);
+    trpc.events.shareLink
+      .query({ eventId })
+      .then((s) => setLink(s.url ?? meetupUrl(s.token)))
+      .catch(() => setShareError(true));
+  }, [eventId]);
+
+  // Lazily fetch the link the first time the sheet opens (kept off the focus load).
+  useEffect(() => {
+    if (visible && link === null) loadLink();
+  }, [visible, link, loadLink]);
+
+  function flash(which: "link" | "share") {
+    setCopied(which);
+    setTimeout(() => setCopied(null), 1500);
+  }
+  async function copyLink() {
+    if (!link) return;
+    await copyToClipboard(link);
+    flash("link");
+  }
+  async function share() {
+    if (!link) return;
+    const { copied: didCopy } = await shareInvite(meetupShareText(activity, groupName), link);
+    if (didCopy) flash("share");
+  }
+
+  return (
+    <BottomSheet visible={visible} onClose={onClose}>
+      <Section title={TITLE_SHARE_MEETUP} size="lg" sub={SHARE_MEETUP_HINT} />
+      {link ? (
+        <>
+          <Field
+            label={LABEL_INVITE_LINK}
+            value={link}
+            editable={false}
+            right={
+              <TextButton
+                label={copied === "link" ? ACTION_COPIED : ACTION_COPY}
+                onPress={copyLink}
+              />
+            }
+          />
+          <Button
+            label={copied === "share" ? ACTION_LINK_COPIED : ACTION_SHARE_INVITE}
+            variant="primary"
+            onPress={share}
+            style={{ marginTop: 16 }}
+          />
+        </>
+      ) : shareError ? (
+        <Card>
+          <AppText variant="caption">{ERR_NETWORK}</AppText>
+          <View style={{ marginTop: 8, alignItems: "flex-start" }}>
+            <TextButton label={ACTION_TRY_AGAIN} onPress={loadLink} />
+          </View>
+        </Card>
+      ) : (
+        <EmptyState inCard>{INVITE_CODE_PENDING}</EmptyState>
+      )}
+    </BottomSheet>
+  );
+}
+
+// The web user's download URL (env-gated): there is no public App Store listing yet, so the nudge is
+// hidden unless a destination is configured. localStorage remembers a dismissal so it shows once.
+const APP_DOWNLOAD_URL = process.env.EXPO_PUBLIC_APP_DOWNLOAD_URL?.trim();
+const GET_APP_DISMISS_KEY = "bethere.getAppDismissed";
+
+// A dismissible "get the app" card shown to a WEB user after they have responded - web users get no
+// notifications yet, so this is the retention hook back into the (push-capable) app. Renders nothing
+// on native or when no download URL is configured; gating happens BEFORE any hook so the native path
+// never touches browser globals (the GetAppCard child owns the dismissed state, web-only).
+function GetAppNudge() {
+  if (Platform.OS !== "web" || !APP_DOWNLOAD_URL) return null;
+  return <GetAppCard url={APP_DOWNLOAD_URL} />;
+}
+
+function GetAppCard({ url }: { url: string }) {
+  const [dismissed, setDismissed] = useState(
+    () => typeof localStorage !== "undefined" && localStorage.getItem(GET_APP_DISMISS_KEY) === "1",
+  );
+  if (dismissed) return null;
+  const dismiss = () => {
+    if (typeof localStorage !== "undefined") localStorage.setItem(GET_APP_DISMISS_KEY, "1");
+    setDismissed(true);
+  };
+  const getApp = () => {
+    if (typeof window !== "undefined") window.open(url, "_blank");
+  };
+  return (
+    <Card style={{ marginTop: 16 }}>
+      <AppText variant="cardTitle">{GET_APP_TITLE}</AppText>
+      <AppText variant="captionPara" style={{ marginTop: 6 }}>
+        {GET_APP_BODY}
+      </AppText>
+      <Button label={ACTION_GET_APP} variant="primary" onPress={getApp} style={{ marginTop: 12 }} />
+      <Button label={ACTION_NOT_NOW} variant="ghost" onPress={dismiss} style={{ marginTop: 8 }} />
+    </Card>
   );
 }
 

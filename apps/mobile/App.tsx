@@ -17,6 +17,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-cont
 import { DevAuthProvider, useAuthBridge } from "./src/lib/auth";
 import { publishableKey, tokenCache } from "./src/lib/clerk";
 import { usePendingInviteRouting } from "./src/lib/usePendingInvite";
+import { useMeetupLaunchToken, usePendingMeetupRouting } from "./src/lib/usePendingMeetup";
 import { Account } from "./src/screens/Account";
 import { CreateGroup } from "./src/screens/CreateGroup";
 import { CreateWizard } from "./src/screens/CreateWizard";
@@ -25,6 +26,7 @@ import { EventDetail } from "./src/screens/EventDetail";
 import { GroupDetail } from "./src/screens/GroupDetail";
 import { GroupsList } from "./src/screens/GroupsList";
 import { JoinGroup } from "./src/screens/JoinGroup";
+import { JoinMeetup, MeetupWelcome } from "./src/screens/JoinMeetup";
 import { SignIn } from "./src/screens/SignIn";
 import { font, ui, webColumnMaxWidth } from "./src/theme";
 import { WebBackdrop } from "./src/ui/WebBackdrop";
@@ -33,8 +35,11 @@ import { WebBackdrop } from "./src/ui/WebBackdrop";
 // and gets a real back button - there is no Account tab anymore.
 export type MeetupsStackParams = {
   Dashboard: undefined;
-  EventDetail: { eventId: string };
+  // shareOnLand: opened straight after creating the plan (auto-opens the share-this-meetup sheet).
+  EventDetail: { eventId: string; shareOnLand?: boolean };
   CreateWizard: undefined;
+  // The authed landing for a tapped meetup share link (/m/:token); previews the plan then joins.
+  JoinMeetup: { token?: string };
   Account: undefined;
 };
 export type GroupsStackParams = {
@@ -67,6 +72,10 @@ const linking: LinkingOptions<RootTabParamList> = {
   ],
   config: {
     screens: {
+      Meetups: {
+        initialRouteName: "Dashboard",
+        screens: { JoinMeetup: "m/:token" },
+      },
       Groups: {
         initialRouteName: "GroupsList",
         screens: { JoinGroup: "join/:code" },
@@ -87,6 +96,7 @@ function MeetupsStackScreen() {
       <MeetupsStack.Screen name="Dashboard" component={Dashboard} />
       <MeetupsStack.Screen name="EventDetail" component={EventDetail} />
       <MeetupsStack.Screen name="CreateWizard" component={CreateWizard} />
+      <MeetupsStack.Screen name="JoinMeetup" component={JoinMeetup} />
       <MeetupsStack.Screen name="Account" component={Account} />
     </MeetupsStack.Navigator>
   );
@@ -173,6 +183,9 @@ function MainTabs() {
 // the app or the sign-in screen.
 function Gate() {
   const authed = useAuthBridge();
+  // The meetup token of the link the app was opened with (web reads it synchronously), so a
+  // logged-out /m/<token> visit shows the public preview on the first paint instead of bare sign-in.
+  const launchMeetup = useMeetupLaunchToken();
 
   // Route a deep-link invite code across the sign-in boundary (the hook captures it while signed out
   // and resumes it once authed). navigate is the only App-coupled step - it routes to JoinGroup once
@@ -183,11 +196,22 @@ function Gate() {
     navigationRef.navigate("Groups", { screen: "JoinGroup", params: { code } });
     return true;
   }, []);
+  // The meetup sibling: resume joins the plan's group (to learn the eventId) then lands on the plan.
+  const navigateMeetup = useCallback((eventId: string) => {
+    if (!navigationRef.isReady()) return false;
+    navigationRef.navigate("Meetups", { screen: "EventDetail", params: { eventId } });
+    return true;
+  }, []);
+  usePendingMeetupRouting(authed, navigateMeetup);
   usePendingInviteRouting(authed, navigate);
+
+  // Logged-out: a meetup link shows its public preview before sign-in (the conversion funnel); any
+  // other entry shows the sign-in screen. Once authed the navigator (and the resume hooks) take over.
+  const loggedOut = launchMeetup ? <MeetupWelcome token={launchMeetup} /> : <SignIn />;
 
   return (
     <NavigationContainer ref={navigationRef} linking={linking}>
-      {authed ? <MainTabs /> : <SignIn />}
+      {authed ? <MainTabs /> : loggedOut}
       <StatusBar style="dark" />
     </NavigationContainer>
   );

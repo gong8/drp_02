@@ -66,6 +66,9 @@ export type TimeCandidateInput = z.infer<typeof TimeCandidateInput>;
 // `replyBy` closes the blind yes/no/"I'll go if" window, then reveals + resolves. `quorum` defaults.
 export const CreateEventInput = z.object({
   groupId: z.string(),
+  // Additional groups to fold into this meetup's audience at creation (cross-group). The creator must
+  // belong to each; the roster is the live union of all of them plus the origin group (DRP-62).
+  additionalGroupIds: z.array(z.string()).max(20).optional(),
   description: z.string().max(DESCRIPTION_MAX).optional(),
   location: z.string().max(LOCATION_MAX).optional(),
   timeCandidates: z.array(TimeCandidateInput).max(10).optional(),
@@ -83,6 +86,10 @@ export type CreateEventInput = z.infer<typeof CreateEventInput>;
 // directly for the bare-eventId procedures.
 export const ByEvent = z.object({ eventId: z.string() });
 export type ByEvent = z.infer<typeof ByEvent>;
+
+// Attach another whole group to a meetup (DRP-62 cross-group). The caller must belong to the group.
+export const AddGroupInput = ByEvent.extend({ groupId: z.string() });
+export type AddGroupInput = z.infer<typeof AddGroupInput>;
 
 // Network boundary for events.toggleReaction - ONE public +1 toggle on a single candidate of EITHER
 // kind. Inserting/removing the caller's row; counts are public during collecting (momentum).
@@ -155,6 +162,10 @@ export const GroupName = z.string().min(1).max(60);
 // Network boundary for groups.create.
 export const CreateGroupInput = z.object({ name: GroupName });
 export type CreateGroupInput = z.infer<typeof CreateGroupInput>;
+
+// Crystallize a meetup's roster into a new permanent group (DRP-62 "make a group from this").
+export const CreateGroupFromEventInput = z.object({ eventId: z.string(), name: GroupName });
+export type CreateGroupFromEventInput = z.infer<typeof CreateGroupFromEventInput>;
 
 // Network boundary for groups.rename - reuses the shared GroupName rule.
 export const RenameGroupInput = z.object({ id: z.string(), name: GroupName });

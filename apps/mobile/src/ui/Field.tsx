@@ -42,11 +42,15 @@ export function Field({
             flexDirection: "row",
             alignItems: "center",
             paddingHorizontal: 11,
+            gap: 8,
           }}
         >
           <TextInput
             style={{
               flex: 1,
+              // Without this a flex input defaults to min-width:auto on web and refuses to shrink
+              // below its content, so a long value (e.g. a share link) overflows under `right`.
+              minWidth: 0,
               fontFamily: font.medium,
               fontSize: 13,
               color: ui.ink,

@@ -6,6 +6,7 @@ import {
   getPendingInvite,
   setPendingInvite,
 } from "./invite";
+import { getPendingMeetup } from "./meetup";
 
 // Capture-then-resume of a deep-link invite code across the sign-in boundary, colocated with the
 // invite primitives. While signed out it stashes an invite code from the launch URL / any incoming
@@ -46,6 +47,9 @@ export function usePendingInviteRouting(
   // navigate lands means a torn-down poll cannot drop the code, and go() bails if the effect is gone.
   useEffect(() => {
     if (!authed) return;
+    // A pending meetup token is the more specific, higher-conversion intent and routes to a plan
+    // (joining the group along the way), so let it win; skip resuming a stale invite code here.
+    if (getPendingMeetup()) return;
     const code = getPendingInvite();
     if (!code) return;
     let active = true;

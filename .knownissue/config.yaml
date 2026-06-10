@@ -1,0 +1,32 @@
+# knownissue repo configuration (committed; values shown are the defaults).
+# Local, per-machine settings go in .knownissue/local/overrides.yaml
+# (gitignored), which also accepts: enabled, muted, min_severity.
+version: 1
+
+#hooks:
+#  pretooluse: true
+#  posttooluse: true
+#  sessionstart: true
+
+#limits:
+#  hook_budget_ms: 120          # self-deadline inside the hook binary
+#  max_hints_per_session: 10
+#  max_per_issue_per_session: 2 # full hint, then one-liner, then silent
+#  max_preemptive_per_session: 3
+#  max_gotcha_per_session: 3
+#  max_capture_per_session: 1
+#  max_retro_per_session: 2
+#  hint_max_chars: 500
+
+#match:
+#  head_window_bytes: 8192
+#  tail_window_bytes: 24576
+#  ignored_commands:            # command globs never matched or ledgered
+#    - "git status*"
+#    - "ls*"
+
+#capture:
+#  enabled: true
+#  min_stderr_lines: 3
+#  struggle_threshold: 3
+#  dismiss_suppress_days: 30
