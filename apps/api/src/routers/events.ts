@@ -1065,28 +1065,24 @@ export const eventsRouter = router({
     };
   }),
 
-  // Redeem a meetup's share token to join its group and land on the plan. This iteration a joiner
-  // becomes a NORMAL group member (ephemeral plan-only guests are a later iteration). Idempotent -
-  // a re-open, or an existing member tapping their own link, is a no-op that still resolves the
-  // eventId/groupId so the client routes to the plan, and reports `alreadyMember` so the UI can skip
-  // a "welcome". Mirrors groups.joinByCode (same membership-FK caveat for a spoofed dev x-user-id).
+  // Redeem a meetup's share token to join THIS meetup only as an ad-hoc participant - NOT the group.
+  // Idempotent: already in the roster (origin/attached group or an existing participant) is a no-op
+  // that still resolves the eventId/groupId so the client routes to the plan, and reports
+  // `alreadyMember` so the UI can skip a "welcome".
   joinByToken: protectedProcedure.input(ByEvent).mutation(async ({ ctx, input }) => {
     const [e] = await db.select().from(events).where(eq(events.id, input.eventId));
     if (!e)
       throw new TRPCError({ code: "NOT_FOUND", message: "That link does not match a meetup" });
-    const [existing] = await db
-      .select({ userId: groupMembers.userId })
-      .from(groupMembers)
-      .where(and(eq(groupMembers.groupId, e.groupId), eq(groupMembers.userId, ctx.userId)))
-      .limit(1);
-    const alreadyMember = !!existing;
-    if (!alreadyMember) {
+    // The link adds you to THIS meetup only (an ad-hoc participant), never to the group. Idempotent:
+    // already in the roster (origin/attached group or an existing participant) is a no-op.
+    const already = await isInRoster(e.id, e.groupId, ctx.userId);
+    if (!already) {
       await db
-        .insert(groupMembers)
-        .values({ groupId: e.groupId, userId: ctx.userId })
+        .insert(eventParticipants)
+        .values({ eventId: e.id, userId: ctx.userId })
         .onConflictDoNothing();
     }
-    return { eventId: e.id, groupId: e.groupId, alreadyMember };
+    return { eventId: e.id, groupId: e.groupId, alreadyMember: already };
   }),
 
   // The shareable link for a plan: a fully-qualified URL when PUBLIC_WEB_URL is set, plus the bare

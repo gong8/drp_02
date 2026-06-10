@@ -133,3 +133,51 @@ test("events.mine includes plans where I am only via a non-origin attached group
     "attached-group member should see the plan",
   );
 });
+
+test("joinByToken inserts an event_participants row, NOT a group_members row", async () => {
+  const creator = await makeUser();
+  const outsider = await makeUser();
+  const origin = await makeGroup([creator], "The Boys");
+  const eventId = await insertEvent({
+    groupId: origin,
+    createdByUserId: creator,
+    activity: "Bowling",
+  });
+
+  const res = await caller(outsider).events.joinByToken({ eventId });
+  assert.equal(res.alreadyMember, false);
+
+  const parts = await db
+    .select()
+    .from(eventParticipants)
+    .where(eq(eventParticipants.eventId, eventId));
+  assert.ok(
+    parts.some((p) => p.userId === outsider),
+    "outsider is a participant",
+  );
+
+  const gm = await db.select().from(groupMembers).where(eq(groupMembers.groupId, origin));
+  assert.equal(
+    gm.some((m) => m.userId === outsider),
+    false,
+    "outsider must NOT join the group",
+  );
+});
+
+test("joinByToken is idempotent and a no-op for someone already in the roster", async () => {
+  const creator = await makeUser();
+  const origin = await makeGroup([creator], "The Boys");
+  const eventId = await insertEvent({
+    groupId: origin,
+    createdByUserId: creator,
+    activity: "Bowling",
+  });
+
+  const res = await caller(creator).events.joinByToken({ eventId });
+  assert.equal(res.alreadyMember, true);
+  const parts = await db
+    .select()
+    .from(eventParticipants)
+    .where(eq(eventParticipants.eventId, eventId));
+  assert.equal(parts.length, 0, "an existing member is not duplicated as a participant");
+});
