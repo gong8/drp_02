@@ -802,7 +802,7 @@ export const eventsRouter = router({
     return db.transaction(async (tx) => {
       const [e] = await tx.select().from(events).where(eq(events.id, input.eventId)).for("update");
       if (!e) throw new TRPCError({ code: "NOT_FOUND" });
-      await requireMember(e.groupId, ctx.userId);
+      await requireInRoster(e.id, e.groupId, ctx.userId);
       if (isTerminalPhase(e.phase)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "this plan is final" });
       }

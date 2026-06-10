@@ -231,3 +231,26 @@ test("events.addGroup is idempotent and a no-op for the origin group", async () 
   const rows = await db.select().from(eventGroups).where(eq(eventGroups.eventId, eventId));
   assert.equal(rows.length, 1);
 });
+
+test("a roster member via an attached group can edit the plan (events.update is roster-gated)", async () => {
+  const creator = await makeUser();
+  const climber = await makeUser();
+  const origin = await makeGroup([creator], "The Boys");
+  const climbers = await makeGroup([climber], "Climbers");
+  const eventId = await insertEvent({
+    groupId: origin,
+    createdByUserId: creator,
+    activity: "Bowling",
+    location: "Old place",
+    // collecting phase: location is editable, activity is vote-decided (not editable)
+  });
+  await db.insert(eventGroups).values({ eventId, groupId: climbers });
+
+  // climber is in the roster only via the attached group; they must be allowed to edit location
+  const res = await caller(climber).events.update({
+    eventId,
+    location: { from: "Old place", to: "New place" },
+  });
+  assert.ok(res.applied.includes("location"), "location should be applied");
+  assert.deepEqual(res.conflicts, [], "no conflicts expected");
+});
