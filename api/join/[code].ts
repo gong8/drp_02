@@ -4,9 +4,12 @@
 
 import { cardImageUrl, fetchShell, fetchTrpc, headTags, htmlResponse } from "../_lib/og";
 
+// Default export + edge runtime so Vercel registers this as a Function (see api/m/[id].ts).
+export const config = { runtime: "edge" };
+
 type GroupPreview = { groupId: string; name: string; memberCount: number };
 
-export async function GET(request: Request): Promise<Response> {
+export default async function handler(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const code = url.pathname.split("/").filter(Boolean).pop() ?? "";
   const canonicalUrl = `${url.origin}/join/${code}`;

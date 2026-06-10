@@ -10,6 +10,11 @@
 
 import { cardImageUrl, fetchShell, fetchTrpc, headTags, htmlResponse, whenLabel } from "../_lib/og";
 
+// Edge runtime + a DEFAULT export: Vercel's `/api` builder only recognises a default-export handler
+// (a named `export function GET` is a Next.js route-handler convention, not a plain Vercel Function -
+// it silently fails to register and the path falls through to the SPA catch-all). Matches api/og.ts.
+export const config = { runtime: "edge" };
+
 type Preview = {
   eventId: string;
   activity: string;
@@ -19,7 +24,7 @@ type Preview = {
   candidateCount: number;
 };
 
-export async function GET(request: Request): Promise<Response> {
+export default async function handler(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const id = url.pathname.split("/").filter(Boolean).pop() ?? "";
   const canonicalUrl = `${url.origin}/m/${id}`;
