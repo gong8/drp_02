@@ -6,8 +6,8 @@
   "framework": null,
   "ignoreCommand": "[ \"$VERCEL_GIT_COMMIT_REF\" != \"main\" ] && [ \"$VERCEL_GIT_COMMIT_REF\" != \"dev\" ]",
   "rewrites": [
-    { "source": "/m/:id", "destination": "/api/m/:id" },
-    { "source": "/join/:code", "destination": "/api/join/:code" },
+    { "source": "/m/:id", "destination": "/api/m?id=:id" },
+    { "source": "/join/:code", "destination": "/api/join?code=:code" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
