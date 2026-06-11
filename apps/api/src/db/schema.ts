@@ -202,8 +202,9 @@ export const eventParticipants = pgTable(
       .notNull()
       .references(() => users.id),
     // Who minted the share link this +1 redeemed (DRP-63 brought-by attribution). Soft: null for
-    // legacy joins or a via that was not in the roster at redemption (rendered as a plain "+1").
-    invitedBy: text("invited_by").references(() => users.id),
+    // legacy joins, a via that was not in the roster at redemption, or an inviter later deleted
+    // (ON DELETE SET NULL) - all rendered as a plain "+1".
+    invitedBy: text("invited_by").references(() => users.id, { onDelete: "set null" }),
     joinedAt: timestamp("joined_at").notNull().defaultNow(),
   },
   (t) => ({ pk: primaryKey({ columns: [t.eventId, t.userId] }) }),

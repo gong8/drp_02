@@ -1097,7 +1097,9 @@ export const eventsRouter = router({
     // The link adds you to THIS meetup only (an ad-hoc participant), never to the group. Idempotent:
     // already in the roster (origin/attached group or an existing participant) is a no-op, checked
     // BEFORE the door so existing people can always reopen their link - a closed door blocks NEW
-    // people only (DRP-63).
+    // people only (DRP-63). The door read is deliberately unlocked (no SELECT FOR UPDATE): a join
+    // racing a concurrent close may slip through the instant the door shuts, which is the same
+    // accepted last-write-wins stance as setJoinsOpen - this is a social door, not an auth boundary.
     const already = await isInRoster(e.id, e.groupId, ctx.userId);
     if (!already) {
       if (!e.joinsOpen) {

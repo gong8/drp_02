@@ -27,6 +27,9 @@ type Preview = {
 export default async function handler(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const id = url.searchParams.get("id") ?? "";
+  // Deliberately via-free (DRP-63): og:url is the unfurl's canonical identity, so dropping the
+  // ?via= sharer ref dedupes card caches across sharers. The hyperlink the recipient actually taps
+  // is the original shared URL, which keeps via for brought-by attribution.
   const canonicalUrl = `${url.origin}/m/${id}`;
 
   const p = await fetchTrpc<Preview>("events.previewByToken", { eventId: id });
