@@ -90,6 +90,11 @@ export const events = pgTable("events", {
   phase: planPhaseEnum("phase").notNull().default("collecting"),
   lockTimes: boolean("lock_times").notNull().default(false),
   lockActivity: boolean("lock_activity").notNull().default(false),
+  // The +1 door (DRP-63): whether the share link admits NEW ad-hoc participants. Existing roster
+  // members always no-op-rejoin regardless. `lockJoins` freezes the door state for everyone,
+  // decided at suggestion like the axis locks; while false any group member may toggle the door.
+  joinsOpen: boolean("joins_open").notNull().default(true),
+  lockJoins: boolean("lock_joins").notNull().default(false),
   // Editable "Decides by" deadline. When collecting auto-locks the winning candidates and opens the
   // moment. Null until set. Drives the deadline + auto-lock; settled lazily on read. (was lock_at)
   decidesBy: timestamp("decides_by"),
@@ -196,6 +201,10 @@ export const eventParticipants = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => users.id),
+    // Who minted the share link this +1 redeemed (DRP-63 brought-by attribution). Soft: null for
+    // legacy joins or a via that was not in the roster at redemption (rendered as a plain "+1").
+    invitedBy: text("invited_by").references(() => users.id),
+    joinedAt: timestamp("joined_at").notNull().defaultNow(),
   },
   (t) => ({ pk: primaryKey({ columns: [t.eventId, t.userId] }) }),
 );
