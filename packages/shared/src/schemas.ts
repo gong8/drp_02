@@ -75,6 +75,11 @@ export const CreateEventInput = z.object({
   activityCandidates: z.array(z.string().trim().min(1).max(ACTIVITY_MAX)).max(10).optional(),
   lockTimes: z.boolean().optional().default(false),
   lockActivity: z.boolean().optional().default(false),
+  // The +1 door (DRP-63): whether the share link admits NEW ad-hoc participants. Open by default
+  // (today's behavior). `lockJoins` freezes the door state for everyone, decided at suggestion like
+  // the axis locks above; while unlocked any group member may toggle the door later.
+  joinsOpen: z.boolean().optional().default(true),
+  lockJoins: z.boolean().optional().default(false),
   decidesBy: Instant.optional(),
   replyBy: Instant.optional(),
   quorum: z.number().int().min(1).max(50).optional(),
@@ -90,6 +95,17 @@ export type ByEvent = z.infer<typeof ByEvent>;
 // Attach another whole group to a meetup (DRP-62 cross-group). The caller must belong to the group.
 export const AddGroupInput = ByEvent.extend({ groupId: z.string() });
 export type AddGroupInput = z.infer<typeof AddGroupInput>;
+
+// Redeem a meetup share link (DRP-63 adds `via`): the optional userId of whoever minted the link,
+// carried as a query param on the URL. Soft attribution - validated against the live roster
+// server-side and degraded to null attribution when bogus/stale, never an error.
+export const JoinByTokenInput = ByEvent.extend({ via: z.string().optional() });
+export type JoinByTokenInput = z.infer<typeof JoinByTokenInput>;
+
+// Network boundary for events.setJoinsOpen - a group member (origin or attached, never an ad-hoc
+// participant) flips the +1 door while the plan's `lockJoins` is off.
+export const SetJoinsOpenInput = ByEvent.extend({ open: z.boolean() });
+export type SetJoinsOpenInput = z.infer<typeof SetJoinsOpenInput>;
 
 // Network boundary for events.toggleReaction - ONE public +1 toggle on a single candidate of EITHER
 // kind. Inserting/removing the caller's row; counts are public during collecting (momentum).
