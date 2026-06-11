@@ -25,13 +25,18 @@ import {
   meetupShareText,
   NOTE_BLIND,
   NOTE_TOP_PICK,
+  newJoinersLabel,
+  peopleCount,
   planLabel,
+  SHARE_MEETUP_CLOSED_HINT,
   SHARE_MEETUP_HINT,
   statusLabel,
   TITLE_SHARE_MEETUP,
+  TITLE_WHOS_IN,
 } from "../lib/copy";
 import { clock12, dayUpper } from "../lib/format";
 import { meetupUrl } from "../lib/meetup";
+import { getRosterSeen, markRosterSeen, newJoinerCount, seedRosterSeen } from "../lib/rosterSeen";
 import { copyToClipboard, shareInvite } from "../lib/share";
 import { activeDeadline, deadlineMs, isLive, isTerminal, type Phase } from "../lib/status";
 import type { RouterOutputs } from "../lib/trpc";
@@ -50,6 +55,7 @@ import {
   FieldLabel,
   FormError,
   PersonRow,
+  Row,
   ScreenHeader,
   ScreenLoading,
   ScreenScroll,
@@ -62,8 +68,10 @@ import {
 import { AddGroupSheet } from "./event-detail/AddGroupSheet";
 import { MakeGroupSheet } from "./event-detail/MakeGroupSheet";
 import { CollectingView, CountdownBanner, MomentView, RevealView } from "./event-detail/PhaseViews";
+import { rosterHeadcount, WhoIsInSheet } from "./event-detail/WhoIsInSheet";
 
 type Detail = NonNullable<RouterOutputs["events"]["get"]>;
+type RosterData = RouterOutputs["events"]["roster"];
 type Member = Detail["members"][number];
 type CondModeLabel = (typeof COND_MODE)[keyof typeof COND_MODE];
 type Props = NativeStackScreenProps<MeetupsStackParams, "EventDetail">;
@@ -103,6 +111,15 @@ export function EventDetail({ route, navigation }: Props) {
   const [addGroupSheet, setAddGroupSheet] = useState(false);
   const [makeGroupSheet, setMakeGroupSheet] = useState(false);
 
+  // The Who's-in roster (DRP-63): fetched alongside the plan, drives the headcount row, the NEW
+  // badge (vs the device-local seen marker), and the sheet. Null until the first successful fetch -
+  // the row simply hides, so a roster hiccup never blanks the plan.
+  const [roster, setRoster] = useState<RosterData | null>(null);
+  const [whoSheet, setWhoSheet] = useState(false);
+  const [seenMs, setSeenMs] = useState<number | null>(() => getRosterSeen(eventId));
+  const [doorBusy, setDoorBusy] = useState(false);
+  const [doorError, setDoorError] = useState(false);
+
   // Whether an inline add-time/add-activity composer is open (reported up by CollectingView). The
   // sticky share bar hides while the user is mid-compose so it never sits over the open composer.
   const [composing, setComposing] = useState(false);
@@ -138,6 +155,55 @@ export function EventDetail({ route, navigation }: Props) {
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [eventId]);
+
+  // The Who's-in roster, refreshed with the same cadence as the plan. The FIRST successful read
+  // baselines the seen marker (viewing the plan counts as having looked - no all-new noise), so
+  // only people joining after that badge as NEW. Failures stay silent: the row hides, the plan
+  // itself never blanks over a roster hiccup.
+  const loadRoster = useCallback(() => {
+    return trpc.events.roster
+      .query({ eventId })
+      .then((r) => {
+        setRoster(r);
+        seedRosterSeen(
+          eventId,
+          r.participants.map((p) => p.joinedAt),
+        );
+        setSeenMs(getRosterSeen(eventId));
+      })
+      .catch(() => {});
+  }, [eventId]);
+
+  // Flip the +1 door (group members, while unlocked - the server re-checks both). Last-write-wins;
+  // a refetch reconciles the sheet either way.
+  const toggleDoor = useCallback(
+    async (open: boolean) => {
+      setDoorBusy(true);
+      setDoorError(false);
+      try {
+        await trpc.events.setJoinsOpen.mutate({ eventId, open });
+        await loadRoster();
+      } catch {
+        setDoorError(true);
+      } finally {
+        setDoorBusy(false);
+      }
+    },
+    [eventId, loadRoster],
+  );
+
+  // Closing the Who's-in sheet is the "I've looked" moment: advance the seen marker past everything
+  // shown so the NEW badges clear - and not on open, so they stay visible IN the sheet.
+  const closeWhoSheet = useCallback(() => {
+    if (roster) {
+      markRosterSeen(
+        eventId,
+        roster.participants.map((p) => p.joinedAt),
+      );
+      setSeenMs(getRosterSeen(eventId));
+    }
+    setWhoSheet(false);
+  }, [eventId, roster]);
 
   // Busy-guarded mutate-then-reload runner shared by lock/addCandidate/answer/changeAnswer. A failed
   // mutation shows inline and reloads to reconcile (the plan may simply have moved on under us, e.g.
@@ -181,15 +247,20 @@ export function EventDetail({ route, navigation }: Props) {
     useCallback(() => {
       let active = true;
       load();
-      // Poll while the plan is live so the tally, countdown and reveal converge without a refresh.
+      loadRoster();
+      // Poll while the plan is live so the tally, countdown, reveal AND the roster (a +1 joining
+      // mid-view badges live) converge without a refresh.
       const poll = setInterval(() => {
-        if (active && !isTerminal({ phase: phaseRef.current as Phase })) load();
+        if (active && !isTerminal({ phase: phaseRef.current as Phase })) {
+          load();
+          loadRoster();
+        }
       }, POLL_MS);
       return () => {
         active = false;
         clearInterval(poll);
       };
-    }, [load]),
+    }, [load, loadRoster]),
   );
 
   phaseRef.current = data?.phase ?? "";
@@ -418,7 +489,7 @@ export function EventDetail({ route, navigation }: Props) {
   // the user is mid-flow - any open sheet or an inline add-time/add-activity composer - so it never
   // covers what they're doing.
   const busyComposing =
-    editSheet || condSheet || addGroupSheet || makeGroupSheet || shareOpen || composing;
+    editSheet || condSheet || addGroupSheet || makeGroupSheet || shareOpen || whoSheet || composing;
   const showShareBar = data.phase !== "fizzled" && !busyComposing;
 
   const sheets = (
@@ -523,8 +594,19 @@ export function EventDetail({ route, navigation }: Props) {
         eventId={eventId}
         activity={data.activity}
         groupName={data.groupName}
+        joinsOpen={roster?.joinsOpen ?? true}
         visible={shareOpen}
         onClose={() => setShareOpen(false)}
+      />
+
+      <WhoIsInSheet
+        visible={whoSheet}
+        roster={roster}
+        seenMs={seenMs}
+        doorBusy={doorBusy}
+        doorError={doorError}
+        onToggleDoor={toggleDoor}
+        onClose={closeWhoSheet}
       />
 
       <AddGroupSheet
@@ -585,6 +667,28 @@ export function EventDetail({ route, navigation }: Props) {
       {actionError ? <FormError>{actionError}</FormError> : null}
 
       <PlanHeaderCard data={data} canEdit={isLive(data)} onEdit={openEditSheet} />
+
+      {/* Who's in (DRP-63): the live headcount, badged when +1s joined since this device last
+          looked - Nathan's "someone got invited after I voted" case. Hidden until the roster loads. */}
+      {roster ? (
+        <View style={{ marginTop: 14 }}>
+          <Row onPress={() => setWhoSheet(true)}>
+            <AppText variant="rowLabelSm">{TITLE_WHOS_IN}</AppText>
+            <AppText variant="caption">{peopleCount(rosterHeadcount(roster))}</AppText>
+            {(() => {
+              const fresh = newJoinerCount(
+                roster.participants.map((p) => p.joinedAt),
+                seenMs,
+              );
+              return fresh > 0 ? (
+                <View style={{ marginLeft: "auto" }}>
+                  <StatusPill label={newJoinersLabel(fresh)} />
+                </View>
+              ) : null;
+            })()}
+          </Row>
+        </View>
+      ) : null}
 
       {data.phase === "cleared" && (
         <Button
@@ -653,12 +757,14 @@ function PlanShareSheet({
   eventId,
   activity,
   groupName,
+  joinsOpen,
   visible,
   onClose,
 }: {
   eventId: string;
   activity: string;
   groupName: string;
+  joinsOpen: boolean;
   visible: boolean;
   onClose: () => void;
 }) {
@@ -667,12 +773,13 @@ function PlanShareSheet({
   const [copied, setCopied] = useState<null | "link" | "share">(null);
 
   // Fetch the plan's share link (member-gated; the viewer is a member). Prefer the server-built
-  // canonical URL (PUBLIC_WEB_URL); fall back to one built client-side from the token.
+  // canonical URL (PUBLIC_WEB_URL); fall back to one built client-side from the token. Either way
+  // the link carries ?via=<me> so a join through it attributes the +1 to this sharer (DRP-63).
   const loadLink = useCallback(() => {
     setShareError(false);
     trpc.events.shareLink
       .query({ eventId })
-      .then((s) => setLink(s.url ?? meetupUrl(s.token)))
+      .then((s) => setLink(s.url ?? meetupUrl(s.token, s.via)))
       .catch(() => setShareError(true));
   }, [eventId]);
 
@@ -698,7 +805,11 @@ function PlanShareSheet({
 
   return (
     <BottomSheet visible={visible} onClose={onClose}>
-      <Section title={TITLE_SHARE_MEETUP} size="lg" sub={SHARE_MEETUP_HINT} />
+      <Section
+        title={TITLE_SHARE_MEETUP}
+        size="lg"
+        sub={joinsOpen ? SHARE_MEETUP_HINT : SHARE_MEETUP_CLOSED_HINT}
+      />
       {link ? (
         <>
           <Field

@@ -88,6 +88,10 @@ export function CreateWizard({ navigation }: Props) {
   // Creator locks - both default OFF (open). Decides-by is editable.
   const [lockTimes, setLockTimes] = useState(false);
   const [lockActivity, setLockActivity] = useState(false);
+  // The +1 door (DRP-63) - open by default; lockJoins freezes the choice for good (the axis-lock
+  // pattern). While unlocked, any group member can flip the door later from the Who's-in sheet.
+  const [joinsOpen, setJoinsOpen] = useState(true);
+  const [lockJoins, setLockJoins] = useState(false);
   const [decidesEdit, setDecidesEdit] = useState(false);
   const [decidesDate, setDecidesDate] = useState("");
   const [decidesTime, setDecidesTime] = useState("");
@@ -313,6 +317,8 @@ export function CreateWizard({ navigation }: Props) {
         activityCandidates: activities.length ? activities : undefined,
         lockTimes: lockTimesEff,
         lockActivity: lockActivityEff,
+        joinsOpen,
+        lockJoins,
         decidesBy: decidesToSend,
         replyBy: replyToSend,
       });
@@ -375,21 +381,49 @@ export function CreateWizard({ navigation }: Props) {
 
       <Section title={stepCopy.title} sub={stepCopy.sub} size="lg">
         {stepKey === "group" && (
-          <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
-            {groups.map((g) => (
+          <>
+            <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
+              {groups.map((g) => (
+                <Chip
+                  key={g.id}
+                  label={g.name}
+                  selected={groupIds.includes(g.id)}
+                  onPress={() =>
+                    setGroupIds((ids) =>
+                      ids.includes(g.id) ? ids.filter((x) => x !== g.id) : [...ids, g.id],
+                    )
+                  }
+                />
+              ))}
               <Chip
-                key={g.id}
-                label={g.name}
-                selected={groupIds.includes(g.id)}
-                onPress={() =>
-                  setGroupIds((ids) =>
-                    ids.includes(g.id) ? ids.filter((x) => x !== g.id) : [...ids, g.id],
-                  )
-                }
+                label={ACTION_NEW_GROUP}
+                selected={false}
+                onPress={() => setNewGroupOpen(true)}
               />
-            ))}
-            <Chip label={ACTION_NEW_GROUP} selected={false} onPress={() => setNewGroupOpen(true)} />
-          </View>
+            </View>
+            <CheckOption
+              label="Open to +1s"
+              sub={
+                joinsOpen
+                  ? "Anyone with the meetup link can join"
+                  : "The meetup link won't admit new people"
+              }
+              on={joinsOpen}
+              onToggle={() => setJoinsOpen((v) => !v)}
+              style={{ marginTop: 16 }}
+            />
+            <CheckOption
+              label="Lock this choice"
+              sub={
+                lockJoins
+                  ? "Decided now, for good - no one can change it"
+                  : "Otherwise any group member can change it later"
+              }
+              on={lockJoins}
+              onToggle={() => setLockJoins((v) => !v)}
+              style={{ marginTop: 8 }}
+            />
+          </>
         )}
 
         {stepKey === "source" && (
@@ -606,6 +640,15 @@ export function CreateWizard({ navigation }: Props) {
             />
             {location.trim() ? <SummaryItem label="Where" lines={[location.trim()]} /> : null}
             {notes.trim() ? <SummaryItem label="Notes" lines={[notes.trim()]} /> : null}
+            <SummaryItem
+              label="+1s"
+              lines={[
+                joinsOpen
+                  ? "Open - anyone with the link can join"
+                  : "Closed - the link won't admit new people",
+              ]}
+              note={lockJoins ? "Locked - decided now, for good" : undefined}
+            />
             <SummaryItem label="Deadlines" lines={deadlineLines} />
 
             <View
