@@ -165,6 +165,15 @@ export const ACTION_JOINING_MEETUP = "Joining...";
 export const MEETUP_NOT_FOUND_TITLE = "Meetup not found";
 export const MEETUP_NOT_FOUND_BODY = "This meetup link isn't valid anymore.";
 
+// The +1 door (DRP-63): a closed meetup still previews, but the link won't admit new people.
+export const MEETUP_CLOSED_TITLE = "Closed to new +1s";
+export const MEETUP_CLOSED_BODY =
+  "The group isn't taking more people for this one. Ask whoever sent you the link.";
+export const MEETUP_CLOSED_WELCOME =
+  "The group isn't taking more people for this one. Already in it? Sign in to open it.";
+export const ACTION_OPEN_IF_IN = "I'm already in - open it";
+export const ACTION_SIGN_IN_ANYWAY = "Sign in";
+
 // In-app-browser escape hatch (WhatsApp/Instagram/etc. block Google sign-in).
 export const MEETUP_OPEN_IN_BROWSER_TITLE = "Open in your browser to join";
 export const MEETUP_OPEN_IN_BROWSER_BODY =

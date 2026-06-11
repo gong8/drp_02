@@ -7,11 +7,16 @@ import {
   ACTION_COPY_LINK,
   ACTION_JOINING_MEETUP,
   ACTION_LINK_COPIED,
+  ACTION_OPEN_IF_IN,
   ACTION_OPEN_IN_BROWSER,
+  ACTION_SIGN_IN_ANYWAY,
   ACTION_TRY_AGAIN,
   ACTION_VIEW_MEETUP,
   ERR_NETWORK,
   joinAndRespond,
+  MEETUP_CLOSED_BODY,
+  MEETUP_CLOSED_TITLE,
+  MEETUP_CLOSED_WELCOME,
   MEETUP_NO_APP,
   MEETUP_NOT_FOUND_BODY,
   MEETUP_NOT_FOUND_TITLE,
@@ -45,10 +50,12 @@ type Phase = "checking" | "preview" | "joining" | "error";
 
 // Shared preview fetch for both the public (logged-out) landing and the authed screen. previewByToken
 // is a PUBLIC procedure, so this works with no session. Fetches once on mount; `reload` re-runs it.
+// "closed" never comes from the preview itself - it is the join-time FORBIDDEN when the +1 door shut
+// between the preview and the tap (DRP-63).
 function useMeetupPreview(token: string) {
   const [phase, setPhase] = useState<Phase>("checking");
   const [preview, setPreview] = useState<Preview | null>(null);
-  const [errReason, setErrReason] = useState<"notFound" | "network">("notFound");
+  const [errReason, setErrReason] = useState<"notFound" | "network" | "closed">("notFound");
 
   const load = useCallback(async () => {
     setPhase("checking");
@@ -102,20 +109,23 @@ function MeetupCard({ preview }: { preview: Preview }) {
 type Props = NativeStackScreenProps<MeetupsStackParams, "JoinMeetup">;
 export function JoinMeetup({ route, navigation }: Props) {
   const token = route.params?.token ?? "";
+  // The sharer ref off the link's query (?via=), for brought-by attribution (DRP-63).
+  const via = route.params?.via;
   const { phase, setPhase, preview, errReason, setErrReason, reload } = useMeetupPreview(token);
 
   async function join() {
     if (phase === "joining") return;
     setPhase("joining");
     try {
-      const res = await trpc.events.joinByToken.mutate({ eventId: token });
+      const res = await trpc.events.joinByToken.mutate({ eventId: token, via });
       // reset (not navigate) so back from the meetup lands on the dashboard, not this spent funnel.
       navigation.reset({
         index: 1,
         routes: [{ name: "Dashboard" }, { name: "EventDetail", params: { eventId: res.eventId } }],
       });
     } catch (e) {
-      setErrReason(trpcErrorCode(e) === "NOT_FOUND" ? "notFound" : "network");
+      const code = trpcErrorCode(e);
+      setErrReason(code === "NOT_FOUND" ? "notFound" : code === "FORBIDDEN" ? "closed" : "network");
       setPhase("error");
     }
   }
@@ -125,23 +135,58 @@ export function JoinMeetup({ route, navigation }: Props) {
   const header = <ScreenHeader title="" onBack={() => navigation.navigate("Dashboard")} />;
 
   if (phase === "error" || !preview) {
-    const notFound = errReason === "notFound";
+    const terminal = errReason !== "network";
+    const title =
+      errReason === "notFound"
+        ? MEETUP_NOT_FOUND_TITLE
+        : errReason === "closed"
+          ? MEETUP_CLOSED_TITLE
+          : ERR_NETWORK;
+    const body =
+      errReason === "notFound"
+        ? MEETUP_NOT_FOUND_BODY
+        : errReason === "closed"
+          ? MEETUP_CLOSED_BODY
+          : null;
     return (
       <ScreenScroll header={header}>
         <Card>
-          <AppText variant="title">{notFound ? MEETUP_NOT_FOUND_TITLE : ERR_NETWORK}</AppText>
-          {notFound ? (
+          <AppText variant="title">{title}</AppText>
+          {body ? (
             <AppText variant="captionPara" style={{ marginTop: 6 }}>
-              {MEETUP_NOT_FOUND_BODY}
+              {body}
             </AppText>
           ) : null}
           <Button
-            label={notFound ? ACTION_VIEW_MEETUP : ACTION_TRY_AGAIN}
-            variant={notFound ? "primary" : "outline"}
-            onPress={notFound ? () => navigation.navigate("Dashboard") : reload}
+            label={terminal ? ACTION_VIEW_MEETUP : ACTION_TRY_AGAIN}
+            variant={terminal ? "primary" : "outline"}
+            onPress={terminal ? () => navigation.navigate("Dashboard") : reload}
             style={{ marginTop: 14 }}
           />
         </Card>
+      </ScreenScroll>
+    );
+  }
+
+  // A closed door (DRP-63): say so up front, but keep a quiet way in for people already in the
+  // roster - the join no-ops them straight to the plan and never admits a new +1 (server-enforced).
+  if (!preview.joinsOpen) {
+    return (
+      <ScreenScroll header={header}>
+        <Section title={meetupInviteHeadline(preview.activity)} size="lg" />
+        <MeetupCard preview={preview} />
+        <Card style={{ marginBottom: 16 }}>
+          <AppText variant="title">{MEETUP_CLOSED_TITLE}</AppText>
+          <AppText variant="captionPara" style={{ marginTop: 6 }}>
+            {MEETUP_CLOSED_BODY}
+          </AppText>
+        </Card>
+        <Button
+          label={phase === "joining" ? ACTION_JOINING_MEETUP : ACTION_OPEN_IF_IN}
+          variant="outline"
+          disabled={phase === "joining"}
+          onPress={join}
+        />
       </ScreenScroll>
     );
   }
@@ -200,15 +245,19 @@ function InAppBrowserNotice({ token }: { token: string }) {
 // signed out. Shows the meetup BEFORE sign-in (value first), then one CTA starts Google sign-in;
 // the token is stashed first so the post-redirect resume joins + lands on the plan. The dev-bypass
 // button mirrors SignIn so the demo can sidestep real OAuth.
-export function MeetupWelcome({ token }: { token: string }) {
+export function MeetupWelcome({ token, via = null }: { token: string; via?: string | null }) {
   const { phase, preview, reload } = useMeetupPreview(token);
   const { onGoogle, signInDev, busy } = useSignInActions();
   // In a hostile in-app browser, Google sign-in is blocked - surface the open-in-browser escape hatch.
   const inApp = detectInAppBrowser();
+  // A closed +1 door (DRP-63): the preview still shows, sign-in still works (an existing roster
+  // member resumes straight to the plan), but the CTA stops promising a join a stranger won't get.
+  const closed = preview ? !preview.joinsOpen : false;
 
-  // Stash the token before sign-in so it survives the web OAuth page reload, then start the flow.
+  // Stash the link (token + sharer ref) before sign-in so it survives the web OAuth page reload,
+  // then start the flow.
   const start = (signIn: () => void) => {
-    setPendingMeetup(token);
+    setPendingMeetup(token, via);
     signIn();
   };
 
@@ -233,10 +282,24 @@ export function MeetupWelcome({ token }: { token: string }) {
             />
           </Card>
         )}
+        {closed ? (
+          <Card style={{ marginBottom: 16 }}>
+            <AppText variant="title">{MEETUP_CLOSED_TITLE}</AppText>
+            <AppText variant="captionPara" style={{ marginTop: 6 }}>
+              {MEETUP_CLOSED_WELCOME}
+            </AppText>
+          </Card>
+        ) : null}
         {inApp.hostile ? <InAppBrowserNotice token={token} /> : null}
         <Button
-          label={busy ? "Connecting..." : joinAndRespond(preview?.groupName ?? "the group")}
-          variant="affirmative"
+          label={
+            busy
+              ? "Connecting..."
+              : closed
+                ? ACTION_SIGN_IN_ANYWAY
+                : joinAndRespond(preview?.groupName ?? "the group")
+          }
+          variant={closed ? "outline" : "affirmative"}
           disabled={busy}
           onPress={() => start(onGoogle)}
         />
