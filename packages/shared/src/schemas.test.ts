@@ -32,6 +32,24 @@ describe("CreateEventInput", () => {
     }
   });
 
+  it("defaults the +1 door open and unlocked when omitted (DRP-63)", () => {
+    const r = CreateEventInput.safeParse({ groupId: "g_1" });
+    expect(r.success).toBe(true);
+    if (r.success) {
+      expect(r.data.joinsOpen).toBe(true);
+      expect(r.data.lockJoins).toBe(false);
+    }
+  });
+
+  it("preserves an explicitly closed, locked +1 door (DRP-63)", () => {
+    const r = CreateEventInput.safeParse({ groupId: "g_1", joinsOpen: false, lockJoins: true });
+    expect(r.success).toBe(true);
+    if (r.success) {
+      expect(r.data.joinsOpen).toBe(false);
+      expect(r.data.lockJoins).toBe(true);
+    }
+  });
+
   it("preserves lock flags when explicitly set true (pinned axes)", () => {
     const r = CreateEventInput.safeParse({
       groupId: "g_1",

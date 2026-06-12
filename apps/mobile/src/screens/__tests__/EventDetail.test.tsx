@@ -27,6 +27,7 @@ import {
   mockQuery,
   resetTrpcMock,
 } from "../../lib/__mocks__/trpc";
+import { setRosterSeen } from "../../lib/rosterSeen";
 import type { RouterOutputs } from "../../lib/trpc";
 import { trpc } from "../../lib/trpc";
 import { act, fireEvent, renderScreen, screen, waitFor } from "../../test/render";
@@ -37,6 +38,7 @@ const mockPillInstances: PillHandle[] = [];
 
 // The exact shape events.get returns (NonNullable so optional null fields are part of the type).
 type Detail = NonNullable<RouterOutputs["events"]["get"]>;
+type RosterData = RouterOutputs["events"]["roster"];
 
 // A future ISO instant, far enough out that no deadline/moment lazily settles during a test.
 const SOON = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -112,8 +114,21 @@ function momentDetail(over: Partial<Detail> = {}): Detail {
   };
 }
 
+// A minimal Who's-in payload (DRP-63) so every mount survives the roster fetch that now rides
+// alongside events.get; roster-specific tests override it per test.
+function emptyRoster(): RosterData {
+  return {
+    joinsOpen: true,
+    lockJoins: false,
+    canToggle: true,
+    groups: [{ id: "g1", name: "The Boys", members: [] }],
+    participants: [],
+  };
+}
+
 beforeEach(() => {
   resetTrpcMock();
+  mockQuery(trpc.events.roster, emptyRoster());
   mockPillInstances.length = 0;
 });
 
@@ -539,5 +554,85 @@ describe("EventDetail - edit sheet (per-field compare-and-set)", () => {
 
     await screen.findByText("Who's in");
     expect(screen.queryByText("Edit")).toBeNull();
+  });
+});
+
+describe("EventDetail - Who's invited roster + the +1 door (DRP-63)", () => {
+  // A roster with one group member and one attributed +1 who joined moments ago.
+  function rosterWithPlusOne(over: Partial<RosterData> = {}): RosterData {
+    return {
+      joinsOpen: true,
+      lockJoins: false,
+      canToggle: true,
+      groups: [{ id: "g1", name: "The Boys", members: [{ id: "u1", name: "Leo", color: "#111" }] }],
+      participants: [
+        {
+          id: "u9",
+          name: "Nathan",
+          color: "#222",
+          invitedBy: { id: "u1", name: "Leo", color: "#111" },
+          joinedAt: new Date().toISOString(),
+        },
+      ],
+      ...over,
+    };
+  }
+
+  test("the Who's invited row shows the distinct headcount and opens the roster sheet", async () => {
+    mockQuery(trpc.events.get, collectingDetail());
+    mockQuery(trpc.events.roster, rosterWithPlusOne());
+    renderScreen(EventDetail, { eventId: "e1" });
+
+    // 2 distinct people: Leo (group) + Nathan (+1).
+    expect(await screen.findByText("Who's invited")).toBeOnTheScreen();
+    expect(screen.getByText("2 people")).toBeOnTheScreen();
+
+    fireEvent.press(screen.getByText("Who's invited"));
+    // The sheet sections: the group, then the +1 with brought-by attribution.
+    expect(await screen.findByText("The Boys")).toBeOnTheScreen();
+    expect(screen.getByText("Nathan")).toBeOnTheScreen();
+    expect(screen.getByText("via Leo")).toBeOnTheScreen();
+  });
+
+  test("a +1 who joined after this device last looked badges as NEW in the sheet", async () => {
+    mockQuery(trpc.events.get, collectingDetail());
+    mockQuery(trpc.events.roster, rosterWithPlusOne());
+    // This device looked long ago (a stored marker), so the fresh join must badge. A previously
+    // unseen plan would instead baseline silently (seedRosterSeen) - covered in rosterSeen tests.
+    setRosterSeen("e1", Date.parse("2026-01-01T00:00:00.000Z"));
+
+    renderScreen(EventDetail, { eventId: "e1" });
+
+    expect(await screen.findByText("1 new")).toBeOnTheScreen();
+    fireEvent.press(screen.getByText("Who's invited"));
+    expect(await screen.findByText("New")).toBeOnTheScreen();
+  });
+
+  test("the door toggle calls setJoinsOpen; a locked door renders disabled with the frozen note", async () => {
+    mockQuery(trpc.events.get, collectingDetail());
+    mockQuery(trpc.events.roster, rosterWithPlusOne());
+    mockMutation(trpc.events.setJoinsOpen, { ok: true as const });
+    renderScreen(EventDetail, { eventId: "e1" });
+
+    fireEvent.press(await screen.findByText("Who's invited"));
+    fireEvent.press(await screen.findByText("Open to +1s"));
+    await waitFor(() =>
+      expect(trpc.events.setJoinsOpen.mutate).toHaveBeenCalledWith({ eventId: "e1", open: false }),
+    );
+  });
+
+  test("a frozen door (lockJoins) shows the decided-at-suggestion note instead of a live toggle", async () => {
+    mockQuery(trpc.events.get, collectingDetail());
+    mockQuery(
+      trpc.events.roster,
+      rosterWithPlusOne({ joinsOpen: false, lockJoins: true, canToggle: false }),
+    );
+    renderScreen(EventDetail, { eventId: "e1" });
+
+    fireEvent.press(await screen.findByText("Who's invited"));
+    expect(await screen.findByText("Locked when the plan was suggested")).toBeOnTheScreen();
+    // Tapping the disabled toggle is a no-op - the door mutation is never called.
+    fireEvent.press(screen.getByText("Open to +1s"));
+    expect(trpc.events.setJoinsOpen.mutate).not.toHaveBeenCalled();
   });
 });

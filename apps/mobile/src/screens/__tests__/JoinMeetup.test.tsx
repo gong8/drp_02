@@ -12,8 +12,20 @@ import { cleanup, render } from "@testing-library/react-native";
 import type { ComponentType } from "react";
 import { Text, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { mockMutation, mockQuery, mockQueryError, resetTrpcMock } from "../../lib/__mocks__/trpc";
-import { ACTION_VIEW_MEETUP, MEETUP_NOT_FOUND_TITLE, meetupInviteHeadline } from "../../lib/copy";
+import {
+  mockMutation,
+  mockMutationError,
+  mockQuery,
+  mockQueryError,
+  resetTrpcMock,
+} from "../../lib/__mocks__/trpc";
+import {
+  ACTION_OPEN_IF_IN,
+  ACTION_VIEW_MEETUP,
+  MEETUP_CLOSED_TITLE,
+  MEETUP_NOT_FOUND_TITLE,
+  meetupInviteHeadline,
+} from "../../lib/copy";
 import type { RouterOutputs } from "../../lib/trpc";
 import { trpc } from "../../lib/trpc";
 import { fireEvent, screen, waitFor } from "../../test/render";
@@ -61,15 +73,18 @@ function mountJoin(params?: object) {
   );
 }
 
+const basePreview: Preview = {
+  eventId: "e1",
+  activity: "Bowling",
+  groupName: "The Boys",
+  phase: "moment",
+  startsAt: "2026-06-12T19:00:00.000Z",
+  candidateCount: 0,
+  joinsOpen: true,
+};
+
 test("a token previews the meetup, then joining lands on the plan", async () => {
-  const preview: Preview = {
-    eventId: "e1",
-    activity: "Bowling",
-    groupName: "The Boys",
-    phase: "moment",
-    startsAt: "2026-06-12T19:00:00.000Z",
-    candidateCount: 0,
-  };
+  const preview: Preview = basePreview;
   const joined: JoinResult = { eventId: "e1", groupId: "g1", alreadyMember: false };
   mockQuery(trpc.events.previewByToken, preview);
   mockMutation(trpc.events.joinByToken, joined);
@@ -98,4 +113,52 @@ test("an unknown token shows the not-found error, not a crash", async () => {
   mountJoin({ token: "e_missing" });
 
   expect(await screen.findByText(MEETUP_NOT_FOUND_TITLE)).toBeOnTheScreen();
+});
+
+test("the link's ?via= rides along into the join for brought-by attribution (DRP-63)", async () => {
+  mockQuery(trpc.events.previewByToken, basePreview);
+  mockMutation(trpc.events.joinByToken, {
+    eventId: "e1",
+    groupId: "g1",
+    alreadyMember: false,
+  } satisfies JoinResult);
+
+  mountJoin({ token: "e1", via: "u_sharer" });
+
+  fireEvent.press(await screen.findByText(ACTION_VIEW_MEETUP));
+  await waitFor(() =>
+    expect(trpc.events.joinByToken.mutate).toHaveBeenCalledWith({ eventId: "e1", via: "u_sharer" }),
+  );
+});
+
+test("a closed +1 door previews with the closed notice and a quiet already-in path (DRP-63)", async () => {
+  mockQuery(trpc.events.previewByToken, { ...basePreview, joinsOpen: false });
+  mockMutation(trpc.events.joinByToken, {
+    eventId: "e1",
+    groupId: "g1",
+    alreadyMember: true,
+  } satisfies JoinResult);
+
+  mountJoin({ token: "e1" });
+
+  // No affirmative join CTA - the closed notice plus the already-in escape hatch instead.
+  expect(await screen.findByText(MEETUP_CLOSED_TITLE)).toBeOnTheScreen();
+  expect(screen.queryByText(ACTION_VIEW_MEETUP)).toBeNull();
+
+  // An existing roster member no-ops through to the plan.
+  fireEvent.press(screen.getByText(ACTION_OPEN_IF_IN));
+  expect(await screen.findByText("stub:EventDetail")).toBeOnTheScreen();
+});
+
+test("a stranger refused by the closed door (FORBIDDEN) sees the closed state, not a crash", async () => {
+  mockQuery(trpc.events.previewByToken, { ...basePreview, joinsOpen: false });
+  mockMutationError(trpc.events.joinByToken, { data: { code: "FORBIDDEN" } });
+
+  mountJoin({ token: "e1" });
+
+  fireEvent.press(await screen.findByText(ACTION_OPEN_IF_IN));
+  // The closed error card replaces the preview: wait for its dashboard CTA (unique to the error
+  // state - the closed preview has no affirmative CTA), then check the closed title rode along.
+  expect(await screen.findByText(ACTION_VIEW_MEETUP)).toBeOnTheScreen();
+  expect(screen.getByText(MEETUP_CLOSED_TITLE)).toBeOnTheScreen();
 });

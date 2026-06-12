@@ -165,6 +165,15 @@ export const ACTION_JOINING_MEETUP = "Joining...";
 export const MEETUP_NOT_FOUND_TITLE = "Meetup not found";
 export const MEETUP_NOT_FOUND_BODY = "This meetup link isn't valid anymore.";
 
+// The +1 door (DRP-63): a closed meetup still previews, but the link won't admit new people.
+export const MEETUP_CLOSED_TITLE = "Closed to new +1s";
+export const MEETUP_CLOSED_BODY =
+  "The group isn't taking more people for this one. Ask whoever sent you the link.";
+export const MEETUP_CLOSED_WELCOME =
+  "The group isn't taking more people for this one. Already in it? Sign in to open it.";
+export const ACTION_OPEN_IF_IN = "I'm already in - open it";
+export const ACTION_SIGN_IN_ANYWAY = "Sign in";
+
 // In-app-browser escape hatch (WhatsApp/Instagram/etc. block Google sign-in).
 export const MEETUP_OPEN_IN_BROWSER_TITLE = "Open in your browser to join";
 export const MEETUP_OPEN_IN_BROWSER_BODY =
@@ -175,6 +184,36 @@ export const ACTION_COPY_LINK = "Copy link";
 // Plan share sheet (EventDetail "Share this meetup").
 export const TITLE_SHARE_MEETUP = "Share this meetup";
 export const SHARE_MEETUP_HINT = "Anyone with the link can join and respond.";
+export const SHARE_MEETUP_CLOSED_HINT =
+  "Closed to new +1s - the link only opens it for people already in.";
+
+// ----- DRP-63: the Who's-invited roster + the +1 door -----
+// "Who's invited" (the audience), deliberately NOT "Who's in" - that is the cleared plan's revealed
+// going crowd (PhaseViews). Two different questions; two different words.
+export const TITLE_WHOS_IN = "Who's invited";
+export const LABEL_PLUS_ONES = "+1s";
+export const PLUS_ONES_OPEN_LABEL = "Open to +1s";
+export const PLUS_ONES_OPEN_SUB = "Anyone with the meetup link can join";
+export const PLUS_ONES_CLOSED_SUB = "The meetup link won't admit new people";
+export const PLUS_ONES_LOCKED_NOTE = "Locked when the plan was suggested";
+export const BADGE_NEW = "New";
+export const WHOS_IN_LOADING = "Loading who's in...";
+export const ERR_CHANGE_DOOR = "Could not change that. Try again.";
+
+// "via Leo" - which member's link admitted a +1 (brought-by attribution).
+export function viaSharer(name: string): string {
+  return `via ${name}`;
+}
+
+// "7 people" / "1 person" - the Who's-in headcount.
+export function peopleCount(n: number): string {
+  return `${n} ${n === 1 ? "person" : "people"}`;
+}
+
+// "2 new" - +1s who joined since this device last looked at the roster.
+export function newJoinersLabel(n: number): string {
+  return `${n} new`;
+}
 
 // Post-response retention nudge (web only - web users get no notifications yet).
 export const GET_APP_TITLE = "Get BeThere for reminders";

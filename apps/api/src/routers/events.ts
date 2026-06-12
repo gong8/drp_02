@@ -11,6 +11,7 @@ import {
   CreateEventInput,
   clears,
   isTerminalPhase,
+  JoinByTokenInput,
   LockInput,
   type MomentResponse,
   type PartOfDay,
@@ -19,6 +20,7 @@ import {
   RespondInput,
   resolveIn,
   revealGoing,
+  SetJoinsOpenInput,
   SetOptOutInput,
   ToggleReactionInput,
   UpdateEventInput,
@@ -27,8 +29,10 @@ import { TRPCError } from "@trpc/server";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "../db/client.js";
 import {
+  eventGroupIds,
   FALLBACK_GROUP_NAME,
   getGroupNames,
+  isGroupLevelMember,
   isInRoster,
   meetupUrlFor,
   rosterUserIds,
@@ -621,6 +625,8 @@ export const eventsRouter = router({
       isAnonymous: true,
       lockTimes: input.lockTimes,
       lockActivity: input.lockActivity,
+      joinsOpen: input.joinsOpen,
+      lockJoins: input.lockJoins,
       phase: opensMoment ? "moment" : "collecting",
       decidesBy,
       replyBy,
@@ -1074,6 +1080,9 @@ export const eventsRouter = router({
       // keys off `phase` and shows "help pick a time" rather than the placeholder).
       startsAt: e.startsAt.toISOString(),
       candidateCount: cands.length,
+      // The +1 door (DRP-63): a boolean, leaks no identity. Lets the logged-out landing show the
+      // closed state BEFORE sign-in instead of failing the join after OAuth.
+      joinsOpen: e.joinsOpen,
     };
   }),
 
@@ -1081,29 +1090,114 @@ export const eventsRouter = router({
   // Idempotent: already in the roster (origin/attached group or an existing participant) is a no-op
   // that still resolves the eventId/groupId so the client routes to the plan, and reports
   // `alreadyMember` so the UI can skip a "welcome".
-  joinByToken: protectedProcedure.input(ByEvent).mutation(async ({ ctx, input }) => {
+  joinByToken: protectedProcedure.input(JoinByTokenInput).mutation(async ({ ctx, input }) => {
     const [e] = await db.select().from(events).where(eq(events.id, input.eventId));
     if (!e)
       throw new TRPCError({ code: "NOT_FOUND", message: "That link does not match a meetup" });
     // The link adds you to THIS meetup only (an ad-hoc participant), never to the group. Idempotent:
-    // already in the roster (origin/attached group or an existing participant) is a no-op.
+    // already in the roster (origin/attached group or an existing participant) is a no-op, checked
+    // BEFORE the door so existing people can always reopen their link - a closed door blocks NEW
+    // people only (DRP-63). The door read is deliberately unlocked (no SELECT FOR UPDATE): a join
+    // racing a concurrent close may slip through the instant the door shuts, which is the same
+    // accepted last-write-wins stance as setJoinsOpen - this is a social door, not an auth boundary.
     const already = await isInRoster(e.id, e.groupId, ctx.userId);
     if (!already) {
+      if (!e.joinsOpen) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "This meetup is closed to new +1s" });
+      }
+      // Brought-by attribution (DRP-63): trust `via` only when that user is in the roster RIGHT NOW
+      // and is not the joiner themselves. A bogus/stale/self via degrades to an unattributed join,
+      // never an error - the link is a bearer token and attribution is a trust signal, not auth.
+      const via = input.via && input.via !== ctx.userId ? input.via : null;
+      const invitedBy = via && (await isInRoster(e.id, e.groupId, via)) ? via : null;
       await db
         .insert(eventParticipants)
-        .values({ eventId: e.id, userId: ctx.userId })
+        .values({ eventId: e.id, userId: ctx.userId, invitedBy })
         .onConflictDoNothing();
     }
     return { eventId: e.id, groupId: e.groupId, alreadyMember: already };
   }),
 
+  // The Who's-in payload (DRP-63): the live roster grouped by where it comes from - the origin
+  // group, each attached group, then the ad-hoc +1s with brought-by attribution and join times.
+  // Roster-gated like every other event read (loadEvent). A participant who later joined a
+  // constituent group has "graduated": they appear in that group's section and are filtered from
+  // the +1 list. Presence is not a vote - voter and creator anonymity are untouched.
+  roster: protectedProcedure.input(ByEvent).query(async ({ ctx, input }) => {
+    const e = await loadEvent(input.eventId, ctx.userId);
+    const groupIds = await eventGroupIds(e.id, e.groupId);
+    const names = await getGroupNames(groupIds);
+    const memberRows = await db
+      .select({ groupId: groupMembers.groupId, userId: groupMembers.userId })
+      .from(groupMembers)
+      .where(inArray(groupMembers.groupId, groupIds));
+    const partRows = await db
+      .select()
+      .from(eventParticipants)
+      .where(eq(eventParticipants.eventId, e.id));
+    const groupLevel = new Set(memberRows.map((r) => r.userId));
+    const parts = partRows
+      .filter((p) => !groupLevel.has(p.userId))
+      .sort((a, b) => a.joinedAt.getTime() - b.joinedAt.getTime());
+    const cardIds = new Set<string>([
+      ...memberRows.map((r) => r.userId),
+      ...parts.flatMap((p) => (p.invitedBy ? [p.userId, p.invitedBy] : [p.userId])),
+    ]);
+    const cardMap = await getUserCards([...cardIds]);
+    const card = (id: string) => cardMap.get(id) ?? fallbackUserCard(id);
+    return {
+      joinsOpen: e.joinsOpen,
+      lockJoins: e.lockJoins,
+      canToggle: !e.lockJoins && groupLevel.has(ctx.userId),
+      groups: groupIds.map((gid) => ({
+        id: gid,
+        name: names.get(gid) ?? FALLBACK_GROUP_NAME,
+        members: memberRows.filter((r) => r.groupId === gid).map((r) => card(r.userId)),
+      })),
+      participants: parts.map((p) => ({
+        ...card(p.userId),
+        invitedBy: p.invitedBy ? card(p.invitedBy) : null,
+        joinedAt: p.joinedAt.toISOString(),
+      })),
+    };
+  }),
+
+  // Flip the +1 door (DRP-63). A frozen plan (lockJoins, decided at suggestion like the axis locks)
+  // rejects everyone; otherwise any GROUP member (origin or attached) may flip it - ad-hoc
+  // participants may not, so a +1 cannot reopen a door the group closed. Last-write-wins: a boolean
+  // toggle has no meaningful edit conflict (contrast events.update's per-field CAS on text).
+  setJoinsOpen: protectedProcedure.input(SetJoinsOpenInput).mutation(async ({ ctx, input }) => {
+    const e = await loadEvent(input.eventId, ctx.userId);
+    if (e.lockJoins) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Whether +1s can join was fixed when this plan was suggested",
+      });
+    }
+    if (!(await isGroupLevelMember(e.id, e.groupId, ctx.userId))) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Only group members can change whether +1s can join",
+      });
+    }
+    await db.update(events).set({ joinsOpen: input.open }).where(eq(events.id, e.id));
+    return { ok: true as const };
+  }),
+
   // The shareable link for a plan: a fully-qualified URL when PUBLIC_WEB_URL is set, plus the bare
   // token (the event id) so the client can build its own link otherwise. Member-gated via loadEvent
   // (NOT_FOUND before FORBIDDEN), mirroring groups.inviteByGroup - only someone in the meetup's group
-  // can mint, and thus share, the link.
+  // can mint, and thus share, the link. The minted URL carries `?via=<caller>` so a redeemed join
+  // can attribute the +1 to whoever shared it (DRP-63); `via` is returned bare too so the client's
+  // own-origin fallback URL can carry it as well.
   shareLink: protectedProcedure.input(ByEvent).query(async ({ ctx, input }) => {
     const e = await loadEvent(input.eventId, ctx.userId);
-    return { token: e.id, url: meetupUrlFor(e.id) };
+    const base = meetupUrlFor(e.id);
+    return {
+      token: e.id,
+      url: base ? `${base}?via=${encodeURIComponent(ctx.userId)}` : null,
+      via: ctx.userId,
+    };
   }),
 
   // Attach another whole group to a meetup (cross-group). Caller must be in the meetup's roster

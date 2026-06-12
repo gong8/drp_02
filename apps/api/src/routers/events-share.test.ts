@@ -17,7 +17,7 @@ import assert from "node:assert/strict";
 import { after, before, beforeEach, test } from "node:test";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
-import { eventParticipants } from "../db/schema.js";
+import { eventParticipants, events } from "../db/schema.js";
 import {
   caller,
   db,
@@ -72,11 +72,22 @@ test("previewByToken reveals no voter, creator, or crowd identity", async () => 
   const eventId = await insertEvent({ groupId, createdByUserId: member, activity: "Bowling" });
 
   const preview = await caller(null).events.previewByToken({ eventId });
-  // The shell is strictly the safe fields - no roster, no going crowd, no creator id.
+  // The shell is strictly the safe fields - no roster, no going crowd, no creator id. joinsOpen is
+  // a bare boolean (the +1 door, DRP-63) and leaks no identity.
   assert.deepEqual(
     Object.keys(preview).sort(),
-    ["activity", "candidateCount", "eventId", "groupName", "phase", "startsAt"].sort(),
+    ["activity", "candidateCount", "eventId", "groupName", "joinsOpen", "phase", "startsAt"].sort(),
   );
+});
+
+test("previewByToken exposes the +1 door state so the landing can show closed pre-sign-in", async () => {
+  const member = await makeUser();
+  const groupId = await makeGroup([member]);
+  const openId = await insertEvent({ groupId, createdByUserId: member });
+  const closedId = await insertEvent({ groupId, createdByUserId: member, joinsOpen: false });
+
+  assert.equal((await caller(null).events.previewByToken({ eventId: openId })).joinsOpen, true);
+  assert.equal((await caller(null).events.previewByToken({ eventId: closedId })).joinsOpen, false);
 });
 
 test("previewByToken derives the leading activity for a collecting plan (no blank card)", async () => {
@@ -170,8 +181,11 @@ test("shareLink returns the token, and url only when a web origin is configured"
 
     process.env.PUBLIC_WEB_URL = "https://bethere.example.com/";
     const withBase = await caller(member).events.shareLink({ eventId });
-    // Trailing slash collapsed; path mirrors the mobile linking config (/m/:token).
-    assert.equal(withBase.url, `https://bethere.example.com/m/${eventId}`);
+    // Trailing slash collapsed; path mirrors the mobile linking config (/m/:token). The minted URL
+    // carries ?via=<caller> for brought-by attribution (DRP-63), and `via` is returned bare for the
+    // client's own-origin fallback.
+    assert.equal(withBase.url, `https://bethere.example.com/m/${eventId}?via=${member}`);
+    assert.equal(withBase.via, member);
   } finally {
     if (prev === undefined) delete process.env.PUBLIC_WEB_URL;
     else process.env.PUBLIC_WEB_URL = prev;
@@ -200,4 +214,104 @@ test("shareLink requires authentication", async () => {
     () => caller(null).events.shareLink({ eventId: "e_anything" }),
     isCode("UNAUTHORIZED"),
   );
+});
+
+// ----- the +1 door (joinsOpen) and brought-by attribution (DRP-63) -----
+
+async function participantRow(eventId: string, userId: string) {
+  const rows = await db
+    .select()
+    .from(eventParticipants)
+    .where(and(eq(eventParticipants.eventId, eventId), eq(eventParticipants.userId, userId)));
+  return rows[0];
+}
+
+test("joinByToken records invitedBy from a via that is in the roster, plus a joinedAt", async () => {
+  const owner = await makeUser();
+  const joiner = await makeUser();
+  const groupId = await makeGroup([owner]);
+  const eventId = await insertEvent({ groupId, createdByUserId: owner });
+
+  await caller(joiner).events.joinByToken({ eventId, via: owner });
+  const row = await participantRow(eventId, joiner);
+  assert.equal(row.invitedBy, owner, "the sharer is recorded");
+  assert.ok(row.joinedAt instanceof Date, "joinedAt is stamped");
+});
+
+test("joinByToken degrades a non-roster or self via to an unattributed join, never an error", async () => {
+  const owner = await makeUser();
+  const stranger = await makeUser();
+  const joinerA = await makeUser();
+  const joinerB = await makeUser();
+  const groupId = await makeGroup([owner]);
+  const eventId = await insertEvent({ groupId, createdByUserId: owner });
+
+  // A via that is not in the roster (hand-edited / stale link) still joins, unattributed.
+  await caller(joinerA).events.joinByToken({ eventId, via: stranger });
+  assert.equal((await participantRow(eventId, joinerA)).invitedBy, null);
+
+  // A self via (crafted) is meaningless and degrades the same way.
+  await caller(joinerB).events.joinByToken({ eventId, via: joinerB });
+  assert.equal((await participantRow(eventId, joinerB)).invitedBy, null);
+});
+
+test("a +1's re-shared link attributes the next joiner to the +1 (the visible chain)", async () => {
+  const owner = await makeUser();
+  const firstPlusOne = await makeUser();
+  const secondPlusOne = await makeUser();
+  const groupId = await makeGroup([owner]);
+  const eventId = await insertEvent({ groupId, createdByUserId: owner });
+
+  await caller(firstPlusOne).events.joinByToken({ eventId, via: owner });
+  // The +1 is now in the roster, so a link they mint is a valid via for the next joiner.
+  await caller(secondPlusOne).events.joinByToken({ eventId, via: firstPlusOne });
+  assert.equal((await participantRow(eventId, secondPlusOne)).invitedBy, firstPlusOne);
+});
+
+test("a closed door rejects a NEW joiner with FORBIDDEN and adds nobody", async () => {
+  const owner = await makeUser();
+  const joiner = await makeUser();
+  const groupId = await makeGroup([owner]);
+  const eventId = await insertEvent({ groupId, createdByUserId: owner, joinsOpen: false });
+
+  await assert.rejects(
+    () => caller(joiner).events.joinByToken({ eventId, via: owner }),
+    isCode("FORBIDDEN"),
+  );
+  assert.equal(await participantRow(eventId, joiner), undefined, "no participant row");
+});
+
+test("a closed door still no-ops for people already in the roster (blocks NEW people only)", async () => {
+  const owner = await makeUser();
+  const plusOne = await makeUser();
+  const groupId = await makeGroup([owner]);
+  const eventId = await insertEvent({ groupId, createdByUserId: owner });
+
+  // Join while open, then the door closes.
+  await caller(plusOne).events.joinByToken({ eventId });
+  await caller(owner).events.setJoinsOpen({ eventId, open: false });
+
+  // Both an existing group member and an existing participant reopen their link fine.
+  assert.equal((await caller(owner).events.joinByToken({ eventId })).alreadyMember, true);
+  assert.equal((await caller(plusOne).events.joinByToken({ eventId })).alreadyMember, true);
+});
+
+test("create persists the +1 door pair; defaults are open + unlocked", async () => {
+  const creator = await makeUser();
+  const groupId = await makeGroup([creator]);
+
+  const open = await caller(creator).events.create({ groupId });
+  const closed = await caller(creator).events.create({
+    groupId,
+    joinsOpen: false,
+    lockJoins: true,
+  });
+
+  const rowOf = async (id: string) => (await db.select().from(events).where(eq(events.id, id)))[0];
+  const openRow = await rowOf(open.id);
+  assert.equal(openRow.joinsOpen, true);
+  assert.equal(openRow.lockJoins, false);
+  const closedRow = await rowOf(closed.id);
+  assert.equal(closedRow.joinsOpen, false);
+  assert.equal(closedRow.lockJoins, true);
 });

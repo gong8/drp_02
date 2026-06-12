@@ -17,7 +17,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-cont
 import { DevAuthProvider, useAuthBridge } from "./src/lib/auth";
 import { publishableKey, tokenCache } from "./src/lib/clerk";
 import { usePendingInviteRouting } from "./src/lib/usePendingInvite";
-import { useMeetupLaunchToken, usePendingMeetupRouting } from "./src/lib/usePendingMeetup";
+import { useMeetupLaunch, usePendingMeetupRouting } from "./src/lib/usePendingMeetup";
 import { Account } from "./src/screens/Account";
 import { CreateGroup } from "./src/screens/CreateGroup";
 import { CreateWizard } from "./src/screens/CreateWizard";
@@ -39,7 +39,8 @@ export type MeetupsStackParams = {
   EventDetail: { eventId: string; shareOnLand?: boolean };
   CreateWizard: undefined;
   // The authed landing for a tapped meetup share link (/m/:token); previews the plan then joins.
-  JoinMeetup: { token?: string };
+  // `via` arrives as the link's query param (the sharer, for brought-by attribution - DRP-63).
+  JoinMeetup: { token?: string; via?: string };
   Account: undefined;
 };
 export type GroupsStackParams = {
@@ -183,9 +184,9 @@ function MainTabs() {
 // the app or the sign-in screen.
 function Gate() {
   const authed = useAuthBridge();
-  // The meetup token of the link the app was opened with (web reads it synchronously), so a
+  // The meetup link the app was opened with - token + sharer ref (web reads it synchronously), so a
   // logged-out /m/<token> visit shows the public preview on the first paint instead of bare sign-in.
-  const launchMeetup = useMeetupLaunchToken();
+  const launchMeetup = useMeetupLaunch();
 
   // Route a deep-link invite code across the sign-in boundary (the hook captures it while signed out
   // and resumes it once authed). navigate is the only App-coupled step - it routes to JoinGroup once
@@ -207,7 +208,11 @@ function Gate() {
 
   // Logged-out: a meetup link shows its public preview before sign-in (the conversion funnel); any
   // other entry shows the sign-in screen. Once authed the navigator (and the resume hooks) take over.
-  const loggedOut = launchMeetup ? <MeetupWelcome token={launchMeetup} /> : <SignIn />;
+  const loggedOut = launchMeetup ? (
+    <MeetupWelcome token={launchMeetup.token} via={launchMeetup.via} />
+  ) : (
+    <SignIn />
+  );
 
   return (
     <NavigationContainer ref={navigationRef} linking={linking}>

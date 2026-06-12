@@ -3,39 +3,48 @@ import { Linking, Platform } from "react-native";
 import {
   clearPendingMeetup,
   extractMeetupToken,
+  extractMeetupVia,
   getPendingMeetup,
   setPendingMeetup,
 } from "./meetup";
 import { trpc } from "./trpc";
 
-// The meetup token of the link the app was opened with, read synchronously on web (from the current
-// location) so the auth Gate can render the public preview on the FIRST paint of a logged-out
-// /m/<token> visit - before any effect runs. On native the launch URL is async, so it resolves via an
-// effect; native logged-out meetup opens are rare (native users are typically already authed).
-export function useMeetupLaunchToken(): string | null {
-  const [token, setToken] = useState<string | null>(() =>
+// The meetup link the app was opened with - its token plus the sharer ref (?via=, DRP-63) - read
+// synchronously on web (from the current location) so the auth Gate can render the public preview
+// on the FIRST paint of a logged-out /m/<token> visit - before any effect runs. On native the
+// launch URL is async, so it resolves via an effect; native logged-out meetup opens are rare
+// (native users are typically already authed).
+export type MeetupLaunch = { token: string; via: string | null };
+
+function launchFrom(url: string): MeetupLaunch | null {
+  const token = extractMeetupToken(url);
+  return token ? { token, via: extractMeetupVia(url) } : null;
+}
+
+export function useMeetupLaunch(): MeetupLaunch | null {
+  const [launch, setLaunch] = useState<MeetupLaunch | null>(() =>
     Platform.OS === "web" && typeof window !== "undefined"
-      ? extractMeetupToken(window.location.href)
+      ? launchFrom(window.location.href)
       : null,
   );
   useEffect(() => {
     let active = true;
     if (Platform.OS !== "web") {
       Linking.getInitialURL().then((url) => {
-        const t = url ? extractMeetupToken(url) : null;
-        if (active && t) setToken(t);
+        const l = url ? launchFrom(url) : null;
+        if (active && l) setLaunch(l);
       });
     }
     const sub = Linking.addEventListener("url", ({ url }) => {
-      const t = extractMeetupToken(url);
-      if (t) setToken(t);
+      const l = launchFrom(url);
+      if (l) setLaunch(l);
     });
     return () => {
       active = false;
       sub.remove();
     };
   }, []);
-  return token;
+  return launch;
 }
 
 // Capture-then-resume of a deep-link meetup token across the sign-in boundary, the meetup-link sibling
@@ -51,14 +60,16 @@ export function usePendingMeetupRouting(
   useEffect(() => {
     if (authed) return;
     let active = true;
-    Linking.getInitialURL().then((url) => {
-      const t = url ? extractMeetupToken(url) : null;
-      if (active && t) setPendingMeetup(t);
-    });
-    const sub = Linking.addEventListener("url", ({ url }) => {
+    // Stash the sharer (?via=) alongside the token so brought-by attribution survives the OAuth
+    // reload too (DRP-63).
+    const stashFrom = (url: string) => {
       const t = extractMeetupToken(url);
-      if (t) setPendingMeetup(t);
+      if (t) setPendingMeetup(t, extractMeetupVia(url));
+    };
+    Linking.getInitialURL().then((url) => {
+      if (active && url) stashFrom(url);
     });
+    const sub = Linking.addEventListener("url", ({ url }) => stashFrom(url));
     return () => {
       active = false;
       sub.remove();
@@ -67,17 +78,21 @@ export function usePendingMeetupRouting(
 
   useEffect(() => {
     if (!authed) return;
-    const token = getPendingMeetup();
-    if (!token) return;
+    const pending = getPendingMeetup();
+    if (!pending) return;
     let active = true;
     (async () => {
       let eventId: string;
       try {
-        const res = await trpc.events.joinByToken.mutate({ eventId: token });
+        const res = await trpc.events.joinByToken.mutate({
+          eventId: pending.token,
+          via: pending.via ?? undefined,
+        });
         eventId = res.eventId;
       } catch {
-        // A stale/invalid token (e.g. a deleted meetup, or a leftover stash) must not trap the user
-        // on a dead funnel: drop it and let them land in the app normally.
+        // A stale/invalid token (a deleted meetup, a leftover stash) or a door that closed mid-OAuth
+        // (FORBIDDEN, DRP-63) must not trap the user on a dead funnel: drop it and let them land in
+        // the app normally. Existing roster members are never refused (the join no-ops them in).
         clearPendingMeetup();
         return;
       }

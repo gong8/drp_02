@@ -1,6 +1,6 @@
 import { randomInt } from "node:crypto";
 import { INVITE_ALPHABET, INVITE_CODE_LENGTH } from "@bethere/shared";
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { db } from "./client.js";
 import { eventGroups, eventParticipants, groupMembers, groups } from "./schema.js";
 
@@ -74,16 +74,40 @@ export async function memberIdsOf(groupId: string): Promise<string[]> {
   return rows.map((r) => r.userId);
 }
 
+// The ids of every group whose membership feeds a meetup's roster: the origin first, then the
+// attached (event_groups) rows. Shared by rosterUserIds, the Who's-in read, and the group-member
+// checks (DRP-63).
+export async function eventGroupIds(eventId: string, originGroupId: string): Promise<string[]> {
+  const attached = await db
+    .select({ groupId: eventGroups.groupId })
+    .from(eventGroups)
+    .where(eq(eventGroups.eventId, eventId));
+  return [originGroupId, ...attached.map((r) => r.groupId)];
+}
+
+// Whether a user is a GROUP-LEVEL member of a meetup (origin or any attached group), excluding
+// ad-hoc participants. The constituency that may flip the +1 door (DRP-63): a +1 must not reopen
+// a door the group closed.
+export async function isGroupLevelMember(
+  eventId: string,
+  originGroupId: string,
+  userId: string,
+): Promise<boolean> {
+  const groupIds = await eventGroupIds(eventId, originGroupId);
+  const rows = await db
+    .select({ userId: groupMembers.userId })
+    .from(groupMembers)
+    .where(and(inArray(groupMembers.groupId, groupIds), eq(groupMembers.userId, userId)))
+    .limit(1);
+  return rows.length > 0;
+}
+
 // The deduped, LIVE roster of a meetup: members of its origin group, members of every additional
 // attached group (event_groups), and ad-hoc individuals who joined by link (event_participants).
 // The single source for "who is in this meetup" - replaces memberIdsOf(groupId) on the event paths.
 // First-occurrence order, origin members first.
 export async function rosterUserIds(eventId: string, originGroupId: string): Promise<string[]> {
-  const attached = await db
-    .select({ groupId: eventGroups.groupId })
-    .from(eventGroups)
-    .where(eq(eventGroups.eventId, eventId));
-  const groupIds = [originGroupId, ...attached.map((r) => r.groupId)];
+  const groupIds = await eventGroupIds(eventId, originGroupId);
   const memberRows = await db
     .select({ userId: groupMembers.userId })
     .from(groupMembers)

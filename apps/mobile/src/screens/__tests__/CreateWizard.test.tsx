@@ -348,6 +348,35 @@ describe("same-minute times are deduped like the server", () => {
     expect(screen.queryByText(/Vote on 2 times/)).toBeNull();
   });
 
+  test("the +1 door defaults open + unlocked, and the group-step toggles flip the payload (DRP-63)", async () => {
+    mockBaseline();
+    await landOnGroupStep();
+    // Flip both on the group step: close the door, lock the choice.
+    fireEvent.press(screen.getByText("Open to +1s"));
+    fireEvent.press(screen.getByText("Lock this choice"));
+    await advanceTo("confirm");
+    // The confirm summary states the closed, locked door.
+    expect(screen.getByText(/Closed - the link won't admit new people/)).toBeOnTheScreen();
+    await act(async () => {
+      fireEvent.press(screen.getByText("Send to the group"));
+    });
+    const arg = (trpc.events.create.mutate as jest.Mock).mock.calls[0][0];
+    expect(arg.joinsOpen).toBe(false);
+    expect(arg.lockJoins).toBe(true);
+  });
+
+  test("an untouched +1 door submits as open + unlocked (today's behavior)", async () => {
+    mockBaseline();
+    await landOnGroupStep();
+    await advanceTo("confirm");
+    await act(async () => {
+      fireEvent.press(screen.getByText("Send to the group"));
+    });
+    const arg = (trpc.events.create.mutate as jest.Mock).mock.calls[0][0];
+    expect(arg.joinsOpen).toBe(true);
+    expect(arg.lockJoins).toBe(false);
+  });
+
   test("the submit payload sends one time candidate when two rows share a minute", async () => {
     mockBaseline();
     await landOnGroupStep();

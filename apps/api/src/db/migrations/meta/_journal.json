@@ -85,6 +85,13 @@
       "when": 1780500006000,
       "tag": "0011_adhoc_cross_group_meetups",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1780500007000,
+      "tag": "0012_plus_one_trust_controls",
+      "breakpoints": true
     }
   ]
 }
