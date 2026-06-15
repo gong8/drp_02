@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BeThere - Copyright and Legal Issues Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700;800&family=Space+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --warm:#FDF6EE; --surface:#FFFFFF; --ink:#111111; --muted:#7D7A86; --tint:#F1EEF6;
+  --pink:#FF5CA8; --green:#34A853; --purple:#7E6BB0; --lav:#ECEAFF; --blush:#FCEFE8;
+  --shadow:4px 4px 0 0 var(--ink); --shadow-sm:3px 3px 0 0 var(--ink);
+  --display:"Archivo","Arial Black",sans-serif; --body:"Inter",system-ui,-apple-system,sans-serif;
+  --mono:"Space Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--warm); color:var(--ink); font-family:var(--body); font-weight:500;
+  line-height:1.5; -webkit-font-smoothing:antialiased; font-feature-settings:"tnum" 1;
+  -webkit-print-color-adjust:exact; print-color-adjust:exact;
+}
+@page{ size:A4; margin:11mm 13mm; }
+.sheet{ max-width:185mm; margin:0 auto; padding:14mm 4mm 18mm; }
+@media screen{ body{background:#d9d6e8;} .sheet{background:var(--warm); margin:18px auto; box-shadow:0 8px 40px rgba(0,0,0,.25); padding:16mm 14mm 20mm; max-width:210mm;} }
+
+.docbar{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; border-bottom:3px solid var(--ink); padding-bottom:12px; margin-bottom:22px; }
+.brand{ display:flex; align-items:center; gap:11px; }
+.brand .mark{ width:40px;height:40px;background:var(--pink);border:2px solid var(--ink);border-radius:11px;box-shadow:var(--shadow-sm);display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+.brand .mark svg{width:23px;height:23px;}
+.brand .wm{ font-family:var(--display); font-weight:900; font-size:30px; letter-spacing:-1.3px; line-height:.9; }
+.coursepill{ font-family:var(--display); font-weight:800; font-size:9px; text-transform:uppercase; letter-spacing:.3px; background:var(--surface); border:2px solid var(--ink); border-radius:999px; box-shadow:var(--shadow-sm); padding:7px 13px; text-align:right; line-height:1.4; flex:0 0 auto; }
+.coursepill span{ color:var(--muted); font-weight:700; }
+
+.doctitle{ font-family:var(--display); font-weight:900; font-size:40px; line-height:1.0; letter-spacing:-1.6px; margin:0 0 10px; }
+.doctitle .hl{ background:var(--pink); color:#fff; border:3px solid var(--ink); box-shadow:var(--shadow); border-radius:8px; padding:0 10px 2px; display:inline-block; line-height:1.05; }
+.docsub{ font-family:var(--body); font-weight:600; font-size:13px; color:var(--muted); margin:0 0 30px; max-width:60ch; line-height:1.45; }
+
+.md{ font-size:12.2px; }
+.md h2{ font-family:var(--display); font-weight:900; font-size:21px; letter-spacing:-.6px; margin:34px 0 12px; padding-bottom:7px; border-bottom:3px solid var(--ink); break-after:avoid; }
+.md h3{ font-family:var(--display); font-weight:800; font-size:15.5px; letter-spacing:-.3px; margin:22px 0 8px; break-after:avoid; }
+.md h3 code{ background:none; border:none; padding:0; color:var(--pink); font-family:var(--mono); font-size:13px; }
+.md h4{ font-family:var(--body); font-weight:800; font-size:12.5px; margin:16px 0 6px; color:var(--ink); break-after:avoid; }
+.md p{ margin:0 0 11px; }
+.md strong{ font-weight:700; color:var(--ink); }
+.md a{ color:var(--pink); text-decoration:none; font-weight:600; }
+.md ul,.md ol{ margin:0 0 12px; padding-left:22px; }
+.md li{ margin:0 0 5px; }
+.md li::marker{ color:var(--purple); }
+.md hr{ display:none; }
+.md code{ font-family:var(--mono); font-size:.86em; background:var(--tint); border:1px solid #d9d4e3; border-radius:5px; padding:1px 5px; }
+
+.md blockquote{ margin:0 0 14px; background:var(--surface); border:2px solid var(--ink); border-left:7px solid var(--pink); border-radius:12px; box-shadow:var(--shadow-sm); padding:11px 15px; break-inside:avoid; }
+.md blockquote p{ margin:0 0 6px; font-size:12.2px; }
+.md blockquote p:last-child{ margin:0; }
+.md blockquote code{ background:none; border:none; }
+
+.md table{ width:100%; border-collapse:separate; border-spacing:0; margin:6px 0 18px; border:2px solid var(--ink); border-radius:12px; overflow:hidden; box-shadow:var(--shadow); font-size:10.8px; }
+.md thead th{ background:var(--ink); color:#fff; font-family:var(--display); font-weight:800; font-size:10px; letter-spacing:.2px; text-align:left; padding:8px 10px; }
+.md tbody td{ padding:8px 10px; border-top:1px solid #e4dfd6; vertical-align:top; line-height:1.4; }
+.md tbody tr:nth-child(even) td{ background:#FBF7F0; }
+.md tbody td code{ font-size:.82em; }
+.md tr{ break-inside:avoid; }
+
+.md pre.mermaid{ background:var(--surface); border:2px solid var(--ink); border-radius:14px; box-shadow:var(--shadow); padding:14px; margin:8px 0 20px; text-align:center; overflow:hidden; break-inside:avoid; }
+.md pre.mermaid svg{ max-width:100%; height:auto; }
+
+.md .ph{ display:block; background:repeating-linear-gradient(45deg,#fff,#fff 9px,#FBF1F6 9px,#FBF1F6 18px); border:2px dashed var(--pink); border-radius:10px; padding:10px 13px; font-family:var(--body); font-weight:600; font-size:11px; color:#9c4d77; margin:4px 0 14px; }
+
+/* compact mode for a strict one-A4-side document (legal report) */
+body.compact .sheet{ padding:0 3mm; }
+body.compact .docbar{ margin-bottom:11px; padding-bottom:7px; border-bottom-width:2px; }
+body.compact .brand .wm{ font-size:23px; }
+body.compact .brand .mark{ width:31px;height:31px;border-radius:9px; }
+body.compact .brand .mark svg{ width:18px;height:18px; }
+body.compact .doctitle{ font-size:27px; letter-spacing:-1.2px; margin-bottom:5px; }
+body.compact .doctitle .hl{ border-width:2px; box-shadow:var(--shadow-sm); padding:0 7px 1px; }
+body.compact .docsub{ font-size:10px; margin-bottom:12px; max-width:none; }
+body.compact .md{ font-size:9.7px; line-height:1.38; }
+body.compact .md h2{ font-size:13.5px; margin:11px 0 5px; padding-bottom:3px; border-bottom-width:2px; }
+body.compact .md p{ margin:0 0 6px; }
+body.compact .md table{ font-size:8.7px; margin:2px 0 9px; box-shadow:var(--shadow-sm); }
+body.compact .md thead th{ padding:5px 7px; font-size:8.6px; }
+body.compact .md tbody td{ padding:4px 7px; line-height:1.32; }
+</style>
+</head>
+<body class="compact">
+<div class="sheet">
+  <header class="docbar">
+    <div class="brand">
+      <span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 6.5" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <span class="wm">BeThere</span>
+    </div>
+    <div class="coursepill">Designing for Real People<br><span>Imperial &times; Royal College of Art &middot; Team DRP_02 &middot; 2026</span></div>
+  </header>
+  <h1 class="doctitle">Copyright &amp; <span class="hl">Legal</span> Report</h1>
+  <main id="doc" class="md"></main>
+</div>
+<script id="src" type="text/plain">This report places BeThere (Expo React Native client, Fastify/tRPC/Postgres backend, Vercel web target) in the wider legal space: the licences of the third-party code we included, what publishing would require, who owns the content, and the data-protection and content duties a launch would create. Licences are the `license` field declared by each package, grouped by type; transitive sub-dependencies are not listed.
+
+## Third-party resources and their licences
+
+| Resource (libraries we actively included) | Licence type | Ships in product? |
+|---|---|---|
+| React, React Native, React Native Web, Expo SDK and expo-* modules, React Navigation, tRPC (client and server), Fastify and @fastify/* , Zod, pg, Pino, @clerk SDKs, @react-native-community/datetimepicker, react-native-screens, safe-area-context | MIT | Yes |
+| drizzle-orm | Apache-2.0 | Yes |
+| dotenv | BSD-2-Clause | Yes (config) |
+| @vercel/og (OpenGraph share-card image generation, `api/og.ts`) | MPL-2.0 (weak copyleft) | Yes (web) |
+| PostgreSQL database engine | PostgreSQL Licence (BSD-style permissive) | Yes (server) |
+| Fonts: Archivo, Inter (Space Mono bundled via its npm wrapper but no longer rendered) | MIT AND OFL-1.1 (wrapper code MIT; font files SIL OFL 1.1) | Yes (app) |
+| TypeScript (Apache-2.0); drizzle-kit, Biome, tsx, Jest, jest-expo, Vitest, Babel, pnpm, types packages (MIT) | Apache-2.0 / MIT | No (build/dev only) |
+| Hosted services: Clerk (Google OAuth), AWS App Runner + RDS, Vercel, Expo/EAS build, GitHub Actions | Commercial terms of service, not software licences | n/a (services) |
+
+Headline. The stack is permissive-dominant: MIT for the large majority, with Apache-2.0 (drizzle-orm), BSD-2-Clause (dotenv), the PostgreSQL Licence, and SIL OFL 1.1 fonts. There is no strong copyleft anywhere (no GPL, AGPL or LGPL), so no source-disclosure or "viral" relicensing risk. The one weak-copyleft component is @vercel/og (MPL-2.0), used to render share-link preview images on the web target; MPL applies at the level of individual files, not the whole codebase.
+
+## Compliance if BeThere were published
+
+Treating a real GitHub release as the test, the standing obligation is modest. The MIT, BSD-2-Clause and PostgreSQL components only require retaining their copyright and licence notices (an in-app "Licences" screen plus a NOTICE file satisfies this). Apache-2.0 (drizzle-orm) adds an express patent grant in our favour and a duty to reproduce any upstream NOTICE on redistribution. @vercel/og (MPL-2.0) is used unmodified, so the duty is to keep its notice and make its MPL-covered files' source available; because MPL is file-level it does not reach our own code. The OFL fonts may be bundled provided the OFL text and copyright lines are retained and the fonts are not sold on their own. At release the team should confirm the exact licence text shipped in `node_modules`.
+
+## Copyright of content on the service
+
+The code, the BeThere wordmark and the neobrutalist visual system are the team's own work; the only bundled third-party creative assets are the fonts above (licensed, not owned), and the app ships no stock photography or icon packs. The substantive content is user-generated: plan and activity names, group names, notes, profile names and RSVP data. Users retain copyright in what they write, so a release would need terms of service granting BeThere a licence to store and display that content to the group, while making clear the team claims no ownership of it. The seeded demo data is fictional and team-authored.
+
+## Wider legal implications
+
+Data protection (UK GDPR). BeThere stores personal data: identities via Clerk and Google OAuth, group membership, and RSVP behaviour, including the conditional "I'll go if [people]" data and the "brought-by" attribution on plus-one links. A record of who someone wants to socialise with is behaviourally sensitive even if not a special category. A public release would need a privacy policy, a lawful basis (consent or legitimate interests), access and deletion rights, a retention stance for cleared and fizzled plans, and a data-residency safeguard for UK users (the database runs on AWS RDS in us-east-1). Clerk and AWS act as processors and would need data-processing agreements. The always-on anonymity and trace-free fizzle aid data minimisation, but the current open CORS and dev auth-bypass are prototype shortcuts to close before launch.
+
+Content and conduct. Because group names, activity names, notes and invite links are free text, a launched service must expect inappropriate, abusive or spam content and unbounded invite-link sharing. A real deployment would need reporting and moderation, the ability to remove content and users, and abuse controls; the product already has a per-IP rate limit and a joins-lock "door" that the creator can close to stop an invite link being re-shared without limit, which are first steps rather than a full moderation system.
+</script>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>
+(function(){
+  var raw = document.getElementById('src').textContent;
+  var out = document.getElementById('doc');
+  out.innerHTML = marked.parse(raw);
+  out.querySelectorAll('pre > code.language-mermaid').forEach(function(code){
+    var pre = code.parentElement;
+    var m = document.createElement('pre');
+    m.className = 'mermaid';
+    m.textContent = code.textContent;
+    pre.replaceWith(m);
+  });
+  out.querySelectorAll('p').forEach(function(p){
+    var t = p.textContent.trim();
+    if(/(TEAM TO FILL|Persona photo|SCREENSHOT|Note for the team)/.test(t)){ p.classList.add('ph'); }
+  });
+  mermaid.initialize({
+    startOnLoad:false, theme:'base', securityLevel:'loose',
+    flowchart:{ htmlLabels:true, useMaxWidth:true, curve:'basis' },
+    pie:{ useMaxWidth:true },
+    themeVariables:{
+      fontFamily:'Inter, system-ui, sans-serif', fontSize:'14px',
+      primaryColor:'#FFFFFF', primaryBorderColor:'#111111', primaryTextColor:'#111111',
+      lineColor:'#111111', secondaryColor:'#F1EEF6', tertiaryColor:'#FDF6EE',
+      clusterBkg:'#FFFFFF', clusterBorder:'#111111', titleColor:'#111111',
+      edgeLabelBackground:'#FDF6EE', nodeBorder:'#111111',
+      pie1:'#FF5CA8', pie2:'#7E6BB0', pie3:'#34A853', pie4:'#ECEAFF', pie5:'#FCEFE8', pie6:'#F1EEF6',
+      pieStrokeColor:'#111111', pieStrokeWidth:'2px', pieOuterStrokeColor:'#111111',
+      pieOuterStrokeWidth:'2px', pieSectionTextSize:'13px', pieTitleTextSize:'15px'
+    }
+  });
+  mermaid.run({ querySelector:'.mermaid' });
+})();
+</script>
+</body>
+</html>
