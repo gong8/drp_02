@@ -11,3 +11,4 @@ infra/.deploy-state-dev.local
 .superpowers/
 .vercel
 .claude/scheduled_tasks.lock
+presentation/_drafts/
