@@ -45,6 +45,25 @@ device during the talk.
 
 ## Export a PDF (for the Scientia submission)
 
-Print to PDF (Chrome recommended): **File -> Print -> Save as PDF**, paper size
-set to landscape / 16:9, margins **None**, and enable **Background graphics**.
-The print stylesheet lays out one slide per page at the authored 1920x1080.
+`bethere-deck.pdf` is the submission PDF: 30 pages, one slide each, 16:9
+(1440 x 810 pt), web fonts embedded, fully vector. It is rendered by a headless
+Chromium - the same engine that draws `index.html` - so it is pixel-identical to
+the live deck (far more faithful than a PowerPoint/Slides export, which
+substitutes fonts).
+
+Regenerate it after any edit:
+
+```bash
+./export-pdf.sh            # uses your installed Chrome/Brave/Edge/Chromium
+```
+
+No-tooling fallback: open `index.html` in Chrome, **File -> Print -> Save as
+PDF**, with **Background graphics ON**, **Margins: None**, and paper size set to
+the slide. The print stylesheet already lays out one slide per page at
+1920x1080.
+
+> We tried an editable PowerPoint/Google Slides export too, but a `.pptx` only
+> renders the brand fonts in *Google* Slides (they are Google Fonts); desktop
+> PowerPoint substitutes them and the heavy Archivo titles look wrong. Since the
+> deliverable is a PDF, the HTML -> PDF path above is the faithful one. (The
+> abandoned pptx generator is in git history if ever needed.)
