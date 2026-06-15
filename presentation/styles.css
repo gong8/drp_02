@@ -1,0 +1,128 @@
+:root {
+  /* brand palette - edit a colour here and it changes across every slide */
+  --ink: #111111;        /* all borders, shadows, primary text */
+  --surface: #ffffff;    /* cards, pills */
+  --pink: #ff5ca8;       /* primary / act-now */
+  --green: #34a853;      /* settled-good / affirmative */
+  --purple: #7e6bb0;     /* in-progress / being decided */
+  --muted: #7d7a86;      /* captions */
+  --grey: #9a97a2;       /* faint dividers / disabled */
+  /* canvas backgrounds */
+  --blush: #fcefe8;      /* warm gradient start */
+  --lav: #eceaff;        /* cool gradient end */
+  --paper: #fdf6ee;      /* flat off-white canvas */
+  /* dark surfaces */
+  --ink-2: #1c1c20;      /* dark inner card */
+  --ink-3: #333333;      /* dark border on ink */
+  --phone: #15171c;      /* phone bezel */
+  --bg: #0b0b0d;         /* viewer letterbox */
+  --bg-2: #1b1b21;
+  /* tints & misc */
+  --sand: #edebe6;
+  --tint-purple: #f1eef6;
+  --tint-green: #e7f6ec;
+  --tint-blue: #dde7ff;
+  --muted-2: #555555;
+  --line: #cfc9bd;
+  --axis-warm: #d9d2c6;
+  --axis-cool: #cdc6e0;
+  --pink-hover: #ff459c;
+  --pink-tint: #fce0ee;
+  --notes: #f2f2f2;
+  /* neobrutalist hard shadows (zero blur, ink) - offsets stay literal per element */
+  --sh-sm: 4px 4px 0 var(--ink);
+  --sh: 6px 6px 0 var(--ink);
+  --sh-lg: 8px 8px 0 var(--ink);
+}
+
+/* ===== deck chrome (viewer UI; hidden in print) ===== */
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); }
+  body { font-family: Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; overscroll-behavior: none; }
+  section { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+
+  #deck-root { position: fixed; inset: 0; overflow: hidden; background: radial-gradient(130% 130% at 50% 0%, var(--bg-2) 0%, var(--bg) 72%); }
+  #deck-stage { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+  #deck-canvas { position: relative; width: 1920px; height: 1080px; transform-origin: center center; will-change: transform; box-shadow: 0 24px 80px rgba(0,0,0,.55); }
+  #deck-canvas > section { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; visibility: hidden; opacity: 0; pointer-events: none; transition: opacity .3s ease; }
+  #deck-canvas > section.is-active { visibility: visible; opacity: 1; pointer-events: auto; }
+
+  #deck-progress { position: fixed; top: 0; left: 0; height: 4px; width: 0; background: var(--pink); z-index: 60; transition: width .3s ease; }
+
+  #deck-controls { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); display: flex; align-items: center; gap: 9px; z-index: 50;
+    background: var(--surface); border: 3px solid var(--ink); border-radius: 14px; box-shadow: 5px 5px 0 var(--ink); padding: 7px 10px; }
+  #deck-root.idle #deck-controls { opacity: 0; transform: translateX(-50%) translateY(16px); pointer-events: none; }
+  #deck-controls { transition: opacity .35s ease, transform .35s ease; }
+  .deck-btn { appearance: none; border: 2px solid var(--ink); background: var(--surface); color: var(--ink); font-family: Archivo, sans-serif; font-weight: 800; font-size: 17px; line-height: 1;
+    padding: 9px 13px; border-radius: 9px; cursor: pointer; box-shadow: 2px 2px 0 var(--ink); transition: transform .05s ease, box-shadow .05s ease, background .15s ease; }
+  .deck-btn:hover { background: var(--lav); }
+  .deck-btn:active { transform: translate(2px,2px); box-shadow: 0 0 0 var(--ink); }
+  .deck-btn.pink { background: var(--pink); color: var(--surface); }
+  .deck-btn.pink:hover { background: var(--pink-hover); }
+  .deck-btn.on { background: var(--ink); color: var(--surface); }
+  #deck-counter { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 16px; color: var(--ink); min-width: 84px; text-align: center; font-variant-numeric: tabular-nums; }
+
+  #deck-notes { position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; background: var(--ink); color: var(--surface); border-top: 4px solid var(--pink);
+    padding: 24px 30px 28px; transform: translateY(102%); transition: transform .32s cubic-bezier(.4,0,.2,1); max-height: 44vh; overflow: auto; }
+  #deck-notes.open { transform: translateY(0); }
+  #deck-notes .nlabel { font-family: Archivo, sans-serif; font-weight: 800; font-size: 14px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--pink); margin: 0 0 10px; }
+  #deck-notes .nbody { font-family: Inter, sans-serif; font-weight: 500; font-size: 21px; line-height: 1.5; color: var(--notes); max-width: 1180px; white-space: pre-wrap; margin: 0; }
+  #deck-notes .nclose { position: absolute; top: 16px; right: 20px; }
+
+  #deck-help { position: fixed; left: 50%; bottom: 86px; transform: translateX(-50%); z-index: 48; font-family: Inter, sans-serif; font-weight: 600; font-size: 14px;
+    color: var(--surface); background: rgba(17,17,17,.86); border: 2px solid var(--pink); border-radius: 10px; padding: 8px 15px; white-space: nowrap; transition: opacity .6s ease; }
+  #deck-help.hide { opacity: 0; pointer-events: none; }
+  #deck-help b { color: var(--pink); }
+
+  image-slot { position: relative; display: block; overflow: hidden; background: var(--sand); cursor: pointer; }
+  image-slot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  image-slot .is-empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 18px; }
+  image-slot .is-empty .ic { width: 48px; height: 48px; border: 3px solid var(--muted); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-family: Archivo, sans-serif; font-size: 30px; font-weight: 800; color: var(--muted); }
+  image-slot .is-empty .cap { font-family: Inter, sans-serif; font-weight: 600; font-size: 18px; line-height: 1.3; color: var(--muted); max-width: 300px; }
+  image-slot .is-empty .hint { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 13px; letter-spacing: .5px; color: var(--grey); text-transform: uppercase; }
+  image-slot.drag { outline: 4px dashed var(--pink); outline-offset: -8px; background: var(--pink-tint); }
+  image-slot .is-clear { position: absolute; top: 8px; right: 8px; width: 30px; height: 30px; border: 2px solid var(--ink); background: var(--surface); color: var(--ink); border-radius: 8px;
+    font-family: Archivo, sans-serif; font-weight: 800; font-size: 18px; line-height: 1; cursor: pointer; box-shadow: 2px 2px 0 var(--ink); display: none; align-items: center; justify-content: center; }
+  image-slot:hover .is-clear { display: flex; }
+
+  @media print {
+    @page { size: 1920px 1080px; margin: 0; }
+    html, body { background: var(--surface); }
+    #deck-progress, #deck-controls, #deck-notes, #deck-help { display: none !important; }
+    #deck-root { position: static; overflow: visible; background: var(--surface); }
+    #deck-stage { position: static; display: block; }
+    #deck-canvas { transform: none !important; position: static; width: 1920px; height: auto; box-shadow: none; }
+    #deck-canvas > section { position: relative !important; visibility: visible !important; opacity: 1 !important; pointer-events: auto !important; page-break-after: always; break-after: page; }
+  }
+
+/* =====================================================================
+   COMPONENT LIBRARY  - compose slides from these instead of inline styles.
+   Edit a value here (or a token in :root) and it changes on every slide.
+   ===================================================================== */
+
+/* ---- slide frame ---- */
+.slide        { display: flex; flex-direction: column; font-family: Inter, system-ui, sans-serif; color: var(--ink); overflow: hidden; }
+.slide--blush { background: linear-gradient(150deg, var(--blush) 0%, var(--lav) 100%); }
+.slide--paper { background: var(--paper); }
+.slide--ink   { background: var(--ink); color: var(--surface); }
+
+/* ---- type ---- */
+.title   { font-family: Archivo; font-weight: 900; line-height: 1.0; color: var(--ink); margin: 0; } /* + font-size / letter-spacing inline */
+.eyebrow { font-family: Inter; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; } /* + font-size / color inline */
+
+/* ---- the pink one-word highlight block (brand signature) ---- */
+.hl { display: inline-block; background: var(--pink); color: var(--surface); border: 3px solid var(--ink);
+      box-shadow: var(--sh); padding: 0 18px 6px; border-radius: 8px; }
+
+/* ---- cards / pills / stickers / stats / phone (used by the architecture
+        slide and ready to adopt on the other slides) ---- */
+.card      { background: var(--surface); border: 3px solid var(--ink); border-radius: 18px; box-shadow: var(--sh-lg); }
+.card-ink  { background: var(--ink); color: var(--surface); border: 3px solid var(--ink); border-radius: 18px; box-shadow: 6px 6px 0 var(--pink); }
+.pill      { border: 2px solid var(--ink); border-radius: 999px; background: var(--surface); font-family: Inter; font-weight: 700; padding: 6px 14px; }
+.chip      { font-family: 'Space Mono', monospace; font-weight: 700; color: var(--ink); border: 2px solid var(--ink); border-radius: 8px; padding: 8px 14px; background: var(--surface); }
+.sticker   { display: inline-block; color: var(--surface); font-family: Archivo; font-weight: 800; border: 3px solid var(--ink); box-shadow: var(--sh-sm); border-radius: 10px; padding: 8px 16px; }
+.stat-num  { font-family: Archivo; font-weight: 900; line-height: .9; font-variant-numeric: tabular-nums; }
+.quote     { font-family: Archivo; font-weight: 700; }
+.arrow-bar { height: 8px; background: var(--ink); }
+.arrow-head{ width: 0; height: 0; border-top: 13px solid transparent; border-bottom: 13px solid transparent; border-left: 20px solid var(--ink); }
