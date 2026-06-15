@@ -1,6 +1,6 @@
 # BeThere - Copyright and Legal Issues Report
 
-This report places BeThere (Expo React Native client, Fastify/tRPC/Postgres backend, Vercel web target) in the wider legal space: the licences of the third-party code we included, what publishing would require, who owns the content, and the data-protection and content duties a launch would create. Licences are the `license` field declared by each package, grouped by type; transitive sub-dependencies are not listed.
+This report places BeThere (Expo React Native client, Fastify/tRPC/Postgres backend, Vercel web target) in the wider legal space: the licences of the third-party code we actively included, what publishing would require, who owns the content, and the data-protection and content duties a launch would create. It is scoped to the app's own codebase and content, not presentation or documentation assets. Licences are the `license` field declared by each package, grouped by type; transitive sub-dependencies are not listed.
 
 ## Third-party resources and their licences
 

@@ -33,6 +33,6 @@ After: a firm time and place, real commitment, no organiser, and no public maybe
 
 ## Why we built it this way
 
-Grounded in real research: a 43-response survey and interviews across three rounds with friend-group planners. The headline finding - 86% of people respond to mild uncertainty with a "maybe" or silence - named the enemy. One interviewee, Tom, argued for the core mechanic in his own words: "the organisers should have an option to be anonymous... nobody likes being the one to push things... it's more of a consensus than one person giving a proposal." BeThere makes that the default for everyone.
+Grounded in real research: a 43-response survey and interviews across three rounds with friend-group planners. The headline finding - 86% of people respond to mild uncertainty with a "maybe" or silence - named the enemy. One interviewee, Tom, argued for the core mechanic in his own words: "the organisers should have an option to be anonymous... there's no pressure on that person at all... it's more of a consensus than one person giving a proposal." BeThere makes that the default for everyone.
 
 BeThere - be there, without the organiser.
