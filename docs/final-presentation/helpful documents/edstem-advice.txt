@@ -1,0 +1,408 @@
+================================================================================
+EDSTEM ADVICE - DRP FINAL PRESENTATION
+================================================================================
+Staff guidance on the DRP (Designing for Real People, COMP50010) Final
+Presentation, collected from the course Edstem forum. The main announcement
+(thread #110) is reproduced in full first, followed by supplementary Q&A advice
+from the other staff-answered threads.
+
+Source: docs/FINAL PROJECT CONTEXT/edstem/
+
+
+================================================================================
+1. MAIN ANNOUNCEMENT - DRP Final Presentation Overview and Advice (thread #110)
+================================================================================
+(Mark Wheelhouse)
+
+Hi everyone,
+
+Next week (on Monday) Carolyn, Ivan and I will give a detailed overview of the
+DRP Final Presentation assessment criteria, but I wanted to share some general
+information and advice about these presentations now, so that you can start to
+plan for them accordingly.
+
+During your DRP Final Presentation slot you will have 20 minutes (strictly
+timed) to present your work. During your presentation you should:
+
+introduce your project context and problem
+(remember that some DRP Tutors won't have seen your work for a few weeks),
+
+describe and demonstrate your proposed solution,
+
+discuss your digital touchpoint's structure and implementation,
+
+and evaluate your project.
+
+This will be followed by 5 minutes of Q&A where your group will take questions
+from the DRP assessment panel and (time permitting) general audience.
+We have also reserved 5 minutes per slot to allow for the logistics of getting
+everyone set-up in 308/311/145 and sorting out any AV sound/video issues.
+
+We want these presentations to be given live (especially any demonstrations),
+but it is fine to pre-record your opening pitch (the first 3-5 mins discussed
+below) if you want to have this part flow smoothly. We would like each member
+of your group to speak for at least 3-4 minutes during your presentation
+(ideally for an equal amount of time).
+
+It is my intention to record each group's DRP Final Project Presentation so
+that we may share the best project presentations on the DoC website and also
+with next year's cohort. On that note, if you would like to see some of the
+best presentations from last year, then I previously uploaded the top 6 to the
+Best DRP Final Presentations 2024-2025 folder on Panopto.
+
+Your presentation should cover all of the following topics:
+
+An Introduction to your Project:
+Your presentation should start with a roughly 5 minute opening pitch and
+mini-demo. This should set the scene for your project by explaining the
+motivating problem that you have set out to solve as well as your target users
+and overarching "How Might We" statement. It should be clear what Human Centred
+Design techniques have been employed in generating your problem statement.
+
+A Detailed Description of your Proposed Solution:
+You should give a more detailed explanation of your problem solution,
+focussing on the various user journeys that your digital touchpoint supports,
+ideally through the experiences of your persona(s). It should be clear how
+users will interact with your digital touchpoint and what benefit this will
+provide to them. It should also be clear that the Human Centred issues
+identified in the problem statement have been addressed.
+
+An overview of your application's structure and implementation:
+You should discuss how your digital touchpoint has been built and how the
+different components interact with one-another. As part of this you should
+explain the languages and programming frameworks that you used to implement
+your digital touchpoint. This discussion should also include a system
+architecture diagram specific to your project. You do not want to go into
+excessive detail about every class or function that you have implemented, but
+you should highlight the points of the design that you feel were particularly
+challenging or that you are proud of. You should give solid justifications for
+each of your choices and compare to alternatives you considered. This
+discussion should be suitable for a future development team to understand the
+structure of your digital touchpoint and the technologies they must understand
+if they were to continue your work.
+
+A demonstration of your digital touchpoint in use:
+You should show the audience your digital touchpoint in action, particularly
+focusing on the user interactions with the system (i.e. user journeys), again
+ideally through the experiences of your persona(s). You should be backing-up
+all of the claims that you make during your presentation with suitably chosen
+examples in your demonstration.
+
+An Evaluation of your Project:
+You should reflect on the outcome of your project, the impact/benefits to your
+target users and identify possibilities for future work. Summarise what you
+have done, what you have not done, what you have learned from the project and
+what you would do differently in the future.
+
+Note that the above list should not be considered as the definitive structure
+of your presentation. Feel free to address things in whichever order you feel
+leads to the most coherent overall story.
+For example, you don't need to have all of your evaluation at the end of the
+presentation, but could chose to evaluate/reflect on your choices throughout.
+
+Additional Presentation Advice:
+
+When presenting in HXLY 145/308/311, remember that you will have two screens
+(though only one external device can be connected) at your disposal. You might
+want to think about sharing one of your demo or presentation from the ICT PC
+and using a laptop for the other so that you can make efficient use of the AV
+set-up.
+
+Clarify in the first slide of your presentation your group number and the title
+of your project. This is important and helpful to the DRP Assessment Team -
+please don't forget it.
+
+Don't spend more than 5 minutes (already a generous upper bound) on the problem
+description. Narrow down your initial problem statement to a couple of minutes
+and then start with the fireworks and show a bit of your product. If you go on
+too long, you risk loosing the attention of the audience. You can always
+revisit the problem/solution in more detail later in the talk.
+
+You probably want to avoid presenting on any generic project management details
+such as: group structure, design processes or the use of collaboration tools.
+These aspects of the project will either have been enforced by us, or will be
+roughly the same for all groups, so there is little interest gained by
+presenting them.
+
+Make sure that you demo a working version of your digital touchpoint, even if
+this means using an older version. It is much better to say that the current
+version of your digital touchpoint does not have some functionality, than to
+have it break during the demo.
+
+Don't describe how the user journey changes with your app before demoing. Just
+demo it and let the audience see (i.e. show don't tell).
+
+Do not attempt to debug or write code during your presentation. This is not an
+efficient use of your time.
+
+You should ideally merge your demonstration and your presentation. Show your
+application in action and explain what is happening as it happens. You will
+probably want to practice swapping between your slides and your demo. It is
+also a good idea to demo something early in the presentation as part of your
+introduction.
+
+You may find it helpful to prepare a list of points to cover to keep you on
+track during the presentation, but try to avoid reading from a script as this
+tends to lead to poor presentation style. It is actually a good idea not to
+learn your script by heart, as that's a single point of failure, and who better
+than a developer knows how bad that is. Try rehearsing enough to be confident
+with multiple alternatives of your scripts. In this way, the chances you will
+find yourselves in no-man's land (script-wise) are minimised.
+
+Try to avoid overcrowding your slides. A slide full of text is not very
+interesting and distracts the audience from what you are saying. Try using
+pictures, diagrams and graphs to convey information where possible. Remember
+that adage "Show, Don't Tell".
+
+Watch out for text/background contrast issues. e.g. don't use yellow text on
+light grey background, or blue text on black background. This makes it very
+difficult (impossible at times) to read anything off your slides. If you are in
+doubt, try your slides in presentation mode and ask someone else to judge the
+clarity of your slides (ideally in HXLY 145/308/311).
+
+Try to avoid including code snippets in your presentation. A slide full of code
+will probably be hard to understand out of context and distracts the audience
+from what you are saying. If you really want to highlight an important point,
+and are going to explain it in detail, then be succinct with your examples.
+
+Do not just read from the slides. What you are saying should explain what the
+audience are seeing, not just repeat it.
+
+Don't speak about "personas" explicitly: personas are abstractions. Saying
+"This is Bob, our persona" is like being an actor and walking on stage during
+the first act of Romeo and Juliet saying "I am Romeo Montague, a fictional
+character". The classic "Meet Bob. Bob is a builder..." works just fine.
+
+Similarly for demos, don't call them that explicitly. Whenever the word "demo"
+appears in solitude on a slide, the flow of the presentation is broken. You
+should always aim at using the app as you talk, blending the demonstration
+seamlessly into the rest of the script.
+
+Consider slide animations with care. If your presentation is overly dynamic it
+may disorientate or confuse your audience (Prezi presentations have actually
+been known to trigger motion sickness!). Bullet by bullet reveals can also lead
+to audience frustration and can waste a noticeable amount of time.
+
+Be sure to rehearse your presentation to ensure that you do not overrun your
+presentation slot. Remember that we will want about 5 minutes to ask questions
+about your project (this is part of your presentation slot). The ideal
+presentation length should be just over 19 minutes. You will need to practice
+swapping between speakers and swapping between your slides and your demo so that
+you don't waste time during the presentation.
+
+We recommend that you practice your presentations with other groups, taking it
+in turns to present to one-another and offer feedback and advice.
+
+We might ask you questions about material you have not covered in your talk.
+Please be aware that we are not trying to trick you. We are just trying to find
+out what you have done and help you increase your grade. However, it is better
+to admit that you do not know something than to try and make things up on the
+spot.
+
+Your digital touchpoint should be robust, no inputs should make it fail. Be
+prepared to demonstrate user input questions from the audience.
+
+You might find it helpful to write down the steps for your demo so any group
+member can run it.
+
+You are encouraged to attend each other's presentations (you can see the
+timetable in the presentation booking spreadsheet) to see what other groups
+have achieved. It can often be more educational to see how other groups present
+than presenting yourself.
+
+Some Notes on System Architecture Diagrams:
+
+Use a sensible number of boxes to represent your components i.e. not 2 (not
+informative enough) nor 20 (they are going to be so small on the screen that
+the audience won't even try to make sense out of them);
+
+Provide a key to read your arrows:
+
+Do they represent data flow or information flow?
+
+Are they all to be interpreted in the same way?
+
+Anonymous arrows are meaningless to the audience;
+
+Use meaningful names: "component 1" means absolutely nothing to any member of
+the audience. Something like "Redis server" provides all the necessary
+information.
+
+Submission of Presentation Slides:
+
+You should submit a PDF copy of the final version of your presentation slides
+(final_presentation_slides.pdf) to Scientia by 7pm on Friday 19th June.
+This is only needed for our assessment records and to provide a clear audit
+trail for your performance in this project should any of the external examiners
+want to review our marking practices. Your presentation mark won't be affected
+by this submission.
+
+
+================================================================================
+2. HOW THE FINAL PRESENTATION IS MARKED (threads #130, #137, #141)
+================================================================================
+
+GENERAL ASSESSMENT APPROACH (thread #130, Mark Wheelhouse)
+All assessment criteria use a 0-3 scale:
+  0 - missing (even after the Q&A session)
+  1 - poor / incomplete discussion
+  2 - good / expected discussion
+  3 - excellent / perfect discussion
+Most groups giving a solid presentation will receive mostly 2s, with 3s and 1s
+reserved for notably strong or weak elements. No criteria are tick-box marked -
+all are judgements of HOW WELL something was done. For example, the timing mark
+is not solely about finishing within the 18-21 minute window, but also about
+avoiding rushing or padding, both of which the panel will notice.
+
+NO ONE-SIZE EXAMPLE OF A 1/2/3 (thread #137, Mark Wheelhouse)
+There is no one-size-fits-all example of what a 1, 2 or 3 looks like for a
+criterion (e.g. a "perfect" user testing iteration). Everything depends on each
+group's specific problem context, user journeys, and solution.
+
+MARK SCHEME CLARIFICATIONS (thread #141, Mark Wheelhouse)
+- Guidance on presenting development iterations: see the user-journey advice
+  (thread #136 / section 4 below).
+- The "Technical Quality" section of the Assessment Information document (see
+  thread #24) breaks down into 5 separate criteria that clarify what needs to
+  be presented.
+- The "Clear Problem Statement" criterion covers the project context and the
+  "How Might We" / opportunity statement too (see thread #134, section 4).
+
+
+================================================================================
+3. DEMOING THE APP (thread #131)
+================================================================================
+(Mark Wheelhouse)
+
+- The app must be shown running LIVE ON A REAL PHONE for at least part of the
+  presentation. Connect via USB-C or use the visualiser available in HXLY
+  145/308/311 (setup assistance is available at the start of your slot).
+- For geo-location / geofencing features specifically, spoofing the location in
+  an emulator OR showing a short pre-recorded video is acceptable - provided the
+  app is still seen running live on a phone elsewhere in the presentation.
+- Groups have complete freedom in how they present, but authenticity is key:
+  showing the app only in an emulator risks not earning full "Stable Product"
+  marks.
+
+
+================================================================================
+4. STRUCTURING THE STORY: USER JOURNEYS & PERSONAS (threads #135, #134, #136, #121)
+================================================================================
+
+USER-JOURNEY ORDER (thread #135, Mark Wheelhouse)
+Present in user-journey order, not in the order you designed/built things -
+presenting interactions out of sequence makes the narrative confusing
+(analogous to explaining a compiler's back-end before the front-end). You do
+not need to cover every design detail; instead repeat this structure 2-3 times
+to cover your main stakeholder journeys:
+  1. Introduce a user journey involving your service
+  2. Demo the relevant user interaction(s)
+  3. Discuss how you designed/developed/implemented that interaction (including
+     some iteration, but not every step)
+You are showing the FINISHED project, not the exact path you took to build it.
+Prefer the live app over screenshots ("show, don't tell").
+
+PROBLEM STATEMENT vs OPPORTUNITY STATEMENT (thread #134, Mark Wheelhouse)
+The assessment criteria are general categories, not a checklist. The "Clear
+Problem Statement" criterion covers how well the project context and problem are
+defined, which SHOULD include the "How Might We" opportunity statement.
+
+TWO PERSONAS WITH SIMILAR JOURNEYS (thread #136, Mark Wheelhouse)
+Introduce both personas early (so no character appears "out of nowhere" later).
+If their initial journeys are very similar, present both, then note the shared
+journey and show just one as the example rather than walking through each.
+
+ACTORS PORTRAYING A PERSONA (thread #121, Mark Wheelhouse)
+Yes, having an actor portray your persona in a video for the final presentation
+is allowed.
+
+
+================================================================================
+5. WHAT TO SHOWCASE / POST-MILESTONE CHANGES (threads #139, #106, #112)
+================================================================================
+
+UI REDESIGN AFTER MILESTONE 4 (thread #139, Jamie Willis / Mark Wheelhouse)
+Making changes after Milestone 4 in response to user or tutor feedback is no
+problem (colour schemes, layout, look and feel). The final presentation should
+showcase the project as a "finished product"; only a SMALL amount of discussion
+about the design/development process is expected.
+
+WEEK 4 MILESTONE vs FINAL PRESENTATION (thread #106, Mark Wheelhouse)
+- The Week 4 session is a milestone review: 10-15 minutes, more discursive,
+  assessed on PROCESS rather than outcomes.
+- The final presentation is a 20-minute session where you present the final
+  state of your project for the full 20 minutes WITHOUT interruption.
+
+REUSING THE MILESTONE 1 PITCH (thread #112, Mark Wheelhouse)
+You may reuse parts of your Milestone 1 Elevator Pitch in the final
+presentation opening, but most groups now understand their problem context far
+more deeply than three weeks ago, so significant reworking of any pre-recorded
+content is probably warranted. There is NO requirement to include any
+pre-recorded content at all.
+
+
+================================================================================
+6. LOGISTICS: BOOKINGS, SCHEDULE & CUT-OFFS (threads #89, #97, #128, #129, #38)
+================================================================================
+
+PRESENTATION DAY / BOOKINGS (threads #89 & #97, Mark Wheelhouse)
+- Each group has ONE final presentation. You have some choice of day/time slot,
+  but must stay within the Assessment Stream allocated to your DRP Tutor Pair
+  (all streams span both days; invalid slots are highlighted red).
+- Book via the DRP Final Presentations tab of the Assessment Schedules
+  spreadsheet (opened for editing 13:00 Wed 3rd June). Select a slot by 7pm on
+  Friday 12th June; unbooked groups are then assigned one. Remove your group
+  from the "Unallocated" list when you book.
+- By the booking deadline you must add your Project Title (final name of your
+  digital touchpoint) and a Project Pitch Leaflet (as an image in the cell);
+  the leaflet here is only a draft for potential Q&A feedback. There are ~20
+  slots per stream for 18-19 groups, so check the timetable before it opens to
+  secure a preferred slot.
+
+MONDAY 15th JUNE OVERVIEW SESSION (thread #128, Mark Wheelhouse)
+The Monday Milestone Overview focuses on presentation advice - what makes a good
+or bad presentation, via slightly exaggerated past examples. The Q&A then
+unpacks ALL the final-presentation assessment criteria and gives a brief
+overview of the end-of-week Documentation submission.
+
+QUESTION CUT-OFF (thread #129, Mark Wheelhouse)
+No new questions about the final presentations will be answered after 7pm on
+Monday 15th June (fairness to groups presenting early in the week).
+
+LAST YEAR'S BEST PRESENTATIONS (thread #38, Mark Wheelhouse)
+A Panopto folder of the best DRP Final Presentations from 2024-2025 is
+available. Each opens with a ~3-minute overview of the project context and
+problem/opportunity statement - useful for refining your own problem framing
+and planning your opening.
+Link: https://imperial.cloud.panopto.eu/Panopto/Pages/Sessions/List.aspx?folderID=c48136fc-772c-4b46-869e-b44a008e5134
+
+
+================================================================================
+7. GENERAL PRESENTATION TIPS (thread #34, originally for the M1 pitch)
+================================================================================
+(Mark Wheelhouse - these slide/delivery tips carry over to the final.)
+
+- Slides: avoid overcrowding with text; check text-background contrast in
+  presentation mode and have someone else judge readability.
+- Delivery: practise beforehand in the delivery format; don't hold scripts or
+  phones; don't memorise a single fixed script - rehearse multiple alternatives
+  instead; don't rely on a teammate to advance your slides (it rarely works).
+- HCD: don't refer to personas explicitly as "personas" - introduce them
+  naturally (e.g. "Meet Bob. Bob is a builder...").
+
+
+================================================================================
+QUICK CHECKLIST
+================================================================================
+[ ] First slide: group number + project title
+[ ] 20 min strictly timed (aim for just over 19); +5 min Q&A; +5 min AV setup
+[ ] Each member speaks 3-4 min (roughly equal)
+[ ] Problem framing kept to ~2 min (max 5); then start the fireworks / product
+[ ] Cover: problem + HMW & HCD techniques / solution & user journeys /
+    architecture & implementation / live demo / evaluation & future work
+[ ] App shown running LIVE on a real phone (emulator/video only for geo-location)
+[ ] System architecture diagram: sensible # of boxes, named components, arrow key
+[ ] Blend demo into the talk ("show, don't tell"); no live debugging
+[ ] Robust to arbitrary inputs; demo a working (even older) version
+[ ] Rehearse speaker/slide/demo swaps; practise with another group
+[ ] Submit final_presentation_slides.pdf to Scientia by 7pm Fri 19th June
