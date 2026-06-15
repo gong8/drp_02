@@ -1,0 +1,76 @@
+==============================================================
+Guild: egg (drp)
+Channel: Text channels / week-3
+==============================================================
+
+[6/1/2026 12:16 PM] the_jlh
+https://docs.google.com/presentation/d/1md-MK4u0qmqGZTL8i5sm6nvCJsqkm4f1v6Xs9qCyTpQ/edit?usp=sharing#
+
+{Embed}
+https://docs.google.com/presentation/d/1md-MK4u0qmqGZTL8i5sm6nvCJsqkm4f1v6Xs9qCyTpQ/edit?usp=sharing
+DRP Milestone 3
+
+
+[6/2/2026 2:28 PM] seventhspark_40504
+https://trello.com/invite/b/6a1ed07108320fe2ae2468e9/ATTI7af08b3981d2557f7041c42f64ecf343512B048D/drp
+
+{Embed}
+https://trello.com/invite/b/6a1ed07108320fe2ae2468e9/ATTI7af08b3981d2557f7041c42f64ecf343512B048D/drp
+Trello
+Organize anything, together. Trello is a collaboration tool that organizes your projects into boards. In one glance, know what's being worked on, who's working on what, and where something is in a process.
+
+
+[6/2/2026 3:33 PM] the_jlh
+tom interview transcript
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1510978540030394419/1511392302143246426/message.txt?ex=6a30c405&is=6a2f7285&hm=22d3303122cc5a89762bf1844ac2504f9c88c01e70e6791b3f199084ec8ee785&
+
+
+[6/2/2026 3:35 PM] the_jlh
+flick interview transcript
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1510978540030394419/1511392808374632600/message.txt?ex=6a30c47d&is=6a2f72fd&hm=6b2ac54a91181d07a2cd177071d799d6d0ad77bab29c4ef991e1fac64470100b&
+
+
+[6/2/2026 3:46 PM] the_jlh
+luca interview
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1510978540030394419/1511395704348868832/message.txt?ex=6a30c730&is=6a2f75b0&hm=fbcf7132d7cc0fc3a3b5209c0ccd7eb1f6af17c0ee9a0284aeaad04f402b4d09&
+
+
+[6/2/2026 4:16 PM] lxkast
+next interview:
+if only 2 people choose a time, what should happen? cancel plan? continue to i can make it  / cant make it etc?
+
+
+[6/2/2026 4:46 PM] lxkast
+todo get clip of this from luca
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1510978540030394419/1511410742103113839/image.png?ex=6a30d531&is=6a2f83b1&hm=f717dbee089caddef16c5f5ea6d0ed9548c374d65f5f9bd2983139c18381e30d&
+
+
+[6/4/2026 11:51 AM] lxkast
+the things we have from current interviews
+
+- improve the wizard to make it very clear what each option is for. "float it" should probably let the person suggesting specify the "auto tips" time, as luca said he isn't sure which of the 3 options he should choose if he wanted to do an afternoon meetup and just wanting to see who's free and who's down to do what, @the_jlh  find this clip pls!!. also i think people get confused with the word "auto-tips" so maybe change that. need to majorly think about how to go about this.
+
+- make it explicitly clear the suggester is anonymous.
+
+- recurring meetups
+
+{Reactions}
+👍
+
+[6/4/2026 1:54 PM] the_jlh
+done this
+
+{Reactions}
+🔥
+
+==============================================================
+Exported 9 message(s)
+==============================================================
