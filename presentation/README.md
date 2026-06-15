@@ -1,14 +1,15 @@
 # BeThere - DRP Final Presentation
 
 `index.html` is the **final presentation deck** (30 slides, 16:9, BeThere
-neobrutalist brand). It is a single self-contained file - no build step, no
-dependencies. Open it in any modern browser.
+neobrutalist brand). No build step, no dependencies - open it in any modern
+browser. Styling lives in `styles.css` (`:root` brand tokens + component
+classes); each slide is one `<section>` authored at 1920x1080, scaled to fit by
+a small vanilla runtime that handles navigation + speaker notes.
 
-It was implemented from a Claude Design handoff bundle: the slide markup is
-carried over verbatim (authored at 1920x1080) and wrapped in a small vanilla
-runtime that scales each slide to fit the screen and handles navigation +
-speaker notes. The original architecture mock lives alongside in
-`architecture-slides.html`; the brand spec is `bethere-design-language-prompt.txt`.
+**Editing the deck?** Read `CLAUDE.md` first - it covers the token/class system,
+the component vocabulary, and the re-export + fidelity-check workflow. The richer
+architecture reference is in `reference/architecture-slides.html`; the brand spec
+is `context/design-language-prompt.txt`.
 
 ## Present it
 

@@ -87,4 +87,6 @@ Track all work in Linear (team **DRP_02**) via the Linear MCP, religiously - it 
 
 Specs and plans: `docs/superpowers/`. Mockups: `docs/mockups/`. Session summaries: `docs/summary/`. Refactor reports: `docs/refactor/`. Deploy runbook: `docs/runbook-deploy.md`. Tech-debt register: `docs/tech-debt.md`. M4 deliverables: `docs/m4/`.
 
+**Final presentation:** the deck + its export script and all supporting context live in `presentation/` (root). It is an HTML slide deck (`index.html` + `styles.css`) exported to a faithful PDF via `presentation/export-pdf.sh`. See `presentation/CLAUDE.md` before editing slides.
+
 This repo uses knownissue (.knownissue/) — shared agent memory; hints tagged [knownissue] are repo-recorded suggestions.
