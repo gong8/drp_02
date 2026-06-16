@@ -52,9 +52,12 @@
 
   #deck-root { position: fixed; inset: 0; overflow: hidden; background: radial-gradient(130% 130% at 50% 0%, var(--bg-2) 0%, var(--bg) 72%); }
   #deck-stage { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
-  #deck-canvas { position: relative; width: 1920px; height: 1080px; transform-origin: center center; will-change: transform; box-shadow: 0 24px 80px rgba(0,0,0,.55); }
-  #deck-canvas > section { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; visibility: hidden; opacity: 0; pointer-events: none; transition: opacity .3s ease; }
-  #deck-canvas > section.is-active { visibility: visible; opacity: 1; pointer-events: auto; }
+  #deck-canvas { position: relative; width: 1920px; height: 1080px; transform-origin: center center; will-change: transform; box-shadow: 0 24px 80px rgba(0,0,0,.55); background: var(--surface); }
+  /* slides crossfade through the white canvas (not the dark surround): the
+     leaving slide keeps visibility for the fade (visibility delayed .3s) while
+     the entering slide fades in over white. */
+  #deck-canvas > section { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; visibility: hidden; opacity: 0; pointer-events: none; transition: opacity .3s ease, visibility 0s linear .3s; }
+  #deck-canvas > section.is-active { visibility: visible; opacity: 1; pointer-events: auto; transition: opacity .3s ease, visibility 0s linear 0s; }
 
   #deck-progress { position: fixed; top: 0; left: 0; height: 4px; width: 0; background: var(--pink); z-index: 60; transition: width .3s ease; }
 
