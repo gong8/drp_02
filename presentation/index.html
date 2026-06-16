@@ -398,7 +398,38 @@
   </div>
 </section>
 
-<section data-label="Walkthrough: Send" data-screen-label="14" data-speaker-notes="Step one - and this is Vasanth's relief. Vasanth has a loose idea, bowling on Friday. He opens BeThere and sends one meetup to The Boys: a couple of candidate times, maybe an activity, and a 'decides by' deadline. The crucial part is this line: sent anonymously. The group sees the plan, but never sees that it was Vasanth. That single decision - which came straight from our interview with Tom - removes the entire social cost of being the one who suggests. [LIVE: switch to the phone here and send a real plan to the group.]" class="slide slide--blush" style="padding:78px 110px 72px;">
+<section data-label="Two user stories" data-screen-label="13b" data-speaker-notes="Everything we built answers two user stories, one for each side of the dead plan. For the organiser: as the organiser, I want to float a plan without it being my job to chase, so I can see my friends without the friction. For the hesitant participant: as someone new and unsure, I want to say yes only if my friends are going, so I feel comfortable committing. Hold these two; the live demo is the answer to both." class="slide slide--blush" style="padding:84px 110px;">
+  <div style="font-family:Inter;font-weight:700;font-size:24px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);">What we built for</div>
+  <h1 class="title" style="font-size:78px;letter-spacing:-3px;margin-top:6px;">Two people. <span class="hl" style="padding:0 16px 6px;">Two user stories.</span></h1>
+  <div style="display:flex;gap:40px;margin-top:46px;flex:1;">
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:38px;display:flex;flex-direction:column;">
+      <span style="align-self:flex-start;background:var(--pink);color:var(--surface);font-family:Archivo;font-weight:800;font-size:20px;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);padding:6px 12px;border-radius:0;transform:rotate(-3deg);">Vasanth &middot; the organiser</span>
+      <p style="font-family:Archivo;font-weight:800;font-size:33px;line-height:1.28;color:var(--ink);margin:28px 0 0;"><span style="color:var(--pink);">As</span> the organiser, <span style="color:var(--pink);">I want</span> to float a plan without it being my job to chase, <span style="color:var(--pink);">so that</span> I can see my friends without the friction.</p>
+      <div style="margin-top:auto;padding-top:26px;font-family:Inter;font-weight:600;font-size:23px;color:var(--muted);">So we built: an anonymous suggest + public vote, with no &ldquo;maybe&rdquo;.</div>
+    </div>
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:38px;display:flex;flex-direction:column;">
+      <span style="align-self:flex-start;background:var(--purple);color:var(--surface);font-family:Archivo;font-weight:800;font-size:20px;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);padding:6px 12px;border-radius:0;transform:rotate(-3deg);">Milly &middot; the participant</span>
+      <p style="font-family:Archivo;font-weight:800;font-size:33px;line-height:1.28;color:var(--ink);margin:28px 0 0;"><span style="color:var(--purple);">As</span> someone new and unsure, <span style="color:var(--purple);">I want</span> to say yes only if my friends are going, <span style="color:var(--purple);">so that</span> I feel comfortable committing.</p>
+      <div style="margin-top:auto;padding-top:26px;font-family:Inter;font-weight:600;font-size:23px;color:var(--muted);">So we built: a blind moment with &ldquo;I&rsquo;ll go if&rdquo;.</div>
+    </div>
+  </div>
+</section>
+
+<section data-label="Demonstration 1: the core flow" data-screen-label="D1" data-speaker-notes="Now let's stop describing it and show it. I'm switching to a real phone - this is the live, deployed app, not a mockup. I'll send a plan to The Boys; the group will vote; the deadline will lock; and on a second phone you'll watch someone answer 'I'll go if' and the moment resolve to 'you and four others are in'. Watch three things: it is anonymous, the counts are public but the names never are, and the conditional resolves the instant it locks. [LIVE: drive the two seeded phones through send -> vote -> lock -> moment -> clear.]" class="slide slide--ink" style="padding:84px 110px;justify-content:center;">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <div style="font-family:Inter;font-weight:700;font-size:24px;letter-spacing:2px;text-transform:uppercase;color:var(--pink);">Live demonstration &middot; 1 of 2</div>
+    <span style="font-family:'Space Mono',monospace;font-weight:700;font-size:20px;color:var(--surface);border:2px solid var(--surface);border-radius:0;padding:8px 14px;">switch to the phone</span>
+  </div>
+  <h1 style="font-family:Archivo;font-weight:900;font-size:98px;letter-spacing:-3px;line-height:.98;color:var(--surface);margin:24px 0 0;">One plan, <span style="display:inline-block;background:var(--pink);color:var(--surface);border:3px solid var(--surface);box-shadow:6px 6px 0 var(--surface);padding:0 16px 6px;border-radius:0;">decided live</span>.</h1>
+  <p style="font-family:Inter;font-weight:500;font-size:30px;line-height:1.35;color:rgba(255,255,255,.85);margin:28px 0 0;max-width:1480px;">Two seeded phones, the real deployed app: send a plan &rarr; the group +1s times and activities &rarr; the deadline locks &rarr; a second phone answers &ldquo;I&rsquo;ll go if&rdquo; &rarr; &ldquo;you and 4 others are in&rdquo;.</p>
+  <div style="display:flex;gap:18px;margin-top:38px;">
+    <div style="flex:1;background:var(--ink-2);border:3px solid var(--ink-3);border-radius:0;padding:22px 26px;"><div class="eyebrow" style="font-size:18px;color:var(--pink);">Watch for</div><div style="font-family:Archivo;font-weight:800;font-size:26px;color:var(--surface);margin-top:6px;">No organiser - it&rsquo;s anonymous</div></div>
+    <div style="flex:1;background:var(--ink-2);border:3px solid var(--ink-3);border-radius:0;padding:22px 26px;"><div class="eyebrow" style="font-size:18px;color:var(--purple);">Watch for</div><div style="font-family:Archivo;font-weight:800;font-size:26px;color:var(--surface);margin-top:6px;">Counts public, names private</div></div>
+    <div style="flex:1;background:var(--ink-2);border:3px solid var(--ink-3);border-radius:0;padding:22px 26px;"><div class="eyebrow" style="font-size:18px;color:var(--green);">Watch for</div><div style="font-family:Archivo;font-weight:800;font-size:26px;color:var(--surface);margin-top:6px;">&ldquo;I&rsquo;ll go if&rdquo; resolves at lock</div></div>
+  </div>
+</section>
+
+<section data-label="Walkthrough: Send" data-screen-label="14" data-speaker-notes="Step one - and this is Vasanth's relief. Vasanth has a loose idea, bowling on Friday. He opens BeThere and sends one meetup to The Boys: a couple of candidate times, maybe an activity, and a 'decides by' deadline. The crucial part is this line: sent anonymously. The group sees the plan, but never sees that it was Vasanth. That single decision - which came straight from our interviews - removes the entire social cost of being the one who suggests. [LIVE: switch to the phone here and send a real plan to the group.]" class="slide slide--blush" style="padding:78px 110px 72px;">
   <div style="display:flex;justify-content:space-between;align-items:flex-end;">
     <h1 class="title" style="font-size:72px;letter-spacing:-2.5px;">One person <span class="hl" style="box-shadow:5px 5px 0 var(--ink);padding:0 16px 5px;">sends</span> one meetup</h1>
     <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:22px;color:var(--ink);border:2px solid var(--ink);border-radius:0;padding:8px 14px;">Walkthrough &middot; 1 / 4</div>
@@ -429,7 +460,7 @@
       <p style="font-family:Inter;font-weight:500;font-size:32px;line-height:1.4;color:var(--muted);margin:26px 0 0;max-width:820px;">The group sees the plan - never who proposed it. No one to chase, no one to blame.</p>
       <div style="margin-top:40px;display:inline-flex;align-items:center;gap:18px;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:6px 6px 0 var(--ink);padding:22px 28px;max-width:820px;">
         <span style="font-family:Inter;font-weight:700;font-size:18px;letter-spacing:1px;text-transform:uppercase;color:var(--purple);white-space:nowrap;">Insight</span>
-        <span style="font-family:Inter;font-weight:600;font-size:26px;line-height:1.3;color:var(--ink);">&ldquo;Nobody likes being the one to push things&hellip; anonymity makes it a consensus.&rdquo; - Tom</span>
+        <span style="font-family:Inter;font-weight:600;font-size:26px;line-height:1.3;color:var(--ink);">&ldquo;Nobody likes being the one to push things&hellip; anonymity makes it a consensus.&rdquo; - from our interviews</span>
       </div>
     </div>
   </div>
@@ -505,7 +536,7 @@
       </div>
       <div style="margin-top:18px;display:inline-flex;align-items:center;gap:18px;background:var(--ink);border:3px solid var(--ink);border-radius:0;box-shadow:6px 6px 0 var(--pink);padding:20px 26px;max-width:820px;">
         <span style="font-family:Inter;font-weight:700;font-size:18px;letter-spacing:1px;text-transform:uppercase;color:var(--pink);white-space:nowrap;">Insight</span>
-        <span style="font-family:Inter;font-weight:600;font-size:24px;line-height:1.3;color:var(--surface);">&ldquo;A deadline with a push - like BeReal, it goes ding ding ding.&rdquo; - Tom</span>
+        <span style="font-family:Inter;font-weight:600;font-size:24px;line-height:1.3;color:var(--surface);">&ldquo;A deadline with a push - like BeReal, it goes ding ding ding.&rdquo; - from our interviews</span>
       </div>
     </div>
   </div>
@@ -588,7 +619,7 @@
   </div>
 </section>
 
-<section data-label="Why anonymous" data-screen-label="19" data-speaker-notes="Let me dwell on the one decision that matters most: anonymity. Vasanth's real problem was never logistics - it was the social cost of being the pusher. Said out loud, the cost lands on him: he's dragging everyone out again. Sent anonymously, the very same plan stops being one person's ask and becomes the group converging. There's no one to push, and no one to blame. And this wasn't our idea - Tom argued for it, unprompted, better than we ever could." class="slide slide--blush" style="padding:84px 110px 78px;">
+<section data-label="Why anonymous" data-screen-label="19" data-speaker-notes="Let me dwell on the one decision that matters most: anonymity. Vasanth's real problem was never logistics - it was the social cost of being the pusher. Said out loud, the cost lands on him: he's dragging everyone out again. Sent anonymously, the very same plan stops being one person's ask and becomes the group converging. There's no one to push, and no one to blame. And this wasn't our idea - it came straight out of the interviews, argued for unprompted, better than we ever could." class="slide slide--blush" style="padding:84px 110px 78px;">
   <h1 class="title" style="font-size:78px;letter-spacing:-3px;">Why <span class="hl">anonymous</span> changes everything</h1>
   <p style="font-family:Inter;font-weight:500;font-size:30px;color:var(--muted);margin:16px 0 0;">The asymmetric effort was never about logistics - it was about who carries the social cost.</p>
 
@@ -609,7 +640,7 @@
   <div style="margin-top:auto;display:flex;align-items:center;gap:24px;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:7px 7px 0 var(--ink);padding:26px 34px;">
     <span style="font-family:Archivo;font-weight:900;font-size:64px;color:var(--pink);line-height:.5;">&ldquo;</span>
     <p style="font-family:Archivo;font-weight:700;font-size:32px;line-height:1.25;color:var(--ink);margin:0;">Nobody likes being the one to push things. Being anonymous makes it more of a consensus than one person giving a proposal.</p>
-    <span style="font-family:Inter;font-weight:700;font-size:22px;color:var(--muted);white-space:nowrap;align-self:flex-end;">- Tom, interview</span>
+    <span style="font-family:Inter;font-weight:700;font-size:22px;color:var(--muted);white-space:nowrap;align-self:flex-end;">- from our interviews</span>
   </div>
 </section>
 
@@ -671,7 +702,7 @@
   <div style="margin-top:auto;font-family:Inter;font-weight:600;font-size:26px;color:var(--ink);">A real user simplified our information model. <span style="font-family:'Space Mono',monospace;font-weight:700;color:var(--muted);">DRP-41</span></div>
 </section>
 
-<section data-label="Iteration: pushed back" data-screen-label="22" data-speaker-notes="And not every test confirmed the design - which is the point. This is a real paper sketch from our second milestone: the 'I will make it if' moment, with friends and tick boxes. We built it, because Luke had told us 'I'm down if others are down'. But when Felicity used it, she said something we did not want to hear: she could not bring herself to name which friends she wanted to see, even privately. So we did not ship it unchanged. We softened the copy and defaulted it to 'at least one', never forcing a name. We kept her objection on the table rather than averaging it away." class="slide slide--paper" style="padding:84px 110px 76px;">
+<section data-label="Iteration: pushed back" data-screen-label="22" data-speaker-notes="And not every test confirmed the design - which is the point. This is a real paper sketch from our second milestone: the 'I will make it if' moment, with friends and tick boxes. We built it, because Luca had told us his attendance is conditional on his friends being there. But when we tested it, a participant said something we did not want to hear: she could not bring herself to name which friends she wanted to see, even privately. So we did not ship it unchanged. We softened the copy and defaulted it to 'at least one', never forcing a name. We kept her objection on the table rather than averaging it away." class="slide slide--paper" style="padding:84px 110px 76px;">
   <h1 class="title" style="font-size:76px;letter-spacing:-3px;">The finding that <span class="hl" style="padding:0 16px 6px;">pushed back</span></h1>
   <p style="font-family:Inter;font-weight:500;font-size:29px;color:var(--muted);margin:16px 0 0;">One participant rejected our favourite mechanic.</p>
 
@@ -685,13 +716,33 @@
       <div style="background:var(--ink);border:3px solid var(--ink);border-radius:0;box-shadow:7px 7px 0 var(--pink);padding:28px 32px;">
         <div class="eyebrow" style="font-size:18px;color:var(--pink);">The pushback</div>
         <p style="font-family:Archivo;font-weight:700;font-size:30px;line-height:1.25;color:var(--surface);margin:10px 0 0;">&ldquo;I would feel so awkward actually writing down which of my friends I wanted to see.&rdquo;</p>
-        <div style="font-family:Inter;font-weight:600;font-size:22px;color:var(--muted);margin-top:12px;">- Felicity, usability test</div>
+        <div style="font-family:Inter;font-weight:600;font-size:22px;color:var(--muted);margin-top:12px;">- a usability-test participant</div>
       </div>
       <div style="background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:7px 7px 0 var(--ink);padding:28px 32px;">
         <div class="eyebrow" style="font-size:18px;color:var(--green);">What changed</div>
         <p style="font-family:Inter;font-weight:600;font-size:28px;line-height:1.3;color:var(--ink);margin:10px 0 0;">&ldquo;I&rsquo;ll go if&rdquo; now defaults to <b>at least one</b> friend and never forces a name. <span style="font-family:'Space Mono',monospace;font-weight:700;color:var(--muted);font-size:24px;">DRP-47</span></p>
       </div>
     </div>
+  </div>
+</section>
+
+<section data-label="User story: onboarding" data-screen-label="22b" data-speaker-notes="One more story, and it is the one that makes everything else usable. As the organiser, I don't want to have to convince my friends to download a new app, so that I don't lose half the group to friction before the plan even starts. This was the barrier Luca named directly in his interview - the download itself. Watch how we removed it." class="slide slide--blush" style="padding:96px 110px;justify-content:center;">
+  <div style="font-family:Inter;font-weight:700;font-size:24px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);">One more user story</div>
+  <p style="font-family:Archivo;font-weight:800;font-size:58px;letter-spacing:-1.5px;line-height:1.24;color:var(--ink);margin:28px 0 0;max-width:1580px;"><span style="color:var(--pink);">As</span> the organiser, <span style="color:var(--pink);">I don&rsquo;t want</span> to make my friends download an app, <span style="color:var(--pink);">so that</span> I don&rsquo;t lose half the group to friction before the plan even starts.</p>
+  <p style="font-family:Inter;font-weight:500;font-size:28px;color:var(--muted);margin:30px 0 0;max-width:1320px;">The barrier Luca named in his interview was the download itself.</p>
+</section>
+
+<section data-label="Demonstration 2: joining" data-screen-label="D2" data-speaker-notes="Second and final live moment. I'll open the invite link on a completely fresh device - nothing installed - tap continue, and I'm in the plan and able to respond. No download, no account hurdle. That is the friction Luca described, gone." class="slide slide--ink" style="padding:84px 110px;justify-content:center;">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <div style="font-family:Inter;font-weight:700;font-size:24px;letter-spacing:2px;text-transform:uppercase;color:var(--pink);">Live demonstration &middot; 2 of 2</div>
+    <span style="font-family:'Space Mono',monospace;font-weight:700;font-size:20px;color:var(--surface);border:2px solid var(--surface);border-radius:0;padding:8px 14px;">a fresh phone</span>
+  </div>
+  <h1 style="font-family:Archivo;font-weight:900;font-size:90px;letter-spacing:-3px;line-height:1.0;color:var(--surface);margin:24px 0 0;">Joining, with <span style="display:inline-block;background:var(--green);color:var(--surface);border:3px solid var(--surface);box-shadow:6px 6px 0 var(--surface);padding:0 16px 6px;border-radius:0;">no app to download</span>.</h1>
+  <p style="font-family:Inter;font-weight:500;font-size:30px;line-height:1.35;color:rgba(255,255,255,.85);margin:28px 0 0;max-width:1480px;">On a brand-new device: open the invite link &rarr; &ldquo;Continue&rdquo; &rarr; you&rsquo;re in the plan and can respond. No install, no account hurdle.</p>
+  <div style="display:flex;gap:18px;margin-top:38px;">
+    <div style="flex:1;background:var(--ink-2);border:3px solid var(--ink-3);border-radius:0;padding:22px 26px;"><div class="eyebrow" style="font-size:18px;color:var(--green);">Watch for</div><div style="font-family:Archivo;font-weight:800;font-size:26px;color:var(--surface);margin-top:6px;">Zero install</div></div>
+    <div style="flex:1;background:var(--ink-2);border:3px solid var(--ink-3);border-radius:0;padding:22px 26px;"><div class="eyebrow" style="font-size:18px;color:var(--pink);">Watch for</div><div style="font-family:Archivo;font-weight:800;font-size:26px;color:var(--surface);margin-top:6px;">Opens in the browser</div></div>
+    <div style="flex:1;background:var(--ink-2);border:3px solid var(--ink-3);border-radius:0;padding:22px 26px;"><div class="eyebrow" style="font-size:18px;color:var(--purple);">Watch for</div><div style="font-family:Archivo;font-weight:800;font-size:26px;color:var(--surface);margin-top:6px;">Instantly in the plan</div></div>
   </div>
 </section>
 
@@ -899,7 +950,7 @@
   <div style="margin-top:auto;background:var(--ink-2);border:3px solid var(--green);border-radius:0;padding:24px 30px;font-family:Inter;font-weight:500;font-size:26px;line-height:1.3;color:var(--surface);"><b style="color:var(--green);font-weight:800;">The bounded claim:</b> we don&rsquo;t cure loneliness. We remove one specific friction that keeps friends apart - and 76% of young adults say seeing friends is how they protect their wellbeing.</div>
 </section>
 
-<section data-label="What's left" data-screen-label="29" data-speaker-notes="We want to be honest about what is not done. On process: we would prioritise onboarding earlier - it only landed in our final milestone, so our iteration interviews tested the core loop, not the whole journey. And we would interview before we build - we slipped once, and one of us insisted we fix it, which is now the rule. On the product, framed as user needs: the felt-privacy gap in the conditional still needs Felicity's ranking alternative tested; push is still only device-local; we have only just started to compete with the group chat people already live in; and crucially, we measured intent, not outcome - the proper study and telemetry are scoped but not yet run. We will not present an intended result as a measured one." class="slide slide--paper" style="padding:84px 110px 76px;">
+<section data-label="What's left" data-screen-label="29" data-speaker-notes="We want to be honest about what is not done. On process: we would prioritise onboarding earlier - it only landed in our final milestone, so our iteration interviews tested the core loop, not the whole journey. And we would interview before we build - we slipped once, and one of us insisted we fix it, which is now the rule. On the product, framed as user needs: the felt-privacy gap in the conditional still needs a rank-importance alternative tested; push is still only device-local; we have only just started to compete with the group chat people already live in; and crucially, we measured intent, not outcome - the proper study and telemetry are scoped but not yet run. We will not present an intended result as a measured one." class="slide slide--paper" style="padding:84px 110px 76px;">
   <h1 class="title" style="font-size:78px;letter-spacing:-3px;">Honest about what&rsquo;s <span class="hl">left</span></h1>
 
   <div style="display:flex;gap:40px;margin-top:42px;flex:1;">
@@ -914,7 +965,7 @@
     <div style="flex:1.25;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:34px;display:flex;flex-direction:column;">
       <div class="eyebrow" style="font-size:20px;color:var(--pink);">Still unmet &middot; user needs</div>
       <div style="display:flex;flex-direction:column;gap:16px;margin-top:24px;">
-        <div style="display:flex;gap:16px;align-items:baseline;"><span style="font-family:Archivo;font-weight:900;font-size:22px;color:var(--pink);">01</span><span style="font-family:Inter;font-weight:500;font-size:26px;line-height:1.3;">The felt-privacy gap in the conditional - test Felicity&rsquo;s &ldquo;rank importance&rdquo; alternative.</span></div>
+        <div style="display:flex;gap:16px;align-items:baseline;"><span style="font-family:Archivo;font-weight:900;font-size:22px;color:var(--pink);">01</span><span style="font-family:Inter;font-weight:500;font-size:26px;line-height:1.3;">The felt-privacy gap in the conditional - test a &ldquo;rank importance&rdquo; alternative.</span></div>
         <div style="display:flex;gap:16px;align-items:baseline;"><span style="font-family:Archivo;font-weight:900;font-size:22px;color:var(--pink);">02</span><span style="font-family:Inter;font-weight:500;font-size:26px;line-height:1.3;">Reliable push notifications - the nudge is currently device-local only.</span></div>
         <div style="display:flex;gap:16px;align-items:baseline;"><span style="font-family:Archivo;font-weight:900;font-size:22px;color:var(--pink);">03</span><span style="font-family:Inter;font-weight:500;font-size:26px;line-height:1.3;">Beat the group chat people already live in - the web-first link is the first move.</span></div>
         <div style="display:flex;gap:16px;align-items:baseline;"><span style="font-family:Archivo;font-weight:900;font-size:22px;color:var(--pink);">04</span><span style="font-family:Inter;font-weight:500;font-size:26px;line-height:1.3;">We measured intent, not outcome - the study and telemetry are scoped, not yet run.</span></div>
@@ -924,7 +975,7 @@
   </div>
 </section>
 
-<section data-label="Closing" data-screen-label="30" data-speaker-notes="So that's BeThere. We took the most ordinary failure in the world - a plan that dies in a group chat - and we found the real reason it dies: not flaking, but the social cost of committing out loud. We removed it. No organiser. No maybe. And I'll leave you with the line from Felicity that kept us honest the whole way through: she said she cares less about what they do, she just wants to see them. That's who we built this for." class="slide slide--blush" style="padding:90px 110px 80px;position:relative;">
+<section data-label="Closing" data-screen-label="30" data-speaker-notes="So that's BeThere. We took the most ordinary failure in the world - a plan that dies in a group chat - and we found the real reason it dies: not flaking, but the social cost of committing out loud. We removed it. No organiser. No maybe. And I'll leave you with the line from our interviews that kept us honest the whole way through: someone told us she cares less about what they do, she just wants to see them. That's who we built this for." class="slide slide--blush" style="padding:90px 110px 80px;position:relative;">
   <div style="display:flex;align-items:center;gap:30px;">
     <div style="font-family:Archivo;font-weight:900;font-size:132px;letter-spacing:-6px;line-height:.9;color:var(--ink);">BeThere</div>
     <span style="background:var(--green);color:var(--surface);font-family:Archivo;font-weight:800;font-size:28px;border:3px solid var(--ink);box-shadow:5px 5px 0 var(--ink);padding:8px 18px;border-radius:0;transform:rotate(-4deg);">You're in</span>
@@ -935,7 +986,7 @@
     <div style="background:var(--ink);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--pink);padding:32px 38px;max-width:1180px;">
       <span style="font-family:Archivo;font-weight:900;font-size:56px;color:var(--pink);line-height:.4;">&ldquo;</span>
       <p style="font-family:Archivo;font-weight:700;font-size:40px;line-height:1.25;color:var(--surface);margin:14px 0 0;">I care less about what we do. I just want to see them.</p>
-      <div style="font-family:Inter;font-weight:600;font-size:24px;color:rgba(255,255,255,.65);margin-top:14px;">- Felicity, the reason we built it</div>
+      <div style="font-family:Inter;font-weight:600;font-size:24px;color:rgba(255,255,255,.65);margin-top:14px;">- the reason we built it</div>
     </div>
     <div style="font-family:Inter;font-weight:700;font-size:24px;color:var(--muted);text-align:right;white-space:nowrap;">DRP &middot; Group 02<br><span style="font-weight:500;">Nelson &middot; Lukas &middot; Noah &middot; James</span></div>
   </div>
