@@ -6,10 +6,11 @@ context. Read this before changing slides.
 
 ## What this is
 
-A self-presenting **HTML slide deck** (30 slides, 16:9, refined-neobrutalist
+A self-presenting **HTML slide deck** (38 slides, 16:9, refined-neobrutalist
 BeThere brand). The deck is the source of truth; the submission **PDF is
 generated from it**. There is no build step and no framework - just HTML + CSS +
-a small vanilla runtime.
+a small vanilla runtime. (Static `<section>`s number ~33; the architecture
+**spotlight tour** generates 5 more at load - see "Architecture spotlight tour".)
 
 ```
 presentation/
@@ -73,11 +74,43 @@ size/spacing inline:
 | `.stat-num` | big tabular stat number |
 | `.quote` | Archivo quote text |
 | `.arrow-bar` / `.arrow-head` | thick ink connector (bar + triangle) |
+| `.logo` + `.ico` + `.i-*` | tech-logo tile: a flat brand-colour glyph (`<svg class="ico i-trpc"><use href="#l-trpc"/></svg>`) in an ink-bordered white tile; colours are `--logo-*` tokens, never inline hex |
 
-The **architecture slide** (`data-screen-label="24"`) is the worked example of
-the full kit - copy its patterns. The other slides use `.slide/.title/.hl/
-.eyebrow`; their inner cards are still inline (tokenised) and can adopt `.card`
-etc. incrementally - do it the way below so nothing shifts.
+Tech logos are **simple-icons** (CC0) inlined once as `<symbol id="l-*">` in a
+hidden sprite right after `<body>`, then referenced with `<use>`. To add one:
+fetch `https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/<slug>.svg`, paste
+its `<path>` into a new `<symbol>`, add a `--logo-<name>` token + `.i-<name>`
+rule in `styles.css`. Keep marks legible on white (deepen pale ones, e.g. React
+cyan, or force ink, e.g. Drizzle).
+
+The **architecture spotlight tour** (below) is the worked example of the full
+kit - copy its patterns. The other slides use `.slide/.title/.hl/.eyebrow`;
+their inner cards are still inline (tokenised) and can adopt `.card` etc.
+incrementally - do it the way below so nothing shifts.
+
+## Architecture spotlight tour - IMPORTANT
+
+"Under the hood" is **not** a normal slide. It is ONE diagram shown as a sequence
+of focus states; clicking advances the spotlight, and **each state is its own
+`<section>` so it exports as its own PDF page**. The states walk the stack:
+overview -> client -> api -> db -> shared -> ship.
+
+- The diagram is authored **once** in the static `#arch-base` section (the
+  overview). The 5 focus steps are **cloned from it at load** by a small
+  generator `<script>` just above the runtime IIFE in `index.html`. So:
+  - **Edit the diagram** (tiers, logos, layout) -> edit `#arch-base` only; every
+    step inherits it, so the spotlight stays pixel-identical across pages.
+  - **Edit a step's caption / speaker notes / which layer it lights** -> edit the
+    `steps` array in that generator script (`focus`, `label`, `notes`, `cap`).
+  - **Add/remove a step** -> add/remove an entry in `steps` (changes the page
+    count; update the `01 / NN` counter seed + the slide count above).
+- The spotlight is pure CSS: `.arch` is the stacking root (`isolation:isolate`),
+  `.scrim` darkens everything, and `[data-focus="X"] .spot--X` lifts the focused
+  group above the scrim. Do **not** give `.arch-diagram` a `z-index` (it would
+  trap the focused group under the scrim).
+- The generator runs synchronously before the runtime collects slides, and the
+  PDF export gives JS a 20s virtual-time budget, so the cloned pages are present
+  in both nav and the PDF. Always re-export and check the page count after edits.
 
 ## After ANY edit: re-export and keep it faithful
 
@@ -115,6 +148,7 @@ cp bethere-deck.pdf /tmp/golden.pdf
 
 Architecture/stack claims must match the real repo (the arch slide was verified
 2026-06-15: Fastify 5, tRPC v11, React Navigation v7, 4 routers, 10 Postgres
-tables). If you change the app, update slide 24 + its speaker notes. Research
+tables). If you change the app, update `#arch-base` + the spotlight tour's step
+captions and notes (the `steps` array). Research
 numbers (n=43 survey, the interview quotes) and the third-party stats on slide 3
 live in `context/project-context/` - cite, do not invent.

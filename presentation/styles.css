@@ -34,6 +34,13 @@
   --sh-sm: 4px 4px 0 var(--ink);
   --sh: 6px 6px 0 var(--ink);
   --sh-lg: 8px 8px 0 var(--ink);
+  /* tech-logo brand colours (simple-icons, CC0) - flat single-colour fills only.
+     a few are deepened or forced to ink so they stay legible on a white tile. */
+  --logo-expo: #000020;  --logo-react: #149eca;  --logo-clerk: #6c47ff;
+  --logo-ts: #3178c6;    --logo-node: #5fa04e;   --logo-fastify: #0a0a0a;
+  --logo-trpc: #2596be;  --logo-zod: #3e67b1;    --logo-drizzle: #0a0a0a;
+  --logo-pg: #336791;    --logo-pnpm: #f69220;   --logo-gha: #2088ff;
+  --logo-docker: #2496ed; --logo-vercel: #0a0a0a; --logo-aws: #ff9900;
 }
 
 /* ===== deck chrome (viewer UI; hidden in print) ===== */
@@ -127,3 +134,69 @@
 .quote     { font-family: Archivo; font-weight: 700; }
 .arrow-bar { height: 8px; background: var(--ink); }
 .arrow-head{ width: 0; height: 0; border-top: 13px solid transparent; border-bottom: 13px solid transparent; border-left: 20px solid var(--ink); }
+
+/* ---- tech logos: a flat brand-colour glyph in an ink-bordered white tile.
+        symbols are defined once (hidden <svg> after <body>); referenced via <use>.
+        size/padding set inline per use; colour via an .i-* class (token-backed). ---- */
+.logo     { display: inline-flex; align-items: center; justify-content: center; background: var(--surface);
+            border: 3px solid var(--ink); border-radius: 0; box-shadow: var(--sh-sm); flex: 0 0 auto; }
+.logo-row { display: flex; align-items: center; gap: 12px; }
+.ico      { width: 100%; height: 100%; display: block; }
+.i-expo   { fill: var(--logo-expo); }    .i-react  { fill: var(--logo-react); }
+.i-clerk  { fill: var(--logo-clerk); }   .i-ts     { fill: var(--logo-ts); }
+.i-node   { fill: var(--logo-node); }    .i-fastify{ fill: var(--logo-fastify); }
+.i-trpc   { fill: var(--logo-trpc); }    .i-zod    { fill: var(--logo-zod); }
+.i-drizzle{ fill: var(--logo-drizzle); } .i-pg     { fill: var(--logo-pg); }
+.i-pnpm   { fill: var(--logo-pnpm); }    .i-gha    { fill: var(--logo-gha); }
+.i-docker { fill: var(--logo-docker); }  .i-vercel { fill: var(--logo-vercel); }
+.i-aws    { fill: var(--logo-aws); }
+
+/* =====================================================================
+   "Under the hood" - architecture spotlight tour.
+   ONE diagram; each step is its own <section> (so it is its own PDF page)
+   that lifts a single .spot group above a dark scrim and swaps the caption.
+   The focus steps are CLONED from #arch-base at load, so the diagram is
+   pixel-identical on every page and the spotlight appears to move in place.
+   ===================================================================== */
+.arch              { position: relative; isolation: isolate; }   /* one stacking context for scrim + spotlight */
+.arch .scrim       { position: absolute; inset: 0; background: rgba(12,10,20,.74); opacity: 0;
+                     pointer-events: none; transition: opacity .3s ease; z-index: 20; }
+.arch[data-focus] .scrim { opacity: 1; }
+.arch-title, .arch-sub   { position: relative; z-index: 25; }
+.arch-sub          { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 19px; color: var(--muted-2); margin-top: 14px; }
+.arch[data-focus] .arch-sub { visibility: hidden; }
+.arch-hint         { position: absolute; left: 0; right: 0; bottom: 132px; z-index: 25; text-align: center; font-family: 'Space Mono', monospace; font-weight: 700; font-size: 18px; color: var(--muted-2); }
+.arch[data-focus] .arch-hint { display: none; }
+.arch-diagram      { position: relative; display: flex; flex-direction: column; flex: 1; justify-content: center; gap: 0; margin-top: 18px; }
+.arch-tiers        { display: flex; align-items: stretch; gap: 0; }
+
+/* focusable groups - all sit under the scrim; the focused one is lifted out + popped */
+.spot              { position: relative; z-index: 1; transition: transform .25s ease, box-shadow .25s ease; }
+.arch[data-focus="client"] .spot--client,
+.arch[data-focus="api"]    .spot--api,
+.arch[data-focus="db"]     .spot--db { z-index: 30; transform: scale(1.035); box-shadow: 11px 11px 0 var(--pink); }
+.arch[data-focus="shared"] .spot--shared,
+.arch[data-focus="ship"]   .spot--ship { z-index: 30; transform: scale(1.015); }
+.arch[data-focus="shared"] .spot--shared { box-shadow: 9px 9px 0 var(--pink); }
+
+/* tier card chrome */
+.tier-h            { color: var(--surface); padding: 12px 18px; font-family: Archivo; font-weight: 800; font-size: 20px; letter-spacing: .03em; text-transform: uppercase; border-bottom: 3px solid var(--ink); }
+.tier-b            { padding: 18px; display: flex; flex-direction: column; gap: 15px; flex: 1; }
+.tier-pkg          { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 13.5px; color: var(--ink); background: var(--paper); border: 2px solid var(--ink); padding: 3px 9px; align-self: flex-start; }
+.tier-names        { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 14.5px; color: var(--muted-2); line-height: 1.5; }
+.arch-conn         { flex: 0 0 116px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px; }
+.arch-conn .lbl    { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 12.5px; color: var(--surface); background: var(--ink); text-align: center; line-height: 1.2; padding: 4px 8px; max-width: 104px; }
+
+/* shared band + ship row */
+.arch-shared       { background: var(--warm); border: 3px solid var(--ink); box-shadow: var(--sh); padding: 15px 22px; display: flex; align-items: center; gap: 18px; margin-top: 26px; }
+.arch-ship         { display: flex; align-items: center; gap: 14px; margin-top: 22px; }
+.ship-chip         { display: flex; align-items: center; gap: 11px; border: 3px solid var(--ink); background: var(--surface); box-shadow: var(--sh-sm); padding: 7px 15px 7px 8px; font-weight: 600; font-size: 16px; }
+
+/* caption box (the per-step descriptor) - lives in the reserved lower band */
+.arch-cap          { position: absolute; left: 90px; right: 90px; bottom: 58px; z-index: 40; background: var(--surface); border: 3px solid var(--ink); box-shadow: var(--sh-lg); padding: 22px 30px 24px; display: none; }
+.arch[data-focus] .arch-cap { display: block; }
+.arch-cap .cap-tag { display: inline-block; font-family: Archivo; font-weight: 800; font-size: 16px; letter-spacing: .08em; text-transform: uppercase; color: var(--surface); background: var(--ink); padding: 5px 13px; margin-bottom: 15px; }
+.arch-cap ul       { margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.arch-cap li       { list-style: none; font-family: Inter; font-weight: 500; font-size: 23px; line-height: 1.32; color: var(--ink); padding-left: 27px; position: relative; }
+.arch-cap li::before { content: ""; position: absolute; left: 0; top: 10px; width: 12px; height: 12px; background: var(--pink); border: 2px solid var(--ink); }
+.arch-cap code     { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 18px; background: var(--paper); border: 2px solid var(--ink); padding: 1px 7px; }
