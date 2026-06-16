@@ -6,34 +6,54 @@ import type {
   ResponseKind,
 } from "@bethere/shared";
 
+// The demo seed is curated to mirror the final-presentation deck: the personas Vasanth (the
+// organiser) and Milly (the hesitant participant), "The Boys" as the hero group the live demo
+// sends into, a dashboard with every bucket populated (Going / Open / Done), a blind moment with a
+// pending "I'll go if" conditional to resolve on stage, and a clean invite-link group for the
+// no-download join demo. Keep it coherent with the deck if either changes.
+
+// The demo protagonist ("You"). Defaults to the spoofable dev-bypass user u_dev, which is who the
+// phone APK and dev web log in as. For a prod-web + Google demo the presenter is a real Clerk user,
+// so set DEMO_ME_ID to their Clerk user id (and DEMO_ME_NAME to the label) on the App Runner service
+// before reseeding - the seed then makes that account the protagonist across every group and plan.
+export const ME_ID = process.env.DEMO_ME_ID ?? "u_dev";
+export const ME_NAME = process.env.DEMO_ME_NAME ?? "You";
+
 export const DEMO_USERS = [
-  { id: "u_dev", name: "You", avatarColor: "#5F9472" },
+  { id: ME_ID, name: ME_NAME, avatarColor: "#5F9472" },
+  { id: "u_vasanth", name: "Vasanth", avatarColor: "#557A6B" },
+  { id: "u_milly", name: "Milly", avatarColor: "#B05F86" },
   { id: "u_adi", name: "Adi", avatarColor: "#C77D54" },
   { id: "u_lily", name: "Lily", avatarColor: "#5B7DB1" },
   { id: "u_joe", name: "Joe", avatarColor: "#7E6BB0" },
   { id: "u_nathan", name: "Nathan", avatarColor: "#B0654F" },
   { id: "u_bethan", name: "Bethan", avatarColor: "#3F7BA8" },
   { id: "u_noah", name: "Noah", avatarColor: "#A8743F" },
-  { id: "u_vasanth", name: "Vasanth", avatarColor: "#557A6B" },
-  { id: "u_imogen", name: "Imogen", avatarColor: "#B05F86" },
+  { id: "u_imogen", name: "Imogen", avatarColor: "#3F7BA8" },
   { id: "u_graham", name: "Graham", avatarColor: "#6B8E5A" },
   { id: "u_zara", name: "Zara", avatarColor: "#C28A3D" },
 ];
 
 export const GROUPS = [
+  // The hero group: the live demo sends a plan here, and the no-download join demo shares its invite.
   {
     id: "g_boys",
     name: "The Boys",
-    members: ["u_dev", "u_adi", "u_lily", "u_joe", "u_nathan", "u_bethan"],
+    members: [ME_ID, "u_vasanth", "u_adi", "u_joe", "u_nathan", "u_bethan"],
   },
-  { id: "g_climb", name: "Climbing Group", members: ["u_dev", "u_adi", "u_joe"] },
-  { id: "g_knit", name: "Glitter Natters", members: ["u_dev", "u_lily", "u_bethan", "u_noah"] },
-  { id: "g_church", name: "Church Group", members: ["u_dev", "u_joe", "u_noah"] },
+  // Milly's netball society - the home of the "I'll go if my friends go" conditional.
+  {
+    id: "g_netball",
+    name: "Netball Society",
+    members: [ME_ID, "u_milly", "u_lily", "u_imogen", "u_zara"],
+  },
+  { id: "g_climb", name: "Climbing Group", members: [ME_ID, "u_adi", "u_joe"] },
   {
     id: "g_hs",
     name: "High School Reunion",
-    members: ["u_dev", "u_vasanth", "u_imogen", "u_graham", "u_zara"],
+    members: [ME_ID, "u_vasanth", "u_imogen", "u_graham", "u_zara"],
   },
+  { id: "g_knit", name: "Glitter Natters", members: [ME_ID, "u_lily", "u_bethan", "u_noah"] },
 ];
 
 export const HOUR = 60 * 60 * 1000;
@@ -44,6 +64,13 @@ export function dayAt(daysFromNow: number, hour: number): Date {
   d.setDate(d.getDate() + daysFromNow);
   d.setHours(hour, 0, 0, 0);
   return d;
+}
+
+// An instant a whole number of hours from "now" (negative = in the past). Used for moment
+// windows (momentStartsAt / momentEndsAt) so a live blind moment ends in the near future while a
+// settled one ended in the recent past.
+export function fromNow(hours: number): Date {
+  return new Date(Date.now() + hours * HOUR);
 }
 
 // A candidate on a plan: a TIME (startsAt set, optional partOfDay hint) or an ACTIVITY (label set,
@@ -84,117 +111,109 @@ export interface Plan {
   responses?: Resp[];
 }
 
-// Demo plans cover the phases the dashboard renders. Every plan is anonymous (names never shown);
-// collecting plans carry PUBLIC +1 counts on both time and activity candidates.
+// Demo plans cover every dashboard bucket and the deck's demo beats. Every plan is anonymous (names
+// never shown); collecting plans carry PUBLIC +1 counts on both time and activity candidates.
 export const PLANS: Plan[] = [
+  // GOING - the payoff card: a confirmed, still-upcoming meetup you're in. Cleared (RSVP window
+  // already closed) with a future start, five yeses => the deck's "you and four others are in".
   {
-    id: "e_movie",
+    id: "e_boys_pub",
     groupId: "g_boys",
-    createdBy: "u_dev",
+    createdBy: "u_adi",
+    activity: "Pub night",
+    location: "The Lighthouse",
+    contingent: true,
+    quorum: 3,
+    phase: "cleared",
+    candidates: [
+      { suffix: "c1", kind: "time", startsAt: dayAt(2, 19) },
+      { suffix: "c2", kind: "time", startsAt: dayAt(3, 19) },
+    ],
+    chosenSuffix: "c1",
+    momentStartsAt: fromNow(-26),
+    momentEndsAt: fromNow(-24),
+    responses: [
+      { userId: ME_ID, kind: "yes" },
+      { userId: "u_adi", kind: "yes" },
+      { userId: "u_joe", kind: "yes" },
+      { userId: "u_nathan", kind: "yes" },
+      { userId: "u_bethan", kind: "yes" },
+      { userId: "u_vasanth", kind: "no" },
+    ],
+  },
+  // GOING - Milly's story made concrete: a live blind moment you've already committed to, where
+  // Milly's "I'll go if You go" conditional has latched onto your yes (revealed once it clears).
+  {
+    id: "e_netball_social",
+    groupId: "g_netball",
+    createdBy: "u_lily",
+    activity: "Netball social",
+    location: "The SU Bar",
+    contingent: true,
+    quorum: 2,
+    phase: "moment",
+    candidates: [{ suffix: "c1", kind: "time", startsAt: dayAt(1, 20) }],
+    chosenSuffix: "c1",
+    momentStartsAt: fromNow(-2),
+    momentEndsAt: fromNow(5),
+    responses: [
+      { userId: ME_ID, kind: "yes" },
+      { userId: "u_lily", kind: "yes" },
+      { userId: "u_milly", kind: "conditional", cond: { mode: "any", targetIds: [ME_ID] } },
+      { userId: "u_zara", kind: "conditional", cond: { mode: "any", targetIds: ["u_lily"] } },
+      { userId: "u_imogen", kind: "no" },
+    ],
+  },
+  // OPEN + action required - the live "I'll go if" beat: a blind moment you have NOT answered yet,
+  // so you can answer it on stage. Nathan's conditional is already waiting in the background.
+  {
+    id: "e_boys_bowling",
+    groupId: "g_boys",
+    createdBy: "u_joe",
+    activity: "Bowling",
+    location: "TenPin Bexleyheath",
+    contingent: true,
+    quorum: 3,
+    phase: "moment",
+    candidates: [{ suffix: "c1", kind: "time", startsAt: dayAt(0, 19) }],
+    chosenSuffix: "c1",
+    momentStartsAt: fromNow(-1),
+    momentEndsAt: fromNow(6),
+    responses: [
+      { userId: "u_adi", kind: "yes" },
+      { userId: "u_joe", kind: "yes" },
+      { userId: "u_nathan", kind: "conditional", cond: { mode: "any", targetIds: ["u_adi"] } },
+      { userId: "u_bethan", kind: "no" },
+    ],
+  },
+  // OPEN - the "vote" beat: a collecting plan with a fixed activity (lockActivity) and public +1
+  // counts on the times, showing momentum without ever naming a voter.
+  {
+    id: "e_boys_cinema",
+    groupId: "g_boys",
+    createdBy: "u_vasanth",
     activity: "Dune: Part Two",
     location: "Cineworld Bexleyheath",
     contingent: true,
     quorum: 3,
     phase: "collecting",
+    lockActivity: true,
     decidesBy: dayAt(1, 18),
     candidates: [
       {
         suffix: "c1",
         kind: "time",
         startsAt: dayAt(2, 18),
-        reactedBy: ["u_dev", "u_adi", "u_lily", "u_joe"],
+        reactedBy: [ME_ID, "u_adi", "u_joe", "u_nathan"],
       },
-      {
-        suffix: "c2",
-        kind: "time",
-        startsAt: dayAt(2, 20),
-        reactedBy: ["u_dev", "u_nathan", "u_bethan"],
-      },
-      { suffix: "c3", kind: "time", startsAt: dayAt(3, 14), reactedBy: ["u_lily"] },
+      { suffix: "c2", kind: "time", startsAt: dayAt(2, 20), reactedBy: ["u_bethan", "u_vasanth"] },
+      { suffix: "c3", kind: "time", startsAt: dayAt(3, 14), reactedBy: ["u_adi"] },
     ],
   },
+  // OPEN - both axes open: a collecting plan with no name yet, so the winning ACTIVITY resolves into
+  // the plan's name at lock. Public +1 counts on activities AND times.
   {
-    id: "e_pub",
-    groupId: "g_climb",
-    createdBy: "u_adi",
-    activity: "Pub night",
-    location: "The Lighthouse",
-    contingent: true,
-    quorum: 2,
-    phase: "collecting",
-    decidesBy: dayAt(1, 12),
-    candidates: [
-      { suffix: "c1", kind: "time", startsAt: dayAt(1, 19), reactedBy: ["u_adi", "u_joe"] },
-      { suffix: "c2", kind: "time", startsAt: dayAt(2, 19), reactedBy: ["u_adi"] },
-      { suffix: "c3", kind: "time", startsAt: dayAt(3, 20), reactedBy: ["u_joe"] },
-    ],
-  },
-  {
-    id: "e_bowling",
-    groupId: "g_boys",
-    createdBy: "u_adi",
-    activity: "Bowling",
-    location: "TenPin Bowling, Bexleyheath",
-    contingent: false,
-    quorum: 1,
-    phase: "moment",
-    candidates: [{ suffix: "c1", kind: "time", startsAt: dayAt(0, 19) }],
-    chosenSuffix: "c1",
-    momentStartsAt: new Date(Date.now() - HOUR),
-    momentEndsAt: new Date(Date.now() + 8 * HOUR),
-    responses: [
-      { userId: "u_adi", kind: "yes" },
-      { userId: "u_lily", kind: "yes" },
-      { userId: "u_joe", kind: "yes" },
-      { userId: "u_nathan", kind: "no" },
-      { userId: "u_bethan", kind: "no" },
-    ],
-  },
-  {
-    id: "e_dinner",
-    groupId: "g_hs",
-    createdBy: "u_vasanth",
-    activity: "Dinner",
-    location: "La Palombe",
-    contingent: true,
-    quorum: 2,
-    phase: "cleared",
-    candidates: [
-      { suffix: "c1", kind: "time", startsAt: dayAt(-3, 20) },
-      { suffix: "c2", kind: "time", startsAt: dayAt(-2, 20) },
-    ],
-    chosenSuffix: "c2",
-    momentStartsAt: new Date(Date.now() - 50 * HOUR),
-    momentEndsAt: new Date(Date.now() - 48 * HOUR),
-    responses: [
-      { userId: "u_dev", kind: "yes" },
-      { userId: "u_vasanth", kind: "yes" },
-      { userId: "u_imogen", kind: "yes" },
-    ],
-  },
-  {
-    id: "e_football",
-    groupId: "g_boys",
-    createdBy: "u_joe",
-    activity: "Football",
-    location: "Goals Wembley",
-    contingent: false,
-    quorum: 1,
-    phase: "cleared",
-    candidates: [{ suffix: "c1", kind: "time", startsAt: dayAt(-1, 10) }],
-    chosenSuffix: "c1",
-    momentStartsAt: new Date(Date.now() - 26 * HOUR),
-    momentEndsAt: new Date(Date.now() - 24 * HOUR),
-    responses: [
-      { userId: "u_dev", kind: "no" },
-      { userId: "u_joe", kind: "yes" },
-    ],
-  },
-  {
-    // A still-collecting plan in the climbing group, left unnamed so its winning ACTIVITY resolves
-    // into the plan's name at lock. Anonymous (no names), with PUBLIC +1 counts on both lists: among
-    // activities "bowling" leads (2 backers), and among times the day-2 evening slot leads (2).
-    id: "e_float_climb",
+    id: "e_climb_meet",
     groupId: "g_climb",
     createdBy: "u_adi",
     activity: "",
@@ -203,8 +222,13 @@ export const PLANS: Plan[] = [
     phase: "collecting",
     decidesBy: dayAt(1, 12),
     candidates: [
-      { suffix: "a1", kind: "activity", label: "bowling", reactedBy: ["u_adi", "u_joe"] },
-      { suffix: "a2", kind: "activity", label: "the pub", reactedBy: ["u_dev"] },
+      {
+        suffix: "a1",
+        kind: "activity",
+        label: "Bouldering at The Castle",
+        reactedBy: ["u_adi", "u_joe"],
+      },
+      { suffix: "a2", kind: "activity", label: "The pub", reactedBy: [ME_ID] },
       {
         suffix: "t1",
         kind: "time",
@@ -217,8 +241,54 @@ export const PLANS: Plan[] = [
         kind: "time",
         startsAt: dayAt(3, 14),
         partOfDay: "afternoon",
-        reactedBy: ["u_dev"],
+        reactedBy: [ME_ID],
       },
+    ],
+  },
+  // DONE - history: Vasanth's reunion dinner, cleared and in the past.
+  {
+    id: "e_hs_dinner",
+    groupId: "g_hs",
+    createdBy: "u_vasanth",
+    activity: "Reunion dinner",
+    location: "La Palombe",
+    contingent: true,
+    quorum: 2,
+    phase: "cleared",
+    candidates: [
+      { suffix: "c1", kind: "time", startsAt: dayAt(-3, 20) },
+      { suffix: "c2", kind: "time", startsAt: dayAt(-2, 20) },
+    ],
+    chosenSuffix: "c2",
+    momentStartsAt: fromNow(-50),
+    momentEndsAt: fromNow(-48),
+    responses: [
+      { userId: ME_ID, kind: "yes" },
+      { userId: "u_vasanth", kind: "yes" },
+      { userId: "u_imogen", kind: "yes" },
+      { userId: "u_zara", kind: "yes" },
+      { userId: "u_graham", kind: "no" },
+    ],
+  },
+  // DONE - history: a small craft night that happened, cleared in the past.
+  {
+    id: "e_knit_craft",
+    groupId: "g_knit",
+    createdBy: "u_lily",
+    activity: "Craft night",
+    location: "Bethan's place",
+    contingent: false,
+    quorum: 1,
+    phase: "cleared",
+    candidates: [{ suffix: "c1", kind: "time", startsAt: dayAt(-5, 19) }],
+    chosenSuffix: "c1",
+    momentStartsAt: fromNow(-122),
+    momentEndsAt: fromNow(-120),
+    responses: [
+      { userId: ME_ID, kind: "yes" },
+      { userId: "u_lily", kind: "yes" },
+      { userId: "u_bethan", kind: "yes" },
+      { userId: "u_noah", kind: "no" },
     ],
   },
 ];
@@ -306,6 +376,19 @@ export function seedIntegrityErrors(
     for (const r of p.responses ?? []) {
       if (!members.has(r.userId))
         errors.push(`plan ${p.id}: response by ${r.userId} who is not in group ${p.groupId}`);
+      // A conditional must name at least one target, and every target must be a fellow member
+      // (else the "I'll go if" can never resolve and the seed is silently broken).
+      if (r.kind === "conditional") {
+        const targets = r.cond?.targetIds ?? [];
+        if (targets.length === 0)
+          errors.push(`plan ${p.id}: conditional response by ${r.userId} names no targets`);
+        for (const t of targets) {
+          if (!members.has(t))
+            errors.push(
+              `plan ${p.id}: conditional by ${r.userId} targets ${t} who is not in group ${p.groupId}`,
+            );
+        }
+      }
     }
   }
   return errors;
