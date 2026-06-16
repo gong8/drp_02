@@ -91,39 +91,40 @@
 
   <div style="flex:1;display:flex;align-items:center;margin-top:10px;">
     <svg viewBox="0 0 1760 470" style="width:100%;height:auto;" preserveAspectRatio="xMidYMid meet">
-      <line x1="40" y1="60" x2="40" y2="400" stroke="var(--axis-warm)" stroke-width="3"></line>
-      <line x1="40" y1="400" x2="1660" y2="400" stroke="var(--axis-warm)" stroke-width="3"></line>
-      <text x="62" y="78" font-family="Inter" font-weight="700" font-size="22" fill="var(--muted)">hopeful</text>
-      <text x="62" y="392" font-family="Inter" font-weight="700" font-size="22" fill="var(--muted)">gives up</text>
-      <polyline points="180,95 470,165 760,250 1050,300 1340,345 1610,392" fill="none" stroke="var(--ink)" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"></polyline>
-      <g>
-        <circle cx="180" cy="95" r="13" fill="var(--green)" stroke="var(--ink)" stroke-width="3"></circle>
-        <circle cx="470" cy="165" r="13" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"></circle>
-        <circle cx="760" cy="250" r="13" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"></circle>
-        <circle cx="1050" cy="300" r="13" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"></circle>
-        <circle cx="1340" cy="345" r="13" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"></circle>
-        <circle cx="1610" cy="392" r="17" fill="var(--pink)" stroke="var(--ink)" stroke-width="3"></circle>
+      <rect x="40" y="14" width="1640" height="221" fill="var(--green)" fill-opacity="0.13"></rect>
+      <rect x="40" y="235" width="1640" height="211" fill="var(--pink)" fill-opacity="0.11"></rect>
+      <line x1="40" y1="14" x2="40" y2="446" stroke="var(--axis-warm)" stroke-width="3"></line>
+      <line x1="40" y1="235" x2="1700" y2="235" stroke="var(--ink)" stroke-width="3"></line>
+      <text x="1696" y="226" font-family="Inter" font-weight="700" font-size="20" fill="var(--muted)" text-anchor="end">time &rarr;</text>
+      <text x="54" y="112" font-family="Inter" font-weight="700" font-size="22" fill="var(--green)">positive</text>
+      <text x="54" y="376" font-family="Inter" font-weight="700" font-size="22" fill="var(--pink)">negative</text>
+      <polyline points="180,90 470,152 760,222 1050,290 1340,352 1610,406" fill="none" stroke="var(--ink)" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"></polyline>
+      <g stroke="var(--ink)" stroke-width="3">
+        <circle cx="180" cy="90" r="13" fill="var(--green)"></circle>
+        <circle cx="470" cy="152" r="13" fill="var(--surface)"></circle>
+        <circle cx="760" cy="222" r="13" fill="var(--surface)"></circle>
+        <circle cx="1050" cy="290" r="13" fill="var(--surface)"></circle>
+        <circle cx="1340" cy="352" r="13" fill="var(--surface)"></circle>
+        <circle cx="1610" cy="406" r="17" fill="var(--pink)"></circle>
       </g>
-      <g font-family="Archivo" font-weight="900" font-size="26" fill="var(--ink)">
-        <text x="180" y="58" text-anchor="middle">Sparks it</text>
-        <text x="470" y="128" text-anchor="middle">Pushes for replies</text>
-        <text x="760" y="213" text-anchor="middle">A few maybes</text>
-        <text x="1050" y="263" text-anchor="middle">Still chasing</text>
-        <text x="1340" y="308" text-anchor="middle">Goes quiet</text>
-        <text x="1610" y="355" text-anchor="middle">Gives up</text>
+      <g font-family="Archivo" font-weight="900" font-size="26" fill="var(--ink)" text-anchor="middle">
+        <text x="180" y="40">Sparks it</text>
+        <text x="470" y="102">Pushes for replies</text>
+        <text x="760" y="172">A few maybes</text>
+        <text x="1050" y="240">Still chasing</text>
+        <text x="1340" y="302">Goes quiet</text>
+        <text x="1610" y="356">Gives up</text>
       </g>
-      <g font-family="Inter" font-weight="500" font-size="20" fill="var(--muted)">
-        <text x="180" y="440" text-anchor="middle">&ldquo;we should do this!&rdquo;</text>
-        <text x="470" y="440" text-anchor="middle">&ldquo;anyone free?&rdquo;</text>
-        <text x="760" y="440" text-anchor="middle">non-committal</text>
-        <text x="1050" y="440" text-anchor="middle">days pass</text>
-        <text x="1340" y="440" text-anchor="middle">no replies</text>
-        <text x="1610" y="440" text-anchor="middle">too late</text>
+      <g font-family="Inter" font-weight="500" font-size="19" fill="var(--muted)" text-anchor="middle">
+        <text x="180" y="64">&ldquo;we should do this!&rdquo;</text>
+        <text x="470" y="126">&ldquo;anyone free?&rdquo;</text>
+        <text x="760" y="196">non-committal</text>
+        <text x="1050" y="264">days pass</text>
+        <text x="1340" y="326">no replies</text>
+        <text x="1610" y="380">too late</text>
       </g>
     </svg>
   </div>
-  <!-- v1 CONTRADICTION TODO (emotion map) - resolve before final export. -->
-  <div style="margin-top:12px;align-self:flex-start;font-family:'Space Mono',monospace;font-weight:700;font-size:15px;line-height:1.35;color:var(--muted);background:var(--surface);border:2px dashed var(--grey);border-radius:0;padding:7px 13px;">TODO v1 - emotion map: keep this v0 &ldquo;as he felt it&rdquo; curve, or switch to the human deck&rsquo;s happiness-vs-time plot with timestamped beats (MON 14:01 hopeful ... gives up)? Same beats either way - pick one visual.</div>
 </section>
 
 <section data-label="Meet Milly" data-screen-label="04" data-speaker-notes="But the organiser is only half the story. Meet Milly. She's 19, studies English, just joined her university's netball society, and she's shy. She would love to go to more of the socials - but she will not commit to a plan unless she's sure her own friends are going too. She's not flaky; she's hesitant. And in a group, her hesitation is contagious." class="slide slide--blush" style="padding:84px 110px 80px;">
@@ -167,39 +168,40 @@
 
   <div style="flex:1;display:flex;align-items:center;margin-top:10px;">
     <svg viewBox="0 0 1760 470" style="width:100%;height:auto;" preserveAspectRatio="xMidYMid meet">
-      <line x1="40" y1="60" x2="40" y2="400" stroke="var(--axis-warm)" stroke-width="3"></line>
-      <line x1="40" y1="400" x2="1660" y2="400" stroke="var(--axis-warm)" stroke-width="3"></line>
-      <text x="62" y="78" font-family="Inter" font-weight="700" font-size="22" fill="var(--muted)">keen</text>
-      <text x="62" y="392" font-family="Inter" font-weight="700" font-size="22" fill="var(--muted)">stays home</text>
-      <polyline points="180,110 470,180 760,250 1050,300 1340,350 1610,392" fill="none" stroke="var(--ink)" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"></polyline>
-      <g>
-        <circle cx="180" cy="110" r="13" fill="var(--green)" stroke="var(--ink)" stroke-width="3"></circle>
-        <circle cx="470" cy="180" r="13" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"></circle>
-        <circle cx="760" cy="250" r="13" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"></circle>
-        <circle cx="1050" cy="300" r="13" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"></circle>
-        <circle cx="1340" cy="350" r="13" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"></circle>
-        <circle cx="1610" cy="392" r="17" fill="var(--pink)" stroke="var(--ink)" stroke-width="3"></circle>
+      <rect x="40" y="14" width="1640" height="221" fill="var(--green)" fill-opacity="0.13"></rect>
+      <rect x="40" y="235" width="1640" height="211" fill="var(--pink)" fill-opacity="0.11"></rect>
+      <line x1="40" y1="14" x2="40" y2="446" stroke="var(--axis-warm)" stroke-width="3"></line>
+      <line x1="40" y1="235" x2="1700" y2="235" stroke="var(--ink)" stroke-width="3"></line>
+      <text x="1696" y="226" font-family="Inter" font-weight="700" font-size="20" fill="var(--muted)" text-anchor="end">time &rarr;</text>
+      <text x="54" y="112" font-family="Inter" font-weight="700" font-size="22" fill="var(--green)">positive</text>
+      <text x="54" y="376" font-family="Inter" font-weight="700" font-size="22" fill="var(--pink)">negative</text>
+      <polyline points="180,95 470,158 760,225 1050,292 1340,352 1610,406" fill="none" stroke="var(--ink)" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"></polyline>
+      <g stroke="var(--ink)" stroke-width="3">
+        <circle cx="180" cy="95" r="13" fill="var(--green)"></circle>
+        <circle cx="470" cy="158" r="13" fill="var(--surface)"></circle>
+        <circle cx="760" cy="225" r="13" fill="var(--surface)"></circle>
+        <circle cx="1050" cy="292" r="13" fill="var(--surface)"></circle>
+        <circle cx="1340" cy="352" r="13" fill="var(--surface)"></circle>
+        <circle cx="1610" cy="406" r="17" fill="var(--pink)"></circle>
       </g>
-      <g font-family="Archivo" font-weight="900" font-size="26" fill="var(--ink)">
-        <text x="180" y="73" text-anchor="middle">Sees it</text>
-        <text x="470" y="143" text-anchor="middle">Waits for a friend</text>
-        <text x="760" y="213" text-anchor="middle">Only maybes</text>
-        <text x="1050" y="263" text-anchor="middle">No one commits</text>
-        <text x="1340" y="313" text-anchor="middle">Drop-outs</text>
-        <text x="1610" y="355" text-anchor="middle">Stays home</text>
+      <g font-family="Archivo" font-weight="900" font-size="26" fill="var(--ink)" text-anchor="middle">
+        <text x="180" y="45">Sees it</text>
+        <text x="470" y="108">Waits for a friend</text>
+        <text x="760" y="175">Only maybes</text>
+        <text x="1050" y="242">No one commits</text>
+        <text x="1340" y="302">Drop-outs</text>
+        <text x="1610" y="356">Stays home</text>
       </g>
-      <g font-family="Inter" font-weight="500" font-size="20" fill="var(--muted)">
-        <text x="180" y="440" text-anchor="middle">&ldquo;ooh netball social&rdquo;</text>
-        <text x="470" y="440" text-anchor="middle">&ldquo;is anyone going?&rdquo;</text>
-        <text x="760" y="440" text-anchor="middle">no firm yes</text>
-        <text x="1050" y="440" text-anchor="middle">she holds back</text>
-        <text x="1340" y="440" text-anchor="middle">one by one</text>
-        <text x="1610" y="440" text-anchor="middle">misses it</text>
+      <g font-family="Inter" font-weight="500" font-size="19" fill="var(--muted)" text-anchor="middle">
+        <text x="180" y="69">&ldquo;ooh netball social&rdquo;</text>
+        <text x="470" y="132">&ldquo;is anyone going?&rdquo;</text>
+        <text x="760" y="199">no firm yes</text>
+        <text x="1050" y="266">she holds back</text>
+        <text x="1340" y="326">one by one</text>
+        <text x="1610" y="380">misses it</text>
       </g>
     </svg>
   </div>
-  <!-- v1 CONTRADICTION TODO (emotion map) - resolve before final export. -->
-  <div style="margin-top:12px;align-self:flex-start;font-family:'Space Mono',monospace;font-weight:700;font-size:15px;line-height:1.35;color:var(--muted);background:var(--surface);border:2px dashed var(--grey);border-radius:0;padding:7px 13px;">TODO v1 - emotion map: keep this v0 &ldquo;as she felt it&rdquo; curve, or switch to the human deck&rsquo;s happiness-vs-time plot with timestamped beats (THU 17:10 keen ... stays home)? Same beats either way - pick one visual.</div>
 </section>
 
 <section data-label="We did the research" data-screen-label="06" data-speaker-notes="Vasanth and Milly are not invented - they are composites of real people we spoke to. To understand why plans really die, we ran three rounds of interviews with university students about their social lives, and then surveyed forty-three more. Everything that follows came straight out of what they told us." class="slide slide--paper" style="padding:96px 110px;justify-content:center;">
@@ -586,34 +588,37 @@
 
   <div style="flex:1;display:flex;align-items:center;margin-top:10px;">
     <svg viewBox="0 0 1760 470" style="width:100%;height:auto;" preserveAspectRatio="xMidYMid meet">
-      <line x1="40" y1="60" x2="40" y2="400" stroke="var(--axis-cool)" stroke-width="3"></line>
-      <line x1="40" y1="400" x2="1660" y2="400" stroke="var(--axis-cool)" stroke-width="3"></line>
-      <text x="62" y="78" font-family="Inter" font-weight="700" font-size="22" fill="var(--muted)">in</text>
-      <text x="62" y="392" font-family="Inter" font-weight="700" font-size="22" fill="var(--muted)">low-stakes</text>
-      <polyline points="180,330 470,300 760,235 1050,180 1340,120 1610,70" fill="none" stroke="var(--ink)" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"></polyline>
+      <rect x="40" y="14" width="1640" height="221" fill="var(--green)" fill-opacity="0.13"></rect>
+      <rect x="40" y="235" width="1640" height="211" fill="var(--pink)" fill-opacity="0.11"></rect>
+      <line x1="40" y1="14" x2="40" y2="446" stroke="var(--axis-warm)" stroke-width="3"></line>
+      <line x1="40" y1="235" x2="1700" y2="235" stroke="var(--ink)" stroke-width="3"></line>
+      <text x="1696" y="226" font-family="Inter" font-weight="700" font-size="20" fill="var(--muted)" text-anchor="end">time &rarr;</text>
+      <text x="54" y="112" font-family="Inter" font-weight="700" font-size="22" fill="var(--green)">positive</text>
+      <text x="54" y="376" font-family="Inter" font-weight="700" font-size="22" fill="var(--pink)">negative</text>
+      <polyline points="180,225 470,193 760,160 1050,127 1340,96 1610,66" fill="none" stroke="var(--ink)" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"></polyline>
       <g stroke="var(--ink)" stroke-width="3">
-        <circle cx="180" cy="330" r="13" fill="var(--surface)"></circle>
-        <circle cx="470" cy="300" r="13" fill="var(--surface)"></circle>
-        <circle cx="760" cy="235" r="13" fill="var(--surface)"></circle>
-        <circle cx="1050" cy="180" r="13" fill="var(--purple)"></circle>
-        <circle cx="1340" cy="120" r="13" fill="var(--surface)"></circle>
-        <circle cx="1610" cy="70" r="18" fill="var(--green)"></circle>
+        <circle cx="180" cy="225" r="13" fill="var(--surface)"></circle>
+        <circle cx="470" cy="193" r="13" fill="var(--surface)"></circle>
+        <circle cx="760" cy="160" r="13" fill="var(--surface)"></circle>
+        <circle cx="1050" cy="127" r="13" fill="var(--purple)"></circle>
+        <circle cx="1340" cy="96" r="13" fill="var(--surface)"></circle>
+        <circle cx="1610" cy="66" r="18" fill="var(--green)"></circle>
       </g>
-      <g font-family="Archivo" font-weight="900" font-size="26" fill="var(--ink)">
-        <text x="180" y="298" text-anchor="middle">Send</text>
-        <text x="470" y="268" text-anchor="middle">Vote</text>
-        <text x="760" y="203" text-anchor="middle">Lock</text>
-        <text x="1050" y="148" text-anchor="middle">Moment</text>
-        <text x="1340" y="88" text-anchor="middle">Reveal</text>
-        <text x="1610" y="40" text-anchor="middle" fill="var(--green)">You're in</text>
+      <g font-family="Archivo" font-weight="900" font-size="26" fill="var(--ink)" text-anchor="middle">
+        <text x="180" y="197">Send</text>
+        <text x="470" y="165">Vote</text>
+        <text x="760" y="132">Lock</text>
+        <text x="1050" y="99">Moment</text>
+        <text x="1340" y="68">Reveal</text>
+        <text x="1610" y="38" fill="var(--green)">You're in</text>
       </g>
-      <g font-family="Inter" font-weight="500" font-size="20" fill="var(--muted)">
-        <text x="180" y="440" text-anchor="middle">anonymous float</text>
-        <text x="470" y="440" text-anchor="middle">+1s, no maybe</text>
-        <text x="760" y="440" text-anchor="middle">deadline auto-picks</text>
-        <text x="1050" y="440" text-anchor="middle">blind yes / can't / if</text>
-        <text x="1340" y="440" text-anchor="middle">it clears</text>
-        <text x="1610" y="440" text-anchor="middle">or quietly fizzles</text>
+      <g font-family="Inter" font-weight="500" font-size="19" fill="var(--muted)" text-anchor="middle">
+        <text x="180" y="259">anonymous float</text>
+        <text x="470" y="227">+1s, no maybe</text>
+        <text x="760" y="194">deadline auto-picks</text>
+        <text x="1050" y="161">blind yes / can't / if</text>
+        <text x="1340" y="130">it clears</text>
+        <text x="1610" y="100">or quietly fizzles</text>
       </g>
     </svg>
   </div>
@@ -930,15 +935,15 @@
   <div style="display:flex;gap:40px;margin-top:30px;flex:1;align-items:stretch;">
     <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:26px;display:flex;flex-direction:column;">
       <div class="eyebrow" style="font-size:20px;color:var(--purple);">Trello &middot; user needs</div>
-      <div style="flex:1;margin:16px 0;border:3px solid var(--ink);overflow:hidden;background:var(--sand);min-height:0;">
-        <img src="assets/process/trello.jpg" alt="Trello board mapping a user need" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block;">
+      <div style="flex:1;margin:16px 0;border:3px solid var(--ink);overflow:hidden;background:var(--surface);min-height:0;display:flex;align-items:center;justify-content:center;padding:10px;">
+        <img src="assets/process/trello.jpg" alt="Trello board mapping a user need" style="max-width:100%;max-height:100%;object-fit:contain;display:block;">
       </div>
       <p style="font-family:Inter;font-weight:600;font-size:23px;color:var(--ink);margin:0;">Personas, interview findings and user stories - the research that drove the work.</p>
     </div>
     <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:26px;display:flex;flex-direction:column;">
       <div class="eyebrow" style="font-size:20px;color:var(--pink);">Linear &middot; engineering</div>
-      <div style="flex:1;margin:16px 0;border:3px solid var(--ink);overflow:hidden;background:var(--sand);min-height:0;">
-        <img src="assets/process/linear.jpg" alt="Linear engineering issue list" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block;">
+      <div style="flex:1;margin:16px 0;border:3px solid var(--ink);overflow:hidden;background:var(--surface);min-height:0;display:flex;align-items:center;justify-content:center;padding:10px;">
+        <img src="assets/process/linear.jpg" alt="Linear engineering issue list" style="max-width:100%;max-height:100%;object-fit:contain;display:block;">
       </div>
       <p style="font-family:Inter;font-weight:600;font-size:23px;color:var(--ink);margin:0;">Every feature, bug and iteration as a ticket - the DRP numbers on the iteration slides.</p>
     </div>
