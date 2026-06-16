@@ -792,44 +792,74 @@
   <div class="arch-sub">One typed pnpm monorepo &middot; TypeScript end to end</div>
 
   <div class="arch-diagram">
-    <div class="arch-tiers">
-      <div class="card spot spot--client" style="flex:1;display:flex;flex-direction:column;overflow:hidden;box-shadow:7px 7px 0 var(--ink);">
-        <div class="tier-h" style="background:var(--pink);">Client</div>
-        <div class="tier-b">
-          <span class="tier-pkg">@bethere/mobile</span>
-          <div class="logo-row">
-            <span class="logo" style="width:54px;height:54px;padding:9px;"><svg class="ico i-expo"><use href="#l-expo"/></svg></span>
-            <span class="logo" style="width:54px;height:54px;padding:9px;"><svg class="ico i-react"><use href="#l-react"/></svg></span>
-            <span class="logo" style="width:54px;height:54px;padding:9px;"><svg class="ico i-clerk"><use href="#l-clerk"/></svg></span>
-            <span class="logo" style="width:54px;height:54px;padding:9px;"><svg class="ico i-ts"><use href="#l-ts"/></svg></span>
-          </div>
-          <div class="tier-names">Expo &middot; React Native<br>Clerk &middot; TypeScript</div>
+    <div class="arch-cols">
+      <!-- DEPLOYMENT: where it ships -->
+      <div class="card arch-col spot spot--ship" style="flex:.96;box-shadow:7px 7px 0 var(--ink);">
+        <div class="tier-h" style="background:var(--ink);">Deployment</div>
+        <div class="acol-b">
+          <span class="tier-pkg">ships to iOS &middot; Android &middot; web</span>
+          <span class="ship-chip" style="font-size:15px;"><span class="logo" style="width:32px;height:32px;padding:6px;"><svg class="ico i-vercel"><use href="#l-vercel"/></svg></span>Web build &rarr; Vercel</span>
+          <span class="ship-chip" style="font-size:15px;"><span class="logo" style="width:32px;height:32px;padding:6px;"><svg class="ico i-gha"><use href="#l-gha"/></svg></span>Android APK &rarr; CI</span>
+          <span class="ship-chip" style="font-size:15px;"><span class="logo" style="width:32px;height:32px;padding:6px;"><svg class="ico i-docker"><use href="#l-docker"/></svg></span><span class="logo" style="width:32px;height:32px;padding:6px;"><svg class="ico i-aws"><use href="#l-aws"/></svg></span>API &rarr; App Runner</span>
         </div>
       </div>
-      <div class="arch-conn"><div class="lbl">tRPC<br>typed JSON</div><div style="display:flex;align-items:center;"><div class="arrow-bar" style="width:58px;"></div><div class="arrow-head"></div></div></div>
-      <div class="card spot spot--api" style="flex:1.18;display:flex;flex-direction:column;overflow:hidden;box-shadow:7px 7px 0 var(--ink);">
-        <div class="tier-h" style="background:var(--purple);">API server</div>
-        <div class="tier-b">
-          <span class="tier-pkg">@bethere/api</span>
-          <div class="logo-row">
-            <span class="logo" style="width:54px;height:54px;padding:9px;"><svg class="ico i-node"><use href="#l-node"/></svg></span>
-            <span class="logo" style="width:54px;height:54px;padding:9px;"><svg class="ico i-fastify"><use href="#l-fastify"/></svg></span>
-            <span class="logo" style="width:54px;height:54px;padding:9px;"><svg class="ico i-trpc"><use href="#l-trpc"/></svg></span>
-            <span class="logo" style="width:54px;height:54px;padding:9px;"><svg class="ico i-zod"><use href="#l-zod"/></svg></span>
-            <span class="logo" style="width:54px;height:54px;padding:9px;"><svg class="ico i-drizzle"><use href="#l-drizzle"/></svg></span>
+
+      <!-- FRONTEND: the screens a user taps, each calling a real endpoint -->
+      <div class="card arch-col spot spot--client" style="flex:1.62;box-shadow:7px 7px 0 var(--ink);">
+        <div class="tier-h" style="background:var(--pink);">Frontend</div>
+        <div class="acol-b">
+          <div class="acol-meta">
+            <span class="tier-pkg">@bethere/mobile</span>
+            <div class="logo-row" style="gap:7px;">
+              <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-expo"><use href="#l-expo"/></svg></span>
+              <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-react"><use href="#l-react"/></svg></span>
+              <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-clerk"><use href="#l-clerk"/></svg></span>
+              <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-ts"><use href="#l-ts"/></svg></span>
+            </div>
           </div>
-          <div class="tier-names">Node &middot; Fastify 5 &middot; tRPC v11<br>Zod &middot; Drizzle &middot; 4 routers</div>
+          <div class="screen-rows">
+            <div class="screen-row"><span class="sr-name">Send a plan</span><span class="sr-ep">events.create</span><span class="sr-arrow"></span></div>
+            <div class="screen-row"><span class="sr-name">Vote / +1</span><span class="sr-ep">events.toggleReaction</span><span class="sr-arrow"></span></div>
+            <div class="screen-row"><span class="sr-name">Lock the round</span><span class="sr-ep">events.lock</span><span class="sr-arrow"></span></div>
+            <div class="screen-row"><span class="sr-name">The blind moment</span><span class="sr-ep">events.respond</span><span class="sr-arrow"></span></div>
+            <div class="screen-row"><span class="sr-name">Join by link</span><span class="sr-ep">groups.joinByCode</span><span class="sr-arrow"></span></div>
+            <div class="screen-row"><span class="sr-name">Your dashboard</span><span class="sr-ep">events.mine</span><span class="sr-arrow"></span></div>
+          </div>
         </div>
       </div>
-      <div class="arch-conn"><div class="lbl">Drizzle<br>SQL</div><div style="display:flex;align-items:center;"><div class="arrow-bar" style="width:58px;"></div><div class="arrow-head"></div></div></div>
-      <div class="card spot spot--db" style="flex:.82;display:flex;flex-direction:column;overflow:hidden;box-shadow:7px 7px 0 var(--ink);">
-        <div class="tier-h" style="background:var(--green);">Database</div>
-        <div class="tier-b">
-          <span class="tier-pkg">Postgres</span>
-          <div class="logo-row">
-            <span class="logo" style="width:54px;height:54px;padding:9px;"><svg class="ico i-pg"><use href="#l-pg"/></svg></span>
+
+      <!-- tRPC bus -->
+      <div class="arch-conn"><div class="lbl">tRPC<br>typed JSON</div><div style="display:flex;align-items:center;"><div class="arrow-bar" style="width:46px;"></div><div class="arrow-head"></div></div></div>
+
+      <!-- BACKEND + DATABASE -->
+      <div class="arch-rightcol" style="flex:1.28;">
+        <div class="card arch-col spot spot--api" style="flex:1;box-shadow:7px 7px 0 var(--ink);">
+          <div class="tier-h" style="background:var(--purple);">Backend</div>
+          <div class="acol-b">
+            <div class="acol-meta">
+              <span class="tier-pkg">@bethere/api</span>
+              <div class="logo-row" style="gap:6px;">
+                <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-node"><use href="#l-node"/></svg></span>
+                <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-fastify"><use href="#l-fastify"/></svg></span>
+                <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-trpc"><use href="#l-trpc"/></svg></span>
+                <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-zod"><use href="#l-zod"/></svg></span>
+                <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-drizzle"><use href="#l-drizzle"/></svg></span>
+              </div>
+            </div>
+            <div class="tier-names" style="font-size:13.5px;">Node &middot; Fastify 5 &middot; tRPC v11 &middot; Zod-validated</div>
+            <div class="router-row">
+              <span class="router-chip">events</span><span class="router-chip">groups</span><span class="router-chip">users</span>
+              <span class="router-note">32 typed procedures</span>
+            </div>
           </div>
-          <div class="tier-names">PostgreSQL<br>10 relational tables</div>
+        </div>
+        <div class="arch-vconn"><div class="arrow-vhead"></div><div class="lbl">Drizzle &middot; SQL</div></div>
+        <div class="card arch-col spot spot--db" style="flex:0 0 auto;box-shadow:7px 7px 0 var(--ink);">
+          <div class="tier-h" style="background:var(--green);">Database</div>
+          <div class="acol-b" style="flex-direction:row;align-items:center;gap:16px;">
+            <span class="logo" style="width:46px;height:46px;padding:8px;"><svg class="ico i-pg"><use href="#l-pg"/></svg></span>
+            <div><span class="tier-pkg">PostgreSQL</span><div class="tier-names" style="margin-top:5px;">10 relational tables &middot; integrity for free</div></div>
+          </div>
         </div>
       </div>
     </div>
@@ -839,13 +869,6 @@
       <span class="logo" style="width:42px;height:42px;padding:7px;"><svg class="ico i-zod"><use href="#l-zod"/></svg></span>
       <span class="logo" style="width:42px;height:42px;padding:7px;"><svg class="ico i-ts"><use href="#l-ts"/></svg></span>
       <span style="font-family:Inter;font-weight:500;font-size:18px;color:var(--ink);line-height:1.3;"><b>Single source of truth.</b> Zod schemas + framework-free pure logic - <b>vote tally &middot; conditional-RSVP &middot; blind reveal</b> - feed the same types + validation into client and server.</span>
-    </div>
-
-    <div class="arch-ship spot spot--ship">
-      <span style="font-family:'Space Mono',monospace;font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);">Git &rarr; CI &rarr; CD</span>
-      <span class="ship-chip"><span class="logo" style="width:34px;height:34px;padding:6px;"><svg class="ico i-gha"><use href="#l-gha"/></svg></span>Android APK via CI</span>
-      <span class="ship-chip"><span class="logo" style="width:34px;height:34px;padding:6px;"><svg class="ico i-vercel"><use href="#l-vercel"/></svg></span>Web &rarr; Vercel</span>
-      <span class="ship-chip"><span class="logo" style="width:34px;height:34px;padding:6px;"><svg class="ico i-docker"><use href="#l-docker"/></svg></span><span class="logo" style="width:34px;height:34px;padding:6px;"><svg class="ico i-aws"><use href="#l-aws"/></svg></span>API &rarr; AWS App Runner</span>
     </div>
   </div>
 
@@ -1065,21 +1088,21 @@
   var base = document.getElementById("arch-base");
   if (!base) return;
   var steps = [
-    { focus: "client", screen: "24a", label: "Architecture: Client",
-      notes: "The client is an Expo React Native app. One codebase ships to iOS, Android and the web - and that web target is the only reason our no-download onboarding works. React Navigation drives about ten screens; Clerk gives us real Google sign-in, so we never store passwords.",
-      cap: '<div class="cap-tag">Client &middot; @bethere/mobile</div><ul><li><b>Expo + React Native</b> - one codebase ships to iOS, Android <i>and</i> web</li><li><b>React Navigation</b> across ~10 screens; <b>Clerk</b> handles Google sign-in</li><li>The web target is exactly what made <b>no-download onboarding</b> possible</li></ul>' },
-    { focus: "api", screen: "24b", label: "Architecture: API",
-      notes: "The server is Fastify 5 hosting tRPC v11 on Node. Everything you watched in the demo is a real, typed procedure: events.create sends the plan, toggleReaction is a vote, lock settles the time, respond is the blind moment, resolve clears or fizzles it. Four routers, around thirty procedures, every input validated by Zod - and no scheduler, because a plan settles its own phase the next time anyone reads it.",
-      cap: '<div class="cap-tag">API server &middot; @bethere/api</div><ul><li><b>Fastify 5</b> on Node hosts <b>tRPC v11</b> - 4 routers, 32 typed procedures</li><li>The demo as real endpoints: <code>events.create &rarr; toggleReaction &rarr; lock &rarr; respond &rarr; resolve</code></li><li><b>Zod</b> validates every input; phases <b>settle on read</b> - no scheduler</li></ul>' },
+    { focus: "client", screen: "24a", label: "Architecture: Frontend",
+      notes: "The frontend is an Expo React Native app, and every screen you see here is one real, typed call - send a plan, vote, lock, the moment, join, your dashboard. One codebase ships to iOS, Android and the web, and that web target is the only reason our no-download onboarding works. React Navigation drives about ten screens; Clerk gives us real Google sign-in, so we never store passwords.",
+      cap: '<div class="cap-tag">Frontend &middot; @bethere/mobile</div><ul><li><b>Expo + React Native</b> - one codebase ships to iOS, Android <i>and</i> web</li><li>Every screen is one <b>typed tRPC call</b> - <code>events.create</code>, <code>respond</code>, <code>joinByCode</code></li><li><b>Clerk</b> handles Google sign-in; the web target makes <b>no-download onboarding</b> possible</li></ul>' },
+    { focus: "api", screen: "24b", label: "Architecture: Backend",
+      notes: "The server is Fastify 5 hosting tRPC v11 on Node. Everything you watched in the demo is a real, typed procedure: events.create sends the plan, toggleReaction is a vote, lock settles the time, respond is the blind moment, resolve clears or fizzles it. The events, groups and users routers hold 32 procedures in all, every input validated by Zod - and no scheduler, because a plan settles its own phase the next time anyone reads it.",
+      cap: '<div class="cap-tag">Backend &middot; @bethere/api</div><ul><li><b>Fastify 5</b> on Node hosts <b>tRPC v11</b> - the events, groups + users routers, 32 typed procedures</li><li>The demo as real endpoints: <code>events.create &rarr; toggleReaction &rarr; lock &rarr; respond &rarr; resolve</code></li><li><b>Zod</b> validates every input; phases <b>settle on read</b> - no scheduler</li></ul>' },
     { focus: "db", screen: "24c", label: "Architecture: Data",
       notes: "Underneath sits Postgres - ten relational tables. Groups, votes and RSVPs are inherently relational, so the database gives us integrity for free, with typed Drizzle queries and no hand-written types. And the privacy rules - no names, blind tallies - live inside those queries, where the client cannot reach them.",
       cap: '<div class="cap-tag">Database &middot; Postgres</div><ul><li><b>Postgres</b> - 10 relational tables give us <b>integrity for free</b></li><li><b>Drizzle ORM</b> - fully typed SQL, no hand-written query types</li><li>The privacy guarantees live <b>inside the queries</b> - server-authoritative, out of reach of the client</li></ul>' },
     { focus: "shared", screen: "24d", label: "Architecture: Shared core",
       notes: "Holding it together is the shared package: Zod schemas plus framework-free pure logic - the vote tally, the conditional-RSVP resolution, the blind reveal. It is the single source of truth, feeding the same types and validation into both client and server, so a change that would break the client fails at compile time, not in front of a user.",
       cap: '<div class="cap-tag">Shared core &middot; @bethere/shared</div><ul><li><b>Zod schemas + framework-free pure logic</b> - vote tally, conditional-RSVP, blind reveal</li><li><b>One source of truth</b>: the same types + validation feed both client and server</li><li>A change that would break the client fails at <b>compile time</b>, not in front of a user</li></ul>' },
-    { focus: "ship", screen: "24e", label: "Architecture: Ship",
+    { focus: "ship", screen: "24e", label: "Architecture: Deployment",
       notes: "And it ships continuously. Every change runs lint, typecheck and the test suite on GitHub Actions, then deploys three targets: the Android APK, the web build to Vercel, and the API as a Docker image to AWS App Runner. Not a localhost demo - a deployed build that real friends used on their own phones.",
-      cap: '<div class="cap-tag">Ship &middot; Git &rarr; CI &rarr; CD</div><ul><li>Every change runs <b>lint, typecheck and tests</b> on GitHub Actions</li><li>Ships continuously: <b>Android APK</b>, <b>web &rarr; Vercel</b>, <b>API &rarr; AWS App Runner</b> (Docker)</li><li>A deployed build real friends used on their own phones - iOS, Android, web</li></ul>' }
+      cap: '<div class="cap-tag">Deployment &middot; Git &rarr; CI &rarr; CD</div><ul><li>Every change runs <b>lint, typecheck and tests</b> on GitHub Actions</li><li>Ships continuously: <b>Android APK</b>, <b>web &rarr; Vercel</b>, <b>API &rarr; AWS App Runner</b> (Docker)</li><li>A deployed build real friends used on their own phones - iOS, Android, web</li></ul>' }
   ];
   var ref = base;
   steps.forEach(function (s) {
