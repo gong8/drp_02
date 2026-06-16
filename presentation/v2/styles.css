@@ -241,3 +241,11 @@
 #deck-steps:empty   { display: none; }
 .deck-pip           { width: 9px; height: 9px; border: 2px solid var(--ink); border-radius: 50%; background: var(--surface); box-sizing: border-box; transition: background .15s ease; }
 .deck-pip.on        { background: var(--pink); }
+
+/* journey curve: the scaffold (axes / bands / labels) is static; each point
+   group fades in and its incoming segment draws (stroke-dashoffset, normalized
+   to a length of 1 via pathLength so every segment draws uniformly). */
+.curve-seg          { fill: none; stroke: var(--ink); stroke-width: 7; stroke-linecap: round; stroke-linejoin: round;
+                      stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset .6s ease; }
+.frag.is-shown .curve-seg { stroke-dashoffset: 0; }
+@media print       { .curve-seg { stroke-dashoffset: 0 !important; } }

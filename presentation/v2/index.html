@@ -47,8 +47,7 @@
   <p style="font-family:Inter;font-weight:500;font-size:28px;color:var(--muted);margin:18px 0 0;">The organiser - one of the two people every group has.</p>
 
   <div style="display:flex;gap:56px;margin-top:42px;flex:1;">
-    <div style="flex-shrink:0;display:flex;flex-direction:column;gap:22px;">
-      <!-- Persona photo (illustrative; AI/stock image used per explicit team decision, overriding the no-AI-faces note). -->
+    <div class="frag frag--left" style="flex-shrink:0;display:flex;flex-direction:column;gap:22px;">
       <div style="width:380px;height:430px;border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);border-radius:0;overflow:hidden;background:var(--sand);">
         <img src="assets/personas/persona-vasanth.jpg" alt="Vasanth" style="width:100%;height:100%;object-fit:cover;object-position:50% 30%;display:block;">
       </div>
@@ -59,15 +58,15 @@
     </div>
 
     <div style="flex:1;display:flex;flex-direction:column;gap:20px;">
-      <div style="background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:6px 6px 0 var(--ink);padding:24px 28px;">
+      <div class="frag" style="background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:6px 6px 0 var(--ink);padding:24px 28px;">
         <div class="eyebrow" style="font-size:20px;color:var(--green);">He wants</div>
         <p style="font-family:Inter;font-weight:600;font-size:30px;line-height:1.3;color:var(--ink);margin:8px 0 0;">To actually see his friends - the easy, reliable get-the-group-together he keeps trying to make happen.</p>
       </div>
-      <div style="background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:6px 6px 0 var(--ink);padding:24px 28px;">
+      <div class="frag" style="background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:6px 6px 0 var(--ink);padding:24px 28px;">
         <div class="eyebrow" style="font-size:20px;color:var(--pink);">He's frustrated by</div>
         <p style="font-family:Inter;font-weight:600;font-size:30px;line-height:1.3;color:var(--ink);margin:8px 0 0;">Being the only one who organises. Suggesting feels like a risk, and then he's left chasing replies that never firm up.</p>
       </div>
-      <div style="background:var(--ink);border:3px solid var(--ink);border-radius:0;box-shadow:6px 6px 0 var(--pink);padding:24px 28px;">
+      <div class="frag" style="background:var(--ink);border:3px solid var(--ink);border-radius:0;box-shadow:6px 6px 0 var(--pink);padding:24px 28px;">
         <div class="eyebrow" style="font-size:20px;color:var(--pink);">He needs from BeThere</div>
         <p style="font-family:Archivo;font-weight:800;font-size:34px;line-height:1.2;color:var(--surface);margin:8px 0 0;">To float a plan without it being <span style="color:var(--pink);">his</span> job to chase.</p>
       </div>
@@ -76,10 +75,7 @@
 </section>
 
 <section data-label="Vasanth, as he felt it" data-screen-label="03" data-speaker-notes="Here is how organising actually feels for Vasanth - a real group trip he tried to set up, mapped the way he experienced it. He sparks the plan, full of hope. Then he's pushing for replies. A few half-hearted maybes trickle in. He's still chasing, days later. People go quiet. And eventually it's just too late, and he gives up. Notice the shape: from his seat, the line only ever goes down. That is the organiser's burden, and nothing in the group chat is built to arrest that fall." class="slide slide--paper" style="padding:84px 110px 76px;">
-  <div style="display:flex;justify-content:space-between;align-items:flex-end;">
-    <h1 class="title" style="font-size:72px;letter-spacing:-3px;">Vasanth's trip, <span class="hl" style="padding:0 14px 6px;">as he felt it</span></h1>
-    <div style="font-family:Inter;font-weight:600;font-size:24px;color:var(--muted);">The organiser's week</div>
-  </div>
+  <h1 class="title" style="font-size:72px;letter-spacing:-3px;">Vasanth's trip, <span class="hl" style="padding:0 14px 6px;">as he felt it</span></h1>
 
   <div style="flex:1;display:flex;align-items:center;margin-top:10px;">
     <svg viewBox="0 0 1760 470" style="width:100%;height:auto;" preserveAspectRatio="xMidYMid meet">
@@ -90,30 +86,40 @@
       <text x="1696" y="226" font-family="Inter" font-weight="700" font-size="20" fill="var(--muted)" text-anchor="end">time &rarr;</text>
       <text x="54" y="112" font-family="Inter" font-weight="700" font-size="22" fill="var(--green)">positive</text>
       <text x="54" y="376" font-family="Inter" font-weight="700" font-size="22" fill="var(--pink)">negative</text>
-      <polyline points="180,90 470,152 760,222 1050,290 1340,352 1610,406" fill="none" stroke="var(--ink)" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"></polyline>
-      <g stroke="var(--ink)" stroke-width="3">
-        <circle cx="180" cy="90" r="13" fill="var(--green)"></circle>
-        <circle cx="470" cy="152" r="13" fill="var(--surface)"></circle>
-        <circle cx="760" cy="222" r="13" fill="var(--surface)"></circle>
-        <circle cx="1050" cy="290" r="13" fill="var(--surface)"></circle>
-        <circle cx="1340" cy="352" r="13" fill="var(--surface)"></circle>
-        <circle cx="1610" cy="406" r="17" fill="var(--pink)"></circle>
+      <g class="frag frag--still">
+        <circle cx="180" cy="90" r="13" fill="var(--green)" stroke="var(--ink)" stroke-width="3"></circle>
+        <text x="180" y="40" font-family="Archivo" font-weight="900" font-size="26" fill="var(--ink)" text-anchor="middle">Sparks it</text>
+        <text x="180" y="64" font-family="Inter" font-weight="500" font-size="19" fill="var(--muted)" text-anchor="middle">&ldquo;we should do this!&rdquo;</text>
       </g>
-      <g font-family="Archivo" font-weight="900" font-size="26" fill="var(--ink)" text-anchor="middle">
-        <text x="180" y="40">Sparks it</text>
-        <text x="470" y="102">Pushes for replies</text>
-        <text x="760" y="172">A few maybes</text>
-        <text x="1050" y="240">Still chasing</text>
-        <text x="1340" y="302">Goes quiet</text>
-        <text x="1610" y="356">Gives up</text>
+      <g class="frag frag--still">
+        <path class="curve-seg" pathLength="1" d="M180,90 L470,152"></path>
+        <circle cx="470" cy="152" r="13" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"></circle>
+        <text x="470" y="102" font-family="Archivo" font-weight="900" font-size="26" fill="var(--ink)" text-anchor="middle">Pushes for replies</text>
+        <text x="470" y="126" font-family="Inter" font-weight="500" font-size="19" fill="var(--muted)" text-anchor="middle">&ldquo;anyone free?&rdquo;</text>
       </g>
-      <g font-family="Inter" font-weight="500" font-size="19" fill="var(--muted)" text-anchor="middle">
-        <text x="180" y="64">&ldquo;we should do this!&rdquo;</text>
-        <text x="470" y="126">&ldquo;anyone free?&rdquo;</text>
-        <text x="760" y="196">non-committal</text>
-        <text x="1050" y="264">days pass</text>
-        <text x="1340" y="326">no replies</text>
-        <text x="1610" y="380">too late</text>
+      <g class="frag frag--still">
+        <path class="curve-seg" pathLength="1" d="M470,152 L760,222"></path>
+        <circle cx="760" cy="222" r="13" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"></circle>
+        <text x="760" y="172" font-family="Archivo" font-weight="900" font-size="26" fill="var(--ink)" text-anchor="middle">A few maybes</text>
+        <text x="760" y="196" font-family="Inter" font-weight="500" font-size="19" fill="var(--muted)" text-anchor="middle">non-committal</text>
+      </g>
+      <g class="frag frag--still">
+        <path class="curve-seg" pathLength="1" d="M760,222 L1050,290"></path>
+        <circle cx="1050" cy="290" r="13" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"></circle>
+        <text x="1050" y="240" font-family="Archivo" font-weight="900" font-size="26" fill="var(--ink)" text-anchor="middle">Still chasing</text>
+        <text x="1050" y="264" font-family="Inter" font-weight="500" font-size="19" fill="var(--muted)" text-anchor="middle">days pass</text>
+      </g>
+      <g class="frag frag--still">
+        <path class="curve-seg" pathLength="1" d="M1050,290 L1340,352"></path>
+        <circle cx="1340" cy="352" r="13" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"></circle>
+        <text x="1340" y="302" font-family="Archivo" font-weight="900" font-size="26" fill="var(--ink)" text-anchor="middle">Goes quiet</text>
+        <text x="1340" y="326" font-family="Inter" font-weight="500" font-size="19" fill="var(--muted)" text-anchor="middle">no replies</text>
+      </g>
+      <g class="frag frag--still">
+        <path class="curve-seg" pathLength="1" d="M1340,352 L1610,406"></path>
+        <circle cx="1610" cy="406" r="17" fill="var(--pink)" stroke="var(--ink)" stroke-width="3"></circle>
+        <text x="1610" y="356" font-family="Archivo" font-weight="900" font-size="26" fill="var(--ink)" text-anchor="middle">Gives up</text>
+        <text x="1610" y="380" font-family="Inter" font-weight="500" font-size="19" fill="var(--muted)" text-anchor="middle">too late</text>
       </g>
     </svg>
   </div>
@@ -124,8 +130,7 @@
   <p style="font-family:Inter;font-weight:500;font-size:28px;color:var(--muted);margin:18px 0 0;">The participant - the other person in every group.</p>
 
   <div style="display:flex;gap:56px;margin-top:42px;flex:1;">
-    <div style="flex-shrink:0;display:flex;flex-direction:column;gap:22px;">
-      <!-- Persona photo (illustrative; AI/stock image used per explicit team decision, overriding the no-AI-faces note). -->
+    <div class="frag frag--left" style="flex-shrink:0;display:flex;flex-direction:column;gap:22px;">
       <div style="width:380px;height:430px;border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);border-radius:0;overflow:hidden;background:var(--sand);">
         <img src="assets/personas/persona-milly.jpg" alt="Milly" style="width:100%;height:100%;object-fit:cover;object-position:50% 28%;display:block;">
       </div>
@@ -136,15 +141,15 @@
     </div>
 
     <div style="flex:1;display:flex;flex-direction:column;gap:20px;">
-      <div style="background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:6px 6px 0 var(--ink);padding:24px 28px;">
+      <div class="frag" style="background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:6px 6px 0 var(--ink);padding:24px 28px;">
         <div class="eyebrow" style="font-size:20px;color:var(--green);">She wants</div>
         <p style="font-family:Inter;font-weight:600;font-size:30px;line-height:1.3;color:var(--ink);margin:8px 0 0;">To be part of the socials and see more of her new friends - to feel comfortable saying yes.</p>
       </div>
-      <div style="background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:6px 6px 0 var(--ink);padding:24px 28px;">
+      <div class="frag" style="background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:6px 6px 0 var(--ink);padding:24px 28px;">
         <div class="eyebrow" style="font-size:20px;color:var(--pink);">She's frustrated by</div>
         <p style="font-family:Inter;font-weight:600;font-size:30px;line-height:1.3;color:var(--ink);margin:8px 0 0;">Not knowing if anyone she knows will actually be there - so she waits, hedges, and the plan stalls on her silence.</p>
       </div>
-      <div style="background:var(--ink);border:3px solid var(--ink);border-radius:0;box-shadow:6px 6px 0 var(--pink);padding:24px 28px;">
+      <div class="frag" style="background:var(--ink);border:3px solid var(--ink);border-radius:0;box-shadow:6px 6px 0 var(--pink);padding:24px 28px;">
         <div class="eyebrow" style="font-size:20px;color:var(--pink);">She needs from BeThere</div>
         <p style="font-family:Archivo;font-weight:800;font-size:34px;line-height:1.2;color:var(--surface);margin:8px 0 0;">To say yes <span style="color:var(--pink);">only if</span> her friends will be there too.</p>
       </div>
@@ -153,10 +158,7 @@
 </section>
 
 <section data-label="Milly, as she felt it" data-screen-label="05" data-speaker-notes="And here is the same week from Milly's side. The netball social drops in the chat - she's keen. But she waits for a friend to say they're in first. A maybe comes back, never a yes. Nobody actually commits. People start quietly dropping out. So she stays home and misses it. The same downward shape as Vasanth - but for the opposite reason. His problem is effort; hers is uncertainty. Two people, one dead plan - and you need to fix both ends to save it." class="slide slide--paper" style="padding:84px 110px 76px;">
-  <div style="display:flex;justify-content:space-between;align-items:flex-end;">
-    <h1 class="title" style="font-size:72px;letter-spacing:-3px;">Milly's social, <span class="hl" style="padding:0 14px 6px;">as she felt it</span></h1>
-    <div style="font-family:Inter;font-weight:600;font-size:24px;color:var(--muted);">The participant's week</div>
-  </div>
+  <h1 class="title" style="font-size:72px;letter-spacing:-3px;">Milly's social, <span class="hl" style="padding:0 14px 6px;">as she felt it</span></h1>
 
   <div style="flex:1;display:flex;align-items:center;margin-top:10px;">
     <svg viewBox="0 0 1760 470" style="width:100%;height:auto;" preserveAspectRatio="xMidYMid meet">
@@ -167,39 +169,48 @@
       <text x="1696" y="226" font-family="Inter" font-weight="700" font-size="20" fill="var(--muted)" text-anchor="end">time &rarr;</text>
       <text x="54" y="112" font-family="Inter" font-weight="700" font-size="22" fill="var(--green)">positive</text>
       <text x="54" y="376" font-family="Inter" font-weight="700" font-size="22" fill="var(--pink)">negative</text>
-      <polyline points="180,95 470,158 760,225 1050,292 1340,352 1610,406" fill="none" stroke="var(--ink)" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"></polyline>
-      <g stroke="var(--ink)" stroke-width="3">
-        <circle cx="180" cy="95" r="13" fill="var(--green)"></circle>
-        <circle cx="470" cy="158" r="13" fill="var(--surface)"></circle>
-        <circle cx="760" cy="225" r="13" fill="var(--surface)"></circle>
-        <circle cx="1050" cy="292" r="13" fill="var(--surface)"></circle>
-        <circle cx="1340" cy="352" r="13" fill="var(--surface)"></circle>
-        <circle cx="1610" cy="406" r="17" fill="var(--pink)"></circle>
+      <g class="frag frag--still">
+        <circle cx="180" cy="95" r="13" fill="var(--green)" stroke="var(--ink)" stroke-width="3"></circle>
+        <text x="180" y="45" font-family="Archivo" font-weight="900" font-size="26" fill="var(--ink)" text-anchor="middle">Sees it</text>
+        <text x="180" y="69" font-family="Inter" font-weight="500" font-size="19" fill="var(--muted)" text-anchor="middle">&ldquo;ooh netball social&rdquo;</text>
       </g>
-      <g font-family="Archivo" font-weight="900" font-size="26" fill="var(--ink)" text-anchor="middle">
-        <text x="180" y="45">Sees it</text>
-        <text x="470" y="108">Waits for a friend</text>
-        <text x="760" y="175">Only maybes</text>
-        <text x="1050" y="242">No one commits</text>
-        <text x="1340" y="302">Drop-outs</text>
-        <text x="1610" y="356">Stays home</text>
+      <g class="frag frag--still">
+        <path class="curve-seg" pathLength="1" d="M180,95 L470,158"></path>
+        <circle cx="470" cy="158" r="13" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"></circle>
+        <text x="470" y="108" font-family="Archivo" font-weight="900" font-size="26" fill="var(--ink)" text-anchor="middle">Waits for a friend</text>
+        <text x="470" y="132" font-family="Inter" font-weight="500" font-size="19" fill="var(--muted)" text-anchor="middle">&ldquo;is anyone going?&rdquo;</text>
       </g>
-      <g font-family="Inter" font-weight="500" font-size="19" fill="var(--muted)" text-anchor="middle">
-        <text x="180" y="69">&ldquo;ooh netball social&rdquo;</text>
-        <text x="470" y="132">&ldquo;is anyone going?&rdquo;</text>
-        <text x="760" y="199">no firm yes</text>
-        <text x="1050" y="266">she holds back</text>
-        <text x="1340" y="326">one by one</text>
-        <text x="1610" y="380">misses it</text>
+      <g class="frag frag--still">
+        <path class="curve-seg" pathLength="1" d="M470,158 L760,225"></path>
+        <circle cx="760" cy="225" r="13" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"></circle>
+        <text x="760" y="175" font-family="Archivo" font-weight="900" font-size="26" fill="var(--ink)" text-anchor="middle">Only maybes</text>
+        <text x="760" y="199" font-family="Inter" font-weight="500" font-size="19" fill="var(--muted)" text-anchor="middle">no firm yes</text>
+      </g>
+      <g class="frag frag--still">
+        <path class="curve-seg" pathLength="1" d="M760,225 L1050,292"></path>
+        <circle cx="1050" cy="292" r="13" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"></circle>
+        <text x="1050" y="242" font-family="Archivo" font-weight="900" font-size="26" fill="var(--ink)" text-anchor="middle">No one commits</text>
+        <text x="1050" y="266" font-family="Inter" font-weight="500" font-size="19" fill="var(--muted)" text-anchor="middle">she holds back</text>
+      </g>
+      <g class="frag frag--still">
+        <path class="curve-seg" pathLength="1" d="M1050,292 L1340,352"></path>
+        <circle cx="1340" cy="352" r="13" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"></circle>
+        <text x="1340" y="302" font-family="Archivo" font-weight="900" font-size="26" fill="var(--ink)" text-anchor="middle">Drop-outs</text>
+        <text x="1340" y="326" font-family="Inter" font-weight="500" font-size="19" fill="var(--muted)" text-anchor="middle">one by one</text>
+      </g>
+      <g class="frag frag--still">
+        <path class="curve-seg" pathLength="1" d="M1340,352 L1610,406"></path>
+        <circle cx="1610" cy="406" r="17" fill="var(--pink)" stroke="var(--ink)" stroke-width="3"></circle>
+        <text x="1610" y="356" font-family="Archivo" font-weight="900" font-size="26" fill="var(--ink)" text-anchor="middle">Stays home</text>
+        <text x="1610" y="380" font-family="Inter" font-weight="500" font-size="19" fill="var(--muted)" text-anchor="middle">misses it</text>
       </g>
     </svg>
   </div>
 </section>
 
 <section data-label="We did the research" data-screen-label="06" data-speaker-notes="Vasanth and Milly are not invented - they are composites of real people we spoke to. To understand why plans really die, we ran three rounds of interviews with university students about their social lives, and then surveyed forty-three more. Everything that follows came straight out of what they told us." class="slide slide--paper" style="padding:96px 110px;justify-content:center;">
-  <div style="font-family:Inter;font-weight:700;font-size:24px;letter-spacing:2px;text-transform:uppercase;color:var(--pink);">The research</div>
-  <p style="font-family:Archivo;font-weight:800;font-size:64px;letter-spacing:-1.5px;line-height:1.22;color:var(--ink);margin:30px 0 0;max-width:1520px;">To understand <span class="hl" style="box-shadow:5px 5px 0 var(--ink);padding:0 14px 4px;">why</span> plans die, we interviewed university students about their social lives - then surveyed 43 more.</p>
-  <p style="font-family:Inter;font-weight:500;font-size:30px;color:var(--muted);margin:30px 0 0;max-width:1320px;">Vasanth and Milly are composites of the people you are about to hear from.</p>
+  <p style="font-family:Archivo;font-weight:800;font-size:64px;letter-spacing:-1.5px;line-height:1.22;color:var(--ink);margin:0;max-width:1520px;">To understand <span class="hl" style="box-shadow:5px 5px 0 var(--ink);padding:0 14px 4px;">why</span> plans die, we interviewed university students about their social lives - then surveyed 43 more.</p>
+  <p class="frag" style="font-family:Inter;font-weight:500;font-size:30px;color:var(--muted);margin:34px 0 0;max-width:1320px;">Vasanth and Milly are composites of the people you are about to hear from.</p>
 </section>
 
 <section data-label="Interview: Eddie" data-screen-label="07" data-speaker-notes="First, the organiser's side. Eddie is a third-year Psychology student at Goldsmiths - the Vasanth of his group. He told us that when he has drummed up a plan, put in considerable time on logistics, pricing, checking everyone is okay with it, and it then falls through, that is genuinely frustrating. That sunk effort, wasted, is exactly the organiser burden we saw in Vasanth's week." class="slide slide--blush" style="padding:84px 110px;flex-direction:row;gap:70px;align-items:center;">
@@ -213,8 +224,7 @@
     </div>
   </div>
   <div style="flex:1;">
-    <div style="font-family:Archivo;font-weight:900;font-size:96px;color:var(--pink);line-height:.4;">&ldquo;</div>
-    <p style="font-family:Archivo;font-weight:700;font-size:46px;line-height:1.3;color:var(--ink);margin:24px 0 0;max-width:900px;">If I drummed up the plan, and it&rsquo;s taken <span style="color:var(--green);">considerable time</span> - logistics, pricing, whether everyone&rsquo;s okay with it - and then it falls through after all of that, that&rsquo;s <span style="color:var(--green);">quite frustrating</span>.</p>
+    <p class="frag" style="font-family:Archivo;font-weight:700;font-size:46px;line-height:1.3;color:var(--ink);margin:0;max-width:900px;">If I drummed up the plan, and it&rsquo;s taken <span style="color:var(--green);">considerable time</span> - logistics, pricing, whether everyone&rsquo;s okay with it - and then it falls through after all of that, that&rsquo;s <span style="color:var(--green);">quite frustrating</span>.</p>
   </div>
 </section>
 
@@ -229,8 +239,7 @@
     </div>
   </div>
   <div style="flex:1;">
-    <div style="font-family:Archivo;font-weight:900;font-size:96px;color:var(--pink);line-height:.4;">&ldquo;</div>
-    <p style="font-family:Archivo;font-weight:700;font-size:46px;line-height:1.3;color:var(--ink);margin:24px 0 0;max-width:900px;">As days went past, the meetup got <span style="color:var(--pink);">more drawn out</span>, second thoughts crept in, and more and more people ended up <span style="color:var(--pink);">pulling out</span>.</p>
+    <p class="frag" style="font-family:Archivo;font-weight:700;font-size:46px;line-height:1.3;color:var(--ink);margin:0;max-width:900px;">As days went past, the meetup got <span style="color:var(--pink);">more drawn out</span>, second thoughts crept in, and more and more people ended up <span style="color:var(--pink);">pulling out</span>.</p>
   </div>
 </section>
 
@@ -245,8 +254,7 @@
     </div>
   </div>
   <div style="flex:1;">
-    <div style="font-family:Archivo;font-weight:900;font-size:96px;color:var(--pink);line-height:.4;">&ldquo;</div>
-    <p style="font-family:Archivo;font-weight:700;font-size:46px;line-height:1.3;color:var(--ink);margin:24px 0 0;max-width:900px;">If I&rsquo;m meeting a friend of a friend, my attendance is <span style="color:var(--purple);">conditional</span> on my friend being there. I&rsquo;ll <span style="color:var(--purple);">wait for them to respond first</span>, then decide.</p>
+    <p class="frag" style="font-family:Archivo;font-weight:700;font-size:46px;line-height:1.3;color:var(--ink);margin:0;max-width:900px;">If I&rsquo;m meeting a friend of a friend, my attendance is <span style="color:var(--purple);">conditional</span> on my friend being there. I&rsquo;ll <span style="color:var(--purple);">wait for them to respond first</span>, then decide.</p>
   </div>
 </section>
 
