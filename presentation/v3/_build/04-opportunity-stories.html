@@ -104,7 +104,7 @@
 
 <section data-label="Before vs after" data-screen-label="22" data-speaker-notes="Step back and look at the shape. The faint line is the old way - the same plan dying in the group chat, the curve we mapped for Vasanth and Milly. On BeThere it starts lower, on purpose, a low-stakes anonymous float instead of a big public ask. But it never collapses: the votes build momentum, the deadline locks it in, the blind moment turns that into commitment. Same Friday, same friends - we only removed the maybe and the organiser, and the whole curve inverts." class="slide slide--blush" style="padding:84px 110px 76px;">
   <h1 class="title" style="font-size:72px;letter-spacing:-3px;">And the curve <span class="hl" style="padding:0 16px 6px;">inverts</span></h1>
-  <p style="font-family:Inter;font-weight:500;font-size:27px;color:var(--muted);margin:14px 0 0;">Same Friday, same friends. The faint line is the group chat today; BeThere bends it upward.</p>
+  <p style="font-family:Inter;font-weight:500;font-size:27px;color:var(--muted);margin:14px 0 0;">Same Friday, same friends. The faint line is Vasanth's journey from before - the same plan in the group chat. BeThere inverts it.</p>
 
   <div style="flex:1;display:flex;align-items:center;margin-top:6px;">
     <svg viewBox="0 0 1760 470" style="width:100%;height:auto;" preserveAspectRatio="xMidYMid meet">
@@ -116,9 +116,19 @@
       <text x="54" y="112" font-family="Inter" font-weight="700" font-size="22" fill="var(--green)">positive</text>
       <text x="54" y="376" font-family="Inter" font-weight="700" font-size="22" fill="var(--pink)">negative</text>
 
-      <!-- the old way: the same plan dying in the group chat (static, faded) -->
-      <polyline points="180,225 470,262 760,300 1050,338 1340,375 1590,406" fill="none" stroke="var(--grey)" stroke-width="5" stroke-dasharray="2 11" stroke-linecap="round" opacity="0.85"></polyline>
-      <text x="1590" y="438" font-family="Inter" font-weight="700" font-size="20" fill="var(--muted)" text-anchor="end">the group chat - it dies</text>
+      <!-- the old way: Vasanth's "as he felt it" journey from slide 3, ghosted -
+           the SAME curve shape from before (hopeful -> dip -> "Yeah I'm in" blip
+           -> "Maybe" -> chases -> gives up), mapped into this viewBox and faded. -->
+      <g opacity="0.5">
+        <polyline points="180,55 450,190 720,140 1007,227 1300,325 1610,408" fill="none" stroke="var(--grey)" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"></polyline>
+        <circle cx="180" cy="55" r="9" fill="var(--surface)" stroke="var(--grey)" stroke-width="3"></circle>
+        <circle cx="450" cy="190" r="8" fill="var(--surface)" stroke="var(--grey)" stroke-width="3"></circle>
+        <circle cx="720" cy="140" r="8" fill="var(--surface)" stroke="var(--grey)" stroke-width="3"></circle>
+        <circle cx="1007" cy="227" r="8" fill="var(--surface)" stroke="var(--grey)" stroke-width="3"></circle>
+        <circle cx="1300" cy="325" r="8" fill="var(--surface)" stroke="var(--grey)" stroke-width="3"></circle>
+        <circle cx="1610" cy="408" r="11" fill="var(--grey)" stroke="var(--grey)" stroke-width="3"></circle>
+      </g>
+      <text x="1610" y="438" font-family="Inter" font-weight="700" font-size="20" fill="var(--muted)" text-anchor="end">the group chat (the curve from before) - it dies</text>
 
       <!-- BeThere: the curve builds upward, segment by segment -->
       <g class="frag frag--still">
