@@ -6,22 +6,34 @@ context. Read this before changing slides.
 
 ## What this is
 
-A self-presenting **HTML slide deck** (38 slides, 16:9, refined-neobrutalist
-BeThere brand). The deck is the source of truth; the submission **PDF is
-generated from it**. There is no build step and no framework - just HTML + CSS +
-a small vanilla runtime. (Static `<section>`s number ~33; the architecture
-**spotlight tour** generates 5 more at load - see "Architecture spotlight tour".)
+A self-presenting **HTML slide deck** (16:9, refined-neobrutalist BeThere
+brand). The deck is the source of truth; the submission **PDF is generated from
+it**. There is no build step and no framework - just HTML + CSS + a small
+vanilla runtime. (Authored `<section>`s number ~38; the architecture
+**spotlight tour** generates 5 more at load, so the PDF is 43 pages - see
+"Architecture spotlight tour".)
+
+**Decks are versioned in self-contained folders. The CURRENT deck is `v1/` -
+edit `v1/index.html` + `v1/styles.css` and export with `v1/export-pdf.sh`.**
+`v0/` is a frozen earlier snapshot; `v2/` is an empty placeholder for the next
+iteration. Each version folder is independent (its own assets + export script),
+so paths below are relative to the version folder you are editing.
 
 ```
 presentation/
-  index.html        the deck: one <section> per slide + the runtime (bottom <script>)
-  styles.css        :root brand tokens + component classes + viewer chrome
-  bethere-deck.pdf  the exported submission PDF (regenerate after edits)
-  export-pdf.sh     headless-Chrome PDF export (faithful: same engine, fonts embedded)
-  README.md         how to present / export (keyboard nav, etc.)
-  assets/sketches/  images referenced by slides
-  reference/        architecture-slides.html (richer arch reference), preview.png
-  context/          design-language-prompt.txt, helpful-documents/, project-context/
+  v1/                 the CURRENT deck (edit this)
+    index.html        the deck: one <section> per slide + the runtime (bottom <script>)
+    styles.css        :root brand tokens + component classes + viewer chrome
+    bethere-deck.pdf  the exported submission PDF (regenerate after edits)
+    export-pdf.sh     headless-Chrome PDF export (faithful: same engine, fonts embedded)
+    README.md         how to present / export (keyboard nav, etc.)
+    assets/           images referenced by slides (personas, process, sketches)
+    reference/        architecture-slides.html (richer arch reference), preview.png
+  v0/                 frozen earlier snapshot of the deck
+  v2/                 next iteration (empty placeholder)
+  context/            design-language-prompt.txt, helpful-documents/, project-context/
+  human/              the team's human-made reference decks
+  CLAUDE.md           this file
 ```
 
 The deck is graded against the **DRP marking rubric**:
