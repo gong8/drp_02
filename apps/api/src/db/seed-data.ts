@@ -7,22 +7,28 @@ import type {
 } from "@bethere/shared";
 
 // The demo seed is curated to mirror the final-presentation deck: the personas Vasanth (the
-// organiser) and Milly (the hesitant participant), "The Boys" as the hero group the live demo
-// sends into, a dashboard with every bucket populated (Going / Open / Done), a blind moment with a
-// pending "I'll go if" conditional to resolve on stage, and a clean invite-link group for the
-// no-download join demo. Keep it coherent with the deck if either changes.
+// organiser) and Milly (the hesitant participant) are the two accounts a real two-phone demo logs
+// in as; "The Boys" is the hero group both share for the live send -> vote -> moment -> clear flow;
+// the dashboard has every bucket populated (Going / Open / Done); a blind moment carries a pending
+// "I'll go if" conditional to resolve on stage. Keep it coherent with the deck if either changes.
 
-// The demo protagonist ("You"). Defaults to the spoofable dev-bypass user u_dev, which is who the
-// phone APK and dev web log in as. For a prod-web + Google demo the presenter is a real Clerk user,
-// so set DEMO_ME_ID to their Clerk user id (and DEMO_ME_NAME to the label) on the App Runner service
-// before reseeding - the seed then makes that account the protagonist across every group and plan.
+// The three BINDABLE identities. Each defaults to a fake seed id, but can be pointed at a real Clerk
+// user id via env on the App Runner service so that signing in with that Google account lands you in
+// the seeded groups/plans AS that persona (the user row is re-created with the persona name on
+// reseed, so a later sign-in is a no-op). Everyone else in DEMO_USERS is a pure prop that never logs
+// in. The mapping for the live (prod-web + Google) demo:
+//   DEMO_VASANTH_ID = <noah's Clerk user id>   (the organiser)
+//   DEMO_MILLY_ID   = <leixin's Clerk user id> (the hesitant participant)
+// ME_ID stays u_dev for the phone APK / dev-web "Continue as test user" fallback path.
 export const ME_ID = process.env.DEMO_ME_ID ?? "u_dev";
 export const ME_NAME = process.env.DEMO_ME_NAME ?? "You";
+export const VASANTH_ID = process.env.DEMO_VASANTH_ID ?? "u_vasanth";
+export const MILLY_ID = process.env.DEMO_MILLY_ID ?? "u_milly";
 
 export const DEMO_USERS = [
   { id: ME_ID, name: ME_NAME, avatarColor: "#5F9472" },
-  { id: "u_vasanth", name: "Vasanth", avatarColor: "#557A6B" },
-  { id: "u_milly", name: "Milly", avatarColor: "#B05F86" },
+  { id: VASANTH_ID, name: "Vasanth", avatarColor: "#557A6B" },
+  { id: MILLY_ID, name: "Milly", avatarColor: "#B05F86" },
   { id: "u_adi", name: "Adi", avatarColor: "#C77D54" },
   { id: "u_lily", name: "Lily", avatarColor: "#5B7DB1" },
   { id: "u_joe", name: "Joe", avatarColor: "#7E6BB0" },
@@ -35,23 +41,25 @@ export const DEMO_USERS = [
 ];
 
 export const GROUPS = [
-  // The hero group: the live demo sends a plan here, and the no-download join demo shares its invite.
+  // The hero group both demo accounts share: the live demo sends a plan here, and the no-download
+  // join demo shares its invite. Vasanth + Milly are both members so the two phones can interact.
   {
     id: "g_boys",
     name: "The Boys",
-    members: [ME_ID, "u_vasanth", "u_adi", "u_joe", "u_nathan", "u_bethan"],
+    members: [ME_ID, VASANTH_ID, MILLY_ID, "u_adi", "u_joe", "u_nathan", "u_bethan"],
   },
-  // Milly's netball society - the home of the "I'll go if my friends go" conditional.
+  // Milly's netball society - her own corner, home of the "I'll go if my friends go" conditional.
   {
     id: "g_netball",
     name: "Netball Society",
-    members: [ME_ID, "u_milly", "u_lily", "u_imogen", "u_zara"],
+    members: [ME_ID, MILLY_ID, "u_lily", "u_imogen", "u_zara"],
   },
   { id: "g_climb", name: "Climbing Group", members: [ME_ID, "u_adi", "u_joe"] },
+  // Vasanth's reunion - his own corner, a Done-bucket history item.
   {
     id: "g_hs",
     name: "High School Reunion",
-    members: [ME_ID, "u_vasanth", "u_imogen", "u_graham", "u_zara"],
+    members: [ME_ID, VASANTH_ID, "u_imogen", "u_graham", "u_zara"],
   },
   { id: "g_knit", name: "Glitter Natters", members: [ME_ID, "u_lily", "u_bethan", "u_noah"] },
 ];
@@ -111,11 +119,12 @@ export interface Plan {
   responses?: Resp[];
 }
 
-// Demo plans cover every dashboard bucket and the deck's demo beats. Every plan is anonymous (names
-// never shown); collecting plans carry PUBLIC +1 counts on both time and activity candidates.
+// Demo plans cover every dashboard bucket for BOTH Vasanth and Milly (and the u_dev fallback), and
+// the deck's demo beats. Every plan is anonymous (names never shown); collecting plans carry PUBLIC
+// +1 counts on both time and activity candidates.
 export const PLANS: Plan[] = [
-  // GOING - the payoff card: a confirmed, still-upcoming meetup you're in. Cleared (RSVP window
-  // already closed) with a future start, five yeses => the deck's "you and four others are in".
+  // GOING - the payoff card: a confirmed, still-upcoming meetup. Cleared (RSVP window already
+  // closed) with a future start; five in, so each of the five sees "you and four others are in".
   {
     id: "e_boys_pub",
     groupId: "g_boys",
@@ -134,42 +143,20 @@ export const PLANS: Plan[] = [
     momentEndsAt: fromNow(-24),
     responses: [
       { userId: ME_ID, kind: "yes" },
+      { userId: VASANTH_ID, kind: "yes" },
+      { userId: MILLY_ID, kind: "yes" },
       { userId: "u_adi", kind: "yes" },
       { userId: "u_joe", kind: "yes" },
-      { userId: "u_nathan", kind: "yes" },
-      { userId: "u_bethan", kind: "yes" },
-      { userId: "u_vasanth", kind: "no" },
+      { userId: "u_nathan", kind: "no" },
+      { userId: "u_bethan", kind: "no" },
     ],
   },
-  // GOING - Milly's story made concrete: a live blind moment you've already committed to, where
-  // Milly's "I'll go if You go" conditional has latched onto your yes (revealed once it clears).
-  {
-    id: "e_netball_social",
-    groupId: "g_netball",
-    createdBy: "u_lily",
-    activity: "Netball social",
-    location: "The SU Bar",
-    contingent: true,
-    quorum: 2,
-    phase: "moment",
-    candidates: [{ suffix: "c1", kind: "time", startsAt: dayAt(1, 20) }],
-    chosenSuffix: "c1",
-    momentStartsAt: fromNow(-2),
-    momentEndsAt: fromNow(5),
-    responses: [
-      { userId: ME_ID, kind: "yes" },
-      { userId: "u_lily", kind: "yes" },
-      { userId: "u_milly", kind: "conditional", cond: { mode: "any", targetIds: [ME_ID] } },
-      { userId: "u_zara", kind: "conditional", cond: { mode: "any", targetIds: ["u_lily"] } },
-      { userId: "u_imogen", kind: "no" },
-    ],
-  },
-  // OPEN + action required - the live "I'll go if" beat: a blind moment you have NOT answered yet,
-  // so you can answer it on stage. Nathan's conditional is already waiting in the background.
+  // OPEN + action required - the live "I'll go if" beat: a blind moment Vasanth, Milly and you have
+  // NOT answered yet, so either phone can answer it on stage. Nathan's conditional already waits.
   {
     id: "e_boys_bowling",
     groupId: "g_boys",
-    createdBy: "u_joe",
+    createdBy: "u_adi",
     activity: "Bowling",
     location: "TenPin Bexleyheath",
     contingent: true,
@@ -191,7 +178,7 @@ export const PLANS: Plan[] = [
   {
     id: "e_boys_cinema",
     groupId: "g_boys",
-    createdBy: "u_vasanth",
+    createdBy: VASANTH_ID,
     activity: "Dune: Part Two",
     location: "Cineworld Bexleyheath",
     contingent: true,
@@ -204,10 +191,56 @@ export const PLANS: Plan[] = [
         suffix: "c1",
         kind: "time",
         startsAt: dayAt(2, 18),
-        reactedBy: [ME_ID, "u_adi", "u_joe", "u_nathan"],
+        reactedBy: [ME_ID, VASANTH_ID, MILLY_ID, "u_adi"],
       },
-      { suffix: "c2", kind: "time", startsAt: dayAt(2, 20), reactedBy: ["u_bethan", "u_vasanth"] },
-      { suffix: "c3", kind: "time", startsAt: dayAt(3, 14), reactedBy: ["u_adi"] },
+      { suffix: "c2", kind: "time", startsAt: dayAt(2, 20), reactedBy: ["u_joe", "u_nathan"] },
+      { suffix: "c3", kind: "time", startsAt: dayAt(3, 14), reactedBy: ["u_bethan"] },
+    ],
+  },
+  // DONE - The Boys history: a past kickabout that happened, so both Vasanth and Milly have a Done
+  // item in the hero group.
+  {
+    id: "e_boys_football",
+    groupId: "g_boys",
+    createdBy: "u_joe",
+    activity: "Five-a-side football",
+    location: "Goals Wembley",
+    contingent: false,
+    quorum: 1,
+    phase: "cleared",
+    candidates: [{ suffix: "c1", kind: "time", startsAt: dayAt(-1, 18) }],
+    chosenSuffix: "c1",
+    momentStartsAt: fromNow(-26),
+    momentEndsAt: fromNow(-24),
+    responses: [
+      { userId: ME_ID, kind: "yes" },
+      { userId: VASANTH_ID, kind: "yes" },
+      { userId: MILLY_ID, kind: "yes" },
+      { userId: "u_adi", kind: "yes" },
+      { userId: "u_joe", kind: "no" },
+    ],
+  },
+  // GOING (for Milly) - her story made concrete: a live blind moment she's already committed to,
+  // where Zara's "I'll go if Lily goes" conditional has latched on (revealed once it clears).
+  {
+    id: "e_netball_social",
+    groupId: "g_netball",
+    createdBy: "u_lily",
+    activity: "Netball social",
+    location: "The SU Bar",
+    contingent: true,
+    quorum: 2,
+    phase: "moment",
+    candidates: [{ suffix: "c1", kind: "time", startsAt: dayAt(1, 20) }],
+    chosenSuffix: "c1",
+    momentStartsAt: fromNow(-2),
+    momentEndsAt: fromNow(5),
+    responses: [
+      { userId: ME_ID, kind: "yes" },
+      { userId: MILLY_ID, kind: "yes" },
+      { userId: "u_lily", kind: "yes" },
+      { userId: "u_zara", kind: "conditional", cond: { mode: "any", targetIds: ["u_lily"] } },
+      { userId: "u_imogen", kind: "no" },
     ],
   },
   // OPEN - both axes open: a collecting plan with no name yet, so the winning ACTIVITY resolves into
@@ -245,11 +278,11 @@ export const PLANS: Plan[] = [
       },
     ],
   },
-  // DONE - history: Vasanth's reunion dinner, cleared and in the past.
+  // DONE (for Vasanth) - his reunion dinner, cleared and in the past.
   {
     id: "e_hs_dinner",
     groupId: "g_hs",
-    createdBy: "u_vasanth",
+    createdBy: VASANTH_ID,
     activity: "Reunion dinner",
     location: "La Palombe",
     contingent: true,
@@ -264,13 +297,13 @@ export const PLANS: Plan[] = [
     momentEndsAt: fromNow(-48),
     responses: [
       { userId: ME_ID, kind: "yes" },
-      { userId: "u_vasanth", kind: "yes" },
+      { userId: VASANTH_ID, kind: "yes" },
       { userId: "u_imogen", kind: "yes" },
       { userId: "u_zara", kind: "yes" },
       { userId: "u_graham", kind: "no" },
     ],
   },
-  // DONE - history: a small craft night that happened, cleared in the past.
+  // DONE - a small craft night that happened (populates the u_dev fallback dashboard's history).
   {
     id: "e_knit_craft",
     groupId: "g_knit",
