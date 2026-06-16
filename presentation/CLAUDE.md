@@ -23,6 +23,13 @@ presentation/
   context/          design-language-prompt.txt, helpful-documents/, project-context/
 ```
 
+The deck is graded against the **DRP marking rubric**:
+`context/helpful-documents/assessment-template-2026.md` (Claude-readable conversion
+of the official `Assesment_Template_2026.pdf`). The **Final Project Evaluation
+(50%)** scoring sheet there is what the presentation + demo are marked on - check
+slides cover its criteria (problem, target audience, stakeholder groups, technical
+quality, architecture diagram, evaluation/future work).
+
 ## How to edit a slide
 
 Each slide is one `<section>` in `index.html` with three data-attributes:
