@@ -13,26 +13,32 @@ vanilla runtime. (Authored `<section>`s number ~38; the architecture
 **spotlight tour** generates 5 more at load, so the PDF is 43 pages - see
 "Architecture spotlight tour".)
 
-**Decks are versioned in self-contained folders. The CURRENT deck is `v1/` -
-edit `v1/index.html` + `v1/styles.css` and export with `v1/export-pdf.sh`.**
-`v0/` is a frozen earlier snapshot; `v2/` is an empty placeholder for the next
-iteration. Each version folder is independent (its own assets + export script),
-so paths below are relative to the version folder you are editing.
+**Decks are versioned in self-contained folders. The CURRENT (final) deck is
+`v3/` - edit `v3/index.html` + `v3/styles.css` and export with
+`v3/export-pdf.sh`.** `v3/` keeps `v2/`'s animated engine and visual language and
+folds in the team's human deck (`reformat/`) for the persona/problem framing,
+the four user stories, and the whole evaluation / impact / looking-ahead
+section; it has 41 slides and uses the team's official survey figures (n=47).
+`v0/`, `v1/` and `v2/` are frozen earlier snapshots; `reformat/` is the team's
+human-made reference deck (re-styled in the brand). Each version folder is
+independent (its own assets + export script), so paths below are relative to the
+version folder you are editing.
 
 ```
 presentation/
-  v1/                 the CURRENT deck (edit this)
+  v3/                 the CURRENT (final) deck (edit this)
     index.html        the deck: one <section> per slide + the runtime (bottom <script>)
     styles.css        :root brand tokens + component classes + viewer chrome
     bethere-deck.pdf  the exported submission PDF (regenerate after edits)
     export-pdf.sh     headless-Chrome PDF export (faithful: same engine, fonts embedded)
     README.md         how to present / export (keyboard nav, etc.)
-    assets/           images referenced by slides (personas, process, sketches)
+    assets/           images referenced by slides (personas, screens, sketches, process)
+    _build/           ordered fragments the index.html is concatenated from
     reference/        architecture-slides.html (richer arch reference), preview.png
-  v0/                 frozen earlier snapshot of the deck
-  v2/                 next iteration (empty placeholder)
+  v0/ v1/ v2/         frozen earlier snapshots (v2 = the animated rebuild v3 is built on)
+  reformat/           the team's human-made reference deck (re-styled in the brand)
   context/            design-language-prompt.txt, helpful-documents/, project-context/
-  human/              the team's human-made reference decks
+  human/              the team's raw human-made reference decks (PDFs)
   CLAUDE.md           this file
 ```
 
