@@ -766,7 +766,7 @@
   <div class="frag" style="margin-top:auto;display:flex;align-items:center;gap:16px;font-family:Inter;font-weight:600;font-size:26px;color:var(--ink);"><span style="font-family:Archivo;font-weight:800;color:var(--pink);">&ldquo;It&rsquo;s just a link - that feels much more seamless.&rdquo;</span> - Luca <span style="font-family:'Space Mono',monospace;font-weight:700;color:var(--muted);font-size:22px;">DRP-50 &middot; DRP-56</span></div>
 </section>
 
-<section id="arch-base" data-label="Architecture" data-screen-label="24" data-speaker-notes="Quickly, under the hood. BeThere is one typed pnpm monorepo - TypeScript runs end to end, from the database all the way to the screen. Here is the whole system on a single diagram; let me walk each layer in turn - the client, the API, the data, the shared core that ties them together, and how it all ships. [Advance to spotlight each layer.]" class="slide slide--paper arch" style="padding:64px 90px 290px;">
+<section id="arch-base" data-label="Architecture" data-screen-label="24" data-speaker-notes="Quickly, under the hood. BeThere is one typed pnpm monorepo - TypeScript runs end to end, from the database all the way to the screen. Here is the whole system on a single diagram; let me walk each layer in turn - the client, the API, the data, the shared core that ties them together, and how it all ships. [Advance to spotlight each layer.]" data-focus-steps="client api db shared ship" class="slide slide--paper arch" style="padding:64px 90px 290px;">
   <div class="scrim"></div>
   <h1 class="title arch-title" style="font-size:70px;letter-spacing:-3px;">Under the <span class="hl" style="padding:0 16px 6px;">hood</span></h1>
   <div class="arch-sub">One typed pnpm monorepo &middot; TypeScript end to end</div>
@@ -798,12 +798,12 @@
             </div>
           </div>
           <div class="screen-rows">
-            <div class="screen-row"><span class="sr-name">Send a plan</span><span class="sr-ep">events.create</span><span class="sr-arrow"></span></div>
-            <div class="screen-row"><span class="sr-name">Vote / +1</span><span class="sr-ep">events.toggleReaction</span><span class="sr-arrow"></span></div>
-            <div class="screen-row"><span class="sr-name">Lock the round</span><span class="sr-ep">events.lock</span><span class="sr-arrow"></span></div>
-            <div class="screen-row"><span class="sr-name">The blind moment</span><span class="sr-ep">events.respond</span><span class="sr-arrow"></span></div>
-            <div class="screen-row"><span class="sr-name">Join by link</span><span class="sr-ep">groups.joinByCode</span><span class="sr-arrow"></span></div>
-            <div class="screen-row"><span class="sr-name">Your dashboard</span><span class="sr-ep">events.mine</span><span class="sr-arrow"></span></div>
+            <div class="screen-row"><span class="sr-name">Send a plan</span></div>
+            <div class="screen-row"><span class="sr-name">Vote / +1</span></div>
+            <div class="screen-row"><span class="sr-name">Lock the round</span></div>
+            <div class="screen-row"><span class="sr-name">The blind moment</span></div>
+            <div class="screen-row"><span class="sr-name">Join by link</span></div>
+            <div class="screen-row"><span class="sr-name">Your dashboard</span></div>
           </div>
         </div>
       </div>
@@ -826,7 +826,7 @@
                 <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-drizzle"><use href="#l-drizzle"/></svg></span>
               </div>
             </div>
-            <div class="tier-names" style="font-size:13.5px;">Node &middot; Fastify 5 &middot; tRPC v11 &middot; Zod-validated</div>
+            <div class="tier-names">Node &middot; Fastify 5 &middot; tRPC v11 &middot; Zod-validated</div>
             <div class="router-row">
               <span class="router-chip">events</span><span class="router-chip">groups</span><span class="router-chip">users</span>
               <span class="router-note">32 typed procedures</span>
@@ -845,15 +845,55 @@
     </div>
 
     <div class="arch-shared spot spot--shared">
-      <span style="font-family:'Space Mono',monospace;font-weight:700;font-size:15px;background:var(--ink);color:var(--surface);padding:6px 11px;white-space:nowrap;">@bethere/shared</span>
+      <span style="font-family:'Space Mono',monospace;font-weight:700;font-size:16px;background:var(--ink);color:var(--surface);padding:6px 11px;white-space:nowrap;">@bethere/shared</span>
       <span class="logo" style="width:42px;height:42px;padding:7px;"><svg class="ico i-zod"><use href="#l-zod"/></svg></span>
       <span class="logo" style="width:42px;height:42px;padding:7px;"><svg class="ico i-ts"><use href="#l-ts"/></svg></span>
-      <span style="font-family:Inter;font-weight:500;font-size:18px;color:var(--ink);line-height:1.3;"><b>Single source of truth.</b> Zod schemas + framework-free pure logic - <b>vote tally &middot; conditional-RSVP &middot; blind reveal</b> - feed the same types + validation into client and server.</span>
+      <span style="font-family:Inter;font-weight:600;font-size:20px;color:var(--ink);line-height:1.3;"><b>One source of truth.</b> Zod schemas + pure logic - vote tally, conditional-RSVP, blind reveal - typed into both client and server.</span>
     </div>
   </div>
 
-  <div class="arch-hint">tap / click to walk through each layer &darr;</div>
-  <div class="arch-cap"></div>
+  <div class="arch-hint">press <b>&rarr;</b> to walk through each layer &darr;</div>
+
+  <div class="arch-cap" data-for="client">
+    <div class="cap-tag">Frontend &middot; @bethere/mobile</div>
+    <ul>
+      <li><b>Expo + React Native</b> - one codebase ships to iOS, Android <i>and</i> web</li>
+      <li>Every screen is one <b>typed tRPC call</b> - <code>events.create</code>, <code>respond</code>, <code>joinByCode</code></li>
+      <li><b>Clerk</b> (third-party) for Google sign-in; the web target makes <b>no-download onboarding</b> possible</li>
+    </ul>
+  </div>
+  <div class="arch-cap" data-for="api">
+    <div class="cap-tag">Backend &middot; @bethere/api</div>
+    <ul>
+      <li><b>Fastify 5</b> + <b>tRPC v11</b> on Node - the events, groups + users routers, <b>32 typed procedures</b></li>
+      <li>The demo as real endpoints: <code>create &rarr; toggleReaction &rarr; lock &rarr; respond &rarr; resolve</code></li>
+      <li><b>Zod</b> validates every input; phases <b>settle on read</b> - no scheduler</li>
+    </ul>
+  </div>
+  <div class="arch-cap" data-for="db">
+    <div class="cap-tag">Data &middot; Postgres</div>
+    <ul>
+      <li><b>Postgres</b> - 10 relational tables give us <b>integrity for free</b></li>
+      <li><b>Drizzle ORM</b> - fully typed SQL, no hand-written query types</li>
+      <li>The privacy guarantees live <b>inside the queries</b>, out of the client&rsquo;s reach</li>
+    </ul>
+  </div>
+  <div class="arch-cap" data-for="shared">
+    <div class="cap-tag">Shared core &middot; @bethere/shared</div>
+    <ul>
+      <li><b>Zod schemas + framework-free logic</b> - vote tally, conditional-RSVP, blind reveal</li>
+      <li><b>One source of truth</b> feeds the same types + validation into client and server</li>
+      <li>A change that would break the client fails at <b>compile time</b>, not in front of a user</li>
+    </ul>
+  </div>
+  <div class="arch-cap" data-for="ship">
+    <div class="cap-tag">Deployment &middot; Git &rarr; CI &rarr; CD</div>
+    <ul>
+      <li>Every push runs <b>lint, typecheck and tests</b> on GitHub Actions</li>
+      <li>Ships <b>Android APK</b>, <b>web &rarr; Vercel</b>, <b>API &rarr; AWS App Runner</b> (Docker)</li>
+      <li>A deployed build real friends used on their own phones - iOS, Android, web</li>
+    </ul>
+  </div>
 </section>
 
 <section data-label="Why this stack" data-screen-label="25" data-speaker-notes="And why these technologies - not because we like them, but for what they let us do. tRPC with a shared Zod package means one schema is the single source of truth, so a server change that would break the client fails at compile time, not in front of a user. Expo gave us iOS, Android and web from one codebase - which is the only reason the no-download web onboarding was even possible. Postgres with typed Drizzle queries lets the privacy guarantees live in the database layer, where users can't reach them. And resolving phases lazily means there's no background job to drift out of sync." class="slide slide--blush" style="padding:84px 110px 76px;">
@@ -1059,47 +1099,6 @@
   <p class="nlabel" id="n-label"></p>
   <p class="nbody" id="n-body"></p>
 </aside>
-
-<script>
-/* Architecture spotlight tour: clone #arch-base once per focus step so the
-   diagram is pixel-identical on every page and each highlight is its own
-   <section> (its own PDF page). Must run before the deck runtime collects
-   slides, so it lives in its own script block above the runtime. */
-(function () {
-  var base = document.getElementById("arch-base");
-  if (!base) return;
-  var steps = [
-    { focus: "client", screen: "24a", label: "Architecture: Frontend",
-      notes: "The frontend is an Expo React Native app, and every screen you see here is one real, typed call - send a plan, vote, lock, the moment, join, your dashboard. One codebase ships to iOS, Android and the web, and that web target is the only reason our no-download onboarding works. React Navigation drives about ten screens; Clerk gives us real Google sign-in, so we never store passwords.",
-      cap: '<div class="cap-tag">Frontend &middot; @bethere/mobile</div><ul><li><b>Expo + React Native</b> - one codebase ships to iOS, Android <i>and</i> web</li><li>Every screen is one <b>typed tRPC call</b> - <code>events.create</code>, <code>respond</code>, <code>joinByCode</code></li><li><b>Clerk</b> handles Google sign-in; the web target makes <b>no-download onboarding</b> possible</li></ul>' },
-    { focus: "api", screen: "24b", label: "Architecture: Backend",
-      notes: "The server is Fastify 5 hosting tRPC v11 on Node. Everything you watched in the demo is a real, typed procedure: events.create sends the plan, toggleReaction is a vote, lock settles the time, respond is the blind moment, resolve clears or fizzles it. The events, groups and users routers hold 32 procedures in all, every input validated by Zod - and no scheduler, because a plan settles its own phase the next time anyone reads it.",
-      cap: '<div class="cap-tag">Backend &middot; @bethere/api</div><ul><li><b>Fastify 5</b> on Node hosts <b>tRPC v11</b> - the events, groups + users routers, 32 typed procedures</li><li>The demo as real endpoints: <code>events.create &rarr; toggleReaction &rarr; lock &rarr; respond &rarr; resolve</code></li><li><b>Zod</b> validates every input; phases <b>settle on read</b> - no scheduler</li></ul>' },
-    { focus: "db", screen: "24c", label: "Architecture: Data",
-      notes: "Underneath sits Postgres - ten relational tables. Groups, votes and RSVPs are inherently relational, so the database gives us integrity for free, with typed Drizzle queries and no hand-written types. And the privacy rules - no names, blind tallies - live inside those queries, where the client cannot reach them.",
-      cap: '<div class="cap-tag">Database &middot; Postgres</div><ul><li><b>Postgres</b> - 10 relational tables give us <b>integrity for free</b></li><li><b>Drizzle ORM</b> - fully typed SQL, no hand-written query types</li><li>The privacy guarantees live <b>inside the queries</b> - server-authoritative, out of reach of the client</li></ul>' },
-    { focus: "shared", screen: "24d", label: "Architecture: Shared core",
-      notes: "Holding it together is the shared package: Zod schemas plus framework-free pure logic - the vote tally, the conditional-RSVP resolution, the blind reveal. It is the single source of truth, feeding the same types and validation into both client and server, so a change that would break the client fails at compile time, not in front of a user.",
-      cap: '<div class="cap-tag">Shared core &middot; @bethere/shared</div><ul><li><b>Zod schemas + framework-free pure logic</b> - vote tally, conditional-RSVP, blind reveal</li><li><b>One source of truth</b>: the same types + validation feed both client and server</li><li>A change that would break the client fails at <b>compile time</b>, not in front of a user</li></ul>' },
-    { focus: "ship", screen: "24e", label: "Architecture: Deployment",
-      notes: "And it ships continuously. Every change runs lint, typecheck and the test suite on GitHub Actions, then deploys three targets: the Android APK, the web build to Vercel, and the API as a Docker image to AWS App Runner. Not a localhost demo - a deployed build that real friends used on their own phones.",
-      cap: '<div class="cap-tag">Deployment &middot; Git &rarr; CI &rarr; CD</div><ul><li>Every change runs <b>lint, typecheck and tests</b> on GitHub Actions</li><li>Ships continuously: <b>Android APK</b>, <b>web &rarr; Vercel</b>, <b>API &rarr; AWS App Runner</b> (Docker)</li><li>A deployed build real friends used on their own phones - iOS, Android, web</li></ul>' }
-  ];
-  var ref = base;
-  steps.forEach(function (s) {
-    var sec = base.cloneNode(true);
-    sec.removeAttribute("id");
-    sec.setAttribute("data-focus", s.focus);
-    sec.setAttribute("data-screen-label", s.screen);
-    sec.setAttribute("data-label", s.label);
-    sec.setAttribute("data-speaker-notes", s.notes);
-    var cap = sec.querySelector(".arch-cap");
-    if (cap) cap.innerHTML = s.cap;
-    ref.after(sec);
-    ref = sec;
-  });
-})();
-</script>
 
 <script>
 (function () {

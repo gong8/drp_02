@@ -182,10 +182,10 @@
 /* tier card chrome */
 .tier-h            { color: var(--surface); padding: 12px 18px; font-family: Archivo; font-weight: 800; font-size: 20px; letter-spacing: .03em; text-transform: uppercase; border-bottom: 3px solid var(--ink); }
 .tier-b            { padding: 18px; display: flex; flex-direction: column; gap: 15px; flex: 1; }
-.tier-pkg          { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 13.5px; color: var(--ink); background: var(--paper); border: 2px solid var(--ink); padding: 3px 9px; align-self: flex-start; }
-.tier-names        { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 14.5px; color: var(--muted-2); line-height: 1.5; }
+.tier-pkg          { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 15px; color: var(--ink); background: var(--paper); border: 2px solid var(--ink); padding: 3px 9px; align-self: flex-start; }
+.tier-names        { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 17px; color: var(--muted-2); line-height: 1.5; }
 .arch-conn         { flex: 0 0 116px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px; }
-.arch-conn .lbl    { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 12.5px; color: var(--surface); background: var(--ink); text-align: center; line-height: 1.2; padding: 4px 8px; max-width: 104px; }
+.arch-conn .lbl    { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 14px; color: var(--surface); background: var(--ink); text-align: center; line-height: 1.2; padding: 4px 8px; max-width: 112px; }
 
 /* shared band + ship row */
 .arch-shared       { background: var(--warm); border: 3px solid var(--ink); box-shadow: var(--sh); padding: 15px 22px; display: flex; align-items: center; gap: 18px; margin-top: 26px; }
@@ -194,7 +194,11 @@
 
 /* caption box (the per-step descriptor) - lives in the reserved lower band */
 .arch-cap          { position: absolute; left: 90px; right: 90px; bottom: 58px; z-index: 40; background: var(--surface); border: 3px solid var(--ink); box-shadow: var(--sh-lg); padding: 22px 30px 24px; display: none; }
-.arch[data-focus] .arch-cap { display: block; }
+.arch[data-focus="client"] .arch-cap[data-for="client"],
+.arch[data-focus="api"]    .arch-cap[data-for="api"],
+.arch[data-focus="db"]     .arch-cap[data-for="db"],
+.arch[data-focus="shared"] .arch-cap[data-for="shared"],
+.arch[data-focus="ship"]   .arch-cap[data-for="ship"] { display: block; }
 .arch-cap .cap-tag { display: inline-block; font-family: Archivo; font-weight: 800; font-size: 16px; letter-spacing: .08em; text-transform: uppercase; color: var(--surface); background: var(--ink); padding: 5px 13px; margin-bottom: 15px; }
 .arch-cap ul       { margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
 .arch-cap li       { list-style: none; font-family: Inter; font-weight: 500; font-size: 23px; line-height: 1.32; color: var(--ink); padding-left: 36px; position: relative; }
@@ -208,16 +212,16 @@
 .acol-meta         { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .screen-rows       { display: flex; flex-direction: column; gap: 8px; margin-top: 2px; }
 .screen-row        { display: flex; align-items: center; gap: 10px; border: 2px solid var(--ink); border-left: 6px solid var(--pink); background: var(--paper); padding: 8px 11px; }
-.sr-name           { font-family: Archivo; font-weight: 800; font-size: 17px; color: var(--ink); white-space: nowrap; }
+.sr-name           { font-family: Archivo; font-weight: 800; font-size: 20px; color: var(--ink); white-space: nowrap; }
 .sr-ep             { margin-left: auto; font-family: 'Space Mono', monospace; font-weight: 700; font-size: 13px; color: var(--purple); background: var(--surface); border: 2px solid var(--ink); padding: 2px 8px; white-space: nowrap; }
 .sr-arrow          { flex: 0 0 auto; width: 0; height: 0; border-top: 7px solid transparent; border-bottom: 7px solid transparent; border-left: 11px solid var(--ink); }
 .arch-rightcol     { display: flex; flex-direction: column; }
 .arch-vconn        { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 8px 0; }
 .arch-vconn .arrow-vhead { width: 0; height: 0; border-left: 13px solid transparent; border-right: 13px solid transparent; border-top: 18px solid var(--ink); }
-.arch-vconn .lbl   { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 13px; color: var(--surface); background: var(--ink); padding: 4px 9px; }
+.arch-vconn .lbl   { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 15px; color: var(--surface); background: var(--ink); padding: 4px 9px; }
 .router-row        { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; margin-top: 2px; }
-.router-chip       { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 14px; color: var(--ink); background: var(--paper); border: 2px solid var(--ink); padding: 3px 10px; }
-.router-note       { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 12.5px; color: var(--muted-2); }
+.router-chip       { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 16px; color: var(--ink); background: var(--paper); border: 2px solid var(--ink); padding: 3px 10px; }
+.router-note       { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 14px; color: var(--muted-2); }
 
 /* =====================================================================
    BUILD ENGINE  - intra-slide fragments, one revealed per Right-arrow press.
