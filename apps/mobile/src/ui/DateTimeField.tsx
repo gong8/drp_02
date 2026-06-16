@@ -42,6 +42,15 @@ export function clampDate(d: Date, min?: Date, max?: Date): Date {
   return ms === d.getTime() ? d : new Date(ms);
 }
 
+// Guard inverted date bounds before they reach the native picker: minimumDate > maximumDate throws a
+// native exception (a hard crash) on both iOS and Android. When the max sits before the min, drop it -
+// the picker keeps its lower bound and stays open. Defense in depth behind callers that should already
+// avoid an inverted window (see PhaseViews.addTimeWindow).
+export function safeMaxDate(min?: Date, max?: Date): Date | undefined {
+  if (min && max && max.getTime() < min.getTime()) return undefined;
+  return max;
+}
+
 // Seed the picker from the current value, falling back to a sensible "now". Parsing lives in
 // lib/format's parseLocalDate/parseLocalTime (the inverse builders, which keep the "never
 // new Date(string)" invariant in one place). In date mode the result is clamped to [min, max] so
@@ -94,7 +103,8 @@ export function DateTimeField({
   // interval applies to time mode, the date bounds to date mode. Used at both the Android and iOS sites.
   const isDate = mode === "date";
   const gatedMin = isDate ? minimumDate : undefined;
-  const gatedMax = isDate ? maximumDate : undefined;
+  // safeMaxDate drops an inverted max (max before min) so the native picker never gets min > max.
+  const gatedMax = isDate ? safeMaxDate(minimumDate, maximumDate) : undefined;
   const gatedInterval = isDate ? undefined : minuteInterval;
 
   const shown = displayValue(mode, value);

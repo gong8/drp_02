@@ -310,6 +310,27 @@ describe("EventDetail - adding a time is bounded and fails gracefully", () => {
     expect(screen.getByText("Bowling")).toBeOnTheScreen();
     expect(screen.queryByText("Couldn't reach the server.")).toBeNull();
   });
+
+  test("a fully-elapsed window hides the add-time composer (no crash-prone picker)", async () => {
+    // The exact live-demo crash shape: a collecting plan whose entire candidate spread is in the past
+    // and has no decides-by, so the add window has closed. Offering the picker here fed inverted
+    // min > max bounds to the native date picker and hard-crashed the app, so the composer must be gone.
+    const PAST = new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString();
+    const PAST2 = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString();
+    mockQuery(
+      trpc.events.get,
+      collectingDetail({
+        decidesBy: null,
+        timeCandidates: [
+          { id: "t1", startsAt: PAST, partOfDay: null, count: 3, mine: false },
+          { id: "t2", startsAt: PAST2, partOfDay: null, count: 1, mine: true },
+        ],
+      }),
+    );
+    renderScreen(EventDetail, { eventId: "e1" });
+    await screen.findByText("Bowling");
+    expect(screen.queryByText("+ add a time")).toBeNull();
+  });
 });
 
 describe("EventDetail - Lock control is creator-only", () => {

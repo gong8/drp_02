@@ -13,7 +13,7 @@ jest.mock("@react-native-community/datetimepicker", () => ({
   DateTimePickerAndroid: { open: jest.fn() },
 }));
 
-import { clampDate } from "./DateTimeField";
+import { clampDate, safeMaxDate } from "./DateTimeField";
 
 // Numeric Date constructor -> always local wall-clock in every engine, so these instants are
 // zone-independent (same strategy as lib/__tests__/format.test.ts).
@@ -52,5 +52,28 @@ describe("clampDate", () => {
     const v = at(2026, 6, 1);
     const out = clampDate(v, at(2026, 6, 5), at(2026, 6, 20));
     expect(out.getTime()).toBe(at(2026, 6, 5).getTime());
+  });
+});
+
+// Defense in depth behind callers (e.g. AddTime): a max BEFORE the min is inverted bounds, and feeding
+// minimumDate > maximumDate to the native date picker throws a native exception that hard-crashes the
+// app. safeMaxDate drops such a max so the picker only ever sees a valid (or absent) upper bound.
+describe("safeMaxDate", () => {
+  test("drops an inverted max so the picker never sees min > max", () => {
+    expect(safeMaxDate(at(2026, 6, 10), at(2026, 6, 5))).toBeUndefined();
+  });
+
+  test("keeps a valid max that sits after the min", () => {
+    const max = at(2026, 6, 20);
+    expect(safeMaxDate(at(2026, 6, 5), max)?.getTime()).toBe(max.getTime());
+  });
+
+  test("keeps the max when there is no min to compare against", () => {
+    const max = at(2026, 6, 20);
+    expect(safeMaxDate(undefined, max)?.getTime()).toBe(max.getTime());
+  });
+
+  test("is undefined when no max is given", () => {
+    expect(safeMaxDate(at(2026, 6, 5), undefined)).toBeUndefined();
   });
 });

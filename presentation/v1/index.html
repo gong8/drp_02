@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BeThere - DRP Final Presentation</title>
+<meta name="description" content="BeThere - turning 'we should hang out' into a firm plan. No organiser. No maybe. DRP Group 02 final presentation.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!-- tech-logo sprite (simple-icons, CC0). Hidden; instantiated by <use href="#l-*">.
+     Kept outside #deck-canvas so the runtime never treats it as a slide. -->
+<svg aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="l-expo" viewBox="0 0 24 24"><path d="M0 20.084c.043.53.23 1.063.718 1.778.58.849 1.576 1.315 2.303.567.49-.505 5.794-9.776 8.35-13.29a.761.761 0 011.248 0c2.556 3.514 7.86 12.785 8.35 13.29.727.748 1.723.282 2.303-.567.57-.835.728-1.42.728-2.046 0-.426-8.26-15.798-9.092-17.078-.8-1.23-1.044-1.498-2.397-1.542h-1.032c-1.353.044-1.597.311-2.398 1.542C8.267 3.991.33 18.758 0 19.77Z"/></symbol>
+  <symbol id="l-react" viewBox="0 0 24 24"><path d="M14.23 12.004a2.236 2.236 0 0 1-2.235 2.236 2.236 2.236 0 0 1-2.236-2.236 2.236 2.236 0 0 1 2.235-2.236 2.236 2.236 0 0 1 2.236 2.236zm2.648-10.69c-1.346 0-3.107.96-4.888 2.622-1.78-1.653-3.542-2.602-4.887-2.602-.41 0-.783.093-1.106.278-1.375.793-1.683 3.264-.973 6.365C1.98 8.917 0 10.42 0 12.004c0 1.59 1.99 3.097 5.043 4.03-.704 3.113-.39 5.588.988 6.38.32.187.69.275 1.102.275 1.345 0 3.107-.96 4.888-2.624 1.78 1.654 3.542 2.603 4.887 2.603.41 0 .783-.09 1.106-.275 1.374-.792 1.683-3.263.973-6.365C22.02 15.096 24 13.59 24 12.004c0-1.59-1.99-3.097-5.043-4.032.704-3.11.39-5.587-.988-6.38-.318-.184-.688-.277-1.092-.278zm-.005 1.09v.006c.225 0 .406.044.558.127.666.382.955 1.835.73 3.704-.054.46-.142.945-.25 1.44-.96-.236-2.006-.417-3.107-.534-.66-.905-1.345-1.727-2.035-2.447 1.592-1.48 3.087-2.292 4.105-2.295zm-9.77.02c1.012 0 2.514.808 4.11 2.28-.686.72-1.37 1.537-2.02 2.442-1.107.117-2.154.298-3.113.538-.112-.49-.195-.964-.254-1.42-.23-1.868.054-3.32.714-3.707.19-.09.4-.127.563-.132zm4.882 3.05c.455.468.91.992 1.36 1.564-.44-.02-.89-.034-1.345-.034-.46 0-.915.01-1.36.034.44-.572.895-1.096 1.345-1.565zM12 8.1c.74 0 1.477.034 2.202.093.406.582.802 1.203 1.183 1.86.372.64.71 1.29 1.018 1.946-.308.655-.646 1.31-1.013 1.95-.38.66-.773 1.288-1.18 1.87-.728.063-1.466.098-2.21.098-.74 0-1.477-.035-2.202-.093-.406-.582-.802-1.204-1.183-1.86-.372-.64-.71-1.29-1.018-1.946.303-.657.646-1.313 1.013-1.954.38-.66.773-1.286 1.18-1.868.728-.064 1.466-.098 2.21-.098zm-3.635.254c-.24.377-.48.763-.704 1.16-.225.39-.435.782-.635 1.174-.265-.656-.49-1.31-.676-1.947.64-.15 1.315-.283 2.015-.386zm7.26 0c.695.103 1.365.23 2.006.387-.18.632-.405 1.282-.66 1.933-.2-.39-.41-.783-.64-1.174-.225-.392-.465-.774-.705-1.146zm3.063.675c.484.15.944.317 1.375.498 1.732.74 2.852 1.708 2.852 2.476-.005.768-1.125 1.74-2.857 2.475-.42.18-.88.342-1.355.493-.28-.958-.646-1.956-1.1-2.98.45-1.017.81-2.01 1.085-2.964zm-13.395.004c.278.96.645 1.957 1.1 2.98-.45 1.017-.812 2.01-1.086 2.964-.484-.15-.944-.318-1.37-.5-1.732-.737-2.852-1.706-2.852-2.474 0-.768 1.12-1.742 2.852-2.476.42-.18.88-.342 1.356-.494zm11.678 4.28c.265.657.49 1.312.676 1.948-.64.157-1.316.29-2.016.39.24-.375.48-.762.705-1.158.225-.39.435-.788.636-1.18zm-9.945.02c.2.392.41.783.64 1.175.23.39.465.772.705 1.143-.695-.102-1.365-.23-2.006-.386.18-.63.406-1.282.66-1.933zM17.92 16.32c.112.493.2.968.254 1.423.23 1.868-.054 3.32-.714 3.708-.147.09-.338.128-.563.128-1.012 0-2.514-.807-4.11-2.28.686-.72 1.37-1.536 2.02-2.44 1.107-.118 2.154-.3 3.113-.54zm-11.83.01c.96.234 2.006.415 3.107.532.66.905 1.345 1.727 2.035 2.446-1.595 1.483-3.092 2.295-4.11 2.295-.22-.005-.406-.05-.553-.132-.666-.38-.955-1.834-.73-3.703.054-.46.142-.944.25-1.438zm4.56.64c.44.02.89.034 1.345.034.46 0 .915-.01 1.36-.034-.44.572-.895 1.095-1.345 1.565-.455-.47-.91-.993-1.36-1.565z"/></symbol>
+  <symbol id="l-clerk" viewBox="0 0 24 24"><path d="m21.47 20.829-2.881-2.881a.572.572 0 0 0-.7-.084 6.854 6.854 0 0 1-7.081 0 .576.576 0 0 0-.7.084l-2.881 2.881a.576.576 0 0 0-.103.69.57.57 0 0 0 .166.186 12 12 0 0 0 14.113 0 .58.58 0 0 0 .239-.423.576.576 0 0 0-.172-.453Zm.002-17.668-2.88 2.88a.569.569 0 0 1-.701.084A6.857 6.857 0 0 0 8.724 8.08a6.862 6.862 0 0 0-1.222 3.692 6.86 6.86 0 0 0 .978 3.764.573.573 0 0 1-.083.699l-2.881 2.88a.567.567 0 0 1-.864-.063A11.993 11.993 0 0 1 6.771 2.7a11.99 11.99 0 0 1 14.637-.405.566.566 0 0 1 .232.418.57.57 0 0 1-.168.448Zm-7.118 12.261a3.427 3.427 0 1 0 0-6.854 3.427 3.427 0 0 0 0 6.854Z"/></symbol>
+  <symbol id="l-ts" viewBox="0 0 24 24"><path d="M1.125 0C.502 0 0 .502 0 1.125v21.75C0 23.498.502 24 1.125 24h21.75c.623 0 1.125-.502 1.125-1.125V1.125C24 .502 23.498 0 22.875 0zm17.363 9.75c.612 0 1.154.037 1.627.111a6.38 6.38 0 0 1 1.306.34v2.458a3.95 3.95 0 0 0-.643-.361 5.093 5.093 0 0 0-.717-.26 5.453 5.453 0 0 0-1.426-.2c-.3 0-.573.028-.819.086a2.1 2.1 0 0 0-.623.242c-.17.104-.3.229-.393.374a.888.888 0 0 0-.14.49c0 .196.053.373.156.529.104.156.252.304.443.444s.423.276.696.41c.273.135.582.274.926.416.47.197.892.407 1.266.628.374.222.695.473.963.753.268.279.472.598.614.957.142.359.214.776.214 1.253 0 .657-.125 1.21-.373 1.656a3.033 3.033 0 0 1-1.012 1.085 4.38 4.38 0 0 1-1.487.596c-.566.12-1.163.18-1.79.18a9.916 9.916 0 0 1-1.84-.164 5.544 5.544 0 0 1-1.512-.493v-2.63a5.033 5.033 0 0 0 3.237 1.2c.333 0 .624-.03.872-.09.249-.06.456-.144.623-.25.166-.108.29-.234.373-.38a1.023 1.023 0 0 0-.074-1.089 2.12 2.12 0 0 0-.537-.5 5.597 5.597 0 0 0-.807-.444 27.72 27.72 0 0 0-1.007-.436c-.918-.383-1.602-.852-2.053-1.405-.45-.553-.676-1.222-.676-2.005 0-.614.123-1.141.369-1.582.246-.441.58-.804 1.004-1.089a4.494 4.494 0 0 1 1.47-.629 7.536 7.536 0 0 1 1.77-.201zm-15.113.188h9.563v2.166H9.506v9.646H6.789v-9.646H3.375z"/></symbol>
+  <symbol id="l-node" viewBox="0 0 24 24"><path d="M11.998,24c-0.321,0-0.641-0.084-0.922-0.247l-2.936-1.737c-0.438-0.245-0.224-0.332-0.08-0.383 c0.585-0.203,0.703-0.25,1.328-0.604c0.065-0.037,0.151-0.023,0.218,0.017l2.256,1.339c0.082,0.045,0.197,0.045,0.272,0l8.795-5.076 c0.082-0.047,0.134-0.141,0.134-0.238V6.921c0-0.099-0.053-0.192-0.137-0.242l-8.791-5.072c-0.081-0.047-0.189-0.047-0.271,0 L3.075,6.68C2.99,6.729,2.936,6.825,2.936,6.921v10.15c0,0.097,0.054,0.189,0.139,0.235l2.409,1.392 c1.307,0.654,2.108-0.116,2.108-0.89V7.787c0-0.142,0.114-0.253,0.256-0.253h1.115c0.139,0,0.255,0.112,0.255,0.253v10.021 c0,1.745-0.95,2.745-2.604,2.745c-0.508,0-0.909,0-2.026-0.551L2.28,18.675c-0.57-0.329-0.922-0.945-0.922-1.604V6.921 c0-0.659,0.353-1.275,0.922-1.603l8.795-5.082c0.557-0.315,1.296-0.315,1.848,0l8.794,5.082c0.57,0.329,0.924,0.944,0.924,1.603 v10.15c0,0.659-0.354,1.273-0.924,1.604l-8.794,5.078C12.643,23.916,12.324,24,11.998,24z M19.099,13.993 c0-1.9-1.284-2.406-3.987-2.763c-2.731-0.361-3.009-0.548-3.009-1.187c0-0.528,0.235-1.233,2.258-1.233 c1.807,0,2.473,0.389,2.747,1.607c0.024,0.115,0.129,0.199,0.247,0.199h1.141c0.071,0,0.138-0.031,0.186-0.081 c0.048-0.054,0.074-0.123,0.067-0.196c-0.177-2.098-1.571-3.076-4.388-3.076c-2.508,0-4.004,1.058-4.004,2.833 c0,1.925,1.488,2.457,3.895,2.695c2.88,0.282,3.103,0.703,3.103,1.269c0,0.983-0.789,1.402-2.642,1.402 c-2.327,0-2.839-0.584-3.011-1.742c-0.02-0.124-0.126-0.215-0.253-0.215h-1.137c-0.141,0-0.254,0.112-0.254,0.253 c0,1.482,0.806,3.248,4.655,3.248C17.501,17.007,19.099,15.91,19.099,13.993z"/></symbol>
+  <symbol id="l-fastify" viewBox="0 0 24 24"><path d="M23.245 6.49L24 4.533l-.031-.121-7.473 1.967c.797-1.153.523-2.078.523-2.078s-2.387 1.524-4.193 1.485c-1.804-.04-2.387-.52-5.155.362-2.768.882-3.551 3.59-4.351 4.173-.804.583-3.32 2.477-3.32 2.477l.006.034 2.27-.724s-.622.585-1.945 2.37l-.062-.057.002.011s1.064 1.626 2.107 1.324a2.14 2.14 0 0 0 .353-.147c.419.234.967.463 1.572.525 0 0-.41-.475-.752-1.017l.238-.154.865.318-.096-.812c.003-.003.006-.003.008-.006l.849.311-.105-.738a5.65 5.65 0 0 1 .322-.158l.885-3.345 3.662-2.497-.291.733c-.741 1.826-2.135 2.256-2.135 2.256l-.582.22c-.433.512-.614.637-.764 2.353.348-.088.682-.107.984-.028 1.564.421 2.107 2.307 1.685 2.827-.104.13-.356.354-.673.617H7.77l-.008.514-.065.051h-.645l-.009.504-.17.127c-.607.011-1.373-.518-1.373-.518 0 .481.401 1.225.401 1.225l.07-.034-.061.045s1.625 1.083 2.646.681c.91-.356 3.263-2.213 5.296-3.093l6.15-1.62.811-2.1-4.688 1.235v-1.889l5.5-1.448.811-2.1-6.31 1.662V8.367zm-11.163 4l1.459-.384.02.074-.455 1.179-1.513.398zm.503 2.526l-1.512.398.489-1.266 1.459-.385.02.074zm1.971-.424l-1.513.398.49-1.266 1.459-.385.02.073Z"/></symbol>
+  <symbol id="l-trpc" viewBox="0 0 24 24"><path d="M24 12c0 6.62-5.38 12-12 12S0 18.62 0 12 5.38 0 12 0s12 5.38 12 12ZM1.21 12A10.78 10.78 0 0 0 12 22.79 10.78 10.78 0 0 0 22.79 12 10.78 10.78 0 0 0 12 1.21 10.78 10.78 0 0 0 1.21 12Zm10.915-6.086 2.162 1.248a.25.25 0 0 1 .125.217v1.103l2.473 1.428a.25.25 0 0 1 .125.217v2.355l.955.551a.25.25 0 0 1 .125.217v2.496a.25.25 0 0 1-.125.217l-2.162 1.248a.25.25 0 0 1-.25 0l-.956-.552-2.472 1.427a.25.25 0 0 1-.25 0l-2.472-1.427-.956.552a.25.25 0 0 1-.25 0l-2.162-1.248a.25.25 0 0 1-.125-.217V13.25a.25.25 0 0 1 .125-.217l.955-.551v-2.355a.25.25 0 0 1 .125-.217l2.473-1.428V7.38a.25.25 0 0 1 .125-.217l2.162-1.248a.25.25 0 0 1 .25 0Zm1.268 10.049a.25.25 0 0 1-.125-.217V13.25a.25.25 0 0 1 .125-.217l2.16-1.248a.25.25 0 0 1 .25 0l.707.408v-1.922l-2.098-1.21v.814a.25.25 0 0 1-.125.217l-2.162 1.248a.25.25 0 0 1-.25 0l-2.162-1.248a.25.25 0 0 1-.125-.217V9.06L7.49 10.271v1.922l.707-.408a.25.25 0 0 1 .25 0l2.16 1.248a.25.25 0 0 1 .125.217v2.496a.25.25 0 0 1-.125.217l-.705.408L12 17.582l2.098-1.211ZM10.088 9.73l1.662.96V8.766l-1.662-.955Zm3.824 0V7.811l-1.662.955v1.924ZM12 6.418l-1.66.96 1.66.954 1.66-.954Zm-5.59 9.184 1.66.958v-1.921l-1.66-.956Zm3.822 0v-1.92l-1.662.957v1.923Zm-1.91-3.311-1.662.96 1.661.955 1.66-.956Zm5.446 3.31 1.66.96v-1.922l-1.66-.956Zm3.822 0v-1.918l-1.662.956v1.922Zm-1.912-3.31-1.66.96 1.66.955 1.66-.956Z"/></symbol>
+  <symbol id="l-zod" viewBox="0 0 24 24"><path d="M2.584 3.582a2.247 2.247 0 0 1 2.112-1.479h14.617c.948 0 1.794.595 2.115 1.487l2.44 6.777a2.248 2.248 0 0 1-.624 2.443l-9.61 8.52a2.247 2.247 0 0 1-2.963.018L.776 12.773a2.248 2.248 0 0 1-.64-2.467Zm12.038 4.887-9.11 5.537 5.74 5.007c.456.399 1.139.396 1.593-.006l5.643-5.001H14.4l6.239-3.957c.488-.328.69-.947.491-1.5l-1.24-3.446a1.535 1.535 0 0 0-1.456-1.015H5.545a1.535 1.535 0 0 0-1.431 1.01l-1.228 3.37z"/></symbol>
+  <symbol id="l-drizzle" viewBox="0 0 24 24"><path d="M5.353 11.823a1.036 1.036 0 0 0-.395-1.422 1.063 1.063 0 0 0-1.437.399L.138 16.702a1.035 1.035 0 0 0 .395 1.422 1.063 1.063 0 0 0 1.437-.398l3.383-5.903Zm11.216 0a1.036 1.036 0 0 0-.394-1.422 1.064 1.064 0 0 0-1.438.399l-3.382 5.902a1.036 1.036 0 0 0 .394 1.422c.506.283 1.15.104 1.438-.398l3.382-5.903Zm7.293-4.525a1.036 1.036 0 0 0-.395-1.422 1.062 1.062 0 0 0-1.437.399l-3.383 5.902a1.036 1.036 0 0 0 .395 1.422 1.063 1.063 0 0 0 1.437-.399l3.383-5.902Zm-11.219 0a1.035 1.035 0 0 0-.394-1.422 1.064 1.064 0 0 0-1.438.398l-3.382 5.903a1.036 1.036 0 0 0 .394 1.422c.506.282 1.15.104 1.438-.399l3.382-5.902Z"/></symbol>
+  <symbol id="l-pg" viewBox="0 0 24 24"><path d="M23.5594 14.7228a.5269.5269 0 0 0-.0563-.1191c-.139-.2632-.4768-.3418-1.0074-.2321-1.6533.3411-2.2935.1312-2.5256-.0191 1.342-2.0482 2.445-4.522 3.0411-6.8297.2714-1.0507.7982-3.5237.1222-4.7316a1.5641 1.5641 0 0 0-.1509-.235C21.6931.9086 19.8007.0248 17.5099.0005c-1.4947-.0158-2.7705.3461-3.1161.4794a9.449 9.449 0 0 0-.5159-.0816 8.044 8.044 0 0 0-1.3114-.1278c-1.1822-.0184-2.2038.2642-3.0498.8406-.8573-.3211-4.7888-1.645-7.2219.0788C.9359 2.1526.3086 3.8733.4302 6.3043c.0409.818.5069 3.334 1.2423 5.7436.4598 1.5065.9387 2.7019 1.4334 3.582.553.9942 1.1259 1.5933 1.7143 1.7895.4474.1491 1.1327.1441 1.8581-.7279.8012-.9635 1.5903-1.8258 1.9446-2.2069.4351.2355.9064.3625 1.39.3772a.0569.0569 0 0 0 .0004.0041 11.0312 11.0312 0 0 0-.2472.3054c-.3389.4302-.4094.5197-1.5002.7443-.3102.064-1.1344.2339-1.1464.8115-.0025.1224.0329.2309.0919.3268.2269.4231.9216.6097 1.015.6331 1.3345.3335 2.5044.092 3.3714-.6787-.017 2.231.0775 4.4174.3454 5.0874.2212.5529.7618 1.9045 2.4692 1.9043.2505 0 .5263-.0291.8296-.0941 1.7819-.3821 2.5557-1.1696 2.855-2.9059.1503-.8707.4016-2.8753.5388-4.1012.0169-.0703.0357-.1207.057-.1362.0007-.0005.0697-.0471.4272.0307a.3673.3673 0 0 0 .0443.0068l.2539.0223.0149.001c.8468.0384 1.9114-.1426 2.5312-.4308.6438-.2988 1.8057-1.0323 1.5951-1.6698zM2.371 11.8765c-.7435-2.4358-1.1779-4.8851-1.2123-5.5719-.1086-2.1714.4171-3.6829 1.5623-4.4927 1.8367-1.2986 4.8398-.5408 6.108-.13-.0032.0032-.0066.0061-.0098.0094-2.0238 2.044-1.9758 5.536-1.9708 5.7495-.0002.0823.0066.1989.0162.3593.0348.5873.0996 1.6804-.0735 2.9184-.1609 1.1504.1937 2.2764.9728 3.0892.0806.0841.1648.1631.2518.2374-.3468.3714-1.1004 1.1926-1.9025 2.1576-.5677.6825-.9597.5517-1.0886.5087-.3919-.1307-.813-.5871-1.2381-1.3223-.4796-.839-.9635-2.0317-1.4155-3.5126zm6.0072 5.0871c-.1711-.0428-.3271-.1132-.4322-.1772.0889-.0394.2374-.0902.4833-.1409 1.2833-.2641 1.4815-.4506 1.9143-1.0002.0992-.126.2116-.2687.3673-.4426a.3549.3549 0 0 0 .0737-.1298c.1708-.1513.2724-.1099.4369-.0417.156.0646.3078.26.3695.4752.0291.1016.0619.2945-.0452.4444-.9043 1.2658-2.2216 1.2494-3.1676 1.0128zm2.094-3.988-.0525.141c-.133.3566-.2567.6881-.3334 1.003-.6674-.0021-1.3168-.2872-1.8105-.8024-.6279-.6551-.9131-1.5664-.7825-2.5004.1828-1.3079.1153-2.4468.079-3.0586-.005-.0857-.0095-.1607-.0122-.2199.2957-.2621 1.6659-.9962 2.6429-.7724.4459.1022.7176.4057.8305.928.5846 2.7038.0774 3.8307-.3302 4.7363-.084.1866-.1633.3629-.2311.5454zm7.3637 4.5725c-.0169.1768-.0358.376-.0618.5959l-.146.4383a.3547.3547 0 0 0-.0182.1077c-.0059.4747-.054.6489-.115.8693-.0634.2292-.1353.4891-.1794 1.0575-.11 1.4143-.8782 2.2267-2.4172 2.5565-1.5155.3251-1.7843-.4968-2.0212-1.2217a6.5824 6.5824 0 0 0-.0769-.2266c-.2154-.5858-.1911-1.4119-.1574-2.5551.0165-.5612-.0249-1.9013-.3302-2.6462.0044-.2932.0106-.5909.019-.8918a.3529.3529 0 0 0-.0153-.1126 1.4927 1.4927 0 0 0-.0439-.208c-.1226-.4283-.4213-.7866-.7797-.9351-.1424-.059-.4038-.1672-.7178-.0869.067-.276.1831-.5875.309-.9249l.0529-.142c.0595-.16.134-.3257.213-.5012.4265-.9476 1.0106-2.2453.3766-5.1772-.2374-1.0981-1.0304-1.6343-2.2324-1.5098-.7207.0746-1.3799.3654-1.7088.5321a5.6716 5.6716 0 0 0-.1958.1041c.0918-1.1064.4386-3.1741 1.7357-4.4823a4.0306 4.0306 0 0 1 .3033-.276.3532.3532 0 0 0 .1447-.0644c.7524-.5706 1.6945-.8506 2.802-.8325.4091.0067.8017.0339 1.1742.081 1.939.3544 3.2439 1.4468 4.0359 2.3827.8143.9623 1.2552 1.9315 1.4312 2.4543-1.3232-.1346-2.2234.1268-2.6797.779-.9926 1.4189.543 4.1729 1.2811 5.4964.1353.2426.2522.4522.2889.5413.2403.5825.5515.9713.7787 1.2552.0696.087.1372.1714.1885.245-.4008.1155-1.1208.3825-1.0552 1.717-.0123.1563-.0423.4469-.0834.8148-.0461.2077-.0702.4603-.0994.7662zm.8905-1.6211c-.0405-.8316.2691-.9185.5967-1.0105a2.8566 2.8566 0 0 0 .135-.0406 1.202 1.202 0 0 0 .1342.103c.5703.3765 1.5823.4213 3.0068.1344-.2016.1769-.5189.3994-.9533.6011-.4098.1903-1.0957.333-1.7473.3636-.7197.0336-1.0859-.0807-1.1721-.151zm.5695-9.2712c-.0059.3508-.0542.6692-.1054 1.0017-.055.3576-.112.7274-.1264 1.1762-.0142.4368.0404.8909.0932 1.3301.1066.887.216 1.8003-.2075 2.7014a3.5272 3.5272 0 0 1-.1876-.3856c-.0527-.1276-.1669-.3326-.3251-.6162-.6156-1.1041-2.0574-3.6896-1.3193-4.7446.3795-.5427 1.3408-.5661 2.1781-.463zm.2284 7.0137a12.3762 12.3762 0 0 0-.0853-.1074l-.0355-.0444c.7262-1.1995.5842-2.3862.4578-3.4385-.0519-.4318-.1009-.8396-.0885-1.2226.0129-.4061.0666-.7543.1185-1.0911.0639-.415.1288-.8443.1109-1.3505.0134-.0531.0188-.1158.0118-.1902-.0457-.4855-.5999-1.938-1.7294-3.253-.6076-.7073-1.4896-1.4972-2.6889-2.0395.5251-.1066 1.2328-.2035 2.0244-.1859 2.0515.0456 3.6746.8135 4.8242 2.2824a.908.908 0 0 1 .0667.1002c.7231 1.3556-.2762 6.2751-2.9867 10.5405zm-8.8166-6.1162c-.025.1794-.3089.4225-.6211.4225a.5821.5821 0 0 1-.0809-.0056c-.1873-.026-.3765-.144-.5059-.3156-.0458-.0605-.1203-.178-.1055-.2844.0055-.0401.0261-.0985.0925-.1488.1182-.0894.3518-.1226.6096-.0867.3163.0441.6426.1938.6113.4186zm7.9305-.4114c.0111.0792-.049.201-.1531.3102-.0683.0717-.212.1961-.4079.2232a.5456.5456 0 0 1-.075.0052c-.2935 0-.5414-.2344-.5607-.3717-.024-.1765.2641-.3106.5611-.352.297-.0414.6111.0088.6356.1851z"/></symbol>
+  <symbol id="l-pnpm" viewBox="0 0 24 24"><path d="M0 0v7.5h7.5V0zm8.25 0v7.5h7.498V0zm8.25 0v7.5H24V0zM2 2h3.5v3.5H2zm8.25 0h3.498v3.5H10.25zm8.25 0H22v3.5h-3.5zM8.25 8.25v7.5h7.498v-7.5zm8.25 0v7.5H24v-7.5zm2 2H22v3.5h-3.5zM0 16.5V24h7.5v-7.5zm8.25 0V24h7.498v-7.5zm8.25 0V24H24v-7.5z"/></symbol>
+  <symbol id="l-gha" viewBox="0 0 24 24"><path d="M10.984 13.836a.5.5 0 0 1-.353-.146l-.745-.743a.5.5 0 1 1 .706-.708l.392.391 1.181-1.18a.5.5 0 0 1 .708.707l-1.535 1.533a.504.504 0 0 1-.354.146zm9.353-.147l1.534-1.532a.5.5 0 0 0-.707-.707l-1.181 1.18-.392-.391a.5.5 0 1 0-.706.708l.746.743a.497.497 0 0 0 .706-.001zM4.527 7.452l2.557-1.585A1 1 0 0 0 7.09 4.17L4.533 2.56A1 1 0 0 0 3 3.406v3.196a1.001 1.001 0 0 0 1.527.85zm2.03-2.436L4 6.602V3.406l2.557 1.61zM24 12.5c0 1.93-1.57 3.5-3.5 3.5a3.503 3.503 0 0 1-3.46-3h-2.08a3.503 3.503 0 0 1-3.46 3 3.502 3.502 0 0 1-3.46-3h-.558c-.972 0-1.85-.399-2.482-1.042V17c0 1.654 1.346 3 3 3h.04c.244-1.693 1.7-3 3.46-3 1.93 0 3.5 1.57 3.5 3.5S13.43 24 11.5 24a3.502 3.502 0 0 1-3.46-3H8c-2.206 0-4-1.794-4-4V9.899A5.008 5.008 0 0 1 0 5c0-2.757 2.243-5 5-5s5 2.243 5 5a5.005 5.005 0 0 1-4.952 4.998A2.482 2.482 0 0 0 7.482 12h.558c.244-1.693 1.7-3 3.46-3a3.502 3.502 0 0 1 3.46 3h2.08a3.503 3.503 0 0 1 3.46-3c1.93 0 3.5 1.57 3.5 3.5zm-15 8c0 1.378 1.122 2.5 2.5 2.5s2.5-1.122 2.5-2.5-1.122-2.5-2.5-2.5S9 19.122 9 20.5zM5 9c2.206 0 4-1.794 4-4S7.206 1 5 1 1 2.794 1 5s1.794 4 4 4zm9 3.5c0-1.378-1.122-2.5-2.5-2.5S9 11.122 9 12.5s1.122 2.5 2.5 2.5 2.5-1.122 2.5-2.5zm9 0c0-1.378-1.122-2.5-2.5-2.5S18 11.122 18 12.5s1.122 2.5 2.5 2.5 2.5-1.122 2.5-2.5zm-13 8a.5.5 0 1 0 1 0 .5.5 0 0 0-1 0zm2 0a.5.5 0 1 0 1 0 .5.5 0 0 0-1 0zm12 0c0 1.93-1.57 3.5-3.5 3.5a3.503 3.503 0 0 1-3.46-3.002c-.007.001-.013.005-.021.005l-.506.017h-.017a.5.5 0 0 1-.016-.999l.506-.017c.018-.002.035.006.052.007A3.503 3.503 0 0 1 20.5 17c1.93 0 3.5 1.57 3.5 3.5zm-1 0c0-1.378-1.122-2.5-2.5-2.5S18 19.122 18 20.5s1.122 2.5 2.5 2.5 2.5-1.122 2.5-2.5z"/></symbol>
+  <symbol id="l-docker" viewBox="0 0 24 24"><path d="M13.983 11.078h2.119a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.119a.185.185 0 00-.185.185v1.888c0 .102.083.185.185.185m-2.954-5.43h2.118a.186.186 0 00.186-.186V3.574a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m0 2.716h2.118a.187.187 0 00.186-.186V6.29a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.887c0 .102.082.185.185.186m-2.93 0h2.12a.186.186 0 00.184-.186V6.29a.185.185 0 00-.185-.185H8.1a.185.185 0 00-.185.185v1.887c0 .102.083.185.185.186m-2.964 0h2.119a.186.186 0 00.185-.186V6.29a.185.185 0 00-.185-.185H5.136a.186.186 0 00-.186.185v1.887c0 .102.084.185.186.186m5.893 2.715h2.118a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m-2.93 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.083.185.185.185m-2.964 0h2.119a.185.185 0 00.185-.185V9.006a.185.185 0 00-.184-.186h-2.12a.186.186 0 00-.186.186v1.887c0 .102.084.185.186.185m-2.92 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.082.185.185.185M23.763 9.89c-.065-.051-.672-.51-1.954-.51-.338.001-.676.03-1.01.087-.248-1.7-1.653-2.53-1.716-2.566l-.344-.199-.226.327c-.284.438-.49.922-.612 1.43-.23.97-.09 1.882.403 2.661-.595.332-1.55.413-1.744.42H.751a.751.751 0 00-.75.748 11.376 11.376 0 00.692 4.062c.545 1.428 1.355 2.48 2.41 3.124 1.18.723 3.1 1.137 5.275 1.137.983.003 1.963-.086 2.93-.266a12.248 12.248 0 003.823-1.389c.98-.567 1.86-1.288 2.61-2.136 1.252-1.418 1.998-2.997 2.553-4.4h.221c1.372 0 2.215-.549 2.68-1.009.309-.293.55-.65.707-1.046l.098-.288z"/></symbol>
+  <symbol id="l-aws" viewBox="0 0 24 24"><path d="M6.763 10.036c0 .296.032.535.088.71.064.176.144.368.256.576.04.063.056.127.056.183 0 .08-.048.16-.152.24l-.503.335a.383.383 0 0 1-.208.072c-.08 0-.16-.04-.239-.112a2.47 2.47 0 0 1-.287-.375 6.18 6.18 0 0 1-.248-.471c-.622.734-1.405 1.101-2.347 1.101-.67 0-1.205-.191-1.596-.574-.391-.384-.59-.894-.59-1.533 0-.678.239-1.23.726-1.644.487-.415 1.133-.623 1.955-.623.272 0 .551.024.846.064.296.04.6.104.918.176v-.583c0-.607-.127-1.03-.375-1.277-.255-.248-.686-.367-1.3-.367-.28 0-.568.031-.863.103-.295.072-.583.16-.862.272a2.287 2.287 0 0 1-.28.104.488.488 0 0 1-.127.023c-.112 0-.168-.08-.168-.247v-.391c0-.128.016-.224.056-.28a.597.597 0 0 1 .224-.167c.279-.144.614-.264 1.005-.36a4.84 4.84 0 0 1 1.246-.151c.95 0 1.644.216 2.091.647.439.43.662 1.085.662 1.963v2.586zm-3.24 1.214c.263 0 .534-.048.822-.144.287-.096.543-.271.758-.51.128-.152.224-.32.272-.512.047-.191.08-.423.08-.694v-.335a6.66 6.66 0 0 0-.735-.136 6.02 6.02 0 0 0-.75-.048c-.535 0-.926.104-1.19.32-.263.215-.39.518-.39.917 0 .375.095.655.295.846.191.2.47.296.838.296zm6.41.862c-.144 0-.24-.024-.304-.08-.064-.048-.12-.16-.168-.311L7.586 5.55a1.398 1.398 0 0 1-.072-.32c0-.128.064-.2.191-.2h.783c.151 0 .255.025.31.08.065.048.113.16.16.312l1.342 5.284 1.245-5.284c.04-.16.088-.264.151-.312a.549.549 0 0 1 .32-.08h.638c.152 0 .256.025.32.08.063.048.12.16.151.312l1.261 5.348 1.381-5.348c.048-.16.104-.264.16-.312a.52.52 0 0 1 .311-.08h.743c.127 0 .2.065.2.2 0 .04-.009.08-.017.128a1.137 1.137 0 0 1-.056.2l-1.923 6.17c-.048.16-.104.263-.168.311a.51.51 0 0 1-.303.08h-.687c-.151 0-.255-.024-.32-.08-.063-.056-.119-.16-.15-.32l-1.238-5.148-1.23 5.14c-.04.16-.087.264-.15.32-.065.056-.177.08-.32.08zm10.256.215c-.415 0-.83-.048-1.229-.143-.399-.096-.71-.2-.918-.32-.128-.071-.215-.151-.247-.223a.563.563 0 0 1-.048-.224v-.407c0-.167.064-.247.183-.247.048 0 .096.008.144.024.048.016.12.048.2.08.271.12.566.215.878.279.319.064.63.096.95.096.502 0 .894-.088 1.165-.264a.86.86 0 0 0 .415-.758.777.777 0 0 0-.215-.559c-.144-.151-.416-.287-.807-.415l-1.157-.36c-.583-.183-1.014-.454-1.277-.813a1.902 1.902 0 0 1-.4-1.158c0-.335.073-.63.216-.886.144-.255.335-.479.575-.654.24-.184.51-.32.83-.415.32-.096.655-.136 1.006-.136.175 0 .359.008.535.032.183.024.35.056.518.088.16.04.312.08.455.127.144.048.256.096.336.144a.69.69 0 0 1 .24.2.43.43 0 0 1 .071.263v.375c0 .168-.064.256-.184.256a.83.83 0 0 1-.303-.096 3.652 3.652 0 0 0-1.532-.311c-.455 0-.815.071-1.062.223-.248.152-.375.383-.375.71 0 .224.08.416.24.567.159.152.454.304.877.44l1.134.358c.574.184.99.44 1.237.767.247.327.367.702.367 1.117 0 .343-.072.655-.207.926-.144.272-.336.511-.583.703-.248.2-.543.343-.886.447-.36.111-.734.167-1.142.167zM21.698 16.207c-2.626 1.94-6.442 2.969-9.722 2.969-4.598 0-8.74-1.7-11.87-4.526-.247-.223-.024-.527.272-.351 3.384 1.963 7.559 3.153 11.877 3.153 2.914 0 6.114-.607 9.06-1.852.439-.2.814.287.383.607zM22.792 14.961c-.336-.43-2.22-.207-3.074-.103-.255.032-.295-.192-.063-.36 1.5-1.053 3.967-.75 4.254-.399.287.36-.08 2.826-1.485 4.007-.215.184-.423.088-.327-.151.32-.79 1.03-2.57.695-2.994z"/></symbol>
+</svg>
+<div id="deck-progress"></div>
+<div id="deck-root" data-design-w="1920" data-design-h="1080">
+  <div id="deck-stage">
+    <div id="deck-canvas">
+<section data-label="Cover" data-screen-label="01" data-speaker-notes="Hi everyone. Before I say a single word about what we built, picture the last time your group chat said 'we should hang out' and then nothing happened. Hold that thought. We're BeThere, group 02, and our whole project is about that gap. The promise in one line: no organiser, and no maybe." class="slide slide--blush" style="padding:80px 110px;position:relative;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+    <div style="font-family:Inter;font-weight:700;font-size:23px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);">Designing for Real People</div>
+    <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:24px;color:var(--ink);border:2px solid var(--ink);border-radius:0;padding:8px 15px;">DRP &middot; GROUP 02</div>
+  </div>
+
+  <div style="margin-top:auto;margin-bottom:auto;">
+    <span style="font-family:Archivo;font-weight:800;font-size:80px;letter-spacing:-1.5px;color:var(--ink);line-height:1;">Get the whole group to</span>
+    <h1 style="font-family:Archivo;font-weight:900;font-size:224px;letter-spacing:-10px;line-height:.84;margin:12px 0 0;color:var(--ink);">Be<span style="color:var(--pink);">There</span>.</h1>
+    <p style="font-family:Inter;font-weight:600;font-size:32px;color:var(--muted);margin:42px 0 0;">No organiser. No maybe - just the whole group, there.</p>
+  </div>
+
+  <div style="display:flex;justify-content:flex-end;align-items:flex-end;">
+    <div style="font-family:Inter;font-weight:700;font-size:24px;color:var(--ink);">Nelson &middot; Lukas &middot; Noah &middot; James</div>
+  </div>
+</section>
+
+<section data-label="Meet Vasanth" data-screen-label="02" data-speaker-notes="Before any numbers, meet the person we built this for. This is Vasanth. He's 21, studies Law at St Andrews, plays volleyball, and he's the friend who always ends up being the organiser. He genuinely loves seeing everyone - but every plan means he is the one sticking his neck out and chasing replies. Keep him in mind: the whole problem is easiest to feel through him." class="slide slide--blush" style="padding:84px 110px 80px;">
+  <h1 class="title" style="font-size:80px;letter-spacing:-3px;">Meet <span class="hl" style="padding:0 20px 6px;">Vasanth</span></h1>
+  <p style="font-family:Inter;font-weight:500;font-size:28px;color:var(--muted);margin:18px 0 0;">The organiser - one of the two people every group has.</p>
+
+  <div style="display:flex;gap:56px;margin-top:42px;flex:1;">
+    <div style="flex-shrink:0;display:flex;flex-direction:column;gap:22px;">
+      <!-- Persona photo (illustrative; AI/stock image used per explicit team decision, overriding the no-AI-faces note). -->
+      <div style="width:380px;height:430px;border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);border-radius:0;overflow:hidden;background:var(--sand);">
+        <img src="assets/personas/persona-vasanth.jpg" alt="Vasanth" style="width:100%;height:100%;object-fit:cover;object-position:50% 30%;display:block;">
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div><div style="font-family:Archivo;font-weight:900;font-size:38px;line-height:1;">Vasanth, 21</div><div style="font-family:Inter;font-weight:500;font-size:22px;color:var(--muted);">Law &middot; St Andrews</div></div>
+        <span style="margin-left:auto;align-self:flex-start;background:var(--pink);color:var(--surface);font-family:Archivo;font-weight:800;font-size:22px;border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:8px 14px;border-radius:0;transform:rotate(-3deg);white-space:nowrap;">The Organiser</span>
+      </div>
+    </div>
+
+    <div style="flex:1;display:flex;flex-direction:column;gap:20px;">
+      <div style="background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:6px 6px 0 var(--ink);padding:24px 28px;">
+        <div class="eyebrow" style="font-size:20px;color:var(--green);">He wants</div>
+        <p style="font-family:Inter;font-weight:600;font-size:30px;line-height:1.3;color:var(--ink);margin:8px 0 0;">To actually see his friends - the easy, reliable get-the-group-together he keeps trying to make happen.</p>
+      </div>
+      <div style="background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:6px 6px 0 var(--ink);padding:24px 28px;">
+        <div class="eyebrow" style="font-size:20px;color:var(--pink);">He's frustrated by</div>
+        <p style="font-family:Inter;font-weight:600;font-size:30px;line-height:1.3;color:var(--ink);margin:8px 0 0;">Being the only one who organises. Suggesting feels like a risk, and then he's left chasing replies that never firm up.</p>
+      </div>
+      <div style="background:var(--ink);border:3px solid var(--ink);border-radius:0;box-shadow:6px 6px 0 var(--pink);padding:24px 28px;">
+        <div class="eyebrow" style="font-size:20px;color:var(--pink);">He needs from BeThere</div>
+        <p style="font-family:Archivo;font-weight:800;font-size:34px;line-height:1.2;color:var(--surface);margin:8px 0 0;">To float a plan without it being <span style="color:var(--pink);">his</span> job to chase.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section data-label="Vasanth, as he felt it" data-screen-label="03" data-speaker-notes="Here is how organising actually feels for Vasanth - a real group trip he tried to set up, mapped the way he experienced it. He sparks the plan, full of hope. Then he's pushing for replies. A few half-hearted maybes trickle in. He's still chasing, days later. People go quiet. And eventually it's just too late, and he gives up. Notice the shape: from his seat, the line only ever goes down. That is the organiser's burden, and nothing in the group chat is built to arrest that fall." class="slide slide--paper" style="padding:84px 110px 76px;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+    <h1 class="title" style="font-size:72px;letter-spacing:-3px;">Vasanth's trip, <span class="hl" style="padding:0 14px 6px;">as he felt it</span></h1>
+    <div style="font-family:Inter;font-weight:600;font-size:24px;color:var(--muted);">The organiser's week</div>
+  </div>
+
+  <div style="flex:1;display:flex;align-items:center;margin-top:10px;">
+    <svg viewBox="0 0 1760 470" style="width:100%;height:auto;" preserveAspectRatio="xMidYMid meet">
+      <rect x="40" y="14" width="1640" height="221" fill="var(--green)" fill-opacity="0.13"></rect>
+      <rect x="40" y="235" width="1640" height="211" fill="var(--pink)" fill-opacity="0.11"></rect>
+      <line x1="40" y1="14" x2="40" y2="446" stroke="var(--axis-warm)" stroke-width="3"></line>
+      <line x1="40" y1="235" x2="1700" y2="235" stroke="var(--ink)" stroke-width="3"></line>
+      <text x="1696" y="226" font-family="Inter" font-weight="700" font-size="20" fill="var(--muted)" text-anchor="end">time &rarr;</text>
+      <text x="54" y="112" font-family="Inter" font-weight="700" font-size="22" fill="var(--green)">positive</text>
+      <text x="54" y="376" font-family="Inter" font-weight="700" font-size="22" fill="var(--pink)">negative</text>
+      <polyline points="180,90 470,152 760,222 1050,290 1340,352 1610,406" fill="none" stroke="var(--ink)" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"></polyline>
+      <g stroke="var(--ink)" stroke-width="3">
+        <circle cx="180" cy="90" r="13" fill="var(--green)"></circle>
+        <circle cx="470" cy="152" r="13" fill="var(--surface)"></circle>
+        <circle cx="760" cy="222" r="13" fill="var(--surface)"></circle>
+        <circle cx="1050" cy="290" r="13" fill="var(--surface)"></circle>
+        <circle cx="1340" cy="352" r="13" fill="var(--surface)"></circle>
+        <circle cx="1610" cy="406" r="17" fill="var(--pink)"></circle>
+      </g>
+      <g font-family="Archivo" font-weight="900" font-size="26" fill="var(--ink)" text-anchor="middle">
+        <text x="180" y="40">Sparks it</text>
+        <text x="470" y="102">Pushes for replies</text>
+        <text x="760" y="172">A few maybes</text>
+        <text x="1050" y="240">Still chasing</text>
+        <text x="1340" y="302">Goes quiet</text>
+        <text x="1610" y="356">Gives up</text>
+      </g>
+      <g font-family="Inter" font-weight="500" font-size="19" fill="var(--muted)" text-anchor="middle">
+        <text x="180" y="64">&ldquo;we should do this!&rdquo;</text>
+        <text x="470" y="126">&ldquo;anyone free?&rdquo;</text>
+        <text x="760" y="196">non-committal</text>
+        <text x="1050" y="264">days pass</text>
+        <text x="1340" y="326">no replies</text>
+        <text x="1610" y="380">too late</text>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<section data-label="Meet Milly" data-screen-label="04" data-speaker-notes="But the organiser is only half the story. Meet Milly. She's 19, studies English, just joined her university's netball society, and she's shy. She would love to go to more of the socials - but she will not commit to a plan unless she's sure her own friends are going too. She's not flaky; she's hesitant. And in a group, her hesitation is contagious." class="slide slide--blush" style="padding:84px 110px 80px;">
+  <h1 class="title" style="font-size:80px;letter-spacing:-3px;">Meet <span class="hl" style="padding:0 20px 6px;">Milly</span></h1>
+  <p style="font-family:Inter;font-weight:500;font-size:28px;color:var(--muted);margin:18px 0 0;">The participant - the other person in every group.</p>
+
+  <div style="display:flex;gap:56px;margin-top:42px;flex:1;">
+    <div style="flex-shrink:0;display:flex;flex-direction:column;gap:22px;">
+      <!-- Persona photo (illustrative; AI/stock image used per explicit team decision, overriding the no-AI-faces note). -->
+      <div style="width:380px;height:430px;border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);border-radius:0;overflow:hidden;background:var(--sand);">
+        <img src="assets/personas/persona-milly.jpg" alt="Milly" style="width:100%;height:100%;object-fit:cover;object-position:50% 28%;display:block;">
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div><div style="font-family:Archivo;font-weight:900;font-size:38px;line-height:1;">Milly, 19</div><div style="font-family:Inter;font-weight:500;font-size:22px;color:var(--muted);">English &middot; St Andrews</div></div>
+        <span style="margin-left:auto;align-self:flex-start;background:var(--purple);color:var(--surface);font-family:Archivo;font-weight:800;font-size:22px;border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:8px 14px;border-radius:0;transform:rotate(-3deg);white-space:nowrap;">The Participant</span>
+      </div>
+    </div>
+
+    <div style="flex:1;display:flex;flex-direction:column;gap:20px;">
+      <div style="background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:6px 6px 0 var(--ink);padding:24px 28px;">
+        <div class="eyebrow" style="font-size:20px;color:var(--green);">She wants</div>
+        <p style="font-family:Inter;font-weight:600;font-size:30px;line-height:1.3;color:var(--ink);margin:8px 0 0;">To be part of the socials and see more of her new friends - to feel comfortable saying yes.</p>
+      </div>
+      <div style="background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:6px 6px 0 var(--ink);padding:24px 28px;">
+        <div class="eyebrow" style="font-size:20px;color:var(--pink);">She's frustrated by</div>
+        <p style="font-family:Inter;font-weight:600;font-size:30px;line-height:1.3;color:var(--ink);margin:8px 0 0;">Not knowing if anyone she knows will actually be there - so she waits, hedges, and the plan stalls on her silence.</p>
+      </div>
+      <div style="background:var(--ink);border:3px solid var(--ink);border-radius:0;box-shadow:6px 6px 0 var(--pink);padding:24px 28px;">
+        <div class="eyebrow" style="font-size:20px;color:var(--pink);">She needs from BeThere</div>
+        <p style="font-family:Archivo;font-weight:800;font-size:34px;line-height:1.2;color:var(--surface);margin:8px 0 0;">To say yes <span style="color:var(--pink);">only if</span> her friends will be there too.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section data-label="Milly, as she felt it" data-screen-label="05" data-speaker-notes="And here is the same week from Milly's side. The netball social drops in the chat - she's keen. But she waits for a friend to say they're in first. A maybe comes back, never a yes. Nobody actually commits. People start quietly dropping out. So she stays home and misses it. The same downward shape as Vasanth - but for the opposite reason. His problem is effort; hers is uncertainty. Two people, one dead plan - and you need to fix both ends to save it." class="slide slide--paper" style="padding:84px 110px 76px;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+    <h1 class="title" style="font-size:72px;letter-spacing:-3px;">Milly's social, <span class="hl" style="padding:0 14px 6px;">as she felt it</span></h1>
+    <div style="font-family:Inter;font-weight:600;font-size:24px;color:var(--muted);">The participant's week</div>
+  </div>
+
+  <div style="flex:1;display:flex;align-items:center;margin-top:10px;">
+    <svg viewBox="0 0 1760 470" style="width:100%;height:auto;" preserveAspectRatio="xMidYMid meet">
+      <rect x="40" y="14" width="1640" height="221" fill="var(--green)" fill-opacity="0.13"></rect>
+      <rect x="40" y="235" width="1640" height="211" fill="var(--pink)" fill-opacity="0.11"></rect>
+      <line x1="40" y1="14" x2="40" y2="446" stroke="var(--axis-warm)" stroke-width="3"></line>
+      <line x1="40" y1="235" x2="1700" y2="235" stroke="var(--ink)" stroke-width="3"></line>
+      <text x="1696" y="226" font-family="Inter" font-weight="700" font-size="20" fill="var(--muted)" text-anchor="end">time &rarr;</text>
+      <text x="54" y="112" font-family="Inter" font-weight="700" font-size="22" fill="var(--green)">positive</text>
+      <text x="54" y="376" font-family="Inter" font-weight="700" font-size="22" fill="var(--pink)">negative</text>
+      <polyline points="180,95 470,158 760,225 1050,292 1340,352 1610,406" fill="none" stroke="var(--ink)" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"></polyline>
+      <g stroke="var(--ink)" stroke-width="3">
+        <circle cx="180" cy="95" r="13" fill="var(--green)"></circle>
+        <circle cx="470" cy="158" r="13" fill="var(--surface)"></circle>
+        <circle cx="760" cy="225" r="13" fill="var(--surface)"></circle>
+        <circle cx="1050" cy="292" r="13" fill="var(--surface)"></circle>
+        <circle cx="1340" cy="352" r="13" fill="var(--surface)"></circle>
+        <circle cx="1610" cy="406" r="17" fill="var(--pink)"></circle>
+      </g>
+      <g font-family="Archivo" font-weight="900" font-size="26" fill="var(--ink)" text-anchor="middle">
+        <text x="180" y="45">Sees it</text>
+        <text x="470" y="108">Waits for a friend</text>
+        <text x="760" y="175">Only maybes</text>
+        <text x="1050" y="242">No one commits</text>
+        <text x="1340" y="302">Drop-outs</text>
+        <text x="1610" y="356">Stays home</text>
+      </g>
+      <g font-family="Inter" font-weight="500" font-size="19" fill="var(--muted)" text-anchor="middle">
+        <text x="180" y="69">&ldquo;ooh netball social&rdquo;</text>
+        <text x="470" y="132">&ldquo;is anyone going?&rdquo;</text>
+        <text x="760" y="199">no firm yes</text>
+        <text x="1050" y="266">she holds back</text>
+        <text x="1340" y="326">one by one</text>
+        <text x="1610" y="380">misses it</text>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<section data-label="We did the research" data-screen-label="06" data-speaker-notes="Vasanth and Milly are not invented - they are composites of real people we spoke to. To understand why plans really die, we ran three rounds of interviews with university students about their social lives, and then surveyed forty-three more. Everything that follows came straight out of what they told us." class="slide slide--paper" style="padding:96px 110px;justify-content:center;">
+  <div style="font-family:Inter;font-weight:700;font-size:24px;letter-spacing:2px;text-transform:uppercase;color:var(--pink);">The research</div>
+  <p style="font-family:Archivo;font-weight:800;font-size:64px;letter-spacing:-1.5px;line-height:1.22;color:var(--ink);margin:30px 0 0;max-width:1520px;">To understand <span class="hl" style="box-shadow:5px 5px 0 var(--ink);padding:0 14px 4px;">why</span> plans die, we interviewed university students about their social lives - then surveyed 43 more.</p>
+  <p style="font-family:Inter;font-weight:500;font-size:30px;color:var(--muted);margin:30px 0 0;max-width:1320px;">Vasanth and Milly are composites of the people you are about to hear from.</p>
+</section>
+
+<section data-label="Interview: Eddie" data-screen-label="07" data-speaker-notes="First, the organiser's side. Eddie is a third-year Psychology student at Goldsmiths - the Vasanth of his group. He told us that when he has drummed up a plan, put in considerable time on logistics, pricing, checking everyone is okay with it, and it then falls through, that is genuinely frustrating. That sunk effort, wasted, is exactly the organiser burden we saw in Vasanth's week." class="slide slide--blush" style="padding:84px 110px;flex-direction:row;gap:70px;align-items:center;">
+  <div style="width:420px;flex-shrink:0;">
+    <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);border-radius:0;overflow:hidden;background:var(--sand);height:600px;">
+      <img src="assets/personas/interview-eddie.jpg" alt="Eddie" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block;">
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;margin-top:18px;">
+      <div><div style="font-family:Archivo;font-weight:900;font-size:32px;line-height:1;">Eddie, 21</div><div style="font-family:Inter;font-weight:500;font-size:20px;color:var(--muted);">Psychology &middot; Goldsmiths</div></div>
+      <span style="margin-left:auto;background:var(--pink);color:var(--surface);font-family:Archivo;font-weight:800;font-size:19px;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);padding:6px 12px;border-radius:0;transform:rotate(-3deg);white-space:nowrap;">The organiser</span>
+    </div>
+  </div>
+  <div style="flex:1;">
+    <div style="font-family:Archivo;font-weight:900;font-size:96px;color:var(--pink);line-height:.4;">&ldquo;</div>
+    <p style="font-family:Archivo;font-weight:700;font-size:46px;line-height:1.3;color:var(--ink);margin:24px 0 0;max-width:900px;">If I drummed up the plan, and it&rsquo;s taken <span style="color:var(--green);">considerable time</span> - logistics, pricing, whether everyone&rsquo;s okay with it - and then it falls through after all of that, that&rsquo;s <span style="color:var(--green);">quite frustrating</span>.</p>
+  </div>
+</section>
+
+<section data-label="Interview: Chloe" data-screen-label="08" data-speaker-notes="Then the participant's side. Chloe studies International Relations at King's. She described exactly the slow death we map on Milly's curve: as the days went past, the meetup got more drawn out, second thoughts crept in, and more and more people ended up pulling out. Nobody made a decision - the delay itself killed it." class="slide slide--paper" style="padding:84px 110px;flex-direction:row;gap:70px;align-items:center;">
+  <div style="width:420px;flex-shrink:0;">
+    <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);border-radius:0;overflow:hidden;background:var(--sand);height:600px;">
+      <img src="assets/personas/interview-chloe.jpg" alt="Chloe" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block;">
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;margin-top:18px;">
+      <div><div style="font-family:Archivo;font-weight:900;font-size:32px;line-height:1;">Chloe, 19</div><div style="font-family:Inter;font-weight:500;font-size:20px;color:var(--muted);">Int. Relations &middot; King&rsquo;s College</div></div>
+      <span style="margin-left:auto;background:var(--purple);color:var(--surface);font-family:Archivo;font-weight:800;font-size:19px;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);padding:6px 12px;border-radius:0;transform:rotate(-3deg);white-space:nowrap;">The participant</span>
+    </div>
+  </div>
+  <div style="flex:1;">
+    <div style="font-family:Archivo;font-weight:900;font-size:96px;color:var(--pink);line-height:.4;">&ldquo;</div>
+    <p style="font-family:Archivo;font-weight:700;font-size:46px;line-height:1.3;color:var(--ink);margin:24px 0 0;max-width:900px;">As days went past, the meetup got <span style="color:var(--pink);">more drawn out</span>, second thoughts crept in, and more and more people ended up <span style="color:var(--pink);">pulling out</span>.</p>
+  </div>
+</section>
+
+<section data-label="Interview: Luca" data-screen-label="09" data-speaker-notes="And Luca gave us the insight that became a whole feature. He studies BioChem at Oxford, and he told us that when he is invited to something with a friend of a friend, his attendance is conditional - he will not say yes until he knows his own friend is going. He waits for them to respond first, then decides. That single sentence is the seed of our conditional RSVP, the 'I'll go if' you will see in the demo." class="slide slide--blush" style="padding:84px 110px;flex-direction:row;gap:70px;align-items:center;">
+  <div style="width:420px;flex-shrink:0;">
+    <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);border-radius:0;overflow:hidden;background:var(--sand);height:600px;">
+      <img src="assets/personas/interview-luca.jpg" alt="Luca" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block;">
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;margin-top:18px;">
+      <div><div style="font-family:Archivo;font-weight:900;font-size:32px;line-height:1;">Luca, 20</div><div style="font-family:Inter;font-weight:500;font-size:20px;color:var(--muted);">BioChem &middot; Oxford</div></div>
+      <span style="margin-left:auto;background:var(--purple);color:var(--surface);font-family:Archivo;font-weight:800;font-size:19px;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);padding:6px 12px;border-radius:0;transform:rotate(-3deg);white-space:nowrap;">The conditional</span>
+    </div>
+  </div>
+  <div style="flex:1;">
+    <div style="font-family:Archivo;font-weight:900;font-size:96px;color:var(--pink);line-height:.4;">&ldquo;</div>
+    <p style="font-family:Archivo;font-weight:700;font-size:46px;line-height:1.3;color:var(--ink);margin:24px 0 0;max-width:900px;">If I&rsquo;m meeting a friend of a friend, my attendance is <span style="color:var(--purple);">conditional</span> on my friend being there. I&rsquo;ll <span style="color:var(--purple);">wait for them to respond first</span>, then decide.</p>
+  </div>
+</section>
+
+<section data-label="The bigger picture" data-screen-label="03" data-speaker-notes="And this isn't just our friends being flaky. Step back for a second. Young people today are the most connected generation in history - and the loneliest. The US Surgeon General's 2023 advisory found that 15 to 24 year-olds now spend seventy percent less time with friends in person than two decades ago. In the UK, 16 to 24s are the loneliest age group - forty percent feel lonely often or very often. And here's the part that matters most for us: most young adults say that seeing their friends is exactly how they look after their wellbeing. They want to see each other. The everyday cost of actually making it happen is what gets in the way - and that gap is where we work." class="slide slide--ink" style="padding:84px 110px 78px;">
+  <h1 style="font-family:Archivo;font-weight:900;font-size:74px;letter-spacing:-3px;line-height:1.02;color:var(--surface);margin:0;">The most connected generation - and the <span style="display:inline-block;background:var(--pink);color:var(--surface);border:3px solid var(--surface);box-shadow:6px 6px 0 var(--surface);padding:0 16px 6px;border-radius:0;">loneliest</span></h1>
+
+  <div style="display:flex;gap:30px;margin-top:auto;margin-bottom:auto;">
+    <div style="flex:1;background:var(--ink-2);border:3px solid var(--ink-3);border-radius:0;padding:34px;">
+      <div style="font-family:Archivo;font-weight:900;font-size:120px;line-height:.9;color:var(--pink);font-variant-numeric:tabular-nums;">70<span style="font-size:56px;">%</span></div>
+      <p style="font-family:Inter;font-weight:600;font-size:27px;line-height:1.3;color:var(--surface);margin:18px 0 14px;">less time 15-24s spend with friends in person than two decades ago.</p>
+      <div style="font-family:Inter;font-weight:500;font-size:21px;color:rgba(255,255,255,.55);">U.S. Surgeon General&rsquo;s Advisory on Loneliness, 2023 &middot; American Time Use Survey</div>
+    </div>
+    <div style="flex:1;background:var(--ink-2);border:3px solid var(--ink-3);border-radius:0;padding:34px;">
+      <div style="font-family:Archivo;font-weight:900;font-size:120px;line-height:.9;color:var(--purple);font-variant-numeric:tabular-nums;">40<span style="font-size:56px;">%</span></div>
+      <p style="font-family:Inter;font-weight:600;font-size:27px;line-height:1.3;color:var(--surface);margin:18px 0 14px;">of UK 16-24s feel lonely often or very often - the loneliest age group.</p>
+      <div style="font-family:Inter;font-weight:500;font-size:21px;color:rgba(255,255,255,.55);">BBC Loneliness Experiment, 2018 &middot; n = 55,000</div>
+    </div>
+    <div style="flex:1;background:var(--ink-2);border:3px solid var(--ink-3);border-radius:0;padding:34px;">
+      <div style="font-family:Archivo;font-weight:900;font-size:120px;line-height:.9;color:var(--green);font-variant-numeric:tabular-nums;">76<span style="font-size:56px;">%</span></div>
+      <p style="font-family:Inter;font-weight:600;font-size:27px;line-height:1.3;color:var(--surface);margin:18px 0 14px;">of young adults say seeing friends is how they look after their wellbeing.</p>
+      <div style="font-family:Inter;font-weight:500;font-size:21px;color:rgba(255,255,255,.55);">ONS, Public Opinions &amp; Social Trends, 2025</div>
+    </div>
+  </div>
+
+  <p style="font-family:Archivo;font-weight:800;font-size:34px;line-height:1.2;color:var(--surface);margin:0;">They want to see each other. The everyday cost of <span style="color:var(--pink);">making it happen</span> is the gap BeThere closes.</p>
+</section>
+
+<section data-label="Survey landscape" data-screen-label="05" data-speaker-notes="And this is not just us and our friends. We ran a survey - 43 people, collected over two days in May. The pattern is everywhere. Nearly nine in ten people, when they are only slightly unsure, send a maybe or just go silent instead of a clear answer. More than half said at least a third of their hangouts get talked about and never happen. And counterintuitively, bigger groups are harder, not easier - not one person said a larger group made it simpler. The failure mode is real, common, and measurable." class="slide slide--blush" style="padding:92px 110px 84px;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+    <h1 class="title" style="font-size:88px;letter-spacing:-3px;">Plans dying is the <span class="hl">norm</span>.</h1>
+    <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:22px;color:var(--ink);border:2px solid var(--ink);border-radius:0;padding:8px 14px;white-space:nowrap;">Friend Meetup Survey &middot; n=43 &middot; May 2026</div>
+  </div>
+
+  <div style="display:flex;gap:40px;margin-top:auto;margin-bottom:auto;">
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:40px 36px;">
+      <div style="font-family:Archivo;font-weight:900;font-size:150px;line-height:.9;color:var(--pink);font-variant-numeric:tabular-nums;">86<span style="font-size:70px;">%</span></div>
+      <p style="font-family:Inter;font-weight:600;font-size:30px;line-height:1.35;color:var(--ink);margin:20px 0 0;">send a &ldquo;maybe&rdquo; or nothing at all when they are only slightly unsure.</p>
+    </div>
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:40px 36px;">
+      <div style="font-family:Archivo;font-weight:900;font-size:150px;line-height:.9;color:var(--ink);font-variant-numeric:tabular-nums;">23<span style="font-size:70px;color:var(--muted);">/43</span></div>
+      <p style="font-family:Inter;font-weight:600;font-size:30px;line-height:1.35;color:var(--ink);margin:20px 0 0;">say a third or more of their hangouts get talked about but never happen.</p>
+    </div>
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:40px 36px;">
+      <div style="font-family:Archivo;font-weight:900;font-size:150px;line-height:.9;color:var(--purple);font-variant-numeric:tabular-nums;">0</div>
+      <p style="font-family:Inter;font-weight:600;font-size:30px;line-height:1.35;color:var(--ink);margin:20px 0 0;">people said a <b>bigger</b> group made planning easier. 84% said smaller is easier.</p>
+    </div>
+  </div>
+</section>
+
+<section data-label="What people send" data-screen-label="06" data-speaker-notes="Here is the single chart that defined who we are designing for. We asked: when you are only slightly unsure you can make a plan, what do you actually send back? Twenty-seven of forty-three reach for a maybe. Ten send nothing at all and wait. Only five people - five - give a clean yes or no. So the honest answer to 'why do plans die' is that the overwhelming majority of us refuse to commit, politely. The maybe is not an accident. It is the default. So we asked: what if the interface simply did not offer one?" class="slide slide--paper" style="padding:92px 110px 84px;">
+  <h1 class="title" style="font-size:80px;letter-spacing:-3px;">What people actually <span class="hl">send</span></h1>
+  <p style="font-family:Inter;font-weight:500;font-size:32px;color:var(--muted);margin:22px 0 0;">&ldquo;When you are only slightly unsure you can make a plan, what do you send?&rdquo; &middot; n=43</p>
+
+  <div style="margin-top:auto;margin-bottom:auto;display:flex;flex-direction:column;gap:26px;max-width:1500px;">
+    <div style="display:flex;align-items:center;gap:28px;">
+      <div style="width:300px;font-family:Inter;font-weight:700;font-size:30px;text-align:right;flex-shrink:0;">A &ldquo;maybe&rdquo;</div>
+      <div style="height:74px;width:62.8%;background:var(--pink);border:3px solid var(--ink);box-shadow:6px 6px 0 var(--ink);border-radius:0;display:flex;align-items:center;justify-content:flex-end;padding-right:22px;font-family:Archivo;font-weight:900;font-size:38px;color:var(--surface);font-variant-numeric:tabular-nums;">27</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:28px;">
+      <div style="width:300px;font-family:Inter;font-weight:700;font-size:30px;text-align:right;flex-shrink:0;">Nothing / silence</div>
+      <div style="height:74px;width:23.3%;background:var(--purple);border:3px solid var(--ink);box-shadow:6px 6px 0 var(--ink);border-radius:0;display:flex;align-items:center;justify-content:flex-end;padding-right:22px;font-family:Archivo;font-weight:900;font-size:38px;color:var(--surface);font-variant-numeric:tabular-nums;">10</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:28px;">
+      <div style="width:300px;font-family:Inter;font-weight:700;font-size:30px;text-align:right;flex-shrink:0;color:var(--green);">A clear yes / no</div>
+      <div style="height:74px;width:11.6%;background:var(--green);border:3px solid var(--ink);box-shadow:6px 6px 0 var(--ink);border-radius:0;display:flex;align-items:center;justify-content:flex-end;padding-right:22px;font-family:Archivo;font-weight:900;font-size:38px;color:var(--surface);font-variant-numeric:tabular-nums;">5</div>
+    </div>
+  </div>
+
+  <p style="font-family:Archivo;font-weight:800;font-size:40px;line-height:1.2;color:var(--ink);margin:0;max-width:1300px;">Only <span style="color:var(--green);">5 of 43</span> people give a straight answer. The &ldquo;maybe&rdquo; is the default - so what if the app didn&rsquo;t offer one?</p>
+</section>
+
+<section data-label="Not the only one" data-screen-label="09" data-speaker-notes="And Vasanth and Milly are far from alone. The survey gave us four clear archetypes, and three of them are defined by how they avoid committing. The Hedger sends a maybe - 27 of 43. The Ghost reads it and says nothing - 10 of 43. And then the rare one we actually want: the Decisive One, who just answers cleanly - only 5 of 43. BeThere's entire job is to make the whole group behave like that fifth person. Around these users sit everyone who votes, the friends named in a conditional, plus-ones - and the one rival we really have to beat: the WhatsApp group chat they already live in." class="slide slide--paper" style="padding:84px 110px 76px;">
+  <h1 class="title" style="font-size:80px;letter-spacing:-3px;">They are not the <span class="hl">only</span> ones</h1>
+  <p style="font-family:Inter;font-weight:500;font-size:28px;color:var(--muted);margin:16px 0 0;">Four ways people dodge committing. BeThere&rsquo;s job: make everyone behave like the rare <span style="color:var(--green);font-weight:700;">Decisive One</span>.</p>
+
+  <div style="display:flex;gap:26px;margin-top:36px;">
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:7px 7px 0 var(--ink);padding:28px;border-top:14px solid var(--pink);">
+      <div style="font-family:Archivo;font-weight:900;font-size:30px;line-height:1.05;">The Reluctant Initiator</div>
+      <p style="font-family:Inter;font-weight:500;font-size:23px;line-height:1.3;color:var(--muted);margin:10px 0 18px;">Wants it to happen, hates being the pusher.</p>
+      <div style="font-family:Archivo;font-weight:900;font-size:52px;color:var(--ink);font-variant-numeric:tabular-nums;">4<span style="font-size:28px;color:var(--muted);">/43 lead</span></div>
+    </div>
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:7px 7px 0 var(--ink);padding:28px;border-top:14px solid var(--purple);">
+      <div style="font-family:Archivo;font-weight:900;font-size:30px;line-height:1.05;">The Hedger</div>
+      <p style="font-family:Inter;font-weight:500;font-size:23px;line-height:1.3;color:var(--muted);margin:10px 0 18px;">Keeps it &ldquo;semi-free&rdquo;, ditches for something better.</p>
+      <div style="font-family:Archivo;font-weight:900;font-size:52px;color:var(--ink);font-variant-numeric:tabular-nums;">27<span style="font-size:28px;color:var(--muted);">/43 maybe</span></div>
+    </div>
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:7px 7px 0 var(--ink);padding:28px;border-top:14px solid var(--purple);">
+      <div style="font-family:Archivo;font-weight:900;font-size:30px;line-height:1.05;">The Ghost</div>
+      <p style="font-family:Inter;font-weight:500;font-size:23px;line-height:1.3;color:var(--muted);margin:10px 0 18px;">Reads it, says nothing, waits for someone else.</p>
+      <div style="font-family:Archivo;font-weight:900;font-size:52px;color:var(--ink);font-variant-numeric:tabular-nums;">10<span style="font-size:28px;color:var(--muted);">/43 silent</span></div>
+    </div>
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:7px 7px 0 var(--ink);padding:28px;border-top:14px solid var(--green);">
+      <div style="font-family:Archivo;font-weight:900;font-size:30px;line-height:1.05;">The Decisive One</div>
+      <p style="font-family:Inter;font-weight:500;font-size:23px;line-height:1.3;color:var(--muted);margin:10px 0 18px;">Says yes or no cleanly. The minority we want.</p>
+      <div style="font-family:Archivo;font-weight:900;font-size:52px;color:var(--green);font-variant-numeric:tabular-nums;">5<span style="font-size:28px;color:var(--muted);">/43 clear</span></div>
+    </div>
+  </div>
+
+  <div style="margin-top:auto;display:flex;gap:22px;">
+    <div style="flex:1;display:flex;align-items:center;gap:18px;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:7px 7px 0 var(--ink);padding:22px 26px;">
+      <span style="font-family:Inter;font-weight:700;font-size:20px;letter-spacing:1.5px;text-transform:uppercase;color:var(--purple);white-space:nowrap;">Direct</span>
+      <span style="font-family:Inter;font-weight:600;font-size:24px;color:var(--ink);line-height:1.25;">Everyone who votes &middot; friends named in a conditional &middot; plus-ones &amp; guests</span>
+    </div>
+    <div style="flex:1;display:flex;align-items:center;gap:18px;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:7px 7px 0 var(--ink);padding:22px 26px;">
+      <span style="font-family:Inter;font-weight:700;font-size:20px;letter-spacing:1.5px;text-transform:uppercase;color:var(--grey);white-space:nowrap;">Indirect</span>
+      <span style="font-family:Inter;font-weight:600;font-size:24px;color:var(--ink);line-height:1.25;">The group chat we replace &middot; venues &middot; Clerk / AWS / Vercel</span>
+    </div>
+  </div>
+</section>
+
+<section data-label="How might we" data-screen-label="11" data-speaker-notes="How might we help a group of friends turn a loose intention to meet into a committed plan - without anyone having to be the organiser, and without the social pressure of a public maybe? Every word in that sentence is load-bearing, and it came straight out of the research. This is the question the rest of the talk answers." class="slide slide--ink" style="padding:96px 110px 84px;justify-content:center;">
+  <div style="font-family:Inter;font-weight:700;font-size:24px;letter-spacing:2px;text-transform:uppercase;color:var(--pink);">Opportunity &middot; how might we</div>
+  <p style="font-family:Archivo;font-weight:800;font-size:66px;letter-spacing:-1.5px;line-height:1.22;color:var(--surface);margin:30px 0 0;max-width:1640px;">Help a group of friends turn a loose intention to meet into a <span style="display:inline-block;background:var(--green);color:var(--surface);border:3px solid var(--surface);box-shadow:5px 5px 0 var(--surface);padding:0 14px 4px;border-radius:0;">committed plan</span> - without anyone being the <span style="color:var(--pink);">organiser</span>, and without the social pressure of a public <span style="color:var(--pink);">&ldquo;maybe&rdquo;</span>.</p>
+</section>
+
+<section data-label="So we built BeThere" data-screen-label="12" data-speaker-notes="So this is what we built. BeThere. One person sends one plan to the group. Everyone decides together. There is no organiser to chase, and there is no maybe to hide behind. The group sees the plan - they never see who sent it. Rather than tell you how it works, let me walk you through Vasanth's Friday night - first the way it goes today, then the way it goes on BeThere." class="slide slide--blush" style="padding:84px 110px 80px;flex-direction:row;gap:80px;align-items:center;">
+  <div style="flex:1;">
+    <div style="font-family:Inter;font-weight:700;font-size:24px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);">So we built</div>
+    <div style="font-family:Archivo;font-weight:900;font-size:148px;letter-spacing:-6px;line-height:.9;color:var(--ink);margin:8px 0 0;">BeThere</div>
+    <p style="font-family:Archivo;font-weight:800;font-size:48px;letter-spacing:-1px;line-height:1.2;color:var(--ink);margin:34px 0 0;max-width:760px;">One person sends one plan. The group decides. <span class="hl" style="box-shadow:5px 5px 0 var(--ink);padding:0 14px 4px;">No organiser, no maybe.</span></p>
+  </div>
+
+  <div style="width:430px;flex-shrink:0;background:var(--phone);border:3px solid var(--ink);border-radius:0;padding:12px;box-shadow:14px 14px 0 var(--ink);">
+    <div style="border-radius:0;overflow:hidden;height:860px;background:linear-gradient(160deg,var(--blush),var(--lav));display:flex;flex-direction:column;padding:0 18px 18px;color:var(--ink);">
+      <div style="display:flex;justify-content:space-between;padding:16px 6px 10px;font-size:17px;font-weight:600;"><span>9:41</span><span style="opacity:.5;">&#9679;&#9679;&#9679;</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;">
+        <div><div style="font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);">4 this week</div><div style="font-family:Archivo;font-weight:900;font-size:38px;letter-spacing:-1.5px;line-height:.95;">Your meets</div></div>
+        <div style="width:40px;height:40px;border-radius:50%;background:#c9c7c0;border:2px solid var(--ink);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;">A</div>
+      </div>
+      <div style="background:var(--surface);border:2px solid var(--ink);border-radius:0;box-shadow:5px 5px 0 var(--ink);padding:16px;margin-bottom:18px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-family:Archivo;font-weight:800;font-size:26px;">Bowling</span><span style="background:var(--pink);color:var(--surface);font-family:Archivo;font-weight:800;font-size:15px;border:2px solid var(--ink);box-shadow:2px 2px 0 var(--ink);padding:5px 10px;border-radius:0;transform:rotate(4deg);">RSVP 8H</span></div>
+        <div style="font-size:14px;color:var(--muted);margin-top:3px;">The Boys &middot; TenPin Bexleyheath</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;"><span style="font-family:'Space Mono',monospace;font-weight:700;font-size:14px;border:1.5px solid var(--ink);border-radius:0;padding:5px 10px;">FRI 16:00</span><span style="font-size:13px;font-weight:700;color:var(--muted);">+5 going</span></div>
+      </div>
+      <div style="display:flex;gap:7px;margin-bottom:16px;"><span style="font-size:15px;font-weight:700;padding:7px 12px;border-radius:0;background:var(--ink);color:var(--surface);">All</span><span style="font-size:15px;font-weight:700;padding:7px 12px;border-radius:0;color:var(--muted);">Going</span><span style="font-size:15px;font-weight:700;padding:7px 12px;border-radius:0;color:var(--muted);">Open</span><span style="font-size:15px;font-weight:700;padding:7px 12px;border-radius:0;color:var(--muted);">Done</span></div>
+      <div style="background:var(--surface);border:2px solid var(--ink);border-radius:0;box-shadow:5px 5px 0 var(--ink);overflow:hidden;">
+        <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1.5px dashed var(--ink);"><span style="font-size:16px;color:var(--muted);">Suggest a meet&hellip;</span><span style="margin-left:auto;background:var(--pink);color:var(--surface);font-weight:800;font-size:20px;width:30px;height:30px;border:1.5px solid var(--ink);border-radius:0;display:flex;align-items:center;justify-content:center;">+</span></div>
+        <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;"><span style="width:24px;height:24px;border:2px solid var(--green);background:var(--green);color:var(--surface);border-radius:0;display:flex;align-items:center;justify-content:center;font-size:14px;">&#10003;</span><span style="font-weight:700;font-size:18px;">Dinner</span><span style="margin-left:auto;font-family:'Space Mono',monospace;font-weight:700;font-size:13px;border:1.5px solid var(--ink);border-radius:0;padding:4px 8px;">26 MAY</span></div>
+        <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-top:1px solid rgba(0,0,0,.1);"><span style="width:24px;height:24px;border:2px solid var(--ink);border-radius:0;"></span><span style="font-weight:700;font-size:18px;">Football</span><span style="margin-left:auto;font-family:'Space Mono',monospace;font-weight:700;font-size:13px;border:1.5px solid var(--ink);border-radius:0;padding:4px 8px;">06 JUN</span></div>
+        <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-top:1px solid rgba(0,0,0,.1);"><span style="width:24px;height:24px;border:2px solid var(--green);background:var(--green);color:var(--surface);border-radius:0;display:flex;align-items:center;justify-content:center;font-size:14px;">&#10003;</span><span style="font-weight:700;font-size:18px;">Climbing</span><span style="margin-left:auto;font-family:'Space Mono',monospace;font-weight:700;font-size:13px;border:1.5px solid var(--ink);border-radius:0;padding:4px 8px;">06 JUN</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section data-label="Two user stories" data-screen-label="13b" data-speaker-notes="Everything we built answers two user stories, one for each side of the dead plan. For the organiser: as the organiser, I want to float a plan without it being my job to chase, so I can see my friends without the friction. For the hesitant participant: as someone new and unsure, I want to say yes only if my friends are going, so I feel comfortable committing. Hold these two; the live demo is the answer to both." class="slide slide--blush" style="padding:84px 110px;">
+  <div style="font-family:Inter;font-weight:700;font-size:24px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);">What we built for</div>
+  <h1 class="title" style="font-size:78px;letter-spacing:-3px;margin-top:6px;">Two people. <span class="hl" style="padding:0 16px 6px;">Two user stories.</span></h1>
+  <div style="display:flex;gap:40px;margin-top:46px;flex:1;">
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:38px;display:flex;flex-direction:column;">
+      <span style="align-self:flex-start;background:var(--pink);color:var(--surface);font-family:Archivo;font-weight:800;font-size:20px;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);padding:6px 12px;border-radius:0;transform:rotate(-3deg);">Vasanth &middot; the organiser</span>
+      <p style="font-family:Archivo;font-weight:800;font-size:33px;line-height:1.28;color:var(--ink);margin:28px 0 0;"><span style="color:var(--pink);">As</span> the organiser, <span style="color:var(--pink);">I want</span> to float a plan without it being my job to chase, <span style="color:var(--pink);">so that</span> I can see my friends without the friction.</p>
+      <div style="margin-top:auto;padding-top:26px;font-family:Inter;font-weight:600;font-size:23px;color:var(--muted);">So we built: an anonymous suggest + public vote, with no &ldquo;maybe&rdquo;.</div>
+    </div>
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:38px;display:flex;flex-direction:column;">
+      <span style="align-self:flex-start;background:var(--purple);color:var(--surface);font-family:Archivo;font-weight:800;font-size:20px;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);padding:6px 12px;border-radius:0;transform:rotate(-3deg);">Milly &middot; the participant</span>
+      <p style="font-family:Archivo;font-weight:800;font-size:33px;line-height:1.28;color:var(--ink);margin:28px 0 0;"><span style="color:var(--purple);">As</span> someone new and unsure, <span style="color:var(--purple);">I want</span> to say yes only if my friends are going, <span style="color:var(--purple);">so that</span> I feel comfortable committing.</p>
+      <div style="margin-top:auto;padding-top:26px;font-family:Inter;font-weight:600;font-size:23px;color:var(--muted);">So we built: a blind moment with &ldquo;I&rsquo;ll go if&rdquo;.</div>
+    </div>
+  </div>
+</section>
+
+<section data-label="Demonstration 1: the core flow" data-screen-label="D1" data-speaker-notes="Now let's stop describing it and show it. I'm switching to a real phone - this is the live, deployed app, not a mockup. I'll send a plan to The Boys; the group will vote; the deadline will lock; and on a second phone you'll watch someone answer 'I'll go if' and the moment resolve to 'you and four others are in'. Watch three things: it is anonymous, the counts are public but the names never are, and the conditional resolves the instant it locks. [LIVE: drive the two seeded phones through send -> vote -> lock -> moment -> clear.]" class="slide slide--ink" style="padding:84px 110px;justify-content:center;">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <div style="font-family:Inter;font-weight:700;font-size:24px;letter-spacing:2px;text-transform:uppercase;color:var(--pink);">Live demonstration &middot; 1 of 2</div>
+    <span style="font-family:'Space Mono',monospace;font-weight:700;font-size:20px;color:var(--surface);border:2px solid var(--surface);border-radius:0;padding:8px 14px;">switch to the phone</span>
+  </div>
+  <h1 style="font-family:Archivo;font-weight:900;font-size:98px;letter-spacing:-3px;line-height:.98;color:var(--surface);margin:24px 0 0;">One plan, <span style="display:inline-block;background:var(--pink);color:var(--surface);border:3px solid var(--surface);box-shadow:6px 6px 0 var(--surface);padding:0 16px 6px;border-radius:0;">decided live</span>.</h1>
+  <p style="font-family:Inter;font-weight:500;font-size:30px;line-height:1.35;color:rgba(255,255,255,.85);margin:28px 0 0;max-width:1480px;">Two seeded phones, the real deployed app: send a plan &rarr; the group +1s times and activities &rarr; the deadline locks &rarr; a second phone answers &ldquo;I&rsquo;ll go if&rdquo; &rarr; &ldquo;you and 4 others are in&rdquo;.</p>
+  <div style="display:flex;gap:18px;margin-top:38px;">
+    <div style="flex:1;background:var(--ink-2);border:3px solid var(--ink-3);border-radius:0;padding:22px 26px;"><div class="eyebrow" style="font-size:18px;color:var(--pink);">Watch for</div><div style="font-family:Archivo;font-weight:800;font-size:26px;color:var(--surface);margin-top:6px;">No organiser - it&rsquo;s anonymous</div></div>
+    <div style="flex:1;background:var(--ink-2);border:3px solid var(--ink-3);border-radius:0;padding:22px 26px;"><div class="eyebrow" style="font-size:18px;color:var(--purple);">Watch for</div><div style="font-family:Archivo;font-weight:800;font-size:26px;color:var(--surface);margin-top:6px;">Counts public, names private</div></div>
+    <div style="flex:1;background:var(--ink-2);border:3px solid var(--ink-3);border-radius:0;padding:22px 26px;"><div class="eyebrow" style="font-size:18px;color:var(--green);">Watch for</div><div style="font-family:Archivo;font-weight:800;font-size:26px;color:var(--surface);margin-top:6px;">&ldquo;I&rsquo;ll go if&rdquo; resolves at lock</div></div>
+  </div>
+</section>
+
+<section data-label="Walkthrough: Send" data-screen-label="14" data-speaker-notes="Step one - and this is Vasanth's relief. Vasanth has a loose idea, bowling on Friday. He opens BeThere and sends one meetup to The Boys: a couple of candidate times, maybe an activity, and a 'decides by' deadline. The crucial part is this line: sent anonymously. The group sees the plan, but never sees that it was Vasanth. That single decision - which came straight from our interviews - removes the entire social cost of being the one who suggests. [LIVE: switch to the phone here and send a real plan to the group.]" class="slide slide--blush" style="padding:78px 110px 72px;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+    <h1 class="title" style="font-size:72px;letter-spacing:-2.5px;">One person <span class="hl" style="box-shadow:5px 5px 0 var(--ink);padding:0 16px 5px;">sends</span> one meetup</h1>
+    <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:22px;color:var(--ink);border:2px solid var(--ink);border-radius:0;padding:8px 14px;">Walkthrough &middot; 1 / 4</div>
+  </div>
+
+  <div style="display:flex;gap:70px;flex:1;align-items:center;margin-top:14px;">
+    <div style="width:400px;flex-shrink:0;background:var(--phone);border:3px solid var(--ink);border-radius:0;padding:11px;box-shadow:12px 12px 0 var(--ink);">
+      <div style="border-radius:0;overflow:hidden;height:760px;background:linear-gradient(160deg,var(--blush),var(--lav));display:flex;flex-direction:column;padding:0 16px 16px;color:var(--ink);">
+        <div style="display:flex;justify-content:space-between;padding:14px 4px 8px;font-size:15px;font-weight:600;"><span>9:41</span><span style="opacity:.5;">&#9679;&#9679;&#9679;</span></div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;"><span style="width:30px;height:30px;border:2px solid var(--ink);border-radius:0;background:var(--surface);box-shadow:2px 2px 0 var(--ink);display:flex;align-items:center;justify-content:center;font-weight:800;">&lsaquo;</span><span style="font-family:Archivo;font-weight:800;font-size:18px;">Suggest a meet</span></div>
+        <div style="background:var(--green);color:var(--surface);border:2px solid var(--ink);box-shadow:3px 3px 0 var(--ink);border-radius:0;padding:8px 12px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:14px;"><span style="font-size:16px;">&#9679;</span> Sent anonymously - no names, just the group</div>
+        <div style="font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Group</div>
+        <div style="display:flex;gap:7px;margin-bottom:14px;"><span style="font-size:14px;font-weight:700;padding:6px 12px;border:2px solid var(--ink);border-radius:0;background:var(--ink);color:var(--surface);box-shadow:2px 2px 0 var(--ink);">The Boys</span><span style="font-size:14px;font-weight:700;padding:6px 12px;border:2px solid var(--ink);border-radius:0;background:var(--surface);">Reunion</span></div>
+        <div style="font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">What</div>
+        <div style="background:var(--surface);border:2px solid var(--ink);border-radius:0;box-shadow:2px 2px 0 var(--ink);padding:10px 12px;font-size:17px;font-weight:700;margin-bottom:14px;">Bowling</div>
+        <div style="font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">When - vote between</div>
+        <div style="background:var(--surface);border:2px solid var(--ink);border-radius:0;box-shadow:2px 2px 0 var(--ink);overflow:hidden;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;padding:11px 13px;font-size:16px;font-weight:600;"><span>Fri 16:00</span><span style="margin-left:auto;font-family:'Space Mono';font-size:12px;color:var(--muted);">candidate</span></div>
+          <div style="display:flex;align-items:center;padding:11px 13px;border-top:1px solid rgba(0,0,0,.1);font-size:16px;font-weight:600;"><span>Sat 14:00</span><span style="margin-left:auto;font-family:'Space Mono';font-size:12px;color:var(--muted);">candidate</span></div>
+          <div style="display:flex;align-items:center;padding:11px 13px;border-top:1px dashed var(--ink);font-size:15px;color:var(--muted);"><span>Add a time&hellip;</span><span style="margin-left:auto;background:var(--pink);color:var(--surface);font-weight:800;width:26px;height:26px;border:1.5px solid var(--ink);border-radius:0;display:flex;align-items:center;justify-content:center;">+</span></div>
+        </div>
+        <div style="margin-top:auto;background:var(--pink);color:var(--surface);border:2px solid var(--ink);box-shadow:4px 4px 0 var(--ink);border-radius:0;text-align:center;font-family:Archivo;font-weight:800;font-size:18px;padding:13px;">Send to the group</div>
+      </div>
+    </div>
+
+    <div style="flex:1;">
+      <p style="font-family:Archivo;font-weight:800;font-size:46px;line-height:1.2;color:var(--ink);margin:0;max-width:820px;">Candidate times, maybe an activity, a deadline. Sent <span style="color:var(--pink);">anonymously</span>.</p>
+      <p style="font-family:Inter;font-weight:500;font-size:32px;line-height:1.4;color:var(--muted);margin:26px 0 0;max-width:820px;">The group sees the plan - never who proposed it. No one to chase, no one to blame.</p>
+      <div style="margin-top:40px;display:inline-flex;align-items:center;gap:18px;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:6px 6px 0 var(--ink);padding:22px 28px;max-width:820px;">
+        <span style="font-family:Inter;font-weight:700;font-size:18px;letter-spacing:1px;text-transform:uppercase;color:var(--purple);white-space:nowrap;">Insight</span>
+        <span style="font-family:Inter;font-weight:600;font-size:26px;line-height:1.3;color:var(--ink);">&ldquo;Nobody likes being the one to push things&hellip; anonymity makes it a consensus.&rdquo; - from our interviews</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section data-label="Walkthrough: Vote" data-screen-label="15" data-speaker-notes="Step two. The plan lands in the group. Everyone votes - they tap plus-one on the times and activities that work for them. And here is the important thing about this screen: you can see how many people want each option, that is the momentum, but you never see who voted. The counts are public, the names are private. And look at the buttons - there is no maybe. You either plus-one something or you don't. We designed the hedge out of the interface. [LIVE: on the phone, the group casts a couple of votes - the counts move, the names stay hidden.]" class="slide slide--paper" style="padding:78px 110px 72px;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+    <h1 class="title" style="font-size:72px;letter-spacing:-2.5px;">The group <span class="hl" style="box-shadow:5px 5px 0 var(--ink);padding:0 16px 5px;">votes</span> - no maybe</h1>
+    <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:22px;color:var(--ink);border:2px solid var(--ink);border-radius:0;padding:8px 14px;">Walkthrough &middot; 2 / 4</div>
+  </div>
+
+  <div style="display:flex;gap:70px;flex:1;align-items:center;margin-top:14px;">
+    <div style="width:400px;flex-shrink:0;background:var(--phone);border:3px solid var(--ink);border-radius:0;padding:11px;box-shadow:12px 12px 0 var(--ink);">
+      <div style="border-radius:0;overflow:hidden;height:760px;background:linear-gradient(160deg,var(--blush),var(--lav));display:flex;flex-direction:column;padding:0 16px 16px;color:var(--ink);">
+        <div style="display:flex;justify-content:space-between;padding:14px 4px 8px;font-size:15px;font-weight:600;"><span>9:41</span><span style="opacity:.5;">&#9679;&#9679;&#9679;</span></div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;"><span style="width:30px;height:30px;border:2px solid var(--ink);border-radius:0;background:var(--surface);box-shadow:2px 2px 0 var(--ink);display:flex;align-items:center;justify-content:center;font-weight:800;">&lsaquo;</span><span style="font-family:Archivo;font-weight:800;font-size:18px;">Bowling &middot; The Boys</span></div>
+        <div style="background:var(--surface);border:2px solid var(--ink);border-radius:0;box-shadow:4px 4px 0 var(--ink);padding:14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;"><div><div style="font-size:13px;color:var(--muted);">Collecting votes</div><div style="font-family:Archivo;font-weight:800;font-size:18px;">Pick the times that work</div></div><span style="background:var(--pink);color:var(--surface);font-family:Archivo;font-weight:800;font-size:13px;border:2px solid var(--ink);box-shadow:2px 2px 0 var(--ink);padding:5px 9px;border-radius:0;transform:rotate(4deg);">2 DAYS</span></div>
+        <div style="font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">When</div>
+        <div style="background:var(--surface);border:2px solid var(--ink);border-radius:0;box-shadow:3px 3px 0 var(--ink);overflow:hidden;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:11px;padding:11px 13px;"><span style="font-weight:700;font-size:16px;">Fri 16:00</span><span style="margin-left:auto;font-family:Archivo;font-weight:900;font-size:18px;font-variant-numeric:tabular-nums;">+4</span><span style="background:var(--pink);color:var(--surface);font-weight:800;width:30px;height:30px;border:2px solid var(--ink);border-radius:0;display:flex;align-items:center;justify-content:center;">&#10003;</span></div>
+          <div style="display:flex;align-items:center;gap:11px;padding:11px 13px;border-top:1px solid rgba(0,0,0,.1);"><span style="font-weight:700;font-size:16px;">Sat 14:00</span><span style="margin-left:auto;font-family:Archivo;font-weight:900;font-size:18px;color:var(--muted);font-variant-numeric:tabular-nums;">+1</span><span style="width:30px;height:30px;border:2px solid var(--ink);border-radius:0;"></span></div>
+        </div>
+        <div style="font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">What</div>
+        <div style="background:var(--surface);border:2px solid var(--ink);border-radius:0;box-shadow:3px 3px 0 var(--ink);overflow:hidden;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:11px;padding:11px 13px;"><span style="font-weight:700;font-size:16px;">Bowling</span><span style="margin-left:auto;font-family:Archivo;font-weight:900;font-size:18px;font-variant-numeric:tabular-nums;">+5</span><span style="background:var(--pink);color:var(--surface);font-weight:800;width:30px;height:30px;border:2px solid var(--ink);border-radius:0;display:flex;align-items:center;justify-content:center;">&#10003;</span></div>
+          <div style="display:flex;align-items:center;gap:11px;padding:11px 13px;border-top:1px solid rgba(0,0,0,.1);"><span style="font-weight:700;font-size:16px;">Dinner after</span><span style="margin-left:auto;font-family:Archivo;font-weight:900;font-size:18px;color:var(--muted);font-variant-numeric:tabular-nums;">+2</span><span style="width:30px;height:30px;border:2px solid var(--ink);border-radius:0;"></span></div>
+        </div>
+        <div style="margin-top:auto;text-align:center;font-size:14px;font-weight:600;color:var(--muted);">Counts are public. Names never are.</div>
+      </div>
+    </div>
+
+    <div style="flex:1;">
+      <p style="font-family:Archivo;font-weight:800;font-size:46px;line-height:1.2;color:var(--ink);margin:0;max-width:820px;">Tap <span style="color:var(--pink);">+1</span>. See the momentum. Never see who voted.</p>
+      <p style="font-family:Inter;font-weight:500;font-size:32px;line-height:1.4;color:var(--muted);margin:26px 0 0;max-width:820px;">Counts are public, names are private. No &ldquo;maybe&rdquo; button to hide behind - so one quiet member can&rsquo;t cascade doubt onto everyone else.</p>
+      <div style="margin-top:40px;display:inline-flex;align-items:center;gap:18px;background:var(--ink);border:3px solid var(--ink);border-radius:0;box-shadow:6px 6px 0 var(--pink);padding:22px 28px;max-width:820px;">
+        <span style="font-family:Inter;font-weight:700;font-size:18px;letter-spacing:1px;text-transform:uppercase;color:var(--pink);white-space:nowrap;">Insight</span>
+        <span style="font-family:Inter;font-weight:600;font-size:26px;line-height:1.3;color:var(--surface);">86% default to a &ldquo;maybe&rdquo; - so we removed the maybe.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section data-label="Walkthrough: Moment" data-screen-label="16" data-speaker-notes="Step three, and this is the heart of it. At the deadline the top time wins automatically - nobody has to call it - and a blind moment opens. Each person privately answers one of three things: I'm in, I can't make it, or the clever one, I'll go if certain people go. This is Milly's moment: she finally has a safe way to say yes-but-only-if-my-friends-are-in, without ever naming names out loud. And it is blind: there is no running tally and you cannot see who else is in. There is nothing to hedge against, so people just answer. A reminder dings them at the deadline - that nudge is device-local today; remote push, BeReal-style, is the very next thing we ship. [LIVE: on a second seeded phone, answer 'I'll go if' so the conditional resolves live.]" class="slide slide--blush" style="padding:78px 110px 72px;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+    <h1 class="title" style="font-size:72px;letter-spacing:-2.5px;">Then a blind <span class="hl" style="box-shadow:5px 5px 0 var(--ink);padding:0 16px 5px;">moment</span></h1>
+    <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:22px;color:var(--ink);border:2px solid var(--ink);border-radius:0;padding:8px 14px;">Walkthrough &middot; 3 / 4</div>
+  </div>
+
+  <div style="display:flex;gap:70px;flex:1;align-items:center;margin-top:14px;">
+    <div style="width:400px;flex-shrink:0;background:var(--phone);border:3px solid var(--ink);border-radius:0;padding:11px;box-shadow:12px 12px 0 var(--ink);">
+      <div style="border-radius:0;overflow:hidden;height:760px;background:linear-gradient(160deg,var(--blush),var(--lav));display:flex;flex-direction:column;padding:0 16px 16px;color:var(--ink);">
+        <div style="display:flex;justify-content:space-between;padding:14px 4px 8px;font-size:15px;font-weight:600;"><span>9:41</span><span style="opacity:.5;">&#9679;&#9679;&#9679;</span></div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;"><span style="width:30px;height:30px;border:2px solid var(--ink);border-radius:0;background:var(--surface);box-shadow:2px 2px 0 var(--ink);display:flex;align-items:center;justify-content:center;font-weight:800;">&lsaquo;</span><span style="font-family:Archivo;font-weight:800;font-size:18px;">The Boys</span></div>
+        <div style="background:var(--surface);border:2px solid var(--ink);border-radius:0;box-shadow:4px 4px 0 var(--ink);padding:16px;margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-family:'Space Mono';font-weight:700;font-size:13px;border:1.5px solid var(--ink);border-radius:0;padding:4px 9px;">FRI 16:00</span><span style="background:var(--pink);color:var(--surface);font-family:Archivo;font-weight:800;font-size:13px;border:2px solid var(--ink);box-shadow:2px 2px 0 var(--ink);padding:5px 9px;border-radius:0;transform:rotate(4deg);">RSVP 8H</span></div>
+          <div style="font-family:Archivo;font-weight:900;font-size:30px;margin-top:10px;">Bowling</div>
+          <div style="font-size:14px;color:var(--muted);">TenPin Bexleyheath</div>
+        </div>
+        <div style="font-family:Archivo;font-weight:800;font-size:20px;margin:16px 2px 12px;">Are you in?</div>
+        <div style="background:var(--green);color:var(--surface);border:2px solid var(--ink);box-shadow:4px 4px 0 var(--ink);border-radius:0;text-align:center;font-family:Archivo;font-weight:800;font-size:18px;padding:14px;margin-bottom:11px;">&#10003;&nbsp; I'm in</div>
+        <div style="background:var(--surface);color:var(--ink);border:2px solid var(--ink);box-shadow:4px 4px 0 var(--ink);border-radius:0;text-align:center;font-family:Archivo;font-weight:800;font-size:18px;padding:14px;margin-bottom:11px;">I'll go if&hellip;</div>
+        <div style="background:var(--surface);color:var(--muted);border:2px solid var(--ink);box-shadow:4px 4px 0 var(--ink);border-radius:0;text-align:center;font-family:Archivo;font-weight:800;font-size:18px;padding:14px;">Can't make it</div>
+        <div style="margin-top:auto;text-align:center;font-size:14px;font-weight:600;color:var(--muted);padding-top:14px;">No tally. No who's in. Not until it locks.</div>
+      </div>
+    </div>
+
+    <div style="flex:1;">
+      <p style="font-family:Archivo;font-weight:800;font-size:46px;line-height:1.2;color:var(--ink);margin:0;max-width:820px;">The deadline auto-picks the winner. Then you reply <span style="color:var(--green);">privately</span>.</p>
+      <p style="font-family:Inter;font-weight:500;font-size:32px;line-height:1.4;color:var(--muted);margin:24px 0 0;max-width:820px;">No live tally, no who-is-in. There is nothing to hedge against, so people just answer.</p>
+      <div style="margin-top:32px;display:flex;align-items:center;gap:16px;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:6px 6px 0 var(--ink);padding:20px 26px;max-width:820px;">
+        <span style="font-family:Archivo;font-weight:800;font-size:24px;color:var(--ink);white-space:nowrap;">&ldquo;I'll go if&hellip;&rdquo;</span>
+        <span style="font-family:Inter;font-weight:600;font-size:24px;color:var(--muted);">the conditional RSVP - defaults to &ldquo;at least one&rdquo; friend, never forces a name.</span>
+      </div>
+      <div style="margin-top:18px;display:inline-flex;align-items:center;gap:18px;background:var(--ink);border:3px solid var(--ink);border-radius:0;box-shadow:6px 6px 0 var(--pink);padding:20px 26px;max-width:820px;">
+        <span style="font-family:Inter;font-weight:700;font-size:18px;letter-spacing:1px;text-transform:uppercase;color:var(--pink);white-space:nowrap;">Insight</span>
+        <span style="font-family:Inter;font-weight:600;font-size:24px;line-height:1.3;color:var(--surface);">&ldquo;A deadline with a push - like BeReal, it goes ding ding ding.&rdquo; - from our interviews</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section data-label="Walkthrough: Clear or fizzle" data-screen-label="17" data-speaker-notes="Step four - the payoff. At the deadline, if enough people are in, it clears. Only now is the in-crowd revealed: you and four others are in, it's on. Commitment is shown only after it is safe to show it. And if not enough commit? It just fizzles. Silently. No failure notice, no awkward dead plan sitting in the chat, hidden from every dashboard. A fizzle leaves no trace - and that means no blame. The plan that dies costs nobody anything. [LIVE: cross the deadline on the phone so the moment clears and 'you and 4 others are in' appears.]" class="slide slide--paper" style="padding:78px 110px 72px;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+    <h1 class="title" style="font-size:72px;letter-spacing:-2.5px;">It clears, or it quietly <span class="hl" style="box-shadow:5px 5px 0 var(--ink);padding:0 16px 5px;">fizzles</span></h1>
+    <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:22px;color:var(--ink);border:2px solid var(--ink);border-radius:0;padding:8px 14px;">Walkthrough &middot; 4 / 4</div>
+  </div>
+
+  <div style="display:flex;gap:70px;flex:1;align-items:center;margin-top:14px;">
+    <div style="width:400px;flex-shrink:0;background:var(--phone);border:3px solid var(--ink);border-radius:0;padding:11px;box-shadow:12px 12px 0 var(--ink);">
+      <div style="border-radius:0;overflow:hidden;height:760px;background:linear-gradient(160deg,var(--tint-green),var(--lav));display:flex;flex-direction:column;padding:0 16px 18px;color:var(--ink);align-items:center;text-align:center;">
+        <div style="display:flex;justify-content:space-between;padding:14px 4px 8px;font-size:15px;font-weight:600;width:100%;"><span>9:41</span><span style="opacity:.5;">&#9679;&#9679;&#9679;</span></div>
+        <div style="margin-top:60px;width:96px;height:96px;border-radius:50%;background:var(--green);border:3px solid var(--ink);box-shadow:5px 5px 0 var(--ink);display:flex;align-items:center;justify-content:center;color:var(--surface);font-size:50px;font-weight:800;">&#10003;</div>
+        <div style="font-family:Archivo;font-weight:900;font-size:54px;letter-spacing:-1px;margin-top:28px;">You're in</div>
+        <div style="font-family:Archivo;font-weight:800;font-size:26px;margin-top:6px;">Bowling &middot; Fri 16:00</div>
+        <div style="font-size:17px;color:var(--muted);margin-top:4px;">TenPin Bexleyheath</div>
+        <div style="display:flex;align-items:center;justify-content:center;margin-top:34px;">
+          <span style="width:46px;height:46px;border-radius:50%;border:3px solid var(--surface);background:var(--purple);color:var(--surface);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;box-shadow:0 0 0 2px var(--ink);">M</span>
+          <span style="width:46px;height:46px;border-radius:50%;border:3px solid var(--surface);background:#3F7BA8;color:var(--surface);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;margin-left:-12px;box-shadow:0 0 0 2px var(--ink);">J</span>
+          <span style="width:46px;height:46px;border-radius:50%;border:3px solid var(--surface);background:#C9823F;color:var(--surface);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;margin-left:-12px;box-shadow:0 0 0 2px var(--ink);">S</span>
+          <span style="width:46px;height:46px;border-radius:50%;border:3px solid var(--surface);background:#5F9472;color:var(--surface);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;margin-left:-12px;box-shadow:0 0 0 2px var(--ink);">L</span>
+        </div>
+        <div style="font-family:Archivo;font-weight:800;font-size:22px;margin-top:18px;">You and 4 others are in</div>
+      </div>
+    </div>
+
+    <div style="flex:1;">
+      <p style="font-family:Archivo;font-weight:800;font-size:46px;line-height:1.2;color:var(--ink);margin:0;max-width:820px;">Enough commit? It <span style="color:var(--green);">clears</span> - and the in-crowd is revealed only now.</p>
+      <p style="font-family:Inter;font-weight:500;font-size:30px;line-height:1.4;color:var(--muted);margin:22px 0 30px;max-width:820px;">Commitment is shown only after it is safe to show it.</p>
+
+      <div style="background:var(--sand);border:3px dashed var(--grey);border-radius:0;padding:28px 32px;max-width:820px;opacity:.92;">
+        <div style="display:flex;align-items:center;gap:14px;"><span style="font-family:Archivo;font-weight:900;font-size:34px;color:var(--muted);">&hellip;or it fizzles</span><span style="background:var(--grey);color:var(--surface);font-family:Archivo;font-weight:800;font-size:16px;border-radius:0;padding:6px 12px;transform:rotate(-3deg);">no trace</span></div>
+        <p style="font-family:Inter;font-weight:500;font-size:26px;line-height:1.35;color:var(--muted);margin:14px 0 0;">If not enough commit, it disappears silently. Hidden from every dashboard. No failure notice, no dead thread - so no blame.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section data-label="The curve inverts" data-screen-label="18" data-speaker-notes="So that's the whole journey on BeThere. Step back and look at the shape. It starts lower than the group chat does - on purpose, a deliberate low-stakes float instead of a big public ask. But it never collapses. Every step you just watched - the votes building momentum, the deadline locking it in, the blind moment turning that into commitment - bends the line upward instead of letting it decay. Same Friday, same friends. We only removed the maybe and the organiser, and the whole curve inverts." class="slide slide--blush" style="padding:84px 110px 76px;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+    <h1 class="title" style="font-size:76px;letter-spacing:-3px;">And the curve <span class="hl" style="padding:0 16px 6px;">inverts</span></h1>
+    <div style="font-family:Inter;font-weight:600;font-size:24px;color:var(--muted);">Same Friday, same friends</div>
+  </div>
+
+  <div style="flex:1;display:flex;align-items:center;margin-top:10px;">
+    <svg viewBox="0 0 1760 470" style="width:100%;height:auto;" preserveAspectRatio="xMidYMid meet">
+      <rect x="40" y="14" width="1640" height="221" fill="var(--green)" fill-opacity="0.13"></rect>
+      <rect x="40" y="235" width="1640" height="211" fill="var(--pink)" fill-opacity="0.11"></rect>
+      <line x1="40" y1="14" x2="40" y2="446" stroke="var(--axis-warm)" stroke-width="3"></line>
+      <line x1="40" y1="235" x2="1700" y2="235" stroke="var(--ink)" stroke-width="3"></line>
+      <text x="1696" y="226" font-family="Inter" font-weight="700" font-size="20" fill="var(--muted)" text-anchor="end">time &rarr;</text>
+      <text x="54" y="112" font-family="Inter" font-weight="700" font-size="22" fill="var(--green)">positive</text>
+      <text x="54" y="376" font-family="Inter" font-weight="700" font-size="22" fill="var(--pink)">negative</text>
+      <polyline points="180,225 470,193 760,160 1050,127 1340,96 1610,66" fill="none" stroke="var(--ink)" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"></polyline>
+      <g stroke="var(--ink)" stroke-width="3">
+        <circle cx="180" cy="225" r="13" fill="var(--surface)"></circle>
+        <circle cx="470" cy="193" r="13" fill="var(--surface)"></circle>
+        <circle cx="760" cy="160" r="13" fill="var(--surface)"></circle>
+        <circle cx="1050" cy="127" r="13" fill="var(--purple)"></circle>
+        <circle cx="1340" cy="96" r="13" fill="var(--surface)"></circle>
+        <circle cx="1610" cy="66" r="18" fill="var(--green)"></circle>
+      </g>
+      <g font-family="Archivo" font-weight="900" font-size="26" fill="var(--ink)" text-anchor="middle">
+        <text x="180" y="197">Send</text>
+        <text x="470" y="165">Vote</text>
+        <text x="760" y="132">Lock</text>
+        <text x="1050" y="99">Moment</text>
+        <text x="1340" y="68">Reveal</text>
+        <text x="1610" y="38" fill="var(--green)">You're in</text>
+      </g>
+      <g font-family="Inter" font-weight="500" font-size="19" fill="var(--muted)" text-anchor="middle">
+        <text x="180" y="259">anonymous float</text>
+        <text x="470" y="227">+1s, no maybe</text>
+        <text x="760" y="194">deadline auto-picks</text>
+        <text x="1050" y="161">blind yes / can't / if</text>
+        <text x="1340" y="130">it clears</text>
+        <text x="1610" y="100">or quietly fizzles</text>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<section data-label="Why anonymous" data-screen-label="19" data-speaker-notes="Let me dwell on the one decision that matters most: anonymity. Vasanth's real problem was never logistics - it was the social cost of being the pusher. Said out loud, the cost lands on him: he's dragging everyone out again. Sent anonymously, the very same plan stops being one person's ask and becomes the group converging. There's no one to push, and no one to blame. And this wasn't our idea - it came straight out of the interviews, argued for unprompted, better than we ever could." class="slide slide--blush" style="padding:84px 110px 78px;">
+  <h1 class="title" style="font-size:78px;letter-spacing:-3px;">Why <span class="hl">anonymous</span> changes everything</h1>
+  <p style="font-family:Inter;font-weight:500;font-size:30px;color:var(--muted);margin:16px 0 0;">The asymmetric effort was never about logistics - it was about who carries the social cost.</p>
+
+  <div style="display:flex;gap:40px;margin-top:42px;align-items:stretch;">
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:36px;border-top:16px solid var(--muted);">
+      <div class="eyebrow" style="font-size:20px;color:var(--muted);">Said out loud</div>
+      <div style="font-family:Archivo;font-weight:900;font-size:42px;line-height:1.1;margin:14px 0 16px;">The cost lands on Vasanth</div>
+      <p style="font-family:Inter;font-weight:500;font-size:28px;line-height:1.35;color:var(--ink);margin:0;">&ldquo;Vasanth&rsquo;s making us commit again.&rdquo; One person sticks their neck out - and the group reads it as his ask.</p>
+    </div>
+    <div style="flex:0 0 90px;display:flex;align-items:center;justify-content:center;font-family:Archivo;font-weight:900;font-size:60px;color:var(--pink);">&rarr;</div>
+    <div style="flex:1;background:var(--ink);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--pink);padding:36px;border-top:16px solid var(--pink);">
+      <div class="eyebrow" style="font-size:20px;color:var(--pink);">Sent anonymously</div>
+      <div style="font-family:Archivo;font-weight:900;font-size:42px;line-height:1.1;margin:14px 0 16px;color:var(--surface);">The group is converging</div>
+      <p style="font-family:Inter;font-weight:500;font-size:28px;line-height:1.35;color:var(--surface);margin:0;">The same plan becomes consensus, not a request. No one to push, no one to blame, no one to chase.</p>
+    </div>
+  </div>
+
+  <div style="margin-top:auto;display:flex;align-items:center;gap:24px;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:7px 7px 0 var(--ink);padding:26px 34px;">
+    <span style="font-family:Archivo;font-weight:900;font-size:64px;color:var(--pink);line-height:.5;">&ldquo;</span>
+    <p style="font-family:Archivo;font-weight:700;font-size:32px;line-height:1.25;color:var(--ink);margin:0;">Nobody likes being the one to push things. Being anonymous makes it more of a consensus than one person giving a proposal.</p>
+    <span style="font-family:Inter;font-weight:700;font-size:22px;color:var(--muted);white-space:nowrap;align-self:flex-end;">- from our interviews</span>
+  </div>
+</section>
+
+<section data-label="How it stays blind" data-screen-label="20" data-speaker-notes="For the engineers in the room, one technical note - because these promises can't just be words on a screen. All three of them are enforced by the server, not the UI. The creator's identity never leaves the backend: the app only ever gets a private yes-or-no 'is this me'. During the moment the API returns nothing about anyone else's answer. And a fizzle is resolved server-side and simply vanishes from every dashboard. There's also no background scheduler - a plan settles its own phase lazily, the next time anyone reads it. The privacy lives in the procedures, which is the only place it's safe." class="slide slide--paper" style="padding:84px 110px 76px;">
+  <h1 class="title" style="font-size:78px;letter-spacing:-3px;">How the moment stays <span class="hl">blind</span></h1>
+  <p style="font-family:Inter;font-weight:500;font-size:30px;color:var(--muted);margin:16px 0 0;">Privacy is a property of the server, not the screen. Three guarantees, enforced in the backend.</p>
+
+  <div style="display:flex;gap:30px;margin-top:42px;">
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:32px;">
+      <div style="font-family:Archivo;font-weight:900;font-size:34px;line-height:1.05;">Anonymous creator</div>
+      <p style="font-family:Inter;font-weight:500;font-size:25px;line-height:1.35;color:var(--muted);margin:14px 0 18px;">The creator&rsquo;s id never leaves the server. The client only gets a private &ldquo;is this me?&rdquo; boolean.</p>
+      <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:20px;color:var(--ink);background:var(--lav);border:2px solid var(--ink);border-radius:0;padding:8px 12px;">isCreator: boolean</div>
+    </div>
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:32px;">
+      <div style="font-family:Archivo;font-weight:900;font-size:34px;line-height:1.05;">No live tally</div>
+      <p style="font-family:Inter;font-weight:500;font-size:25px;line-height:1.35;color:var(--muted);margin:14px 0 18px;">Counts are returned while collecting, never the voter set. During the moment, nothing about others.</p>
+      <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:20px;color:var(--ink);background:var(--lav);border:2px solid var(--ink);border-radius:0;padding:8px 12px;">respond() &rarr; { recorded }</div>
+    </div>
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:32px;">
+      <div style="font-family:Archivo;font-weight:900;font-size:34px;line-height:1.05;">Silent fizzle</div>
+      <p style="font-family:Inter;font-weight:500;font-size:25px;line-height:1.35;color:var(--muted);margin:14px 0 18px;">Under quorum, the plan flips to fizzled on the next read and drops out of every dashboard.</p>
+      <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:20px;color:var(--ink);background:var(--lav);border:2px solid var(--ink);border-radius:0;padding:8px 12px;">revealGoing()</div>
+    </div>
+  </div>
+
+  <div style="margin-top:auto;display:flex;align-items:center;gap:20px;background:var(--purple);border:3px solid var(--ink);border-radius:0;box-shadow:7px 7px 0 var(--ink);padding:24px 32px;">
+    <span style="font-family:Inter;font-weight:700;font-size:20px;letter-spacing:1.5px;text-transform:uppercase;color:var(--surface);white-space:nowrap;">No scheduler</span>
+    <span style="font-family:Inter;font-weight:600;font-size:26px;color:var(--surface);">A plan settles its own phase lazily - the next time anyone reads it. The privacy boundary lives inside the server&rsquo;s procedures.</span>
+  </div>
+</section>
+
+<section data-label="Iteration: simplify" data-screen-label="21" data-speaker-notes="Now, how did we get here? The product was steered by users, not designed once. Here's the clearest example. We built what we thought was our cleverest feature: a dial that let you set the precision of a plan - float, rough, or set - with names like 'spark' and 'brewing'. Then we put it in front of Luca, and he could not map his real intention onto any of the three. So we did the brave thing: we deleted the entire feature and replaced it with two simple switches. A real user made our product smaller and sharper." class="slide slide--blush" style="padding:84px 110px 78px;">
+  <h1 class="title" style="font-size:76px;letter-spacing:-3px;">Three modes became two <span class="hl" style="padding:0 16px 6px;">switches</span></h1>
+
+  <div style="display:flex;gap:36px;margin-top:40px;align-items:center;">
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:32px;position:relative;">
+      <span style="position:absolute;top:-18px;right:24px;background:var(--grey);color:var(--surface);font-family:Archivo;font-weight:800;font-size:18px;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);padding:6px 14px;border-radius:0;transform:rotate(-4deg);">deleted</span>
+      <div class="eyebrow" style="font-size:19px;color:var(--muted);">What we built</div>
+      <div style="display:flex;border:3px solid var(--grey);border-radius:0;overflow:hidden;margin:18px 0 16px;opacity:.65;">
+        <div style="flex:1;text-align:center;font-family:Archivo;font-weight:800;font-size:24px;padding:14px 6px;background:var(--grey);color:var(--surface);">Float</div>
+        <div style="flex:1;text-align:center;font-family:Archivo;font-weight:800;font-size:24px;padding:14px 6px;color:var(--muted);border-left:2px solid var(--grey);">Rough</div>
+        <div style="flex:1;text-align:center;font-family:Archivo;font-weight:800;font-size:24px;padding:14px 6px;color:var(--muted);border-left:2px solid var(--grey);">Set</div>
+      </div>
+      <p style="font-family:Inter;font-weight:500;font-size:24px;line-height:1.35;color:var(--muted);margin:0;">Jargon - &ldquo;spark&rdquo;, &ldquo;brewing&rdquo;, &ldquo;auto-tips&rdquo;. Luca couldn&rsquo;t map his real intent onto any of the three.</p>
+    </div>
+
+    <div style="flex:0 0 80px;text-align:center;font-family:Archivo;font-weight:900;font-size:56px;color:var(--pink);">&rarr;</div>
+
+    <div style="flex:1;background:var(--ink);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--pink);padding:32px;">
+      <div class="eyebrow" style="font-size:19px;color:var(--pink);">What we shipped</div>
+      <div style="display:flex;flex-direction:column;gap:14px;margin:18px 0 16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:3px solid var(--ink);border-radius:0;padding:14px 18px;"><span style="font-family:Archivo;font-weight:800;font-size:26px;">Lock times</span><span style="width:64px;height:34px;border-radius:0;background:var(--sand);border:2px solid var(--ink);position:relative;"><span style="position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:var(--ink);"></span></span></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:3px solid var(--ink);border-radius:0;padding:14px 18px;"><span style="font-family:Archivo;font-weight:800;font-size:26px;">Lock activity</span><span style="width:64px;height:34px;border-radius:0;background:var(--sand);border:2px solid var(--ink);position:relative;"><span style="position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:var(--ink);"></span></span></div>
+      </div>
+      <p style="font-family:Inter;font-weight:500;font-size:24px;line-height:1.35;color:var(--surface);margin:0;">Both off by default = open. One votable plan. The three-mode fork was deleted entirely.</p>
+    </div>
+  </div>
+
+  <div style="margin-top:auto;font-family:Inter;font-weight:600;font-size:26px;color:var(--ink);">A real user simplified our information model. <span style="font-family:'Space Mono',monospace;font-weight:700;color:var(--muted);">DRP-41</span></div>
+</section>
+
+<section data-label="Iteration: pushed back" data-screen-label="22" data-speaker-notes="And not every test confirmed the design - which is the point. This is a real paper sketch from our second milestone: the 'I will make it if' moment, with friends and tick boxes. We built it, because Luca had told us his attendance is conditional on his friends being there. But when we tested it, a participant said something we did not want to hear: she could not bring herself to name which friends she wanted to see, even privately. So we did not ship it unchanged. We softened the copy and defaulted it to 'at least one', never forcing a name. We kept her objection on the table rather than averaging it away." class="slide slide--paper" style="padding:84px 110px 76px;">
+  <h1 class="title" style="font-size:76px;letter-spacing:-3px;">The finding that <span class="hl" style="padding:0 16px 6px;">pushed back</span></h1>
+  <p style="font-family:Inter;font-weight:500;font-size:29px;color:var(--muted);margin:16px 0 0;">One participant rejected our favourite mechanic.</p>
+
+  <div style="display:flex;gap:44px;margin-top:34px;flex:1;align-items:center;">
+    <div style="flex-shrink:0;text-align:center;">
+      <img src="assets/sketches/moment-if-sheet.png" alt="hand-drawn I will make it if sketch" style="width:330px;height:auto;border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);border-radius:0;display:block;background:var(--surface);">
+      <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:18px;color:var(--muted);margin-top:14px;">Paper sketch &middot; M2</div>
+    </div>
+    <div style="flex:0 0 60px;text-align:center;font-family:Archivo;font-weight:900;font-size:50px;color:var(--pink);">&rarr;</div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:20px;">
+      <div style="background:var(--ink);border:3px solid var(--ink);border-radius:0;box-shadow:7px 7px 0 var(--pink);padding:28px 32px;">
+        <div class="eyebrow" style="font-size:18px;color:var(--pink);">The pushback</div>
+        <p style="font-family:Archivo;font-weight:700;font-size:30px;line-height:1.25;color:var(--surface);margin:10px 0 0;">&ldquo;I would feel so awkward actually writing down which of my friends I wanted to see.&rdquo;</p>
+        <div style="font-family:Inter;font-weight:600;font-size:22px;color:var(--muted);margin-top:12px;">- a usability-test participant</div>
+      </div>
+      <div style="background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:7px 7px 0 var(--ink);padding:28px 32px;">
+        <div class="eyebrow" style="font-size:18px;color:var(--green);">What changed</div>
+        <p style="font-family:Inter;font-weight:600;font-size:28px;line-height:1.3;color:var(--ink);margin:10px 0 0;">&ldquo;I&rsquo;ll go if&rdquo; now defaults to <b>at least one</b> friend and never forces a name. <span style="font-family:'Space Mono',monospace;font-weight:700;color:var(--muted);font-size:24px;">DRP-47</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section data-label="User story: onboarding" data-screen-label="22b" data-speaker-notes="One more story, and it is the one that makes everything else usable. As the organiser, I don't want to have to convince my friends to download a new app, so that I don't lose half the group to friction before the plan even starts. This was the barrier Luca named directly in his interview - the download itself. Watch how we removed it." class="slide slide--blush" style="padding:96px 110px;justify-content:center;">
+  <div style="font-family:Inter;font-weight:700;font-size:24px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);">One more user story</div>
+  <p style="font-family:Archivo;font-weight:800;font-size:58px;letter-spacing:-1.5px;line-height:1.24;color:var(--ink);margin:28px 0 0;max-width:1580px;"><span style="color:var(--pink);">As</span> the organiser, <span style="color:var(--pink);">I don&rsquo;t want</span> to make my friends download an app, <span style="color:var(--pink);">so that</span> I don&rsquo;t lose half the group to friction before the plan even starts.</p>
+  <p style="font-family:Inter;font-weight:500;font-size:28px;color:var(--muted);margin:30px 0 0;max-width:1320px;">The barrier Luca named in his interview was the download itself.</p>
+</section>
+
+<section data-label="Demonstration 2: joining" data-screen-label="D2" data-speaker-notes="Second and final live moment. I'll open the invite link on a completely fresh device - nothing installed - tap continue, and I'm in the plan and able to respond. No download, no account hurdle. That is the friction Luca described, gone." class="slide slide--ink" style="padding:84px 110px;justify-content:center;">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <div style="font-family:Inter;font-weight:700;font-size:24px;letter-spacing:2px;text-transform:uppercase;color:var(--pink);">Live demonstration &middot; 2 of 2</div>
+    <span style="font-family:'Space Mono',monospace;font-weight:700;font-size:20px;color:var(--surface);border:2px solid var(--surface);border-radius:0;padding:8px 14px;">a fresh phone</span>
+  </div>
+  <h1 style="font-family:Archivo;font-weight:900;font-size:90px;letter-spacing:-3px;line-height:1.0;color:var(--surface);margin:24px 0 0;">Joining, with <span style="display:inline-block;background:var(--green);color:var(--surface);border:3px solid var(--surface);box-shadow:6px 6px 0 var(--surface);padding:0 16px 6px;border-radius:0;">no app to download</span>.</h1>
+  <p style="font-family:Inter;font-weight:500;font-size:30px;line-height:1.35;color:rgba(255,255,255,.85);margin:28px 0 0;max-width:1480px;">On a brand-new device: open the invite link &rarr; &ldquo;Continue&rdquo; &rarr; you&rsquo;re in the plan and can respond. No install, no account hurdle.</p>
+  <div style="display:flex;gap:18px;margin-top:38px;">
+    <div style="flex:1;background:var(--ink-2);border:3px solid var(--ink-3);border-radius:0;padding:22px 26px;"><div class="eyebrow" style="font-size:18px;color:var(--green);">Watch for</div><div style="font-family:Archivo;font-weight:800;font-size:26px;color:var(--surface);margin-top:6px;">Zero install</div></div>
+    <div style="flex:1;background:var(--ink-2);border:3px solid var(--ink-3);border-radius:0;padding:22px 26px;"><div class="eyebrow" style="font-size:18px;color:var(--pink);">Watch for</div><div style="font-family:Archivo;font-weight:800;font-size:26px;color:var(--surface);margin-top:6px;">Opens in the browser</div></div>
+    <div style="flex:1;background:var(--ink-2);border:3px solid var(--ink-3);border-radius:0;padding:22px 26px;"><div class="eyebrow" style="font-size:18px;color:var(--purple);">Watch for</div><div style="font-family:Archivo;font-weight:800;font-size:26px;color:var(--surface);margin-top:6px;">Instantly in the plan</div></div>
+  </div>
+</section>
+
+<section data-label="Iteration: onboarding" data-screen-label="23" data-speaker-notes="One more, from our final round. We realised the cleverest flow in the world is useless if Vasanth can't get his friends onto it. Early on, you added people from a dropdown of literally everyone in the app - it didn't scale, and it felt strange. Luca and others told us the real barrier was the download itself. So we shipped two things: invite links with a join code, and a no-download share link that opens straight in the browser. As Luca put it, 'it's just a link - that feels much more seamless'. The app meets the group where they already are." class="slide slide--blush" style="padding:84px 110px 78px;">
+  <h1 class="title" style="font-size:76px;letter-spacing:-3px;">The download was the real <span class="hl" style="padding:0 16px 6px;">barrier</span></h1>
+  <p style="font-family:Inter;font-weight:500;font-size:29px;color:var(--muted);margin:16px 0 0;">A great flow is useless if Vasanth can&rsquo;t get his friends onto it.</p>
+
+  <div style="display:flex;gap:36px;margin-top:38px;align-items:center;">
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:30px;position:relative;">
+      <span style="position:absolute;top:-18px;right:24px;background:var(--grey);color:var(--surface);font-family:Archivo;font-weight:800;font-size:17px;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);padding:6px 12px;border-radius:0;transform:rotate(-4deg);">replaced</span>
+      <div class="eyebrow" style="font-size:19px;color:var(--muted);">What we had</div>
+      <div style="font-family:Archivo;font-weight:900;font-size:30px;margin:12px 0 16px;">Add from a list of everyone</div>
+      <div style="border:3px solid var(--grey);border-radius:0;overflow:hidden;opacity:.7;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:var(--sand);font-weight:700;font-size:18px;">Add member <span>&#9662;</span></div>
+        <div style="padding:9px 14px;font-size:17px;border-top:1px solid var(--line);">Aaron K.</div>
+        <div style="padding:9px 14px;font-size:17px;border-top:1px solid var(--line);">Abigail T.</div>
+        <div style="padding:9px 14px;font-size:17px;border-top:1px solid var(--line);color:var(--grey);">&hellip; 4,201 more, no order</div>
+      </div>
+      <p style="font-family:Inter;font-weight:500;font-size:23px;line-height:1.35;color:var(--muted);margin:16px 0 0;">Doesn&rsquo;t scale, no privacy, and it force-joins you to the group.</p>
+    </div>
+
+    <div style="flex:0 0 80px;text-align:center;font-family:Archivo;font-weight:900;font-size:56px;color:var(--pink);">&rarr;</div>
+
+    <div style="flex:1;background:var(--ink);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--pink);padding:30px;">
+      <div class="eyebrow" style="font-size:19px;color:var(--pink);">What we shipped</div>
+      <div style="font-family:Archivo;font-weight:900;font-size:30px;margin:12px 0 16px;color:var(--surface);">A link and a join code</div>
+      <div style="background:var(--surface);border:3px solid var(--ink);border-radius:0;padding:18px;">
+        <div style="font-size:15px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);">The Boys &middot; join code</div>
+        <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:38px;letter-spacing:4px;color:var(--ink);margin:4px 0 12px;">BOWL-42</div>
+        <div style="background:var(--pink);color:var(--surface);border:2px solid var(--ink);box-shadow:3px 3px 0 var(--ink);border-radius:0;text-align:center;font-family:Archivo;font-weight:800;font-size:18px;padding:11px;">Share invite link</div>
+      </div>
+      <p style="font-family:Inter;font-weight:500;font-size:23px;line-height:1.35;color:var(--surface);margin:16px 0 0;">No download - the link opens straight in the browser, then drops you into the group.</p>
+    </div>
+  </div>
+
+  <div style="margin-top:auto;display:flex;align-items:center;gap:16px;font-family:Inter;font-weight:600;font-size:26px;color:var(--ink);"><span style="font-family:Archivo;font-weight:800;color:var(--pink);">&ldquo;It&rsquo;s just a link - that feels much more seamless.&rdquo;</span> - Luca <span style="font-family:'Space Mono',monospace;font-weight:700;color:var(--muted);font-size:22px;">DRP-50 &middot; DRP-56</span></div>
+</section>
+
+<section id="arch-base" data-label="Architecture" data-screen-label="24" data-speaker-notes="Quickly, under the hood. BeThere is one typed pnpm monorepo - TypeScript runs end to end, from the database all the way to the screen. Here is the whole system on a single diagram; let me walk each layer in turn - the client, the API, the data, the shared core that ties them together, and how it all ships. [Advance to spotlight each layer.]" class="slide slide--paper arch" style="padding:64px 90px 290px;">
+  <div class="scrim"></div>
+  <h1 class="title arch-title" style="font-size:70px;letter-spacing:-3px;">Under the <span class="hl" style="padding:0 16px 6px;">hood</span></h1>
+  <div class="arch-sub">One typed pnpm monorepo &middot; TypeScript end to end</div>
+
+  <div class="arch-diagram">
+    <div class="arch-cols">
+      <!-- DEPLOYMENT: where it ships -->
+      <div class="card arch-col spot spot--ship" style="flex:.96;box-shadow:7px 7px 0 var(--ink);">
+        <div class="tier-h" style="background:var(--ink);">Deployment</div>
+        <div class="acol-b">
+          <span class="tier-pkg">ships to iOS &middot; Android &middot; web</span>
+          <span class="ship-chip" style="font-size:15px;"><span class="logo" style="width:32px;height:32px;padding:6px;"><svg class="ico i-vercel"><use href="#l-vercel"/></svg></span>Web build &rarr; Vercel</span>
+          <span class="ship-chip" style="font-size:15px;"><span class="logo" style="width:32px;height:32px;padding:6px;"><svg class="ico i-gha"><use href="#l-gha"/></svg></span>Android APK &rarr; CI</span>
+          <span class="ship-chip" style="font-size:15px;"><span class="logo" style="width:32px;height:32px;padding:6px;"><svg class="ico i-docker"><use href="#l-docker"/></svg></span><span class="logo" style="width:32px;height:32px;padding:6px;"><svg class="ico i-aws"><use href="#l-aws"/></svg></span>API &rarr; App Runner</span>
+        </div>
+      </div>
+
+      <!-- FRONTEND: the screens a user taps, each calling a real endpoint -->
+      <div class="card arch-col spot spot--client" style="flex:1.62;box-shadow:7px 7px 0 var(--ink);">
+        <div class="tier-h" style="background:var(--pink);">Frontend</div>
+        <div class="acol-b">
+          <div class="acol-meta">
+            <span class="tier-pkg">@bethere/mobile</span>
+            <div class="logo-row" style="gap:7px;">
+              <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-expo"><use href="#l-expo"/></svg></span>
+              <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-react"><use href="#l-react"/></svg></span>
+              <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-clerk"><use href="#l-clerk"/></svg></span>
+              <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-ts"><use href="#l-ts"/></svg></span>
+            </div>
+          </div>
+          <div class="screen-rows">
+            <div class="screen-row"><span class="sr-name">Send a plan</span><span class="sr-ep">events.create</span><span class="sr-arrow"></span></div>
+            <div class="screen-row"><span class="sr-name">Vote / +1</span><span class="sr-ep">events.toggleReaction</span><span class="sr-arrow"></span></div>
+            <div class="screen-row"><span class="sr-name">Lock the round</span><span class="sr-ep">events.lock</span><span class="sr-arrow"></span></div>
+            <div class="screen-row"><span class="sr-name">The blind moment</span><span class="sr-ep">events.respond</span><span class="sr-arrow"></span></div>
+            <div class="screen-row"><span class="sr-name">Join by link</span><span class="sr-ep">groups.joinByCode</span><span class="sr-arrow"></span></div>
+            <div class="screen-row"><span class="sr-name">Your dashboard</span><span class="sr-ep">events.mine</span><span class="sr-arrow"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- tRPC bus -->
+      <div class="arch-conn"><div class="lbl">tRPC<br>typed JSON</div><div style="display:flex;align-items:center;"><div class="arrow-bar" style="width:46px;"></div><div class="arrow-head"></div></div></div>
+
+      <!-- BACKEND + DATABASE -->
+      <div class="arch-rightcol" style="flex:1.28;">
+        <div class="card arch-col spot spot--api" style="flex:1;box-shadow:7px 7px 0 var(--ink);">
+          <div class="tier-h" style="background:var(--purple);">Backend</div>
+          <div class="acol-b">
+            <div class="acol-meta">
+              <span class="tier-pkg">@bethere/api</span>
+              <div class="logo-row" style="gap:6px;">
+                <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-node"><use href="#l-node"/></svg></span>
+                <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-fastify"><use href="#l-fastify"/></svg></span>
+                <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-trpc"><use href="#l-trpc"/></svg></span>
+                <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-zod"><use href="#l-zod"/></svg></span>
+                <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-drizzle"><use href="#l-drizzle"/></svg></span>
+              </div>
+            </div>
+            <div class="tier-names" style="font-size:13.5px;">Node &middot; Fastify 5 &middot; tRPC v11 &middot; Zod-validated</div>
+            <div class="router-row">
+              <span class="router-chip">events</span><span class="router-chip">groups</span><span class="router-chip">users</span>
+              <span class="router-note">32 typed procedures</span>
+            </div>
+          </div>
+        </div>
+        <div class="arch-vconn"><div class="arrow-vhead"></div><div class="lbl">Drizzle &middot; SQL</div></div>
+        <div class="card arch-col spot spot--db" style="flex:0 0 auto;box-shadow:7px 7px 0 var(--ink);">
+          <div class="tier-h" style="background:var(--green);">Database</div>
+          <div class="acol-b" style="flex-direction:row;align-items:center;gap:16px;">
+            <span class="logo" style="width:46px;height:46px;padding:8px;"><svg class="ico i-pg"><use href="#l-pg"/></svg></span>
+            <div><span class="tier-pkg">PostgreSQL</span><div class="tier-names" style="margin-top:5px;">10 relational tables &middot; integrity for free</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arch-shared spot spot--shared">
+      <span style="font-family:'Space Mono',monospace;font-weight:700;font-size:15px;background:var(--ink);color:var(--surface);padding:6px 11px;white-space:nowrap;">@bethere/shared</span>
+      <span class="logo" style="width:42px;height:42px;padding:7px;"><svg class="ico i-zod"><use href="#l-zod"/></svg></span>
+      <span class="logo" style="width:42px;height:42px;padding:7px;"><svg class="ico i-ts"><use href="#l-ts"/></svg></span>
+      <span style="font-family:Inter;font-weight:500;font-size:18px;color:var(--ink);line-height:1.3;"><b>Single source of truth.</b> Zod schemas + framework-free pure logic - <b>vote tally &middot; conditional-RSVP &middot; blind reveal</b> - feed the same types + validation into client and server.</span>
+    </div>
+  </div>
+
+  <div class="arch-hint">tap / click to walk through each layer &darr;</div>
+  <div class="arch-cap"></div>
+</section>
+
+<section data-label="Why this stack" data-screen-label="25" data-speaker-notes="And why these technologies - not because we like them, but for what they let us do. tRPC with a shared Zod package means one schema is the single source of truth, so a server change that would break the client fails at compile time, not in front of a user. Expo gave us iOS, Android and web from one codebase - which is the only reason the no-download web onboarding was even possible. Postgres with typed Drizzle queries lets the privacy guarantees live in the database layer, where users can't reach them. And resolving phases lazily means there's no background job to drift out of sync." class="slide slide--blush" style="padding:84px 110px 76px;">
+  <h1 class="title" style="font-size:78px;letter-spacing:-3px;">Why this <span class="hl">stack</span></h1>
+
+  <div style="display:flex;gap:28px;margin-top:auto;margin-bottom:auto;">
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:7px 7px 0 var(--ink);padding:28px;">
+      <div style="font-family:Archivo;font-weight:900;font-size:30px;line-height:1.05;">tRPC + Zod</div>
+      <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:16px;color:var(--purple);margin:6px 0 16px;">@bethere/shared</div>
+      <p style="font-family:Inter;font-weight:500;font-size:24px;line-height:1.35;color:var(--ink);margin:0;">One schema is the single source of truth. A change that breaks the client fails at <b>compile time</b>, not in front of a user. <b style="color:var(--purple);">(vs REST + hand-written types, which drift apart.)</b></p>
+    </div>
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:7px 7px 0 var(--ink);padding:28px;">
+      <div style="font-family:Archivo;font-weight:900;font-size:30px;line-height:1.05;">Expo / RN</div>
+      <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:16px;color:var(--purple);margin:6px 0 16px;">iOS &middot; Android &middot; web</div>
+      <p style="font-family:Inter;font-weight:500;font-size:24px;line-height:1.35;color:var(--ink);margin:0;">One codebase ships to all three. The web target is exactly what made the <b>no-download onboarding</b> possible. <b style="color:var(--purple);">(vs native iOS/Android - double the code, no web.)</b></p>
+    </div>
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:7px 7px 0 var(--ink);padding:28px;">
+      <div style="font-family:Archivo;font-weight:900;font-size:30px;line-height:1.05;">Postgres + Drizzle</div>
+      <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:16px;color:var(--purple);margin:6px 0 16px;">typed SQL</div>
+      <p style="font-family:Inter;font-weight:500;font-size:24px;line-height:1.35;color:var(--ink);margin:0;">The privacy guarantees - no names, blind tally - live <b>inside the queries</b>, server-authoritative and out of reach of the client. <b style="color:var(--purple);">(vs Firebase - less control over the privacy logic.)</b></p>
+    </div>
+    <div style="flex:1;background:var(--ink);border:3px solid var(--ink);border-radius:0;box-shadow:7px 7px 0 var(--pink);padding:28px;">
+      <div style="font-family:Archivo;font-weight:900;font-size:30px;line-height:1.05;color:var(--surface);">Lazy resolve</div>
+      <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:16px;color:var(--pink);margin:6px 0 16px;">no scheduler</div>
+      <p style="font-family:Inter;font-weight:500;font-size:24px;line-height:1.35;color:var(--surface);margin:0;">Phases settle on read - <b>no background job</b> to drift out of sync, and the privacy boundary stays in one place. <b style="color:var(--pink);">(vs a cron scheduler - more to break, same result.)</b></p>
+    </div>
+  </div>
+</section>
+
+<section data-label="Built for the group" data-screen-label="26" data-speaker-notes="One thing worth being explicit about: BeThere is fundamentally multi-user. A plan only resolves if the whole group acts, so every core interaction is between people - the anonymous voting, the blind moment everyone commits in together, the I'll go if conditional where your answer literally depends on others, plus-ones that bring a guest into one meetup, and shared editing so any member can fix a live plan. And it feels immediate: your plus-one lands optimistically, vote counts move the moment you tap, and because two people can edit at once, we use compare-and-set so a stale edit reports a conflict instead of silently clobbering someone. The one honest gap is real-time push - today the nudge is device-local, and remote push is the very next thing." class="slide slide--paper" style="padding:84px 110px 76px;">
+  <h1 class="title" style="font-size:78px;letter-spacing:-3px;">Built for the <span class="hl">group</span></h1>
+  <p style="font-family:Inter;font-weight:500;font-size:29px;color:var(--muted);margin:16px 0 0;">A plan only resolves if the whole group acts - so the interactions are between people, and they feel immediate.</p>
+
+  <div style="display:flex;gap:40px;margin-top:40px;flex:1;">
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:32px 34px;">
+      <div class="eyebrow" style="font-size:20px;color:var(--purple);">User to user</div>
+      <div style="display:flex;flex-direction:column;gap:15px;margin-top:20px;">
+        <div style="font-family:Inter;font-weight:500;font-size:26px;line-height:1.25;"><b style="font-weight:800;">Anonymous voting</b> - the group +1s times and activities together</div>
+        <div style="font-family:Inter;font-weight:500;font-size:26px;line-height:1.25;"><b style="font-weight:800;">The blind moment</b> - everyone commits in the same window</div>
+        <div style="font-family:Inter;font-weight:500;font-size:26px;line-height:1.25;"><b style="font-weight:800;">&ldquo;I&rsquo;ll go if&rdquo;</b> - your answer depends on other people&rsquo;s</div>
+        <div style="font-family:Inter;font-weight:500;font-size:26px;line-height:1.25;"><b style="font-weight:800;">Plus-ones</b> - bring a guest into one meetup, across groups</div>
+        <div style="font-family:Inter;font-weight:500;font-size:26px;line-height:1.25;"><b style="font-weight:800;">Shared editing</b> - any member can fix a live plan</div>
+      </div>
+    </div>
+    <div style="flex:1;background:var(--ink);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--pink);padding:32px 34px;display:flex;flex-direction:column;">
+      <div class="eyebrow" style="font-size:20px;color:var(--pink);">Responsive</div>
+      <div style="display:flex;flex-direction:column;gap:15px;margin-top:20px;">
+        <div style="font-family:Inter;font-weight:500;font-size:26px;line-height:1.25;color:var(--surface);"><b style="font-weight:800;">Instant +1</b> - optimistic UI; momentum moves as you tap</div>
+        <div style="font-family:Inter;font-weight:500;font-size:26px;line-height:1.25;color:var(--surface);"><b style="font-weight:800;">Conflict-safe edits</b> - compare-and-set; a stale edit reports a conflict, never clobbers</div>
+        <div style="font-family:Inter;font-weight:500;font-size:26px;line-height:1.25;color:var(--surface);"><b style="font-weight:800;">Settles on read</b> - no waiting on a background job</div>
+      </div>
+      <div style="margin-top:auto;background:var(--ink-2);border:2px solid var(--ink-3);border-radius:0;padding:18px 20px;font-family:Inter;font-weight:500;font-size:22px;color:rgba(255,255,255,.8);"><b style="color:var(--pink);font-weight:800;">Honest gap:</b> real-time push is next - today the nudge is device-local.</div>
+    </div>
+  </div>
+</section>
+
+<section data-label="What went well" data-screen-label="27" data-speaker-notes="So, to wrap up. What went well? Three things we're genuinely proud of. First, human-centred design actually reshaped the product - it didn't just decorate it. We deleted our cleverest feature, we promoted anonymity from an option to the spine, and we kept a real tension on the table instead of pretending we'd solved it. The product got smaller and sharper because we listened. Second, it actually works, everywhere - a deployed build on iOS, Android and the web that real friends used on their own phones. And third, we hit the core need: the maybe and the organiser are both gone." class="slide slide--blush" style="padding:84px 110px 78px;">
+  <h1 class="title" style="font-size:80px;letter-spacing:-3px;">What went <span style="display:inline-block;background:var(--green);color:var(--surface);border:3px solid var(--ink);box-shadow:6px 6px 0 var(--ink);padding:0 18px 6px;border-radius:0;">well</span></h1>
+
+  <div style="display:flex;gap:32px;margin-top:auto;margin-bottom:auto;">
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:36px;">
+      <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:24px;color:var(--green);">01</div>
+      <div style="font-family:Archivo;font-weight:900;font-size:40px;line-height:1.05;margin:12px 0 16px;">HCD reshaped the product</div>
+      <p style="font-family:Inter;font-weight:500;font-size:27px;line-height:1.35;color:var(--ink);margin:0;">We deleted our cleverest feature, made anonymity the spine, and kept a real tension honest. It got smaller and sharper because we listened.</p>
+    </div>
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:36px;">
+      <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:24px;color:var(--green);">02</div>
+      <div style="font-family:Archivo;font-weight:900;font-size:40px;line-height:1.05;margin:12px 0 16px;">It works, everywhere</div>
+      <p style="font-family:Inter;font-weight:500;font-size:27px;line-height:1.35;color:var(--ink);margin:0;">A deployed build on iOS, Android and the web - real friends used it on their own phones, not a mock-up.</p>
+    </div>
+    <div style="flex:1;background:var(--ink);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--green);padding:36px;">
+      <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:24px;color:var(--green);">03</div>
+      <div style="font-family:Archivo;font-weight:900;font-size:40px;line-height:1.05;margin:12px 0 16px;color:var(--surface);">We met the core need</div>
+      <p style="font-family:Inter;font-weight:500;font-size:27px;line-height:1.35;color:var(--surface);margin:0;">The two things that kill plans - the public maybe and the lone organiser - are both gone.</p>
+    </div>
+  </div>
+</section>
+
+<section data-label="Agile development" data-screen-label="27b" data-speaker-notes="A quick word on how we actually worked, because the process is what produced everything you have seen. We ran two boards in parallel. Trello mapped the human side - user needs, interview findings and the user stories - so the research always drove the work. Linear tracked the engineering - every feature, bug and iteration as a ticket, the DRP numbers you saw on the iteration slides. Research on one board, code on the other, with a tight loop between them: that is how a real user could reject a feature one week and see it changed the next." class="slide slide--paper" style="padding:80px 110px 72px;">
+  <h1 class="title" style="font-size:74px;letter-spacing:-3px;">How we <span class="hl">worked</span></h1>
+  <p style="font-family:Inter;font-weight:500;font-size:28px;color:var(--muted);margin:14px 0 0;">Two boards, a tight loop: research drove the tickets; tickets shipped the product.</p>
+  <div style="display:flex;gap:40px;margin-top:30px;flex:1;align-items:stretch;">
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:26px;display:flex;flex-direction:column;">
+      <div class="eyebrow" style="font-size:20px;color:var(--purple);">Trello &middot; user needs</div>
+      <div style="flex:1;margin:16px 0;border:3px solid var(--ink);overflow:hidden;background:var(--surface);min-height:0;display:flex;align-items:center;justify-content:center;padding:10px;">
+        <img src="assets/process/trello.jpg" alt="Trello board mapping a user need" style="max-width:100%;max-height:100%;object-fit:contain;display:block;">
+      </div>
+      <p style="font-family:Inter;font-weight:600;font-size:23px;color:var(--ink);margin:0;">Personas, interview findings and user stories - the research that drove the work.</p>
+    </div>
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:26px;display:flex;flex-direction:column;">
+      <div class="eyebrow" style="font-size:20px;color:var(--pink);">Linear &middot; engineering</div>
+      <div style="flex:1;margin:16px 0;border:3px solid var(--ink);overflow:hidden;background:var(--surface);min-height:0;display:flex;align-items:center;justify-content:center;padding:10px;">
+        <img src="assets/process/linear.jpg" alt="Linear engineering issue list" style="max-width:100%;max-height:100%;object-fit:contain;display:block;">
+      </div>
+      <p style="font-family:Inter;font-weight:600;font-size:23px;color:var(--ink);margin:0;">Every feature, bug and iteration as a ticket - the DRP numbers on the iteration slides.</p>
+    </div>
+  </div>
+</section>
+
+<section data-label="What changed" data-screen-label="28" data-speaker-notes="So, back to the people we started with. We set out to make a whole group behave like the rare Decisive One - and here's what each of them gets. Vasanth can finally float a plan without it being his ask: no one to chase, no one to blame. And Milly, our hesitant participant, finally has a safe way to say 'I'll go if my friends go', so her uncertainty stops stalling the plan. The Hedger has no maybe to hide in, and a deadline that closes the plan before the second thoughts grow. The Ghost's silence becomes a safe, private plus-one instead of a dead end. And the Decisive One finally has a system that makes everyone else answer too. The problem was never logistics. It was feelings - and that's what we designed for." class="slide slide--ink" style="padding:84px 110px 78px;">
+  <h1 style="font-family:Archivo;font-weight:900;font-size:80px;letter-spacing:-3px;line-height:1.0;color:var(--surface);margin:0;">What <span style="display:inline-block;background:var(--pink);color:var(--surface);border:3px solid var(--surface);box-shadow:6px 6px 0 var(--surface);padding:0 18px 6px;border-radius:0;">changed</span> for them</h1>
+  <p style="font-family:Inter;font-weight:500;font-size:30px;color:rgba(255,255,255,.7);margin:16px 0 0;">We set out to make the whole group behave like the rare Decisive One.</p>
+
+  <div style="display:flex;flex-direction:column;gap:18px;margin-top:36px;">
+    <div style="display:flex;align-items:center;gap:26px;background:var(--ink-2);border:3px solid var(--ink-3);border-left:14px solid var(--pink);border-radius:0;padding:22px 30px;">
+      <span style="font-family:Archivo;font-weight:900;font-size:30px;width:340px;flex-shrink:0;">The Reluctant Initiator</span>
+      <span style="font-family:Inter;font-weight:500;font-size:30px;color:var(--surface);">Floats a plan without it being her ask - no one to chase, no one to blame.</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:26px;background:var(--ink-2);border:3px solid var(--ink-3);border-left:14px solid var(--purple);border-radius:0;padding:22px 30px;">
+      <span style="font-family:Archivo;font-weight:900;font-size:30px;width:340px;flex-shrink:0;">The Hedger</span>
+      <span style="font-family:Inter;font-weight:500;font-size:30px;color:var(--surface);">No maybe to hide in; a deadline closes it before second thoughts grow.</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:26px;background:var(--ink-2);border:3px solid var(--ink-3);border-left:14px solid var(--purple);border-radius:0;padding:22px 30px;">
+      <span style="font-family:Archivo;font-weight:900;font-size:30px;width:340px;flex-shrink:0;">The Ghost</span>
+      <span style="font-family:Inter;font-weight:500;font-size:30px;color:var(--surface);">A quiet +1 is now a safe signal - silence stops killing plans.</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:26px;background:var(--ink-2);border:3px solid var(--ink-3);border-left:14px solid var(--green);border-radius:0;padding:22px 30px;">
+      <span style="font-family:Archivo;font-weight:900;font-size:30px;width:340px;flex-shrink:0;color:var(--green);">The Decisive One</span>
+      <span style="font-family:Inter;font-weight:500;font-size:30px;color:var(--surface);">A blind, deadlined moment that finally makes everyone else answer too.</span>
+    </div>
+  </div>
+
+  <div style="margin-top:auto;background:var(--ink-2);border:3px solid var(--green);border-radius:0;padding:24px 30px;font-family:Inter;font-weight:500;font-size:26px;line-height:1.3;color:var(--surface);"><b style="color:var(--green);font-weight:800;">The bounded claim:</b> we don&rsquo;t cure loneliness. We remove one specific friction that keeps friends apart - and 76% of young adults say seeing friends is how they protect their wellbeing.</div>
+</section>
+
+<section data-label="What's left" data-screen-label="29" data-speaker-notes="We want to be honest about what is not done. On process: we would prioritise onboarding earlier - it only landed in our final milestone, so our iteration interviews tested the core loop, not the whole journey. And we would interview before we build - we slipped once, and one of us insisted we fix it, which is now the rule. On the product, framed as user needs: the felt-privacy gap in the conditional still needs a rank-importance alternative tested; push is still only device-local; we have only just started to compete with the group chat people already live in; and crucially, we measured intent, not outcome - the proper study and telemetry are scoped but not yet run. We will not present an intended result as a measured one." class="slide slide--paper" style="padding:84px 110px 76px;">
+  <h1 class="title" style="font-size:78px;letter-spacing:-3px;">Honest about what&rsquo;s <span class="hl">left</span></h1>
+
+  <div style="display:flex;gap:40px;margin-top:42px;flex:1;">
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:34px;display:flex;flex-direction:column;">
+      <div class="eyebrow" style="font-size:20px;color:var(--purple);">What we&rsquo;d do differently</div>
+      <div style="display:flex;flex-direction:column;gap:22px;margin-top:24px;">
+        <div><div style="font-family:Archivo;font-weight:800;font-size:30px;">Onboarding earlier</div><p style="font-family:Inter;font-weight:500;font-size:25px;line-height:1.35;color:var(--muted);margin:6px 0 0;">It only landed in M4, so our interviews tested the core loop, not the whole journey.</p></div>
+        <div><div style="font-family:Archivo;font-weight:800;font-size:30px;">Interview before we build</div><p style="font-family:Inter;font-weight:500;font-size:25px;line-height:1.35;color:var(--muted);margin:6px 0 0;">We slipped once. One of us insisted we validate it properly - now that&rsquo;s the rule.</p></div>
+      </div>
+    </div>
+
+    <div style="flex:1.25;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:34px;display:flex;flex-direction:column;">
+      <div class="eyebrow" style="font-size:20px;color:var(--pink);">Still unmet &middot; user needs</div>
+      <div style="display:flex;flex-direction:column;gap:16px;margin-top:24px;">
+        <div style="display:flex;gap:16px;align-items:baseline;"><span style="font-family:Archivo;font-weight:900;font-size:22px;color:var(--pink);">01</span><span style="font-family:Inter;font-weight:500;font-size:26px;line-height:1.3;">The felt-privacy gap in the conditional - test a &ldquo;rank importance&rdquo; alternative.</span></div>
+        <div style="display:flex;gap:16px;align-items:baseline;"><span style="font-family:Archivo;font-weight:900;font-size:22px;color:var(--pink);">02</span><span style="font-family:Inter;font-weight:500;font-size:26px;line-height:1.3;">Reliable push notifications - the nudge is currently device-local only.</span></div>
+        <div style="display:flex;gap:16px;align-items:baseline;"><span style="font-family:Archivo;font-weight:900;font-size:22px;color:var(--pink);">03</span><span style="font-family:Inter;font-weight:500;font-size:26px;line-height:1.3;">Beat the group chat people already live in - the web-first link is the first move.</span></div>
+        <div style="display:flex;gap:16px;align-items:baseline;"><span style="font-family:Archivo;font-weight:900;font-size:22px;color:var(--pink);">04</span><span style="font-family:Inter;font-weight:500;font-size:26px;line-height:1.3;">We measured intent, not outcome - the study and telemetry are scoped, not yet run.</span></div>
+      </div>
+      <div style="margin-top:auto;padding-top:20px;font-family:Inter;font-weight:600;font-size:23px;color:var(--muted);font-style:italic;">We won&rsquo;t present an intended result as a measured one.</div>
+    </div>
+  </div>
+</section>
+
+<section data-label="Looking ahead" data-screen-label="29b" data-speaker-notes="And where does BeThere go next? Three things, all straight from edge cases our users raised. First, availability changes: once Milly has confirmed she'll be there, the people who said 'I'll go if Milly' should be told the moment that changes. Second, plus-ones: Vasanth might welcome a guest, but there are some people he'd rather not see turn up, so plus-ones need to stay in the group's control. And third, a per-meetup chat that opens only after a plan confirms, so the group can sort the last details without reopening the dead-chat problem we started with." class="slide slide--blush" style="padding:84px 110px 78px;">
+  <div style="font-family:Inter;font-weight:700;font-size:24px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);">Future work</div>
+  <h1 class="title" style="font-size:78px;letter-spacing:-3px;margin-top:6px;">Looking <span class="hl">ahead</span></h1>
+  <div style="display:flex;gap:28px;margin-top:44px;flex:1;">
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:32px;border-top:14px solid var(--purple);display:flex;flex-direction:column;">
+      <div style="font-family:Archivo;font-weight:900;font-size:34px;line-height:1.08;">Availability changes</div>
+      <p style="font-family:Inter;font-weight:500;font-size:26px;line-height:1.4;color:var(--ink);margin:18px 0 0;">When Milly&rsquo;s plans change after she confirms, tell the people who said &ldquo;I&rsquo;ll go <span style="color:var(--purple);font-weight:700;">if Milly</span>&rdquo; - right away.</p>
+    </div>
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:32px;border-top:14px solid var(--pink);display:flex;flex-direction:column;">
+      <div style="font-family:Archivo;font-weight:900;font-size:34px;line-height:1.08;">Plus-ones, in the group&rsquo;s control</div>
+      <p style="font-family:Inter;font-weight:500;font-size:26px;line-height:1.4;color:var(--ink);margin:18px 0 0;">Vasanth can welcome a guest without the <span style="color:var(--pink);font-weight:700;">people he&rsquo;d rather not</span> see turn up.</p>
+    </div>
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:32px;border-top:14px solid var(--green);display:flex;flex-direction:column;">
+      <div style="font-family:Archivo;font-weight:900;font-size:34px;line-height:1.08;">A chat once it&rsquo;s on</div>
+      <p style="font-family:Inter;font-weight:500;font-size:26px;line-height:1.4;color:var(--ink);margin:18px 0 0;">A per-meetup chat that opens <span style="color:var(--green);font-weight:700;">only after a plan confirms</span> - settle details without reopening the dead chat.</p>
+    </div>
+  </div>
+</section>
+
+<section data-label="Closing" data-screen-label="30" data-speaker-notes="So that's BeThere. We took the most ordinary failure in the world - a plan that dies in a group chat - and we found the real reason it dies: not flaking, but the social cost of committing out loud. We removed it. No organiser. No maybe. And I'll leave you with the line from our interviews that kept us honest the whole way through: someone told us she cares less about what they do, she just wants to see them. That's who we built this for." class="slide slide--blush" style="padding:90px 110px 80px;position:relative;">
+  <div style="display:flex;align-items:center;gap:30px;">
+    <div style="font-family:Archivo;font-weight:900;font-size:132px;letter-spacing:-6px;line-height:.9;color:var(--ink);">BeThere</div>
+    <span style="background:var(--green);color:var(--surface);font-family:Archivo;font-weight:800;font-size:28px;border:3px solid var(--ink);box-shadow:5px 5px 0 var(--ink);padding:8px 18px;border-radius:0;transform:rotate(-4deg);">You're in</span>
+  </div>
+  <p style="font-family:Archivo;font-weight:800;font-size:60px;letter-spacing:-1.5px;color:var(--ink);margin:30px 0 0;">Be there - without the <span class="hl">organiser</span>.</p>
+
+  <div style="margin-top:auto;display:flex;align-items:flex-end;justify-content:space-between;gap:40px;">
+    <div style="background:var(--ink);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--pink);padding:32px 38px;max-width:1180px;">
+      <span style="font-family:Archivo;font-weight:900;font-size:56px;color:var(--pink);line-height:.4;">&ldquo;</span>
+      <p style="font-family:Archivo;font-weight:700;font-size:40px;line-height:1.25;color:var(--surface);margin:14px 0 0;">I care less about what we do. I just want to see them.</p>
+      <div style="font-family:Inter;font-weight:600;font-size:24px;color:rgba(255,255,255,.65);margin-top:14px;">- the reason we built it</div>
+    </div>
+    <div style="font-family:Inter;font-weight:700;font-size:24px;color:var(--muted);text-align:right;white-space:nowrap;">DRP &middot; Group 02<br><span style="font-weight:500;">Nelson &middot; Lukas &middot; Noah &middot; James</span></div>
+  </div>
+</section>
+    </div>
+  </div>
+</div>
+
+<div id="deck-help">Use <b>&larr; &rarr;</b> to move &middot; <b>N</b> speaker notes &middot; <b>F</b> fullscreen &middot; <b>1-9</b> jump</div>
+
+<div id="deck-controls">
+  <button class="deck-btn" id="c-prev" title="Previous (Left arrow)" aria-label="Previous slide">&lsaquo;</button>
+  <span id="deck-counter">01 / 38</span>
+  <button class="deck-btn pink" id="c-next" title="Next (Right arrow)" aria-label="Next slide">&rsaquo;</button>
+  <button class="deck-btn" id="c-notes" title="Speaker notes (N)">Notes</button>
+  <button class="deck-btn" id="c-full" title="Fullscreen (F)">Full</button>
+</div>
+
+<aside id="deck-notes" aria-label="Speaker notes">
+  <button class="deck-btn nclose" id="n-close" aria-label="Close notes">&times;</button>
+  <p class="nlabel" id="n-label"></p>
+  <p class="nbody" id="n-body"></p>
+</aside>
+
+<script>
+/* Architecture spotlight tour: clone #arch-base once per focus step so the
+   diagram is pixel-identical on every page and each highlight is its own
+   <section> (its own PDF page). Must run before the deck runtime collects
+   slides, so it lives in its own script block above the runtime. */
+(function () {
+  var base = document.getElementById("arch-base");
+  if (!base) return;
+  var steps = [
+    { focus: "client", screen: "24a", label: "Architecture: Frontend",
+      notes: "The frontend is an Expo React Native app, and every screen you see here is one real, typed call - send a plan, vote, lock, the moment, join, your dashboard. One codebase ships to iOS, Android and the web, and that web target is the only reason our no-download onboarding works. React Navigation drives about ten screens; Clerk gives us real Google sign-in, so we never store passwords.",
+      cap: '<div class="cap-tag">Frontend &middot; @bethere/mobile</div><ul><li><b>Expo + React Native</b> - one codebase ships to iOS, Android <i>and</i> web</li><li>Every screen is one <b>typed tRPC call</b> - <code>events.create</code>, <code>respond</code>, <code>joinByCode</code></li><li><b>Clerk</b> handles Google sign-in; the web target makes <b>no-download onboarding</b> possible</li></ul>' },
+    { focus: "api", screen: "24b", label: "Architecture: Backend",
+      notes: "The server is Fastify 5 hosting tRPC v11 on Node. Everything you watched in the demo is a real, typed procedure: events.create sends the plan, toggleReaction is a vote, lock settles the time, respond is the blind moment, resolve clears or fizzles it. The events, groups and users routers hold 32 procedures in all, every input validated by Zod - and no scheduler, because a plan settles its own phase the next time anyone reads it.",
+      cap: '<div class="cap-tag">Backend &middot; @bethere/api</div><ul><li><b>Fastify 5</b> on Node hosts <b>tRPC v11</b> - the events, groups + users routers, 32 typed procedures</li><li>The demo as real endpoints: <code>events.create &rarr; toggleReaction &rarr; lock &rarr; respond &rarr; resolve</code></li><li><b>Zod</b> validates every input; phases <b>settle on read</b> - no scheduler</li></ul>' },
+    { focus: "db", screen: "24c", label: "Architecture: Data",
+      notes: "Underneath sits Postgres - ten relational tables. Groups, votes and RSVPs are inherently relational, so the database gives us integrity for free, with typed Drizzle queries and no hand-written types. And the privacy rules - no names, blind tallies - live inside those queries, where the client cannot reach them.",
+      cap: '<div class="cap-tag">Database &middot; Postgres</div><ul><li><b>Postgres</b> - 10 relational tables give us <b>integrity for free</b></li><li><b>Drizzle ORM</b> - fully typed SQL, no hand-written query types</li><li>The privacy guarantees live <b>inside the queries</b> - server-authoritative, out of reach of the client</li></ul>' },
+    { focus: "shared", screen: "24d", label: "Architecture: Shared core",
+      notes: "Holding it together is the shared package: Zod schemas plus framework-free pure logic - the vote tally, the conditional-RSVP resolution, the blind reveal. It is the single source of truth, feeding the same types and validation into both client and server, so a change that would break the client fails at compile time, not in front of a user.",
+      cap: '<div class="cap-tag">Shared core &middot; @bethere/shared</div><ul><li><b>Zod schemas + framework-free pure logic</b> - vote tally, conditional-RSVP, blind reveal</li><li><b>One source of truth</b>: the same types + validation feed both client and server</li><li>A change that would break the client fails at <b>compile time</b>, not in front of a user</li></ul>' },
+    { focus: "ship", screen: "24e", label: "Architecture: Deployment",
+      notes: "And it ships continuously. Every change runs lint, typecheck and the test suite on GitHub Actions, then deploys three targets: the Android APK, the web build to Vercel, and the API as a Docker image to AWS App Runner. Not a localhost demo - a deployed build that real friends used on their own phones.",
+      cap: '<div class="cap-tag">Deployment &middot; Git &rarr; CI &rarr; CD</div><ul><li>Every change runs <b>lint, typecheck and tests</b> on GitHub Actions</li><li>Ships continuously: <b>Android APK</b>, <b>web &rarr; Vercel</b>, <b>API &rarr; AWS App Runner</b> (Docker)</li><li>A deployed build real friends used on their own phones - iOS, Android, web</li></ul>' }
+  ];
+  var ref = base;
+  steps.forEach(function (s) {
+    var sec = base.cloneNode(true);
+    sec.removeAttribute("id");
+    sec.setAttribute("data-focus", s.focus);
+    sec.setAttribute("data-screen-label", s.screen);
+    sec.setAttribute("data-label", s.label);
+    sec.setAttribute("data-speaker-notes", s.notes);
+    var cap = sec.querySelector(".arch-cap");
+    if (cap) cap.innerHTML = s.cap;
+    ref.after(sec);
+    ref = sec;
+  });
+})();
+</script>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---- <image-slot>: user-fillable photo placeholder (drag/drop or click), -
+     persisted in localStorage so a dropped photo survives a reload. ---- */
+  class ImageSlot extends HTMLElement {
+    connectedCallback() {
+      if (this._wired) return;
+      this._wired = true;
+      this._input = document.createElement("input");
+      this._input.type = "file";
+      this._input.accept = "image/*";
+      this._input.style.display = "none";
+      this.appendChild(this._input);
+      this._input.addEventListener("change", () => {
+        var f = this._input.files && this._input.files[0];
+        this._input.value = "";
+        if (f) this._read(f);
+      });
+      this.addEventListener("click", (e) => {
+        if (e.target.closest(".is-clear")) return;
+        if (!this._has()) this._input.click();
+      });
+      this.addEventListener("dragover", (e) => { e.preventDefault(); this.classList.add("drag"); });
+      this.addEventListener("dragleave", (e) => { if (e.target === this) this.classList.remove("drag"); });
+      this.addEventListener("drop", (e) => {
+        e.preventDefault();
+        this.classList.remove("drag");
+        var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (f) this._read(f);
+      });
+      this._render();
+    }
+    _key() { return "bethere-deck.imageslot." + (this.id || "anon"); }
+    _get() { try { return localStorage.getItem(this._key()); } catch (_) { return null; } }
+    _set(v) { try { localStorage.setItem(this._key(), v); } catch (_) {} }
+    _del() { try { localStorage.removeItem(this._key()); } catch (_) {} }
+    _has() { return !!(this._get() || this.getAttribute("src")); }
+    _read(file) {
+      if (!/^image\//.test(file.type)) return;
+      var fr = new FileReader();
+      fr.onload = () => { this._set(String(fr.result)); this._render(); };
+      fr.readAsDataURL(file);
+    }
+    _render() {
+      var src = this._get() || this.getAttribute("src");
+      Array.prototype.slice.call(this.children).forEach((c) => { if (c !== this._input) c.remove(); });
+      if (src) {
+        var img = document.createElement("img");
+        img.src = src; img.alt = "persona photo";
+        this.appendChild(img);
+        var btn = document.createElement("button");
+        btn.className = "is-clear"; btn.type = "button"; btn.title = "Remove photo";
+        btn.textContent = "\u00d7";
+        btn.addEventListener("click", (e) => { e.stopPropagation(); this._del(); this._render(); });
+        this.appendChild(btn);
+      } else {
+        var wrap = document.createElement("div");
+        wrap.className = "is-empty";
+        wrap.innerHTML = '<div class="ic">+</div><div class="cap"></div><div class="hint">click or drop a photo</div>';
+        wrap.querySelector(".cap").textContent = this.getAttribute("placeholder") || "Drop an image";
+        this.appendChild(wrap);
+      }
+    }
+  }
+  customElements.define("image-slot", ImageSlot);
+
+  /* ---- deck runtime: scale-to-fit + letterbox, keyboard / click nav, -
+     speaker-notes drawer, fullscreen. Each <section> is authored at the -
+     design size and centred + scaled to the viewport. ---- */
+  var root = document.getElementById("deck-root");
+  var stage = document.getElementById("deck-stage");
+  var canvas = document.getElementById("deck-canvas");
+  var progress = document.getElementById("deck-progress");
+  var counter = document.getElementById("deck-counter");
+  var help = document.getElementById("deck-help");
+  var notes = document.getElementById("deck-notes");
+  var nLabel = document.getElementById("n-label");
+  var nBody = document.getElementById("n-body");
+  var W = parseInt(root.dataset.designW, 10) || 1920;
+  var H = parseInt(root.dataset.designH, 10) || 1080;
+  var slides = Array.prototype.slice.call(canvas.querySelectorAll(":scope > section"));
+  var idx = 0;
+
+  function pad2(n) { return String(n).length < 2 ? "0" + n : String(n); }
+  function label(s, i) {
+    return s.getAttribute("data-label") || ("Slide " + (i + 1));
+  }
+  function fit() {
+    var s = Math.min(stage.clientWidth / W, stage.clientHeight / H);
+    canvas.style.transform = "scale(" + s + ")";
+  }
+  function show(i) {
+    idx = Math.max(0, Math.min(slides.length - 1, i));
+    for (var k = 0; k < slides.length; k++) slides[k].classList.toggle("is-active", k === idx);
+    var human = pad2(idx + 1) + " / " + pad2(slides.length);
+    counter.textContent = human;
+    progress.style.width = ((idx + 1) / slides.length * 100) + "%";
+    nLabel.textContent = pad2(idx + 1) + "  -  " + label(slides[idx], idx);
+    nBody.textContent = slides[idx].getAttribute("data-speaker-notes") || "(no speaker notes for this slide)";
+    var hash = "#" + (idx + 1);
+    if (location.hash !== hash) { try { history.replaceState(null, "", hash); } catch (_) {} }
+  }
+  function go(i) { show(i); }
+  function advance(d) { show(idx + d); }
+
+  function toggleNotes(force) {
+    var open = typeof force === "boolean" ? force : !notes.classList.contains("open");
+    notes.classList.toggle("open", open);
+    document.getElementById("c-notes").classList.toggle("on", open);
+    if (open) { root.classList.remove("idle"); }
+  }
+  function toggleFull() {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else {
+      var el = document.documentElement;
+      if (el.requestFullscreen) el.requestFullscreen();
+    }
+  }
+
+  window.addEventListener("keydown", function (e) {
+    var t = e.target;
+    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    var k = e.key, handled = true;
+    if (k === "ArrowRight" || k === "PageDown" || k === " " || k === "Spacebar") advance(1);
+    else if (k === "ArrowLeft" || k === "PageUp") advance(-1);
+    else if (k === "Home") go(0);
+    else if (k === "End") go(slides.length - 1);
+    else if (k === "r" || k === "R") go(0);
+    else if (k === "n" || k === "N") toggleNotes();
+    else if (k === "f" || k === "F") toggleFull();
+    else if (k === "Escape") toggleNotes(false);
+    else if (/^[0-9]$/.test(k)) { var n = k === "0" ? 9 : parseInt(k, 10) - 1; if (n < slides.length) go(n); }
+    else handled = false;
+    if (handled) { e.preventDefault(); if (help) help.classList.add("hide"); }
+  });
+
+  stage.addEventListener("click", function (e) {
+    if (e.target.closest("image-slot, a, button, input")) return;
+    var r = stage.getBoundingClientRect();
+    advance(e.clientX < r.left + r.width / 2 ? -1 : 1);
+    if (help) help.classList.add("hide");
+  });
+
+  document.getElementById("c-prev").addEventListener("click", function () { advance(-1); });
+  document.getElementById("c-next").addEventListener("click", function () { advance(1); });
+  document.getElementById("c-notes").addEventListener("click", function () { toggleNotes(); });
+  document.getElementById("c-full").addEventListener("click", function () { toggleFull(); });
+  document.getElementById("n-close").addEventListener("click", function () { toggleNotes(false); });
+
+  window.addEventListener("resize", fit);
+  if (window.visualViewport) window.visualViewport.addEventListener("resize", fit);
+
+  /* idle-hide the control bar while presenting */
+  var idleTimer;
+  function activity() {
+    root.classList.remove("idle");
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(function () { if (!notes.classList.contains("open")) root.classList.add("idle"); }, 2800);
+  }
+  window.addEventListener("mousemove", activity, { passive: true });
+  window.addEventListener("keydown", activity);
+  window.addEventListener("touchstart", activity, { passive: true });
+
+  /* boot: honour a #N deep-link, fit, then reveal */
+  var start = parseInt((location.hash || "").replace("#", ""), 10);
+  fit();
+  show(isFinite(start) && start >= 1 ? start - 1 : 0);
+  activity();
+  setTimeout(function () { if (help) help.classList.add("hide"); }, 6000);
+  document.fonts && document.fonts.ready && document.fonts.ready.then(fit);
+})();
+</script>
+</body>
+</html>

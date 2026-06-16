@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>BeThere - Architecture + Stack slides</title>
+<!--
+  Two final-presentation slides for BeThere (verified against the codebase 2026-06-15):
+    Slide 1 - System Architecture diagram
+    Slide 2 - Why this stack (framework / language justification)
+
+  To export: open in Chrome. Each .slide is exactly 1280x720 (16:9).
+    - Screenshot each slide, OR
+    - Cmd+P -> Save as PDF (each slide is its own page), OR
+    - copy the rendered slide into Google Slides and reformat.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800;900&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --pink: #ff5ca8;
+    --purple: #7e6bb0;
+    --green: #34a853;
+    --ink: #111111;
+    --paper: #fdf6ee;
+    --card: #ffffff;
+    --shadow: 7px 7px 0 var(--ink);
+    --shadow-sm: 4px 4px 0 var(--ink);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #c9c4bd;
+    font-family: "Inter", system-ui, sans-serif;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+    padding: 40px 0;
+  }
+
+  .slide {
+    position: relative;
+    width: 1280px;
+    height: 720px;
+    background: var(--paper);
+    border: 4px solid var(--ink);
+    padding: 44px 52px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ---------- shared header ---------- */
+  .kicker {
+    font-family: "Space Mono", monospace;
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--purple);
+    margin-bottom: 6px;
+  }
+  .title {
+    font-family: "Archivo", sans-serif;
+    font-weight: 900;
+    font-size: 54px;
+    line-height: 0.98;
+    letter-spacing: -0.01em;
+  }
+  .title .hl { background: var(--pink); padding: 0 10px; border: 3px solid var(--ink); box-shadow: var(--shadow-sm); }
+
+  /* ============ SLIDE 1 : ARCHITECTURE ============ */
+  .arch {
+    position: relative;
+    flex: 1;
+    margin-top: 30px;
+  }
+
+  .tiers {
+    display: grid;
+    grid-template-columns: 312px 116px 312px 116px 312px;
+    height: 318px;
+  }
+
+  .tier {
+    background: var(--card);
+    border: 3px solid var(--ink);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+  }
+  .tier .hd {
+    border-bottom: 3px solid var(--ink);
+    padding: 10px 16px;
+    font-family: "Archivo", sans-serif;
+    font-weight: 800;
+    font-size: 19px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+  .tier.mobile .hd { background: var(--pink); }
+  .tier.api .hd { background: var(--purple); }
+  .tier.db .hd { background: var(--green); }
+  .tier .body { padding: 14px 16px; display: flex; flex-direction: column; gap: 7px; }
+  .tier .pkg {
+    font-family: "Space Mono", monospace;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--ink);
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    padding: 2px 7px;
+    align-self: flex-start;
+  }
+  .tier .body li { list-style: none; font-size: 15.5px; font-weight: 500; line-height: 1.32; }
+  .tier .body li b { font-weight: 700; }
+  .tier .body .muted { color: #555; font-size: 13.5px; }
+
+  /* connector arrows between tiers */
+  .arrow { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px; }
+  .arrow .lbl {
+    font-family: "Space Mono", monospace;
+    font-size: 11.5px;
+    font-weight: 700;
+    text-align: center;
+    line-height: 1.2;
+    background: var(--ink);
+    color: #fff;
+    padding: 4px 7px;
+    max-width: 108px;
+  }
+  .arrow .line { display: flex; align-items: center; }
+  .arrow .bar { width: 56px; height: 7px; background: var(--ink); }
+  .arrow .head {
+    width: 0; height: 0;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-left: 15px solid var(--ink);
+  }
+
+  /* dashed connectors from shared band up to mobile + api */
+  .conn { position: absolute; top: 318px; height: 40px; border-left: 3px dashed var(--ink); }
+  .conn.m { left: 156px; }
+  .conn.a { left: 584px; }
+  .conn .cap {
+    position: absolute; top: -2px; left: -6px;
+    width: 0; height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 9px solid var(--ink);
+  }
+
+  .shared {
+    margin-top: 40px;
+    background: #fff3d6;
+    border: 3px solid var(--ink);
+    box-shadow: var(--shadow);
+    padding: 13px 18px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .shared .badge {
+    font-family: "Space Mono", monospace;
+    font-weight: 700;
+    font-size: 14px;
+    background: var(--ink);
+    color: #fff;
+    padding: 6px 10px;
+    white-space: nowrap;
+  }
+  .shared .txt { font-size: 15px; font-weight: 500; line-height: 1.3; }
+  .shared .txt b { font-weight: 700; }
+
+  .deploy { display: flex; gap: 14px; margin-top: 22px; }
+  .chip {
+    display: flex; align-items: center; gap: 9px;
+    border: 3px solid var(--ink);
+    background: #fff;
+    box-shadow: var(--shadow-sm);
+    padding: 8px 14px;
+    font-weight: 600;
+    font-size: 14.5px;
+  }
+  .chip .dot { width: 13px; height: 13px; border: 2px solid var(--ink); }
+  .chip.p .dot { background: var(--pink); }
+  .chip.u .dot { background: var(--purple); }
+  .chip.g .dot { background: var(--green); }
+  .deploy .lead {
+    font-family: "Space Mono", monospace;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    align-self: center;
+    color: #555;
+  }
+
+  /* ============ SLIDE 2 : WHY THIS STACK ============ */
+  .picks {
+    margin-top: 34px;
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px 20px;
+    align-content: start;
+  }
+  .pick {
+    background: var(--card);
+    border: 3px solid var(--ink);
+    box-shadow: var(--shadow);
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .pick.wide { grid-column: 1 / -1; }
+  .pick .tag {
+    align-self: flex-start;
+    font-family: "Archivo", sans-serif;
+    font-weight: 800;
+    font-size: 17px;
+    color: #fff;
+    border: 2px solid var(--ink);
+    padding: 4px 11px;
+  }
+  .pick.c1 .tag { background: var(--pink); }
+  .pick.c2 .tag { background: var(--purple); }
+  .pick.c3 .tag { background: var(--green); }
+  .pick .why { font-size: 16px; font-weight: 500; line-height: 1.34; }
+  .pick .why b { font-weight: 700; }
+
+  @media print {
+    body { background: #fff; padding: 0; gap: 0; }
+    .slide { box-shadow: none; border: none; page-break-after: always; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- ============ SLIDE 1 ============ -->
+  <section class="slide">
+    <header>
+      <div class="kicker">BeThere &middot; System design</div>
+      <h1 class="title">System <span class="hl">Architecture</span></h1>
+    </header>
+
+    <div class="arch">
+      <div class="tiers">
+        <!-- MOBILE -->
+        <div class="tier mobile">
+          <div class="hd">Mobile client</div>
+          <div class="body">
+            <span class="pkg">@bethere/mobile</span>
+            <ul>
+              <li><b>Expo</b> &middot; React Native</li>
+              <li>iOS &middot; Android &middot; Web</li>
+              <li>React Navigation v7</li>
+              <li>Clerk Google sign-in</li>
+              <li class="muted">~10 screens (dashboard, create wizard, event, groups, join...)</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- arrow 1 -->
+        <div class="arrow">
+          <div class="lbl">HTTP / tRPC<br />typed JSON</div>
+          <div class="line"><span class="bar"></span><span class="head"></span></div>
+        </div>
+
+        <!-- API -->
+        <div class="tier api">
+          <div class="hd">API server</div>
+          <div class="body">
+            <span class="pkg">@bethere/api</span>
+            <ul>
+              <li><b>Fastify 5</b> &middot; tRPC v11</li>
+              <li>Clerk auth &middot; rate limit</li>
+              <li>Drizzle ORM</li>
+              <li class="muted">4 routers: health &middot; groups &middot; events &middot; users</li>
+              <li class="muted">lazy settle-on-read (no scheduler)</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- arrow 2 -->
+        <div class="arrow">
+          <div class="lbl">Drizzle ORM<br />SQL</div>
+          <div class="line"><span class="bar"></span><span class="head"></span></div>
+        </div>
+
+        <!-- DB -->
+        <div class="tier db">
+          <div class="hd">Database</div>
+          <div class="body">
+            <span class="pkg">Postgres</span>
+            <ul>
+              <li><b>10 tables</b></li>
+              <li>users &middot; groups &middot; group_members</li>
+              <li>events &middot; event_candidates</li>
+              <li>candidate_reactions &middot; responses</li>
+              <li>event_opt_outs &middot; event_groups</li>
+              <li>event_participants</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- dashed risers from the shared band -->
+      <div class="conn m"><span class="cap"></span></div>
+      <div class="conn a"><span class="cap"></span></div>
+
+      <!-- SHARED -->
+      <div class="shared">
+        <span class="badge">@bethere/shared</span>
+        <span class="txt">
+          <b>Single source of truth.</b> Zod schemas + framework-free pure logic (vote tally, conditional-RSVP resolution, blind reveal) - feeds the same <b>types + validation</b> into the client and the server.
+        </span>
+      </div>
+
+      <!-- DEPLOY -->
+      <div class="deploy">
+        <span class="lead">Git &rarr; CI &rarr; CD</span>
+        <span class="chip p"><span class="dot"></span>Android APK via CI</span>
+        <span class="chip u"><span class="dot"></span>Web &rarr; Vercel</span>
+        <span class="chip g"><span class="dot"></span>API &rarr; AWS App Runner (Docker)</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SLIDE 2 ============ -->
+  <section class="slide">
+    <header>
+      <div class="kicker">BeThere &middot; Technical choices</div>
+      <h1 class="title">Why this <span class="hl">stack</span></h1>
+    </header>
+
+    <div class="picks">
+      <div class="pick c1">
+        <span class="tag">TypeScript + pnpm monorepo</span>
+        <span class="why">One language across client, server, and shared logic. Refactors are <b>type-checked end to end</b>.</span>
+      </div>
+
+      <div class="pick c2">
+        <span class="tag">tRPC v11 + Zod</span>
+        <span class="why">A <b>fully type-safe API</b> with zero hand-written types or codegen. One schema validates server input and types the client.</span>
+      </div>
+
+      <div class="pick c3">
+        <span class="tag">Expo / React Native</span>
+        <span class="why">One codebase ships to <b>iOS, Android, and web</b> - so we could test with real users on whatever device they already had.</span>
+      </div>
+
+      <div class="pick c1">
+        <span class="tag">Fastify 5</span>
+        <span class="why">A lightweight, fast Node server - a thin, low-overhead host for the tRPC layer.</span>
+      </div>
+
+      <div class="pick c2">
+        <span class="tag">Postgres + Drizzle ORM</span>
+        <span class="why">Groups, votes, and RSVPs are inherently relational, so the database gives us <b>integrity for free</b>, with typed SQL.</span>
+      </div>
+
+      <div class="pick c3">
+        <span class="tag">Clerk</span>
+        <span class="why">Managed auth with <b>real Google OAuth</b> - we don't roll our own identity or security.</span>
+      </div>
+
+      <div class="pick wide c1">
+        <span class="tag">Git &rarr; GitHub Actions CI/CD</span>
+        <span class="why">Lint, typecheck, and tests run on <b>every change</b>, with continuous deployment to AWS App Runner (API) and Vercel (web).</span>
+      </div>
+    </div>
+  </section>
+
+</body>
+</html>

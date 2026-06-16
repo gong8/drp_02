@@ -1,0 +1,198 @@
+    </div>
+  </div>
+</div>
+
+<div id="deck-help">Use <b>&larr; &rarr;</b> to move &middot; <b>N</b> speaker notes &middot; <b>F</b> fullscreen &middot; <b>1-9</b> jump</div>
+
+<div id="deck-controls">
+  <button class="deck-btn" id="c-prev" title="Previous (Left arrow)" aria-label="Previous slide">&lsaquo;</button>
+  <span id="deck-counter">01 / 50</span>
+  <button class="deck-btn pink" id="c-next" title="Next (Right arrow)" aria-label="Next slide">&rsaquo;</button>
+  <button class="deck-btn" id="c-notes" title="Speaker notes (N)">Notes</button>
+  <button class="deck-btn" id="c-full" title="Fullscreen (F)">Full</button>
+</div>
+
+<aside id="deck-notes" aria-label="Speaker notes">
+  <button class="deck-btn nclose" id="n-close" aria-label="Close notes">&times;</button>
+  <p class="nlabel" id="n-label"></p>
+  <p class="nbody" id="n-body"></p>
+</aside>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---- <image-slot>: user-fillable photo placeholder (drag/drop or click), -
+     persisted in localStorage so a dropped photo survives a reload. ---- */
+  class ImageSlot extends HTMLElement {
+    connectedCallback() {
+      if (this._wired) return;
+      this._wired = true;
+      this._input = document.createElement("input");
+      this._input.type = "file";
+      this._input.accept = "image/*";
+      this._input.style.display = "none";
+      this.appendChild(this._input);
+      this._input.addEventListener("change", () => {
+        var f = this._input.files && this._input.files[0];
+        this._input.value = "";
+        if (f) this._read(f);
+      });
+      this.addEventListener("click", (e) => {
+        if (e.target.closest(".is-clear")) return;
+        if (!this._has()) this._input.click();
+      });
+      this.addEventListener("dragover", (e) => { e.preventDefault(); this.classList.add("drag"); });
+      this.addEventListener("dragleave", (e) => { if (e.target === this) this.classList.remove("drag"); });
+      this.addEventListener("drop", (e) => {
+        e.preventDefault();
+        this.classList.remove("drag");
+        var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (f) this._read(f);
+      });
+      this._render();
+    }
+    _key() { return "bethere-deck.imageslot." + (this.id || "anon"); }
+    _get() { try { return localStorage.getItem(this._key()); } catch (_) { return null; } }
+    _set(v) { try { localStorage.setItem(this._key(), v); } catch (_) {} }
+    _del() { try { localStorage.removeItem(this._key()); } catch (_) {} }
+    _has() { return !!(this._get() || this.getAttribute("src")); }
+    _read(file) {
+      if (!/^image\//.test(file.type)) return;
+      var fr = new FileReader();
+      fr.onload = () => { this._set(String(fr.result)); this._render(); };
+      fr.readAsDataURL(file);
+    }
+    _render() {
+      var src = this._get() || this.getAttribute("src");
+      Array.prototype.slice.call(this.children).forEach((c) => { if (c !== this._input) c.remove(); });
+      if (src) {
+        var img = document.createElement("img");
+        img.src = src; img.alt = "persona photo";
+        this.appendChild(img);
+        var btn = document.createElement("button");
+        btn.className = "is-clear"; btn.type = "button"; btn.title = "Remove photo";
+        btn.textContent = "×";
+        btn.addEventListener("click", (e) => { e.stopPropagation(); this._del(); this._render(); });
+        this.appendChild(btn);
+      } else {
+        var wrap = document.createElement("div");
+        wrap.className = "is-empty";
+        wrap.innerHTML = '<div class="ic">+</div><div class="cap"></div><div class="hint">click or drop a photo</div>';
+        wrap.querySelector(".cap").textContent = this.getAttribute("placeholder") || "Drop an image";
+        this.appendChild(wrap);
+      }
+    }
+  }
+  customElements.define("image-slot", ImageSlot);
+
+  /* ---- deck runtime: scale-to-fit + letterbox, keyboard / click nav, -
+     speaker-notes drawer, fullscreen. Each <section> is authored at the -
+     design size and centred + scaled to the viewport. ---- */
+  var root = document.getElementById("deck-root");
+  var stage = document.getElementById("deck-stage");
+  var canvas = document.getElementById("deck-canvas");
+  var progress = document.getElementById("deck-progress");
+  var counter = document.getElementById("deck-counter");
+  var help = document.getElementById("deck-help");
+  var notes = document.getElementById("deck-notes");
+  var nLabel = document.getElementById("n-label");
+  var nBody = document.getElementById("n-body");
+  var W = parseInt(root.dataset.designW, 10) || 1920;
+  var H = parseInt(root.dataset.designH, 10) || 1080;
+  var slides = Array.prototype.slice.call(canvas.querySelectorAll(":scope > section"));
+  var idx = 0;
+
+  function pad2(n) { return String(n).length < 2 ? "0" + n : String(n); }
+  function label(s, i) {
+    return s.getAttribute("data-label") || ("Slide " + (i + 1));
+  }
+  function fit() {
+    var s = Math.min(stage.clientWidth / W, stage.clientHeight / H);
+    canvas.style.transform = "scale(" + s + ")";
+  }
+  function show(i) {
+    idx = Math.max(0, Math.min(slides.length - 1, i));
+    for (var k = 0; k < slides.length; k++) slides[k].classList.toggle("is-active", k === idx);
+    var human = pad2(idx + 1) + " / " + pad2(slides.length);
+    counter.textContent = human;
+    progress.style.width = ((idx + 1) / slides.length * 100) + "%";
+    nLabel.textContent = pad2(idx + 1) + "  -  " + label(slides[idx], idx);
+    nBody.textContent = slides[idx].getAttribute("data-speaker-notes") || "(no speaker notes for this slide)";
+    var hash = "#" + (idx + 1);
+    if (location.hash !== hash) { try { history.replaceState(null, "", hash); } catch (_) {} }
+  }
+  function go(i) { show(i); }
+  function advance(d) { show(idx + d); }
+
+  function toggleNotes(force) {
+    var open = typeof force === "boolean" ? force : !notes.classList.contains("open");
+    notes.classList.toggle("open", open);
+    document.getElementById("c-notes").classList.toggle("on", open);
+    if (open) { root.classList.remove("idle"); }
+  }
+  function toggleFull() {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else {
+      var el = document.documentElement;
+      if (el.requestFullscreen) el.requestFullscreen();
+    }
+  }
+
+  window.addEventListener("keydown", function (e) {
+    var t = e.target;
+    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    var k = e.key, handled = true;
+    if (k === "ArrowRight" || k === "PageDown" || k === " " || k === "Spacebar") advance(1);
+    else if (k === "ArrowLeft" || k === "PageUp") advance(-1);
+    else if (k === "Home") go(0);
+    else if (k === "End") go(slides.length - 1);
+    else if (k === "r" || k === "R") go(0);
+    else if (k === "n" || k === "N") toggleNotes();
+    else if (k === "f" || k === "F") toggleFull();
+    else if (k === "Escape") toggleNotes(false);
+    else if (/^[0-9]$/.test(k)) { var n = k === "0" ? 9 : parseInt(k, 10) - 1; if (n < slides.length) go(n); }
+    else handled = false;
+    if (handled) { e.preventDefault(); if (help) help.classList.add("hide"); }
+  });
+
+  stage.addEventListener("click", function (e) {
+    if (e.target.closest("image-slot, a, button, input")) return;
+    var r = stage.getBoundingClientRect();
+    advance(e.clientX < r.left + r.width / 2 ? -1 : 1);
+    if (help) help.classList.add("hide");
+  });
+
+  document.getElementById("c-prev").addEventListener("click", function () { advance(-1); });
+  document.getElementById("c-next").addEventListener("click", function () { advance(1); });
+  document.getElementById("c-notes").addEventListener("click", function () { toggleNotes(); });
+  document.getElementById("c-full").addEventListener("click", function () { toggleFull(); });
+  document.getElementById("n-close").addEventListener("click", function () { toggleNotes(false); });
+
+  window.addEventListener("resize", fit);
+  if (window.visualViewport) window.visualViewport.addEventListener("resize", fit);
+
+  /* idle-hide the control bar while presenting */
+  var idleTimer;
+  function activity() {
+    root.classList.remove("idle");
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(function () { if (!notes.classList.contains("open")) root.classList.add("idle"); }, 2800);
+  }
+  window.addEventListener("mousemove", activity, { passive: true });
+  window.addEventListener("keydown", activity);
+  window.addEventListener("touchstart", activity, { passive: true });
+
+  /* boot: honour a #N deep-link, fit, then reveal */
+  var start = parseInt((location.hash || "").replace("#", ""), 10);
+  fit();
+  show(isFinite(start) && start >= 1 ? start - 1 : 0);
+  activity();
+  setTimeout(function () { if (help) help.classList.add("hide"); }, 6000);
+  document.fonts && document.fonts.ready && document.fonts.ready.then(fit);
+})();
+</script>
+</body>
+</html>

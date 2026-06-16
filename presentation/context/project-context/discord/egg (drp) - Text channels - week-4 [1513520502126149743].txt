@@ -1,0 +1,532 @@
+==============================================================
+Guild: egg (drp)
+Channel: Text channels / week-4
+==============================================================
+
+[6/8/2026 12:30 PM] gong8
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1513520502126149743/1513520527086588136/image.png?ex=6a309915&is=6a2f4795&hm=2ddebfb31be699914660baf78b5dddc52e3e24f9ca2e97e2215747024beacc94&
+
+
+[6/8/2026 12:30 PM] gong8
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1513520502126149743/1513520544169853138/image.png?ex=6a309919&is=6a2f4799&hm=73e6883df9f293fa02387c71c782af15062ab9f01e3a1170850a55c0adeb4036&
+
+
+[6/8/2026 12:30 PM] gong8
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1513520502126149743/1513520565481242725/image.png?ex=6a30991e&is=6a2f479e&hm=76f72e99feb97808e6ee9e47f42afc66be7041bf11833c8582679d20bcae76eb&
+
+
+[6/8/2026 12:30 PM] gong8
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1513520502126149743/1513520711149551657/image.png?ex=6a309941&is=6a2f47c1&hm=daa38ec0d74cceff97efc6e92515a5a19728edf750b379cb79030d3251634569&
+
+
+[6/8/2026 12:31 PM] gong8
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1513520502126149743/1513520732594765895/image.png?ex=6a309946&is=6a2f47c6&hm=b85303093630db35ebf0f30063202c6a83e1df072a6389f93b848250863c19e1&
+
+
+[6/8/2026 12:33 PM] gong8
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1513520502126149743/1513521365192413256/image.png?ex=6a3099dd&is=6a2f485d&hm=8bf1c3699feab2b1c109552242ca0f47aa6a96ea0cd9da1e64b89fa9a3e9b899&
+
+
+[6/8/2026 1:00 PM] seventhspark_40504
+metric ideas
+
+
+[6/8/2026 1:01 PM] seventhspark_40504
+1. Time taken to suggest a meetup
+
+
+[6/8/2026 1:01 PM] seventhspark_40504
+2. Time taken to respond to a meetup
+
+
+[6/8/2026 1:02 PM] seventhspark_40504
+3. Error rate - ppl going back and changing choices as they go thru the wizard
+
+
+[6/8/2026 1:02 PM] seventhspark_40504
+4. Abandonment rate (because it's on the slides)
+
+
+[6/8/2026 1:35 PM] the_jlh
+https://docs.google.com/document/d/1zDQh1-ZOp8ruEVuEREFwcuAOqupv1FiMWkYMV0X1VRc/edit?usp=sharing
+
+{Embed}
+https://docs.google.com/document/d/1zDQh1-ZOp8ruEVuEREFwcuAOqupv1FiMWkYMV0X1VRc/edit?usp=sharing
+DRP - Project Impact Asset
+Be There   “End a culture of maybes and no responses”
+https://images-ext-1.discordapp.net/external/m4NgTU0tTuOnYWwl-MdIJDJR9DhuLz2vMx2Ak0OvyBk/https/lh7-us.googleusercontent.com/docs/AHkbwyKvGRYZ62t7vpxy-C6nz6iMQqOJUdTEDNDcDS7PxR_qx1Q3c84Gg4jmuIVUCHJw7neNpBiddkQ6c9ljj6NbLmP-mxmeLDLJ8t_7h_9bmOIjYBo8jXg%3Dw1200-h630-p
+
+
+[6/8/2026 1:36 PM] the_jlh
+https://docs.google.com/document/d/1ahWR0ik85bVxUAP7xP-FhScBXj289MvDaepKs3NvmzQ/edit?usp=sharing
+
+{Embed}
+https://docs.google.com/document/d/1ahWR0ik85bVxUAP7xP-FhScBXj289MvDaepKs3NvmzQ/edit?usp=sharing
+DRP - Project Pitch Leaflet
+
+
+[6/8/2026 3:02 PM] the_jlh
+we're gonna stop working on the impact asset now
+
+
+[6/8/2026 3:02 PM] the_jlh
+it's alr no
+
+
+[6/8/2026 3:02 PM] the_jlh
+now
+
+
+[6/8/2026 3:02 PM] the_jlh
+the images and formatting is horror tho
+
+
+[6/8/2026 3:03 PM] the_jlh
+we can come back to it once we've acc done the iterations also
+
+
+[6/8/2026 3:18 PM] gong8
+wait osryr
+
+
+[6/8/2026 3:18 PM] gong8
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1513520502126149743/1513562892484608010/message.txt?ex=6a30c08a&is=6a2f6f0a&hm=95e31e5ce852351aad784719fd86cc35a9dd654a92cdec76ee51a2a67bf57a42&
+
+
+[6/8/2026 3:18 PM] gong8
+desing language
+
+
+[6/8/2026 3:18 PM] gong8
+just so claude doesnt cook up some bullshit
+
+
+[6/8/2026 3:18 PM] gong8
+keeps it consistent
+
+
+[6/8/2026 3:18 PM] gong8
+with the codebase
+
+
+[6/8/2026 3:19 PM] the_jlh
+alr
+
+
+[6/8/2026 3:19 PM] gong8
+use ts
+
+
+[6/8/2026 3:19 PM] gong8
+use
+
+
+[6/8/2026 3:19 PM] gong8
+claude.ai/design
+
+
+[6/8/2026 3:19 PM] gong8
+lowkey just copy paste what you have
+
+
+[6/8/2026 3:19 PM] gong8
+with the formatting
+
+
+[6/8/2026 3:19 PM] gong8
+context
+
+
+[6/8/2026 3:19 PM] gong8
+im doing the groups thing
+
+
+[6/8/2026 3:19 PM] gong8
+im gonna do like a link
+
+
+[6/8/2026 3:19 PM] gong8
+you click
+
+
+[6/8/2026 3:19 PM] gong8
+and then some bs
+
+
+[6/8/2026 3:19 PM] seventhspark_40504
+nelson
+
+
+[6/8/2026 3:19 PM] gong8
+with a code oyu can enter as wlel
+
+
+[6/8/2026 3:19 PM] gong8
+yeah my yt lover
+
+
+[6/8/2026 3:19 PM] seventhspark_40504
+where are your INTERVIEWS
+
+
+[6/8/2026 3:19 PM] gong8
+bros tryna make me cry and get high again
+
+{Reactions}
+😂
+
+[6/8/2026 3:19 PM] seventhspark_40504
+INTERVIEW someone RIGHT NOW
+
+
+[6/8/2026 3:20 PM] seventhspark_40504
+@the_jlh back me up
+
+
+[6/8/2026 3:20 PM] the_jlh
+it's true
+
+
+[6/8/2026 3:20 PM] gong8
+:c
+
+
+[6/8/2026 3:20 PM] gong8
+:c
+
+
+[6/8/2026 3:20 PM] gong8
+:c
+
+
+[6/8/2026 3:20 PM] gong8
+:c
+
+
+[6/8/2026 3:20 PM] gong8
+ill smoke a joint then interview myself
+
+{Reactions}
+😂
+
+[6/8/2026 3:21 PM] seventhspark_40504
+interview sophia
+
+
+[6/8/2026 3:21 PM] gong8
+shes asleep
+
+
+[6/8/2026 3:21 PM] gong8
+in korea
+
+
+[6/8/2026 3:21 PM] gong8
+what
+
+
+[6/8/2026 3:21 PM] seventhspark_40504
+wake her up
+
+
+[6/8/2026 3:21 PM] gong8
+MI BOMBACALRT
+
+
+[6/8/2026 3:22 PM] the_jlh
+i can probs interview navy tmr or at least on wednesday
+
+
+[6/8/2026 3:52 PM] lxkast
+i don’t approve of getting high
+
+
+[6/8/2026 4:03 PM] gong8
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1513520502126149743/1513574157504217179/image.png?ex=6a30cb07&is=6a2f7987&hm=8fdb69c3be85947a08818291dcd5f140e6011999eba686e740456ed41cd9615a&
+
+
+[6/8/2026 4:03 PM] gong8
+holy claude
+
+
+[6/8/2026 4:04 PM] gong8
+holy claude
+
+
+[6/8/2026 4:04 PM] gong8
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1513520502126149743/1513574423737929818/image.png?ex=6a30cb47&is=6a2f79c7&hm=3be2b385b2e590149669ec86a5bbf0a060b3575e29cfc1523c8bd38377d55c4e&
+
+
+[6/8/2026 4:04 PM] the_jlh
+look at my one in general
+
+
+[6/8/2026 4:05 PM] gong8
+i saw it
+
+
+[6/8/2026 4:06 PM] gong8
+my tokens reset 6 minutes ago
+
+
+[6/8/2026 4:06 PM] gong8
+so i got claude to go ultrathink ultracode some bs up
+
+
+[6/8/2026 4:07 PM] lxkast
+are the ones you guys have made the impact asset
+
+
+[6/8/2026 4:07 PM] lxkast
+or the non impact asset
+
+
+[6/8/2026 4:25 PM] the_jlh
+the document is the impact asset
+
+
+[6/8/2026 4:25 PM] the_jlh
+this one
+
+
+[6/8/2026 4:25 PM] the_jlh
+it's a bit goofy tho
+
+
+[6/9/2026 12:05 PM] the_jlh (pinned)
+https://docs.google.com/presentation/d/1Yg2_QIJ7Wsb9cOPMxW9zPsdY60YT5dY66KWFeBT09rU/edit?usp=sharing
+
+{Embed}
+https://docs.google.com/presentation/d/1Yg2_QIJ7Wsb9cOPMxW9zPsdY60YT5dY66KWFeBT09rU/edit?usp=sharing
+DRP Milestone 4
+University friend groups have trouble organising meetups, typically due to poor communication. From our interviews and our survey of 46 people, we found out that it is often the case people usually wait to see who else responds before they decide, leading to friction in the group chat. The Problem
+https://images-ext-1.discordapp.net/external/LjvGn7mNzp9niikMSME6Ik5tPH6E2bGwLhjuntN9xlg/https/lh7-us.googleusercontent.com/docs/AHkbwyKeoR_ilBV2oOXBlCVg1OCKWUgNZap6qa1d7NyHbQFAuSJuoWxbXYelifeewDGEs1vrF7xsDsVRrAtPEdtwrf2QSHENgFclvRMTnku-LnXCHtvK6unK%3Dw1200-h630-p
+
+
+[6/9/2026 12:05 PM] the_jlh
+Pinned a message.
+
+
+[6/9/2026 1:25 PM] the_jlh
+luca new interview transcript
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1513520502126149743/1513896780423626873/message.txt?ex=6a30a5ff&is=6a2f547f&hm=bf4b1fe586326e1faa73fde01be5b05e2304bc35c51119bdca6ba9eb6faede6a&
+
+
+[6/9/2026 3:20 PM] lxkast
+iteration 1: where we left off, invite codes
+iteration 2: web app
+iteration 3: meetups with no explicit groups
+
+
+[6/9/2026 3:22 PM] gong8
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1513520502126149743/1513926241340752012/image.png?ex=6a30c16f&is=6a2f6fef&hm=47b0b1b57b4eed917c7426994a8e481fcb2bb702c6fae049714c55b36eec6254&
+
+
+[6/9/2026 3:24 PM] gong8
+want:
+
+
+[6/9/2026 3:25 PM] gong8
+eventually want ability to send meetups without a fixed group
+
+
+[6/9/2026 3:25 PM] gong8
+requires an endpoint for meetups that is not just groups
+
+
+[6/9/2026 3:25 PM] gong8
++ advantage is also
+
+
+[6/9/2026 3:25 PM] gong8
+you can show the preview of the meetup to hlegp convince your friends
+
+
+[6/9/2026 3:25 PM] gong8
+to sign up
+
+
+[6/9/2026 3:25 PM] gong8
+preview + "sign up to join this meetup"
+
+
+[6/9/2026 3:25 PM] gong8
+--------
+
+
+[6/9/2026 3:25 PM] gong8
++1 bullshit
+
+
+[6/9/2026 3:25 PM] gong8
+meetups without groups
+
+
+[6/9/2026 3:25 PM] gong8
+ty shi
+
+
+[6/9/2026 3:26 PM] gong8
+(unordered)
+
+
+[6/9/2026 3:29 PM] gong8
+iter 1: where we left off, inv codes
+iter 2: web app
+iter 3: be able to preview meetups for joiners (helps people onboard on the app, solves luca's problem of friends not joining up), need meetup endpoint link, not just group
+iter 4: +1
+iter 5: meetups without groups?
+
+{Reactions}
+👍
+
+[6/10/2026 11:49 AM] gong8
+https://bethere-dev.vercel.app/join/H4WCAZVZ
+Join "Heineken Enjoyers" on BeThere.
+
+{Embed}
+https://bethere-dev.vercel.app/join/H4WCAZVZ
+BeThere
+Turn 'we should hang out' into a firm plan - no organiser, no public maybe. No app to download.
+https://images-ext-1.discordapp.net/external/ZjXi-Wr0nUdtIZ1-qVxdXykgJL0ALzklqh5s8hTkciA/%3Ftitle%3DBeThere%26subtitle%3DPlan%2520real%2520meetups%2520with%2520your%2520groups/https/bethere-8cyxm6aft-gong8s-projects.vercel.app/api/og
+
+
+[6/10/2026 11:50 AM] gong8
+https://bethere-dev.vercel.app/m/e_331f4b19-7b82-4ba1-83dc-81822b79a436
+
+{Embed}
+https://bethere-dev.vercel.app/m/e_331f4b19-7b82-4ba1-83dc-81822b79a436
+BeThere
+Turn 'we should hang out' into a firm plan - no organiser, no public maybe. No app to download.
+https://images-ext-1.discordapp.net/external/ZjXi-Wr0nUdtIZ1-qVxdXykgJL0ALzklqh5s8hTkciA/%3Ftitle%3DBeThere%26subtitle%3DPlan%2520real%2520meetups%2520with%2520your%2520groups/https/bethere-8cyxm6aft-gong8s-projects.vercel.app/api/og
+
+
+[6/10/2026 12:05 PM] gong8
+https://bethere-dev.vercel.app/m/e_331f4b19-7b82-4ba1-83dc-81822b79a436
+
+{Embed}
+https://bethere-dev.vercel.app/m/e_331f4b19-7b82-4ba1-83dc-81822b79a436
+BeThere
+Turn 'we should hang out' into a firm plan - no organiser, no public maybe. No app to download.
+https://images-ext-1.discordapp.net/external/ZjXi-Wr0nUdtIZ1-qVxdXykgJL0ALzklqh5s8hTkciA/%3Ftitle%3DBeThere%26subtitle%3DPlan%2520real%2520meetups%2520with%2520your%2520groups/https/bethere-8cyxm6aft-gong8s-projects.vercel.app/api/og
+
+
+[6/10/2026 12:06 PM] gong8
+https://bethere-dev.vercel.app/m/e_331f4b19-7b82-4ba1-83dc-81822b79a436
+
+{Embed}
+https://bethere-dev.vercel.app/m/e_331f4b19-7b82-4ba1-83dc-81822b79a436
+BeThere
+Turn 'we should hang out' into a firm plan - no organiser, no public maybe. No app to download.
+https://images-ext-1.discordapp.net/external/ZjXi-Wr0nUdtIZ1-qVxdXykgJL0ALzklqh5s8hTkciA/%3Ftitle%3DBeThere%26subtitle%3DPlan%2520real%2520meetups%2520with%2520your%2520groups/https/bethere-8cyxm6aft-gong8s-projects.vercel.app/api/og
+
+
+[6/10/2026 12:30 PM] gong8
+https://bethere-dev.vercel.app/m/e_d63c1c81-e2d5-4ddd-a04d-3f4522e424be
+
+{Embed}
+https://bethere-dev.vercel.app/m/e_d63c1c81-e2d5-4ddd-a04d-3f4522e424be
+You're invited on BeThere
+Help pick a time - with The Boys. Respond on BeThere - no app to download.
+https://images-ext-1.discordapp.net/external/5G5JHltRCp0ngi4-pZM18DYWHsdQ-MVhj50PlxdglCk/%3Ftitle%3DYou%2527re%2Binvited%2Bon%2BBeThere%26subtitle%3DHelp%2Bpick%2Ba%2Btime%2B-%2Bwith%2BThe%2BBoys/https/bethere-dev.vercel.app/api/og
+
+
+[6/10/2026 1:21 PM] lxkast
+COOOOLD
+
+
+[6/10/2026 1:58 PM] gong8
+here
+
+
+[6/10/2026 2:48 PM] lxkast
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1513520502126149743/1514280065188495503/image.png?ex=6a30b975&is=6a2f67f5&hm=f1086387d27e520d6fe986a7231c508d3303a3a42417eaf4772aa96fa79e2f07&
+
+
+[6/10/2026 2:48 PM] lxkast
+havent changed any text yet
+
+
+[6/10/2026 2:48 PM] the_jlh
+no way the eternal joy is still there lmao
+
+
+[6/10/2026 2:48 PM] the_jlh
+looks good
+
+
+[6/10/2026 2:49 PM] lxkast
+"I would give my firstborn son to the founders"
+
+
+[6/10/2026 2:50 PM] the_jlh
+in bold as well
+
+
+[6/10/2026 5:07 PM] lxkast
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1513520502126149743/1514315014452936826/image.png?ex=6a30da02&is=6a2f8882&hm=0021f018aaa9eee60d6a6c9f51065b77c053910a1c36b6cbb7480599aea84bbc&
+
+
+[6/10/2026 5:07 PM] lxkast
+i have edited the text
+
+
+[6/11/2026 3:44 PM] the_jlh
+nathan interview transcript
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1513520502126149743/1514656704556699679/message.txt?ex=6a30c6bb&is=6a2f753b&hm=f7aed4baadad01153e49ff26d3f06244709ac1b8bcf8579f187436d86981d8dc&
+
+
+[6/11/2026 3:53 PM] the_jlh
+"like, hey, guys, there's this guy who he wants to go. Is that fine? And then I would say, like, I mean, usually it's not, like, as serious as, like, needing to vote on it because I feel like usually, I mean, if it's, like, a group of friends, like, they're not really too pressed about, like, another dude being there. But, like, just to let people know, you know." what do you think of this one guys?
+
+
+[6/12/2026 10:36 AM] the_jlh
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1513520502126149743/1514941491334742046/BeThere_Impact_Article_standalone_1.pdf?ex=6a312735&is=6a2fd5b5&hm=48204c41c0e9908a2391e1399797fe9e4ec23fd7c149152b4bf74c8783900b39&
+
+
+==============================================================
+Exported 105 message(s)
+==============================================================

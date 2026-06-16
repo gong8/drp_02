@@ -8,6 +8,7 @@
     "dev:mobile": "pnpm --filter @bethere/mobile start",
     "dev:api": "pnpm --filter @bethere/api dev",
     "phone": "bash scripts/phone.sh",
+    "demo": "bash scripts/demo.sh",
     "kill": "bash scripts/kill-ports.sh",
     "web": "bash scripts/web.sh",
     "reseed:live": "bash infra/reseed-live.sh",

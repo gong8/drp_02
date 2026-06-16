@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BeThere - DRP Final Presentation</title>
+<meta name="description" content="BeThere - taking the pain out of friend group meetups. DRP Group 02 final presentation.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="deck-progress"></div>
+<div id="deck-root" data-design-w="1920" data-design-h="1080">
+  <div id="deck-stage">
+    <div id="deck-canvas">
+<section data-label="Cover" data-screen-label="01" data-speaker-notes="BeThere - taking the pain out of friend group meetups. DRP group 02: Nelson Gong, Noah Seymour, Lukas Trakimas, James Hughff." class="slide slide--ink" style="padding:80px 110px;position:relative;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+    <div style="font-family:Inter;font-weight:700;font-size:22px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);">Designing for real people</div>
+    <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:22px;color:var(--surface);border:2px solid var(--surface);border-radius:0;padding:8px 15px;">DRP &middot; GROUP 02</div>
+  </div>
+
+  <div style="margin-top:auto;margin-bottom:auto;">
+    <h1 style="font-family:Archivo;font-weight:900;font-size:224px;letter-spacing:-11px;line-height:.88;margin:0;color:var(--surface);">Be<span style="color:var(--pink);">There</span></h1>
+    <p style="font-family:Inter;font-weight:600;font-size:40px;color:rgba(255,255,255,.78);margin:36px 0 0;">Taking the pain out of friend group meetups.</p>
+  </div>
+
+  <div style="display:flex;justify-content:flex-start;align-items:flex-end;">
+    <div style="font-family:Inter;font-weight:700;font-size:28px;color:var(--green);">DRP02 - Nelson Gong, Noah Seymour, Lukas Trakimas, James Hughff</div>
+  </div>
+</section>
+
+<section data-label="Meet Vasanth" data-screen-label="02" data-speaker-notes="Vasanth, 21, studies Law at St Andrews, plays volleyball and board games, loves to cook for his friends. Extroverted and reliable - the organiser." class="slide slide--blush" style="padding:80px 110px 76px;">
+  <h1 class="title" style="font-size:84px;letter-spacing:-3px;">Meet <span class="hl" style="padding:0 20px 6px;">Vasanth</span></h1>
+
+  <div style="display:flex;gap:60px;margin-top:38px;flex:1;align-items:center;">
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:40px 46px;">
+      <ul style="margin:0;padding:0;display:flex;flex-direction:column;gap:18px;">
+        <li style="list-style:none;font-family:Inter;font-weight:600;font-size:30px;color:var(--ink);display:flex;gap:16px;align-items:baseline;"><span style="color:var(--pink);font-weight:900;">&bull;</span>Age 21</li>
+        <li style="list-style:none;font-family:Inter;font-weight:600;font-size:30px;color:var(--ink);display:flex;gap:16px;align-items:baseline;"><span style="color:var(--pink);font-weight:900;">&bull;</span>Studies Law at St. Andrews</li>
+        <li style="list-style:none;font-family:Inter;font-weight:600;font-size:30px;color:var(--ink);display:flex;gap:16px;align-items:baseline;"><span style="color:var(--pink);font-weight:900;">&bull;</span>Enjoys playing volleyball and board games</li>
+        <li style="list-style:none;font-family:Inter;font-weight:600;font-size:30px;color:var(--ink);display:flex;gap:16px;align-items:baseline;"><span style="color:var(--pink);font-weight:900;">&bull;</span>Loves to cook for his friends</li>
+        <li style="list-style:none;font-family:Inter;font-weight:600;font-size:30px;color:var(--ink);display:flex;gap:16px;align-items:baseline;"><span style="color:var(--pink);font-weight:900;">&bull;</span>Extroverted and reliable</li>
+      </ul>
+      <div style="font-family:Archivo;font-weight:800;font-size:42px;color:var(--ink);margin-top:30px;">The <span class="hl" style="padding:0 14px 4px;">organiser</span>.</div>
+    </div>
+    <div style="flex-shrink:0;position:relative;">
+      <div style="width:540px;height:600px;border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--sand);overflow:hidden;"><img src="assets/personas/persona-vasanth.jpg" alt="Vasanth" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+      <span class="sticker" style="position:absolute;top:24px;right:-14px;background:var(--pink);font-size:24px;transform:rotate(-4deg);">The Organiser</span>
+    </div>
+  </div>
+</section>
+
+<section data-label="Vasanth, as he felt it" data-screen-label="03" data-speaker-notes="Vasanth's Christmas-break attempt, mapped the way he felt it: hopeful at the spark, then chasing replies, a brief yes, a maybe, and a slow slide to giving up." class="slide slide--paper" style="padding:80px 110px 56px;">
+  <h1 class="title" style="font-size:60px;letter-spacing:-2px;">Vasanth's Christmas break, <span class="hl" style="padding:0 14px 6px;">mapped as he felt it</span></h1>
+  <div style="flex:1;display:flex;align-items:center;margin-top:6px;">
+    <svg viewBox="0 0 1720 600" style="width:100%;height:auto;" preserveAspectRatio="xMidYMid meet">
+      <line x1="80" y1="60" x2="80" y2="540" stroke="var(--axis-warm)" stroke-width="3"></line>
+      <line x1="80" y1="310" x2="1660" y2="310" stroke="var(--axis-warm)" stroke-width="3"></line>
+      <polygon points="1660,300 1682,310 1660,320" fill="var(--axis-warm)"></polygon>
+      <text transform="translate(44,340) rotate(-90)" font-family="Inter" font-weight="700" font-size="22" fill="var(--muted)">Happiness</text>
+      <text x="1648" y="352" text-anchor="end" font-family="Inter" font-weight="700" font-size="22" fill="var(--muted)">Time</text>
+      <polyline points="240,130 480,265 720,215 975,302 1235,400 1510,485" fill="none" stroke="var(--ink)" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"></polyline>
+      <g stroke="var(--ink)" stroke-width="3">
+        <circle cx="240" cy="130" r="13" fill="var(--green)"></circle>
+        <circle cx="480" cy="265" r="12" fill="var(--surface)"></circle>
+        <circle cx="720" cy="215" r="12" fill="var(--surface)"></circle>
+        <circle cx="975" cy="302" r="12" fill="var(--surface)"></circle>
+        <circle cx="1235" cy="400" r="12" fill="var(--surface)"></circle>
+        <circle cx="1510" cy="485" r="17" fill="var(--pink)"></circle>
+      </g>
+      <g text-anchor="middle">
+        <text x="240" y="82" font-family="'Space Mono',monospace" font-weight="700" font-size="18" fill="var(--muted)">MON 14:01<tspan x="240" dy="26" font-family="Inter" font-weight="700" font-size="21" fill="var(--ink)">messages the chat - hopeful</tspan></text>
+        <text x="480" y="217" font-family="'Space Mono',monospace" font-weight="700" font-size="18" fill="var(--muted)">TUE 11:00<tspan x="480" dy="26" font-family="Inter" font-weight="700" font-size="21" fill="var(--ink)">silence - pushes for replies</tspan></text>
+        <text x="720" y="167" font-family="'Space Mono',monospace" font-weight="700" font-size="18" fill="var(--muted)">TUE 12:14<tspan x="720" dy="26" font-family="Inter" font-weight="700" font-size="21" fill="var(--ink)">&ldquo;Yeah I'm in&rdquo;</tspan></text>
+        <text x="975" y="254" font-family="'Space Mono',monospace" font-weight="700" font-size="18" fill="var(--muted)">TUE 14:37<tspan x="975" dy="26" font-family="Inter" font-weight="700" font-size="21" fill="var(--ink)">&ldquo;Maybe&rdquo;</tspan></text>
+        <text x="1235" y="352" font-family="'Space Mono',monospace" font-weight="700" font-size="18" fill="var(--muted)">TUE 23:11<tspan x="1235" dy="26" font-family="Inter" font-weight="700" font-size="21" fill="var(--ink)">still no replies - chases</tspan></text>
+        <text x="1510" y="437" font-family="'Space Mono',monospace" font-weight="700" font-size="18" fill="var(--muted)">WED 5:00<tspan x="1510" dy="26" font-family="Inter" font-weight="700" font-size="21" fill="var(--ink)">too late - gives up</tspan></text>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<section data-label="Vasanth's problem" data-screen-label="04" data-speaker-notes="Vasanth loves seeing his friends, but organising is hard and chasing replies is the frustrating part." class="slide slide--blush" style="padding:96px 110px;justify-content:center;">
+  <div class="eyebrow" style="font-size:24px;color:var(--pink);">The organiser's problem</div>
+  <p style="font-family:Archivo;font-weight:800;font-size:60px;letter-spacing:-1.5px;line-height:1.25;color:var(--ink);margin:28px 0 0;max-width:1540px;">Vasanth loves to meet his friends, but organising is <span style="color:var(--pink);">difficult</span> and chasing replies from group members is <span style="color:var(--pink);">frustrating</span>.</p>
+</section>
+
+<section data-label="Meet Milly" data-screen-label="05" data-speaker-notes="Milly, 19, studies English Literature at St Andrews, plays cello and reads, recently joined the netball society. Shy and introverted - the passive participant." class="slide slide--blush" style="padding:80px 110px 76px;">
+  <h1 class="title" style="font-size:84px;letter-spacing:-3px;">Meet <span class="hl" style="padding:0 20px 6px;">Milly</span></h1>
+
+  <div style="display:flex;gap:60px;margin-top:38px;flex:1;align-items:center;">
+    <div style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:40px 46px;">
+      <ul style="margin:0;padding:0;display:flex;flex-direction:column;gap:18px;">
+        <li style="list-style:none;font-family:Inter;font-weight:600;font-size:30px;color:var(--ink);display:flex;gap:16px;align-items:baseline;"><span style="color:var(--purple);font-weight:900;">&bull;</span>Age 19</li>
+        <li style="list-style:none;font-family:Inter;font-weight:600;font-size:30px;color:var(--ink);display:flex;gap:16px;align-items:baseline;"><span style="color:var(--purple);font-weight:900;">&bull;</span>Studies English Literature at St. Andrews</li>
+        <li style="list-style:none;font-family:Inter;font-weight:600;font-size:30px;color:var(--ink);display:flex;gap:16px;align-items:baseline;"><span style="color:var(--purple);font-weight:900;">&bull;</span>Likes to play cello and read</li>
+        <li style="list-style:none;font-family:Inter;font-weight:600;font-size:30px;color:var(--ink);display:flex;gap:16px;align-items:baseline;"><span style="color:var(--purple);font-weight:900;">&bull;</span>Recently joined her university's netball society</li>
+        <li style="list-style:none;font-family:Inter;font-weight:600;font-size:30px;color:var(--ink);display:flex;gap:16px;align-items:baseline;"><span style="color:var(--purple);font-weight:900;">&bull;</span>Shy and introverted</li>
+      </ul>
+      <div style="font-family:Archivo;font-weight:800;font-size:42px;color:var(--ink);margin-top:30px;">The <span class="hl" style="padding:0 14px 4px;">passive</span> participant.</div>
+    </div>
+    <div style="flex-shrink:0;position:relative;">
+      <div style="width:540px;height:600px;border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--sand);overflow:hidden;"><img src="assets/personas/persona-milly.jpg" alt="Milly" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+      <span class="sticker" style="position:absolute;top:24px;right:-14px;background:var(--purple);font-size:24px;transform:rotate(-4deg);">The Participant</span>
+    </div>
+  </div>
+</section>
+
+<section data-label="Milly, as she felt it" data-screen-label="06" data-speaker-notes="Milly's netball social, mapped the way she felt it: keen, then waiting on a friend's reply, a no, a maybe, drop-outs, and the meetup falling apart." class="slide slide--paper" style="padding:80px 110px 56px;">
+  <h1 class="title" style="font-size:60px;letter-spacing:-2px;">Milly's netball social, <span class="hl" style="padding:0 14px 6px;">mapped as she felt it</span></h1>
+  <div style="flex:1;display:flex;align-items:center;margin-top:6px;">
+    <svg viewBox="0 0 1720 600" style="width:100%;height:auto;" preserveAspectRatio="xMidYMid meet">
+      <line x1="80" y1="60" x2="80" y2="540" stroke="var(--axis-warm)" stroke-width="3"></line>
+      <line x1="80" y1="310" x2="1660" y2="310" stroke="var(--axis-warm)" stroke-width="3"></line>
+      <polygon points="1660,300 1682,310 1660,320" fill="var(--axis-warm)"></polygon>
+      <text transform="translate(44,340) rotate(-90)" font-family="Inter" font-weight="700" font-size="22" fill="var(--muted)">Happiness</text>
+      <text x="1648" y="352" text-anchor="end" font-family="Inter" font-weight="700" font-size="22" fill="var(--muted)">Time</text>
+      <polyline points="240,310 480,155 720,420 975,225 1235,310 1510,490" fill="none" stroke="var(--ink)" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"></polyline>
+      <g stroke="var(--ink)" stroke-width="3">
+        <circle cx="240" cy="310" r="13" fill="var(--green)"></circle>
+        <circle cx="480" cy="155" r="12" fill="var(--surface)"></circle>
+        <circle cx="720" cy="420" r="12" fill="var(--surface)"></circle>
+        <circle cx="975" cy="225" r="12" fill="var(--surface)"></circle>
+        <circle cx="1235" cy="310" r="12" fill="var(--surface)"></circle>
+        <circle cx="1510" cy="490" r="17" fill="var(--pink)"></circle>
+      </g>
+      <g text-anchor="middle">
+        <text x="240" y="262" font-family="'Space Mono',monospace" font-weight="700" font-size="18" fill="var(--muted)">THU 17:10<tspan x="240" dy="26" font-family="Inter" font-weight="700" font-size="21" fill="var(--ink)">netball social drops</tspan></text>
+        <text x="480" y="107" font-family="'Space Mono',monospace" font-weight="700" font-size="18" fill="var(--muted)">THU 18:22<tspan x="480" dy="26" font-family="Inter" font-weight="700" font-size="21" fill="var(--ink)">waits on Abby's reply</tspan></text>
+        <text x="720" y="462" font-family="'Space Mono',monospace" font-weight="700" font-size="18" fill="var(--muted)">FRI<tspan x="720" dy="26" font-family="Inter" font-weight="700" font-size="21" fill="var(--ink)">Abby doesn't respond</tspan></text>
+        <text x="975" y="177" font-family="'Space Mono',monospace" font-weight="700" font-size="18" fill="var(--muted)">SAT 13:44<tspan x="975" dy="26" font-family="Inter" font-weight="700" font-size="21" fill="var(--ink)">Abby says &ldquo;maybe&rdquo;</tspan></text>
+        <text x="1235" y="262" font-family="'Space Mono',monospace" font-weight="700" font-size="18" fill="var(--muted)">SUN 10:53<tspan x="1235" dy="26" font-family="Inter" font-weight="700" font-size="21" fill="var(--ink)">people start dropping out</tspan></text>
+        <text x="1510" y="532" font-family="'Space Mono',monospace" font-weight="700" font-size="18" fill="var(--muted)">SUN 19:43<tspan x="1510" dy="26" font-family="Inter" font-weight="700" font-size="21" fill="var(--ink)">meetup falls apart</tspan></text>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<section data-label="Milly's problem" data-screen-label="07" data-speaker-notes="Milly would love to engage with the netball socials more, but she is hesitant unless she's sure her own friends are going too." class="slide slide--blush" style="padding:96px 110px;justify-content:center;">
+  <div class="eyebrow" style="font-size:24px;color:var(--purple);">The participant's problem</div>
+  <p style="font-family:Archivo;font-weight:800;font-size:60px;letter-spacing:-1.5px;line-height:1.25;color:var(--ink);margin:28px 0 0;max-width:1540px;">Milly would love to engage with her netball society's socials more, but she is <span style="color:var(--purple);">hesitant</span> because she wants to be sure her friends are <span style="color:var(--purple);">going too</span>.</p>
+</section>
+<section data-label="Why we interviewed" data-screen-label="08" data-speaker-notes="To ground the problem in real people, we interviewed university students about how they actually plan and join social meetups." class="slide slide--paper" style="padding:96px 120px;justify-content:center;">
+  <div class="eyebrow" style="font-size:24px;color:var(--muted);">Research</div>
+  <p style="font-family:Archivo;font-weight:800;font-size:62px;letter-spacing:-1.5px;line-height:1.18;color:var(--ink);margin:28px 0 0;max-width:1480px;">To better understand this problem, we interviewed <span class="hl" style="box-shadow:5px 5px 0 var(--ink);padding:0 16px 5px;">university students</span> about their social lives.</p>
+</section>
+
+<section data-label="Eddie - the organiser" data-screen-label="09" data-speaker-notes="Eddie, an organiser, on the asymmetric effort: he puts in considerable time on logistics and pricing, and it still falls through - which is what makes it so frustrating." class="slide slide--blush" style="padding:88px 110px;flex-direction:row;gap:70px;align-items:center;">
+  <div style="flex:1;">
+    <span style="font-family:Archivo;font-weight:900;font-size:90px;color:var(--pink);line-height:.4;display:block;margin-bottom:18px;">&ldquo;</span>
+    <p style="font-family:Archivo;font-weight:700;font-size:42px;line-height:1.3;color:var(--ink);margin:0;max-width:980px;">If I drummed up the plan, and it's taken <span style="color:var(--green);">considerable time</span>, looking at logistics, pricing, whether everyone's okay with it, and then it falls through after all of that, that's <span style="color:var(--green);">quite frustrating</span>.</p>
+    <div style="margin-top:40px;">
+      <div style="font-family:Inter;font-weight:800;font-size:30px;color:var(--ink);">Eddie, 21 - the organiser</div>
+      <div style="font-family:Inter;font-weight:500;font-size:24px;color:var(--muted);margin-top:4px;">3rd year Psychology at Goldsmiths</div>
+    </div>
+  </div>
+  <div style="width:430px;height:540px;border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--sand);overflow:hidden;flex-shrink:0;">
+    <img src="assets/personas/interview-eddie.jpg" alt="Eddie, interview participant" style="width:100%;height:100%;object-fit:cover;display:block;">
+  </div>
+</section>
+
+<section data-label="Chloe - the participant" data-screen-label="10" data-speaker-notes="Chloe, a participant, on how plans decay over time: the longer a meetup is drawn out, the more second thoughts creep in and the more people pull out." class="slide slide--paper" style="padding:88px 110px;flex-direction:row;gap:70px;align-items:center;">
+  <div style="width:420px;height:520px;border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--sand);overflow:hidden;flex-shrink:0;">
+    <img src="assets/personas/interview-chloe.jpg" alt="Chloe, interview participant" style="width:100%;height:100%;object-fit:cover;display:block;">
+  </div>
+  <div style="flex:1;text-align:right;">
+    <span style="font-family:Archivo;font-weight:900;font-size:90px;color:var(--pink);line-height:.4;display:block;margin-bottom:18px;">&ldquo;</span>
+    <p style="font-family:Archivo;font-weight:700;font-size:42px;line-height:1.3;color:var(--ink);margin:0 0 0 auto;max-width:980px;">As days went past, [the meetup] got more drawn out, second thoughts crept in, and more and more people ended up <span style="color:var(--purple);">pulling out</span>.</p>
+    <div style="margin-top:40px;">
+      <div style="font-family:Inter;font-weight:800;font-size:30px;color:var(--ink);">Chloe, 19 - the passive participant</div>
+      <div style="font-family:Inter;font-weight:500;font-size:24px;color:var(--muted);margin-top:4px;">2nd Year International Relations at King's College</div>
+    </div>
+  </div>
+</section>
+
+<section data-label="Luca - conditional" data-screen-label="11" data-speaker-notes="Luca makes the conditional explicit: when it is a friend of a friend, his attendance is conditional on his own friend going - he waits for them to respond, then decides." class="slide slide--blush" style="padding:88px 110px;flex-direction:row;gap:70px;align-items:center;">
+  <div style="flex:1;">
+    <span style="font-family:Archivo;font-weight:900;font-size:90px;color:var(--pink);line-height:.4;display:block;margin-bottom:18px;">&ldquo;</span>
+    <p style="font-family:Archivo;font-weight:700;font-size:42px;line-height:1.3;color:var(--ink);margin:0;max-width:980px;">If [I'm meeting] a friend of a friend, my attendance is <span style="color:var(--green);">conditional</span> on my friend being there. I'll wait for them to respond first, then decide.</p>
+    <div style="margin-top:40px;">
+      <div style="font-family:Inter;font-weight:800;font-size:30px;color:var(--ink);">Luca, 20 - the passive participant</div>
+      <div style="font-family:Inter;font-weight:500;font-size:24px;color:var(--muted);margin-top:4px;">BioChem at Oxford</div>
+    </div>
+  </div>
+  <div style="width:420px;height:540px;border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--sand);overflow:hidden;flex-shrink:0;">
+    <img src="assets/personas/interview-luca.jpg" alt="Luca, interview participant" style="width:100%;height:100%;object-fit:cover;display:block;">
+  </div>
+</section>
+
+<section data-label="Two stakeholder groups" data-screen-label="12" data-speaker-notes="Two key stakeholder groups fall out of the research: suggestors, for whom organising is one-sided and exhausting, and participants, whose uncertainty compounds because their participation is contingent on others." class="slide slide--ink" style="padding:96px 110px;justify-content:center;">
+  <h1 style="font-family:Archivo;font-weight:900;font-size:74px;letter-spacing:-2px;line-height:1.02;color:var(--surface);margin:0 0 56px;">Two key stakeholder <span style="display:inline-block;background:var(--pink);color:var(--surface);border:3px solid var(--surface);box-shadow:6px 6px 0 var(--surface);padding:0 16px 6px;border-radius:0;">groups</span></h1>
+  <div style="display:flex;gap:0;align-items:stretch;">
+    <div style="flex:1;padding-right:60px;">
+      <div class="eyebrow" style="font-size:22px;color:var(--green);">1. Suggestors</div>
+      <p style="font-family:Inter;font-weight:600;font-size:34px;line-height:1.35;color:var(--surface);margin:22px 0 0;">One sided and exhausting. <span style="color:var(--green);font-style:italic;">Awkward</span> to push for replies.</p>
+    </div>
+    <div style="width:0;border-left:2px solid var(--ink-3);"></div>
+    <div style="flex:1;padding-left:60px;">
+      <div class="eyebrow" style="font-size:22px;color:var(--green);">2. Participants</div>
+      <p style="font-family:Inter;font-weight:600;font-size:34px;line-height:1.35;color:var(--surface);margin:22px 0 0;">Uncertainty <span style="color:var(--green);font-style:italic;">compounds</span> uncertainty. Some people's participation is <span style="color:var(--green);font-style:italic;">contingent</span> on others.</p>
+    </div>
+  </div>
+</section>
+
+<section data-label="Survey: dead in chat" data-screen-label="13" data-speaker-notes="Over half of our forty-seven survey respondents said over a third of their meet-ups never made it out of the chat." class="slide slide--paper" style="padding:120px 130px;justify-content:center;">
+  <div style="font-family:Archivo;font-weight:900;font-size:200px;line-height:.9;color:var(--green);font-variant-numeric:tabular-nums;">50<span style="font-size:96px;">%+</span></div>
+  <p style="font-family:Inter;font-weight:600;font-size:38px;line-height:1.35;color:var(--ink);margin:34px 0 0;max-width:1180px;">of our 47 survey respondents said <b style="color:var(--green);">over a third</b> of meet-ups never made it out of the chat.</p>
+</section>
+
+<section data-label="Survey: time moves" data-screen-label="14" data-speaker-notes="Sixty percent said the meet-up time gets moved half the time or more." class="slide slide--blush" style="padding:120px 130px;justify-content:center;">
+  <div style="font-family:Archivo;font-weight:900;font-size:200px;line-height:.9;color:var(--green);font-variant-numeric:tabular-nums;">60<span style="font-size:96px;">%</span></div>
+  <p style="font-family:Inter;font-weight:600;font-size:38px;line-height:1.35;color:var(--ink);margin:34px 0 0;max-width:1180px;">said the meet-up time gets moved <b style="color:var(--green);">half the time or more</b>.</p>
+</section>
+
+<section data-label="Survey: maybe / delay" data-screen-label="15" data-speaker-notes="Eighty-seven percent send a maybe or delay their response to a plan they are unsure about - the hedge is the default." class="slide slide--paper" style="padding:120px 130px;justify-content:center;">
+  <div style="font-family:Archivo;font-weight:900;font-size:200px;line-height:.9;color:var(--green);font-variant-numeric:tabular-nums;">87<span style="font-size:96px;">%</span></div>
+  <p style="font-family:Inter;font-weight:600;font-size:38px;line-height:1.35;color:var(--ink);margin:34px 0 0;max-width:1200px;">send a <b style="color:var(--green);">maybe</b> or <b style="color:var(--green);">delay</b> their response to a plan they are unsure about.</p>
+</section>
+
+<section data-label="Loneliness: then vs now" data-screen-label="16" data-speaker-notes="The bigger picture: a decade ago seven percent of young people had one or no close friends; today it is twenty-two percent." class="slide slide--paper" style="padding:90px 130px 70px;">
+  <div style="flex:1;display:flex;align-items:center;gap:90px;">
+    <div style="flex-shrink:0;">
+      <div class="eyebrow" style="font-size:24px;color:var(--muted);">a decade ago</div>
+      <div style="font-family:Archivo;font-weight:900;font-size:130px;line-height:.9;color:var(--muted);font-variant-numeric:tabular-nums;">7<span style="font-size:64px;">%</span></div>
+    </div>
+    <div style="font-family:Archivo;font-weight:900;font-size:64px;color:var(--grey);">&rarr;</div>
+    <div>
+      <div class="eyebrow" style="font-size:28px;color:var(--green);">today</div>
+      <div style="font-family:Archivo;font-weight:900;font-size:230px;line-height:.9;color:var(--green);font-variant-numeric:tabular-nums;">22<span style="font-size:104px;">%</span></div>
+      <p style="font-family:Inter;font-weight:600;font-size:38px;line-height:1.3;color:var(--ink);margin:18px 0 0;max-width:760px;">of young people have one or no close friends.</p>
+    </div>
+  </div>
+  <div style="font-family:Inter;font-weight:500;font-size:18px;line-height:1.4;color:var(--muted);"><b>Onward,</b> <i>Age of Alienation: Young people are facing a loneliness epidemic,</i><br>[https://ukonward.com/reports/age-of-alienation-loneliness-young-people/]</div>
+</section>
+
+<section data-label="Loneliness: therapy" data-screen-label="17" data-speaker-notes="And more than a quarter of lonely young people have sought therapy - the everyday cost of disconnection is real." class="slide slide--paper" style="padding:90px 130px 70px;">
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;">
+    <div style="font-family:Archivo;font-weight:900;font-size:200px;line-height:.9;color:var(--green);font-variant-numeric:tabular-nums;">25<span style="font-size:96px;">%+</span></div>
+    <p style="font-family:Inter;font-weight:600;font-size:38px;line-height:1.35;color:var(--ink);margin:34px 0 0;max-width:1100px;">of lonely young people have sought therapy.</p>
+  </div>
+  <div style="font-family:Inter;font-weight:500;font-size:18px;line-height:1.4;color:var(--muted);"><b>BACP</b>, <i>Loneliness impacting majority of young people's mental health,</i><br>[https://www.bacp.co.uk/news/news-from-bacp/2025/20-june-loneliness-impacting-majority-of-young-people-s-mental-health/]</div>
+</section>
+
+<section data-label="How might we" data-screen-label="18" data-speaker-notes="The opportunity, stated as a how-might-we: reduce hesitancy in university friend groups when planning to meet up, so groups go from frustrating maybe responses to a clear consensus." class="slide slide--ink" style="padding:96px 120px;justify-content:center;">
+  <div class="eyebrow" style="font-size:24px;color:var(--pink);">Opportunity - how might we</div>
+  <p style="font-family:Archivo;font-weight:800;font-size:58px;letter-spacing:-1px;line-height:1.26;color:var(--surface);margin:30px 0 0;max-width:1580px;">How might we reduce <span style="color:var(--green);">hesitancy</span> in university friend groups when planning to meet up so that groups go from frustrating <span style="color:var(--green);">&lsquo;maybe&rsquo;</span> responses to a clear <span style="display:inline-block;background:var(--green);color:var(--surface);border:3px solid var(--surface);box-shadow:5px 5px 0 var(--surface);padding:0 14px 4px;border-radius:0;">consensus</span>?</p>
+</section>
+<section data-label="Demo: Suggesting" data-screen-label="19" data-speaker-notes="Section: a demonstration of suggesting a meetup." class="slide slide--blush" style="padding:110px 120px;justify-content:center;">
+  <div class="eyebrow" style="font-size:26px;color:var(--pink);">Demonstration</div>
+  <h1 class="title" style="font-size:120px;letter-spacing:-4px;margin-top:18px;">Suggesting a <span class="hl" style="padding:0 20px 8px;">meetup</span></h1>
+</section>
+
+<section data-label="User Story: suggest" data-screen-label="20" data-speaker-notes="The user story behind suggesting: a social organiser who wants to suggest meetups easily, so they can see friends more without chasing responses." class="slide slide--paper" style="padding:90px 110px;flex-direction:row;gap:70px;align-items:center;">
+  <div style="flex:1;">
+    <h1 class="title" style="font-size:72px;letter-spacing:-2px;">User <span class="hl">Story</span></h1>
+    <div style="margin-top:42px;display:flex;flex-direction:column;gap:26px;max-width:920px;">
+      <p style="font-family:Inter;font-weight:500;font-size:34px;line-height:1.32;color:var(--ink);margin:0;"><b style="font-weight:800;">As a</b> social member of my friend group who tends to organise things</p>
+      <p style="font-family:Inter;font-weight:500;font-size:34px;line-height:1.32;color:var(--ink);margin:0;"><b style="font-weight:800;">I want</b> to be able to easily suggest meetups to my friends</p>
+      <p style="font-family:Inter;font-weight:500;font-size:34px;line-height:1.32;color:var(--ink);margin:0;"><b style="font-weight:800;">So that</b> I can see my friends more without the frustration of chasing responses</p>
+    </div>
+  </div>
+  <div style="width:480px;height:540px;border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--sand);overflow:hidden;flex-shrink:0;">
+    <img src="assets/personas/persona-vasanth.jpg" alt="Vasanth, the organiser" style="width:100%;height:100%;object-fit:cover;display:block;">
+  </div>
+</section>
+
+<section data-label="Core: simplify suggesting" data-screen-label="21" data-speaker-notes="Section: the core interaction we focused on - simplifying how you suggest a meetup." class="slide slide--paper" style="padding:110px 120px;justify-content:center;">
+  <div class="eyebrow" style="font-size:26px;color:var(--purple);">Core Interaction</div>
+  <h1 class="title" style="font-size:112px;letter-spacing:-4px;margin-top:18px;">Simplify suggesting a <span class="hl" style="padding:0 20px 8px;">meetup</span></h1>
+</section>
+
+<section data-label="Our Initial Design" data-screen-label="22" data-speaker-notes="Our initial design: a meetups dashboard and a single suggest-a-meet form." class="slide slide--paper" style="padding:64px 110px 56px;">
+  <h1 class="title" style="font-size:62px;letter-spacing:-2px;">Our Initial <span class="hl" style="padding:0 14px 6px;">Design</span></h1>
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:90px;">
+    <div style="text-align:center;">
+      <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--surface);font-size:0;display:inline-block;"><img src="assets/screens/init-dashboard.jpg" alt="Your meetups dashboard" style="display:block;height:680px;width:auto;"></div>
+      <div style="font-family:Inter;font-weight:600;font-size:24px;color:var(--muted);margin-top:18px;">Your meetups dashboard</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--surface);font-size:0;display:inline-block;"><img src="assets/screens/init-suggest.jpg" alt="Suggest a meet form" style="display:block;height:680px;width:auto;"></div>
+      <div style="font-family:Inter;font-weight:600;font-size:24px;color:var(--muted);margin-top:18px;">Suggest a meet</div>
+    </div>
+  </div>
+</section>
+
+<section data-label="Demo video: suggesting" data-screen-label="23" data-speaker-notes="A short live demo of suggesting a meetup in the app." class="slide slide--blush" style="padding:120px;justify-content:center;align-items:center;">
+  <div style="display:flex;align-items:center;gap:40px;background:var(--surface);border:3px solid var(--ink);box-shadow:10px 10px 0 var(--ink);padding:46px 56px;">
+    <div style="width:120px;height:120px;background:var(--ink);border:3px solid var(--ink);box-shadow:5px 5px 0 var(--pink);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+      <div style="width:0;height:0;border-top:26px solid transparent;border-bottom:26px solid transparent;border-left:40px solid var(--surface);margin-left:8px;"></div>
+    </div>
+    <div>
+      <div class="eyebrow" style="font-size:20px;color:var(--pink);">Live demo</div>
+      <div style="font-family:Archivo;font-weight:900;font-size:54px;letter-spacing:-1px;color:var(--ink);margin-top:6px;">Suggesting a meetup</div>
+      <div style="font-family:Inter;font-weight:500;font-size:28px;color:var(--muted);margin-top:6px;">on a real device</div>
+    </div>
+  </div>
+</section>
+
+<section data-label="Added voting on times" data-screen-label="24" data-speaker-notes="We added voting on times: the creator offers flexible or fixed times, and the group taps the times that work for them." class="slide slide--paper" style="padding:60px 110px 48px;">
+  <h1 class="title" style="font-size:62px;letter-spacing:-2px;">Added voting on <span class="hl" style="padding:0 14px 6px;">times</span></h1>
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:100px;">
+    <div style="text-align:center;">
+      <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--surface);font-size:0;display:inline-block;"><img src="assets/screens/voting-when.jpg" alt="Flexible vs fixed times" style="display:block;height:720px;width:auto;"></div>
+      <div style="font-family:Inter;font-weight:600;font-size:24px;color:var(--muted);margin-top:16px;">Flexible vs fixed times</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--surface);font-size:0;display:inline-block;"><img src="assets/screens/voting-pick.jpg" alt="Vote on the times that work" style="display:block;height:720px;width:auto;"></div>
+      <div style="font-family:Inter;font-weight:600;font-size:24px;color:var(--muted);margin-top:16px;">Vote on the times that work</div>
+    </div>
+  </div>
+</section>
+
+<section data-label="User feedback" data-screen-label="25" data-speaker-notes="Feedback from usability testing: the form felt cluttered, and people needed a second to work out where everything went." class="slide slide--paper" style="padding:80px 120px;position:relative;">
+  <div style="display:flex;align-items:flex-start;gap:24px;">
+    <h1 class="title" style="font-size:62px;letter-spacing:-2px;">Feed<span class="hl" style="padding:0 12px 6px;">back</span></h1>
+    <span style="font-family:'Space Mono',monospace;font-weight:700;font-size:18px;color:var(--ink);border:2px solid var(--ink);padding:8px 14px;align-self:center;">from usability testing</span>
+  </div>
+  <div style="flex:1;position:relative;margin-top:30px;">
+    <div style="position:absolute;left:0;top:30px;max-width:620px;background:var(--surface);border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);padding:34px 40px;">
+      <span style="font-family:Archivo;font-weight:900;font-size:56px;color:var(--pink);line-height:.4;display:block;margin-bottom:12px;">&ldquo;</span>
+      <p style="font-family:Archivo;font-weight:700;font-size:38px;line-height:1.25;color:var(--ink);margin:0;">This form feels quite cluttered</p>
+    </div>
+    <div style="position:absolute;right:0;bottom:40px;max-width:680px;background:var(--ink);border:3px solid var(--ink);box-shadow:8px 8px 0 var(--pink);padding:34px 40px;">
+      <span style="font-family:Archivo;font-weight:900;font-size:56px;color:var(--pink);line-height:.4;display:block;margin-bottom:12px;">&ldquo;</span>
+      <p style="font-family:Archivo;font-weight:700;font-size:36px;line-height:1.28;color:var(--surface);margin:0;">It takes me a second to read through to make sure I understand where to put everything</p>
+    </div>
+  </div>
+</section>
+
+<section data-label="After some refinement" data-screen-label="26" data-speaker-notes="After refinement: a single guided flow - how pinned down is it, who is it for, what's the spark, and roughly when." class="slide slide--paper" style="padding:56px 80px 44px;">
+  <h1 class="title" style="font-size:58px;letter-spacing:-2px;">After some <span class="hl" style="padding:0 14px 6px;">refinement</span></h1>
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:34px;">
+    <div style="text-align:center;">
+      <div style="border:3px solid var(--ink);box-shadow:7px 7px 0 var(--ink);background:var(--surface);font-size:0;display:inline-block;"><img src="assets/screens/refine-1.jpg" alt="How pinned down is this" style="display:block;height:600px;width:auto;"></div>
+      <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:17px;color:var(--muted);margin-top:14px;">How pinned down?</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="border:3px solid var(--ink);box-shadow:7px 7px 0 var(--ink);background:var(--surface);font-size:0;display:inline-block;"><img src="assets/screens/refine-2.jpg" alt="Who is it for" style="display:block;height:600px;width:auto;"></div>
+      <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:17px;color:var(--muted);margin-top:14px;">Who's it for?</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="border:3px solid var(--ink);box-shadow:7px 7px 0 var(--ink);background:var(--surface);font-size:0;display:inline-block;"><img src="assets/screens/refine-3.jpg" alt="What's the spark" style="display:block;height:600px;width:auto;"></div>
+      <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:17px;color:var(--muted);margin-top:14px;">What's the spark?</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="border:3px solid var(--ink);box-shadow:7px 7px 0 var(--ink);background:var(--surface);font-size:0;display:inline-block;"><img src="assets/screens/refine-4.jpg" alt="Roughly when" style="display:block;height:600px;width:auto;"></div>
+      <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:17px;color:var(--muted);margin-top:14px;">Roughly when?</div>
+    </div>
+  </div>
+</section>
+
+<section data-label="(pause)" data-screen-label="27" data-speaker-notes="(pause / transition)" class="slide slide--blush" style="padding:0;align-items:center;justify-content:center;">
+  <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:40px;letter-spacing:18px;color:var(--grey);opacity:.5;">&middot;&middot;&middot;</div>
+</section>
+<section data-label="User Story: conditional" data-screen-label="28" data-speaker-notes="The user story behind conditional attendance: a new, introverted member who only wants to attend if they already know people going, so they feel comfortable." class="slide slide--paper" style="padding:90px 110px;flex-direction:row;gap:70px;align-items:center;">
+  <div style="flex:1;">
+    <h1 class="title" style="font-size:72px;letter-spacing:-2px;">User <span class="hl">Story</span></h1>
+    <div style="margin-top:42px;display:flex;flex-direction:column;gap:26px;max-width:920px;">
+      <p style="font-family:Inter;font-weight:500;font-size:34px;line-height:1.32;color:var(--ink);margin:0;"><b style="font-weight:800;">As a</b> new and introverted member of a friend group</p>
+      <p style="font-family:Inter;font-weight:500;font-size:34px;line-height:1.32;color:var(--ink);margin:0;"><b style="font-weight:800;">I want</b> to only attend social events if I already know people going</p>
+      <p style="font-family:Inter;font-weight:500;font-size:34px;line-height:1.32;color:var(--ink);margin:0;"><b style="font-weight:800;">So that</b> I feel comfortable</p>
+    </div>
+  </div>
+  <div style="width:480px;height:540px;border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--sand);overflow:hidden;flex-shrink:0;">
+    <img src="assets/personas/persona-milly.jpg" alt="Milly, the participant" style="width:100%;height:100%;object-fit:cover;display:block;">
+  </div>
+</section>
+
+<section data-label="Core: conditional attendance" data-screen-label="29" data-speaker-notes="Section: the core interaction of conditional attendance - I'll go if certain people go." class="slide slide--paper" style="padding:110px 120px;justify-content:center;">
+  <div class="eyebrow" style="font-size:26px;color:var(--purple);">Core Interaction</div>
+  <h1 class="title" style="font-size:120px;letter-spacing:-4px;margin-top:18px;">Conditional <span class="hl" style="padding:0 20px 8px;">attendance</span></h1>
+</section>
+
+<section data-label="Initial Mock-up" data-screen-label="30" data-speaker-notes="The initial mock-up: a paper sketch of the I'll-make-it-if conditional, where you pick the friends whose attendance yours depends on." class="slide slide--paper" style="padding:70px 110px;flex-direction:row;gap:80px;align-items:center;">
+  <div style="flex:1;">
+    <h1 class="title" style="font-size:66px;letter-spacing:-2px;">Initial <span class="hl" style="padding:0 14px 6px;">Mock-up</span></h1>
+    <p style="font-family:Inter;font-weight:500;font-size:30px;line-height:1.4;color:var(--muted);margin:34px 0 0;max-width:680px;">The &ldquo;I'll make it if [people] are going&rdquo; conditional - sketched first on paper, then built.</p>
+    <span style="display:inline-block;margin-top:30px;font-family:'Space Mono',monospace;font-weight:700;font-size:18px;color:var(--ink);border:2px solid var(--ink);box-shadow:3px 3px 0 var(--ink);padding:9px 16px;">Paper sketch</span>
+  </div>
+  <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--surface);font-size:0;flex-shrink:0;">
+    <img src="assets/sketches/moment-if-sheet.png" alt="hand-drawn I will make it if conditional-RSVP sketch" style="display:block;height:640px;width:auto;">
+  </div>
+</section>
+
+<section data-label="Demo: conditional" data-screen-label="31" data-speaker-notes="Section: a demonstration of conditional attendance." class="slide slide--blush" style="padding:110px 120px;justify-content:center;">
+  <div class="eyebrow" style="font-size:26px;color:var(--pink);">Demonstration</div>
+  <h1 class="title" style="font-size:120px;letter-spacing:-4px;margin-top:18px;">Conditional <span class="hl" style="padding:0 20px 8px;">attendance</span></h1>
+</section>
+
+<section data-label="User Story: onboarding" data-screen-label="32" data-speaker-notes="The user story behind onboarding: an organiser who doesn't want to convince people to download a new app, so they can save time and avoid frustration." class="slide slide--paper" style="padding:90px 110px;flex-direction:row;gap:70px;align-items:center;">
+  <div style="flex:1;">
+    <h1 class="title" style="font-size:72px;letter-spacing:-2px;">User <span class="hl">Story</span></h1>
+    <div style="margin-top:42px;display:flex;flex-direction:column;gap:26px;max-width:920px;">
+      <p style="font-family:Inter;font-weight:500;font-size:34px;line-height:1.32;color:var(--ink);margin:0;"><b style="font-weight:800;">As</b> someone wanting to organise a meetup for my friends</p>
+      <p style="font-family:Inter;font-weight:500;font-size:34px;line-height:1.32;color:var(--ink);margin:0;"><b style="font-weight:800;">I don't want</b> to have to convince people to download a new app</p>
+      <p style="font-family:Inter;font-weight:500;font-size:34px;line-height:1.32;color:var(--ink);margin:0;"><b style="font-weight:800;">So that</b> I can save time and avoid frustration</p>
+    </div>
+  </div>
+  <div style="width:480px;height:540px;border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--sand);overflow:hidden;flex-shrink:0;">
+    <img src="assets/personas/persona-vasanth.jpg" alt="Vasanth, the organiser" style="width:100%;height:100%;object-fit:cover;display:block;">
+  </div>
+</section>
+
+<section data-label="Core: onboarding" data-screen-label="33" data-speaker-notes="Section: the core interaction of onboarding new users without forcing a download." class="slide slide--paper" style="padding:110px 120px;justify-content:center;">
+  <div class="eyebrow" style="font-size:26px;color:var(--purple);">Core Interaction</div>
+  <h1 class="title" style="font-size:118px;letter-spacing:-4px;margin-top:18px;">Onboarding new <span class="hl" style="padding:0 20px 8px;">users</span></h1>
+</section>
+
+<section data-label="Our Initial Design (onboarding)" data-screen-label="34" data-speaker-notes="Our initial onboarding design: create a group, then invite people with a join code and link." class="slide slide--paper" style="padding:64px 110px 56px;">
+  <h1 class="title" style="font-size:62px;letter-spacing:-2px;">Our Initial <span class="hl" style="padding:0 14px 6px;">Design</span></h1>
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:100px;">
+    <div style="text-align:center;">
+      <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--surface);font-size:0;display:inline-block;"><img src="assets/screens/onboard-group.jpg" alt="Create a group" style="display:block;height:700px;width:auto;"></div>
+      <div style="font-family:Inter;font-weight:600;font-size:24px;color:var(--muted);margin-top:16px;">Create a group</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--surface);font-size:0;display:inline-block;"><img src="assets/screens/onboard-invite.jpg" alt="Invite with a join code" style="display:block;height:700px;width:auto;"></div>
+      <div style="font-family:Inter;font-weight:600;font-size:24px;color:var(--muted);margin-top:16px;">Invite with a join code</div>
+    </div>
+  </div>
+</section>
+
+<section data-label="Luca, in his words" data-screen-label="35" data-speaker-notes="A short clip of Luca on onboarding - that a plain link feels far more seamless than asking friends to download an app." class="slide slide--blush" style="padding:88px 110px;flex-direction:row;gap:80px;align-items:center;justify-content:center;">
+  <div style="width:430px;height:540px;border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--sand);overflow:hidden;flex-shrink:0;">
+    <img src="assets/personas/interview-luca.jpg" alt="Luca, interview participant" style="width:100%;height:100%;object-fit:cover;display:block;">
+  </div>
+  <div style="display:flex;align-items:center;gap:34px;">
+    <div style="width:120px;height:120px;background:var(--ink);border:3px solid var(--ink);box-shadow:5px 5px 0 var(--pink);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+      <div style="width:0;height:0;border-top:26px solid transparent;border-bottom:26px solid transparent;border-left:40px solid var(--surface);margin-left:8px;"></div>
+    </div>
+    <div>
+      <div class="eyebrow" style="font-size:20px;color:var(--pink);">In his words</div>
+      <div style="font-family:Archivo;font-weight:900;font-size:50px;letter-spacing:-1px;color:var(--ink);margin-top:6px;">Hear it from Luca</div>
+      <div style="font-family:Inter;font-weight:500;font-size:28px;color:var(--muted);margin-top:6px;">on onboarding friends</div>
+    </div>
+  </div>
+</section>
+
+<section data-label="After some refinement (onboarding)" data-screen-label="36" data-speaker-notes="After refinement: anyone can be added to a shared meetup, and an invited friend joins straight from a link with no app to download." class="slide slide--paper" style="padding:60px 110px 48px;">
+  <h1 class="title" style="font-size:62px;letter-spacing:-2px;">After some <span class="hl" style="padding:0 14px 6px;">refinement</span></h1>
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:100px;">
+    <div style="text-align:center;">
+      <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--surface);font-size:0;display:inline-block;"><img src="assets/screens/onboard-meetup.jpg" alt="Add to a shared meetup" style="display:block;height:720px;width:auto;"></div>
+      <div style="font-family:Inter;font-weight:600;font-size:24px;color:var(--muted);margin-top:16px;">Add to a shared meetup</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--surface);font-size:0;display:inline-block;"><img src="assets/screens/onboard-invited.jpg" alt="Join with no app to download" style="display:block;height:720px;width:auto;"></div>
+      <div style="font-family:Inter;font-weight:600;font-size:24px;color:var(--muted);margin-top:16px;">Join - no app to download</div>
+    </div>
+  </div>
+</section>
+
+<section data-label="Demo: onboarding" data-screen-label="37" data-speaker-notes="Section: a demonstration of onboarding new users." class="slide slide--blush" style="padding:110px 120px;justify-content:center;">
+  <div class="eyebrow" style="font-size:26px;color:var(--pink);">Demonstration</div>
+  <h1 class="title" style="font-size:118px;letter-spacing:-4px;margin-top:18px;">Onboarding new <span class="hl" style="padding:0 20px 8px;">users</span></h1>
+</section>
+<section data-label="Implementation" data-screen-label="38" data-speaker-notes="Section divider: how BeThere is actually built." class="slide slide--ink" style="padding:0;justify-content:center;align-items:center;">
+  <h1 style="font-family:Archivo;font-weight:900;font-size:152px;letter-spacing:-5px;color:var(--surface);line-height:1;margin:0;">Implementation</h1>
+</section>
+
+<section data-label="System architecture" data-screen-label="39" data-speaker-notes="A typed pnpm monorepo: an Expo React Native client talks over tRPC to a Fastify 5 server, which writes through Drizzle into Postgres. A shared Zod + pure-logic package is the single source of truth, feeding types and validation into both sides. It ships continuously to three targets." class="slide slide--paper" style="padding:70px 90px 60px;">
+  <h1 class="title" style="font-size:72px;letter-spacing:-3px;">System <span class="hl" style="padding:0 16px 6px;">Architecture</span></h1>
+
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:0;margin-top:24px;">
+  <div style="display:flex;align-items:stretch;gap:0;min-height:360px;">
+    <div class="card" style="flex:1;display:flex;flex-direction:column;overflow:hidden;border-radius:0;box-shadow:7px 7px 0 var(--ink);"><div style="background:var(--pink);color:var(--surface);padding:11px 18px;font-family:Archivo;font-weight:800;font-size:21px;letter-spacing:.03em;text-transform:uppercase;border-bottom:3px solid var(--ink);">Mobile client</div><div style="padding:15px 17px;display:flex;flex-direction:column;gap:7px;flex:1;"><span style="font-family:'Space Mono',monospace;font-weight:700;font-size:14px;color:var(--ink);background:var(--paper);border:2px solid var(--ink);border-radius:0;padding:2px 8px;align-self:flex-start;margin-bottom:3px;">@bethere/mobile</span><ul style="margin:0;padding:0;display:flex;flex-direction:column;gap:7px;"><li style="list-style:none;font-size:17px;font-weight:500;line-height:1.32;"><b>Expo</b> &middot; React Native</li><li style="list-style:none;font-size:17px;font-weight:500;line-height:1.32;">iOS &middot; Android &middot; Web</li><li style="list-style:none;font-size:17px;font-weight:500;line-height:1.32;">React Navigation v7</li><li style="list-style:none;font-size:17px;font-weight:500;line-height:1.32;">Clerk Google sign-in</li><li style="list-style:none;font-size:15px;font-weight:500;line-height:1.32;color:var(--muted-2);">~10 screens &middot; dashboard, create wizard, event, groups, join</li></ul></div></div>
+    <div style="flex:0 0 130px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;"><div style="font-family:'Space Mono',monospace;font-weight:700;font-size:13px;color:var(--surface);background:var(--ink);text-align:center;line-height:1.2;padding:4px 8px;max-width:110px;">HTTP / tRPC<br>typed JSON</div><div style="display:flex;align-items:center;"><div class="arrow-bar" style="width:66px;"></div><div class="arrow-head"></div></div></div>
+    <div class="card" style="flex:1.15;display:flex;flex-direction:column;overflow:hidden;border-radius:0;box-shadow:7px 7px 0 var(--ink);"><div style="background:var(--purple);color:var(--surface);padding:11px 18px;font-family:Archivo;font-weight:800;font-size:21px;letter-spacing:.03em;text-transform:uppercase;border-bottom:3px solid var(--ink);">API server</div><div style="padding:15px 17px;display:flex;flex-direction:column;gap:7px;flex:1;"><span style="font-family:'Space Mono',monospace;font-weight:700;font-size:14px;color:var(--ink);background:var(--paper);border:2px solid var(--ink);border-radius:0;padding:2px 8px;align-self:flex-start;margin-bottom:3px;">@bethere/api</span><ul style="margin:0;padding:0;display:flex;flex-direction:column;gap:7px;"><li style="list-style:none;font-size:17px;font-weight:500;line-height:1.32;"><b>Fastify 5</b> &middot; tRPC v11</li><li style="list-style:none;font-size:17px;font-weight:500;line-height:1.32;">Clerk auth &middot; rate limit</li><li style="list-style:none;font-size:17px;font-weight:500;line-height:1.32;">4 routers &middot; health &middot; groups &middot; events &middot; users</li><li style="list-style:none;font-size:17px;font-weight:500;line-height:1.32;"><b>settlePhase</b> &middot; lazy settle-on-read, no scheduler</li><li style="list-style:none;font-size:17px;font-weight:500;line-height:1.32;">Drizzle ORM</li></ul></div></div>
+    <div style="flex:0 0 130px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;"><div style="font-family:'Space Mono',monospace;font-weight:700;font-size:13px;color:var(--surface);background:var(--ink);text-align:center;line-height:1.2;padding:4px 8px;max-width:110px;">Drizzle ORM<br>SQL</div><div style="display:flex;align-items:center;"><div class="arrow-bar" style="width:66px;"></div><div class="arrow-head"></div></div></div>
+    <div class="card" style="flex:1;display:flex;flex-direction:column;overflow:hidden;border-radius:0;box-shadow:7px 7px 0 var(--ink);"><div style="background:var(--green);color:var(--surface);padding:11px 18px;font-family:Archivo;font-weight:800;font-size:21px;letter-spacing:.03em;text-transform:uppercase;border-bottom:3px solid var(--ink);">Database</div><div style="padding:15px 17px;display:flex;flex-direction:column;gap:7px;flex:1;"><span style="font-family:'Space Mono',monospace;font-weight:700;font-size:14px;color:var(--ink);background:var(--paper);border:2px solid var(--ink);border-radius:0;padding:2px 8px;align-self:flex-start;margin-bottom:3px;">Postgres</span><ul style="margin:0;padding:0;display:flex;flex-direction:column;gap:7px;"><li style="list-style:none;font-size:17px;font-weight:500;line-height:1.32;"><b>10 tables</b></li><li style="list-style:none;font-size:17px;font-weight:500;line-height:1.32;">users &middot; groups &middot; group_members</li><li style="list-style:none;font-size:17px;font-weight:500;line-height:1.32;">events &middot; event_candidates</li><li style="list-style:none;font-size:17px;font-weight:500;line-height:1.32;">candidate_reactions &middot; responses</li><li style="list-style:none;font-size:15px;font-weight:500;line-height:1.32;color:var(--muted-2);">event_opt_outs &middot; event_groups &middot; event_participants</li></ul></div></div>
+  </div>
+
+  <div style="display:flex;align-items:stretch;gap:0;height:36px;">
+    <div style="flex:1;display:flex;justify-content:center;"><div style="width:0;border-left:3px dashed var(--ink);"></div></div>
+    <div style="flex:0 0 130px;"></div>
+    <div style="flex:1.15;display:flex;justify-content:center;"><div style="width:0;border-left:3px dashed var(--ink);"></div></div>
+    <div style="flex:0 0 130px;"></div>
+    <div style="flex:1;"></div>
+  </div>
+
+  <div style="background:var(--warm);border:3px solid var(--ink);box-shadow:var(--sh);border-radius:0;padding:15px 24px;display:flex;align-items:center;gap:18px;">
+    <span style="font-family:'Space Mono',monospace;font-weight:700;font-size:15px;background:var(--ink);color:var(--surface);padding:6px 11px;border-radius:0;white-space:nowrap;">@bethere/shared</span>
+    <span style="font-family:Inter;font-weight:500;font-size:19px;color:var(--ink);line-height:1.3;"><b>Single source of truth.</b> Zod schemas + framework-free pure logic - <b>vote tally &middot; conditional-RSVP &middot; blind reveal</b> - feed the same types + validation into both the client and the server.</span>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:14px;margin-top:22px;">
+    <span style="font-family:'Space Mono',monospace;font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);">Git &rarr; CI &rarr; CD</span>
+    <span style="display:flex;align-items:center;gap:9px;border:3px solid var(--ink);background:var(--surface);box-shadow:var(--sh-sm);border-radius:0;padding:8px 14px;font-weight:600;font-size:16px;"><span style="width:13px;height:13px;border:2px solid var(--ink);background:var(--pink);"></span>Android APK via CI</span>
+    <span style="display:flex;align-items:center;gap:9px;border:3px solid var(--ink);background:var(--surface);box-shadow:var(--sh-sm);border-radius:0;padding:8px 14px;font-weight:600;font-size:16px;"><span style="width:13px;height:13px;border:2px solid var(--ink);background:var(--purple);"></span>Web &rarr; Vercel</span>
+    <span style="display:flex;align-items:center;gap:9px;border:3px solid var(--ink);background:var(--surface);box-shadow:var(--sh-sm);border-radius:0;padding:8px 14px;font-weight:600;font-size:16px;"><span style="width:13px;height:13px;border:2px solid var(--ink);background:var(--green);"></span>API &rarr; AWS App Runner (Docker)</span>
+  </div>
+  </div>
+</section>
+
+<section data-label="Why this stack" data-screen-label="40" data-speaker-notes="Why these technologies: one typed schema is the single source of truth, one codebase ships everywhere including the web onboarding, the privacy logic lives in typed SQL, managed auth, and CI/CD on every change." class="slide slide--blush" style="padding:72px 110px 64px;">
+  <h1 class="title" style="font-size:74px;letter-spacing:-3px;">Why this <span class="hl">stack</span></h1>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:34px;">
+    <div class="card" style="padding:22px 26px;box-shadow:6px 6px 0 var(--ink);">
+      <span style="display:inline-block;background:var(--pink);color:var(--surface);border:2px solid var(--ink);font-family:Archivo;font-weight:800;font-size:19px;padding:6px 12px;margin-bottom:12px;">TypeScript + pnpm monorepo</span>
+      <p style="font-family:Inter;font-weight:500;font-size:22px;line-height:1.35;color:var(--ink);margin:0;">One language across client, server, and shared logic. Refactors are <b>type-checked end to end</b>.</p>
+    </div>
+    <div class="card" style="padding:22px 26px;box-shadow:6px 6px 0 var(--ink);">
+      <span style="display:inline-block;background:var(--purple);color:var(--surface);border:2px solid var(--ink);font-family:Archivo;font-weight:800;font-size:19px;padding:6px 12px;margin-bottom:12px;">tRPC v11 + Zod</span>
+      <p style="font-family:Inter;font-weight:500;font-size:22px;line-height:1.35;color:var(--ink);margin:0;">A <b>fully type-safe API</b> with zero hand-written types or codegen. One schema validates server input and types the client.</p>
+    </div>
+    <div class="card" style="padding:22px 26px;box-shadow:6px 6px 0 var(--ink);">
+      <span style="display:inline-block;background:var(--green);color:var(--surface);border:2px solid var(--ink);font-family:Archivo;font-weight:800;font-size:19px;padding:6px 12px;margin-bottom:12px;">Expo / React Native</span>
+      <p style="font-family:Inter;font-weight:500;font-size:22px;line-height:1.35;color:var(--ink);margin:0;">One codebase ships to <b>iOS, Android, and web</b> - so we could test with real users on whatever device they already had.</p>
+    </div>
+    <div class="card" style="padding:22px 26px;box-shadow:6px 6px 0 var(--ink);">
+      <span style="display:inline-block;background:var(--pink);color:var(--surface);border:2px solid var(--ink);font-family:Archivo;font-weight:800;font-size:19px;padding:6px 12px;margin-bottom:12px;">Fastify 5</span>
+      <p style="font-family:Inter;font-weight:500;font-size:22px;line-height:1.35;color:var(--ink);margin:0;">A lightweight, fast Node server - a thin, low-overhead host for the tRPC layer.</p>
+    </div>
+    <div class="card" style="padding:22px 26px;box-shadow:6px 6px 0 var(--ink);">
+      <span style="display:inline-block;background:var(--purple);color:var(--surface);border:2px solid var(--ink);font-family:Archivo;font-weight:800;font-size:19px;padding:6px 12px;margin-bottom:12px;">Postgres + Drizzle ORM</span>
+      <p style="font-family:Inter;font-weight:500;font-size:22px;line-height:1.35;color:var(--ink);margin:0;">Groups, votes, and RSVPs are inherently relational, so the database gives us <b>integrity for free</b>, with typed SQL.</p>
+    </div>
+    <div class="card" style="padding:22px 26px;box-shadow:6px 6px 0 var(--ink);">
+      <span style="display:inline-block;background:var(--green);color:var(--surface);border:2px solid var(--ink);font-family:Archivo;font-weight:800;font-size:19px;padding:6px 12px;margin-bottom:12px;">Clerk</span>
+      <p style="font-family:Inter;font-weight:500;font-size:22px;line-height:1.35;color:var(--ink);margin:0;">Managed auth with <b>real Google OAuth</b> - we don't roll our own identity or security.</p>
+    </div>
+    <div class="card" style="grid-column:1 / -1;padding:22px 26px;box-shadow:6px 6px 0 var(--ink);">
+      <span style="display:inline-block;background:var(--pink);color:var(--surface);border:2px solid var(--ink);font-family:Archivo;font-weight:800;font-size:19px;padding:6px 12px;margin-bottom:12px;">Git &rarr; GitHub Actions CI/CD</span>
+      <p style="font-family:Inter;font-weight:500;font-size:22px;line-height:1.35;color:var(--ink);margin:0;">Lint, typecheck, and tests run on <b>every change</b>, with continuous deployment to AWS App Runner (API) and Vercel (web).</p>
+    </div>
+  </div>
+</section>
+
+<section data-label="Evaluation" data-screen-label="41" data-speaker-notes="Section divider: evaluation." class="slide slide--ink" style="padding:0;justify-content:center;align-items:center;">
+  <h1 style="font-family:Archivo;font-weight:900;font-size:160px;letter-spacing:-5px;color:var(--surface);line-height:1;margin:0;">Evaluation</h1>
+</section>
+
+<section data-label="What went well" data-screen-label="42" data-speaker-notes="Section divider: what went well." class="slide slide--ink" style="padding:0;justify-content:center;align-items:center;">
+  <h1 style="font-family:Archivo;font-weight:900;font-size:140px;letter-spacing:-5px;color:var(--surface);line-height:1;margin:0;">What went <span style="color:var(--green);">well</span></h1>
+</section>
+
+<section data-label="What went well: detail" data-screen-label="43" data-speaker-notes="Continuous feedback from new and recurring users gave us diverse insight, and letting real friends plan real meetups surfaced the app's actual pain points." class="slide slide--paper" style="padding:96px 110px 88px;justify-content:center;">
+  <div style="max-width:1000px;">
+    <p style="font-family:Archivo;font-weight:800;font-size:46px;line-height:1.25;letter-spacing:-1px;color:var(--ink);margin:0;">Continuous feedback from <span style="color:var(--green);">new</span> and <span style="color:var(--green);">recurring</span> users gave us diverse insights into how the problem is actually solved.</p>
+  </div>
+  <div style="max-width:1000px;align-self:flex-end;text-align:right;margin-top:64px;">
+    <p style="font-family:Archivo;font-weight:800;font-size:46px;line-height:1.25;letter-spacing:-1px;color:var(--ink);margin:0;">Letting users plan <span style="color:var(--pink);">real</span> meetups with their friends using BeThere helped identify the pain points of the app.</p>
+  </div>
+</section>
+
+<section data-label="Agile development" data-screen-label="44" data-speaker-notes="We worked in an agile loop: Trello to map user needs and evidence, Linear to track engineering issues milestone by milestone." class="slide slide--paper" style="padding:74px 110px 66px;">
+  <h1 class="title" style="font-size:74px;letter-spacing:-3px;">Agile <span class="hl">development</span></h1>
+
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:90px;margin-top:8px;">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:20px;">
+      <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--surface);font-size:0;"><img src="assets/screens/trello.jpg" alt="Trello board mapping user needs" style="display:block;height:540px;width:auto;"></div>
+      <div style="font-family:Archivo;font-weight:700;font-size:26px;color:var(--ink);"><b>Trello</b> for mapping user needs.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:20px;">
+      <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--surface);font-size:0;"><img src="assets/screens/linear.jpg" alt="Linear issue list" style="display:block;height:402px;width:auto;"></div>
+      <div style="font-family:Archivo;font-weight:700;font-size:26px;color:var(--ink);"><b>Linear</b> for engineering issues.</div>
+    </div>
+  </div>
+</section>
+
+<section data-label="What we'd do differently" data-screen-label="45" data-speaker-notes="Section divider: what we would do differently." class="slide slide--ink" style="padding:0 120px;justify-content:center;align-items:center;text-align:center;">
+  <h1 style="font-family:Archivo;font-weight:900;font-size:112px;letter-spacing:-4px;color:var(--surface);line-height:1.02;margin:0;">What we would do <span style="color:var(--pink);">differently</span></h1>
+</section>
+
+<section data-label="Differently: detail" data-screen-label="46" data-speaker-notes="We would build a stronger test suite to stop bugs recurring, and run interviews before building rather than after, so we validate the need first." class="slide slide--paper" style="padding:96px 110px 88px;justify-content:center;">
+  <div style="max-width:1020px;">
+    <p style="font-family:Archivo;font-weight:800;font-size:44px;line-height:1.28;letter-spacing:-1px;color:var(--ink);margin:0;"><span style="color:var(--pink);">Testing</span>: a stronger test suite with wider code coverage would've prevented bugs from recurring.</p>
+  </div>
+  <div style="max-width:1020px;align-self:flex-end;text-align:right;margin-top:64px;">
+    <p style="font-family:Archivo;font-weight:800;font-size:44px;line-height:1.28;letter-spacing:-1px;color:var(--ink);margin:0;"><span style="color:var(--pink);">Interviews</span>: run them before building, not after - validate the need first.</p>
+  </div>
+</section>
+
+<section data-label="Looking ahead" data-screen-label="47" data-speaker-notes="Section divider: looking ahead." class="slide slide--ink" style="padding:0;justify-content:center;align-items:center;">
+  <h1 style="font-family:Archivo;font-weight:900;font-size:150px;letter-spacing:-5px;color:var(--surface);line-height:1;margin:0;">Looking <span style="color:var(--green);">ahead</span></h1>
+</section>
+
+<section data-label="Ahead: availability" data-screen-label="48" data-speaker-notes="Availability changes after people commit: those who said they'll go if Milly goes want to know if she might not make it." class="slide slide--paper" style="padding:110px 110px 96px;justify-content:center;">
+  <p style="font-family:Archivo;font-weight:800;font-size:56px;line-height:1.2;letter-spacing:-1.5px;color:var(--ink);margin:0;max-width:1300px;">Milly's availability may change after confirming she'll <span class="hl" style="padding:0 12px 4px;">BeThere</span>.</p>
+  <p style="font-family:Inter;font-weight:500;font-size:32px;line-height:1.4;color:var(--muted);margin:56px 0 0;max-width:820px;align-self:flex-end;text-align:right;">People who will go if Milly goes want to be notified she might not make it.</p>
+</section>
+
+<section data-label="Ahead: plus-ones" data-screen-label="49" data-speaker-notes="Plus-ones remain socially awkward: a host may welcome guests in general, but not every guest." class="slide slide--paper" style="padding:110px 110px 96px;justify-content:center;">
+  <p style="font-family:Archivo;font-weight:800;font-size:56px;line-height:1.2;letter-spacing:-1.5px;color:var(--ink);margin:0;max-width:1300px;">Plus-ones are still an <span style="color:var(--pink);">awkward</span> problem.</p>
+  <p style="font-family:Inter;font-weight:500;font-size:32px;line-height:1.4;color:var(--muted);margin:56px 0 0;max-width:820px;align-self:flex-end;text-align:right;">Vasanth may welcome plus-ones to his meetup, but there are some people he would prefer not to see there.</p>
+</section>
+
+<section data-label="Ahead: nuance" data-screen-label="50" data-speaker-notes="Meetup logistics are endlessly nuanced; a dedicated in-app chat after confirmation would let the group settle the details we cannot model." class="slide slide--paper" style="padding:110px 110px 96px;justify-content:center;">
+  <p style="font-family:Archivo;font-weight:800;font-size:56px;line-height:1.2;letter-spacing:-1.5px;color:var(--ink);margin:0;max-width:1340px;">Meetup logistics are full of <span style="color:var(--purple);">nuance</span> - we cannot capture every case.</p>
+  <p style="font-family:Inter;font-weight:500;font-size:32px;line-height:1.4;color:var(--muted);margin:56px 0 0;max-width:820px;align-self:flex-end;text-align:right;">An in-app chat dedicated to the meetup, available after confirmation, would let the group settle the details.</p>
+</section>
+    </div>
+  </div>
+</div>
+
+<div id="deck-help">Use <b>&larr; &rarr;</b> to move &middot; <b>N</b> speaker notes &middot; <b>F</b> fullscreen &middot; <b>1-9</b> jump</div>
+
+<div id="deck-controls">
+  <button class="deck-btn" id="c-prev" title="Previous (Left arrow)" aria-label="Previous slide">&lsaquo;</button>
+  <span id="deck-counter">01 / 50</span>
+  <button class="deck-btn pink" id="c-next" title="Next (Right arrow)" aria-label="Next slide">&rsaquo;</button>
+  <button class="deck-btn" id="c-notes" title="Speaker notes (N)">Notes</button>
+  <button class="deck-btn" id="c-full" title="Fullscreen (F)">Full</button>
+</div>
+
+<aside id="deck-notes" aria-label="Speaker notes">
+  <button class="deck-btn nclose" id="n-close" aria-label="Close notes">&times;</button>
+  <p class="nlabel" id="n-label"></p>
+  <p class="nbody" id="n-body"></p>
+</aside>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---- <image-slot>: user-fillable photo placeholder (drag/drop or click), -
+     persisted in localStorage so a dropped photo survives a reload. ---- */
+  class ImageSlot extends HTMLElement {
+    connectedCallback() {
+      if (this._wired) return;
+      this._wired = true;
+      this._input = document.createElement("input");
+      this._input.type = "file";
+      this._input.accept = "image/*";
+      this._input.style.display = "none";
+      this.appendChild(this._input);
+      this._input.addEventListener("change", () => {
+        var f = this._input.files && this._input.files[0];
+        this._input.value = "";
+        if (f) this._read(f);
+      });
+      this.addEventListener("click", (e) => {
+        if (e.target.closest(".is-clear")) return;
+        if (!this._has()) this._input.click();
+      });
+      this.addEventListener("dragover", (e) => { e.preventDefault(); this.classList.add("drag"); });
+      this.addEventListener("dragleave", (e) => { if (e.target === this) this.classList.remove("drag"); });
+      this.addEventListener("drop", (e) => {
+        e.preventDefault();
+        this.classList.remove("drag");
+        var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (f) this._read(f);
+      });
+      this._render();
+    }
+    _key() { return "bethere-deck.imageslot." + (this.id || "anon"); }
+    _get() { try { return localStorage.getItem(this._key()); } catch (_) { return null; } }
+    _set(v) { try { localStorage.setItem(this._key(), v); } catch (_) {} }
+    _del() { try { localStorage.removeItem(this._key()); } catch (_) {} }
+    _has() { return !!(this._get() || this.getAttribute("src")); }
+    _read(file) {
+      if (!/^image\//.test(file.type)) return;
+      var fr = new FileReader();
+      fr.onload = () => { this._set(String(fr.result)); this._render(); };
+      fr.readAsDataURL(file);
+    }
+    _render() {
+      var src = this._get() || this.getAttribute("src");
+      Array.prototype.slice.call(this.children).forEach((c) => { if (c !== this._input) c.remove(); });
+      if (src) {
+        var img = document.createElement("img");
+        img.src = src; img.alt = "persona photo";
+        this.appendChild(img);
+        var btn = document.createElement("button");
+        btn.className = "is-clear"; btn.type = "button"; btn.title = "Remove photo";
+        btn.textContent = "×";
+        btn.addEventListener("click", (e) => { e.stopPropagation(); this._del(); this._render(); });
+        this.appendChild(btn);
+      } else {
+        var wrap = document.createElement("div");
+        wrap.className = "is-empty";
+        wrap.innerHTML = '<div class="ic">+</div><div class="cap"></div><div class="hint">click or drop a photo</div>';
+        wrap.querySelector(".cap").textContent = this.getAttribute("placeholder") || "Drop an image";
+        this.appendChild(wrap);
+      }
+    }
+  }
+  customElements.define("image-slot", ImageSlot);
+
+  /* ---- deck runtime: scale-to-fit + letterbox, keyboard / click nav, -
+     speaker-notes drawer, fullscreen. Each <section> is authored at the -
+     design size and centred + scaled to the viewport. ---- */
+  var root = document.getElementById("deck-root");
+  var stage = document.getElementById("deck-stage");
+  var canvas = document.getElementById("deck-canvas");
+  var progress = document.getElementById("deck-progress");
+  var counter = document.getElementById("deck-counter");
+  var help = document.getElementById("deck-help");
+  var notes = document.getElementById("deck-notes");
+  var nLabel = document.getElementById("n-label");
+  var nBody = document.getElementById("n-body");
+  var W = parseInt(root.dataset.designW, 10) || 1920;
+  var H = parseInt(root.dataset.designH, 10) || 1080;
+  var slides = Array.prototype.slice.call(canvas.querySelectorAll(":scope > section"));
+  var idx = 0;
+
+  function pad2(n) { return String(n).length < 2 ? "0" + n : String(n); }
+  function label(s, i) {
+    return s.getAttribute("data-label") || ("Slide " + (i + 1));
+  }
+  function fit() {
+    var s = Math.min(stage.clientWidth / W, stage.clientHeight / H);
+    canvas.style.transform = "scale(" + s + ")";
+  }
+  function show(i) {
+    idx = Math.max(0, Math.min(slides.length - 1, i));
+    for (var k = 0; k < slides.length; k++) slides[k].classList.toggle("is-active", k === idx);
+    var human = pad2(idx + 1) + " / " + pad2(slides.length);
+    counter.textContent = human;
+    progress.style.width = ((idx + 1) / slides.length * 100) + "%";
+    nLabel.textContent = pad2(idx + 1) + "  -  " + label(slides[idx], idx);
+    nBody.textContent = slides[idx].getAttribute("data-speaker-notes") || "(no speaker notes for this slide)";
+    var hash = "#" + (idx + 1);
+    if (location.hash !== hash) { try { history.replaceState(null, "", hash); } catch (_) {} }
+  }
+  function go(i) { show(i); }
+  function advance(d) { show(idx + d); }
+
+  function toggleNotes(force) {
+    var open = typeof force === "boolean" ? force : !notes.classList.contains("open");
+    notes.classList.toggle("open", open);
+    document.getElementById("c-notes").classList.toggle("on", open);
+    if (open) { root.classList.remove("idle"); }
+  }
+  function toggleFull() {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else {
+      var el = document.documentElement;
+      if (el.requestFullscreen) el.requestFullscreen();
+    }
+  }
+
+  window.addEventListener("keydown", function (e) {
+    var t = e.target;
+    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    var k = e.key, handled = true;
+    if (k === "ArrowRight" || k === "PageDown" || k === " " || k === "Spacebar") advance(1);
+    else if (k === "ArrowLeft" || k === "PageUp") advance(-1);
+    else if (k === "Home") go(0);
+    else if (k === "End") go(slides.length - 1);
+    else if (k === "r" || k === "R") go(0);
+    else if (k === "n" || k === "N") toggleNotes();
+    else if (k === "f" || k === "F") toggleFull();
+    else if (k === "Escape") toggleNotes(false);
+    else if (/^[0-9]$/.test(k)) { var n = k === "0" ? 9 : parseInt(k, 10) - 1; if (n < slides.length) go(n); }
+    else handled = false;
+    if (handled) { e.preventDefault(); if (help) help.classList.add("hide"); }
+  });
+
+  stage.addEventListener("click", function (e) {
+    if (e.target.closest("image-slot, a, button, input")) return;
+    var r = stage.getBoundingClientRect();
+    advance(e.clientX < r.left + r.width / 2 ? -1 : 1);
+    if (help) help.classList.add("hide");
+  });
+
+  document.getElementById("c-prev").addEventListener("click", function () { advance(-1); });
+  document.getElementById("c-next").addEventListener("click", function () { advance(1); });
+  document.getElementById("c-notes").addEventListener("click", function () { toggleNotes(); });
+  document.getElementById("c-full").addEventListener("click", function () { toggleFull(); });
+  document.getElementById("n-close").addEventListener("click", function () { toggleNotes(false); });
+
+  window.addEventListener("resize", fit);
+  if (window.visualViewport) window.visualViewport.addEventListener("resize", fit);
+
+  /* idle-hide the control bar while presenting */
+  var idleTimer;
+  function activity() {
+    root.classList.remove("idle");
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(function () { if (!notes.classList.contains("open")) root.classList.add("idle"); }, 2800);
+  }
+  window.addEventListener("mousemove", activity, { passive: true });
+  window.addEventListener("keydown", activity);
+  window.addEventListener("touchstart", activity, { passive: true });
+
+  /* boot: honour a #N deep-link, fit, then reveal */
+  var start = parseInt((location.hash || "").replace("#", ""), 10);
+  fit();
+  show(isFinite(start) && start >= 1 ? start - 1 : 0);
+  activity();
+  setTimeout(function () { if (help) help.classList.add("hide"); }, 6000);
+  document.fonts && document.fonts.ready && document.fonts.ready.then(fit);
+})();
+</script>
+</body>
+</html>

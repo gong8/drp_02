@@ -51,6 +51,32 @@ test("flags a chosenSuffix that matches no candidate", () => {
   );
 });
 
+test("flags a conditional response that targets a non-member", () => {
+  const users = [{ id: "u_a" }, { id: "u_b" }];
+  const groups = [{ id: "g1", members: ["u_a"] }];
+  const plans: Plan[] = [
+    {
+      id: "p1",
+      groupId: "g1",
+      createdBy: "u_a",
+      activity: "T",
+      contingent: true,
+      quorum: 1,
+      phase: "moment",
+      candidates: [{ suffix: "c1", kind: "time", startsAt: new Date() }],
+      chosenSuffix: "c1",
+      responses: [
+        { userId: "u_a", kind: "conditional", cond: { mode: "any", targetIds: ["u_b"] } },
+      ],
+    },
+  ];
+  const errs = seedIntegrityErrors(users, groups, plans);
+  assert.ok(
+    errs.some((e) => e.includes("conditional") && e.includes("u_b")),
+    `expected a conditional-target error, got ${JSON.stringify(errs)}`,
+  );
+});
+
 test("flags a collecting plan with no time candidate", () => {
   const users = [{ id: "u_a" }];
   const groups = [{ id: "g1", members: ["u_a"] }];

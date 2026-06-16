@@ -221,6 +221,30 @@ function AddActivity({
   );
 }
 
+// Picker bounds for the DATE half of the add-a-time pill, derived from the existing candidate spread
+// and decides-by. minMs is the earliest a new time may land (now, or the vote close); maxMs the latest
+// (the candidate horizon, or a 14-day fallback before any time exists). `closed` is true when that
+// window has fully elapsed (horizon at/under the floor) - e.g. a collecting plan whose every candidate
+// is already in the past (stale demo data). In that state there is no valid time to add AND the raw
+// bounds would invert (min > max); maxMs is held at minMs so the bounds can never invert, and callers
+// MUST NOT open the picker (an inverted minimumDate/maximumDate hard-crashes the native picker).
+export function addTimeWindow(
+  startsAtIso: string[],
+  decidesByIso: string | null,
+  nowMs: number,
+): { minMs: number; maxMs: number; closed: boolean } {
+  const times = startsAtIso.map((iso) => new Date(iso).getTime());
+  const decideMs = decidesByIso ? new Date(decidesByIso).getTime() : nowMs;
+  const horizonMs = times.length
+    ? addCandidateHorizon(Math.min(...times), Math.max(...times))
+    : null;
+  const minMs = Math.max(nowMs, decideMs);
+  const rawMaxMs = horizonMs ?? decideMs + 14 * 24 * 60 * 60 * 1000;
+  // Held at minMs (never below) so the DATE picker's bounds can never invert; `closed` tells the
+  // composer to refuse to open the picker at all when there is no longer a usable slot.
+  return { minMs, maxMs: Math.max(minMs, rawMaxMs), closed: rawMaxMs <= minMs };
+}
+
 // Inline concrete time entry through the shared AddComposer, bounded to a sensible horizon from the
 // existing candidate spread. De-duped by minute server-side. The pill's min/max only bound the DATE
 // half - the combined date+time can still land outside the server's accept window (after decides-by,
@@ -242,13 +266,24 @@ function AddTime({
   const [newTime, setNewTime] = useState("");
   const newIso = isoFrom(newDate, newTime);
 
-  const times = data.timeCandidates.map((c: TimeCand) => new Date(c.startsAt).getTime());
-  const decideMs = data.decidesBy ? new Date(data.decidesBy).getTime() : Date.now();
-  const horizonMs = times.length
-    ? addCandidateHorizon(Math.min(...times), Math.max(...times))
-    : null;
-  const addMinDate = new Date(Math.max(Date.now(), decideMs));
-  const addMaxDate = new Date(horizonMs ?? decideMs + 14 * 24 * 60 * 60 * 1000);
+  const { minMs, maxMs, closed } = addTimeWindow(
+    data.timeCandidates.map((c: TimeCand) => c.startsAt),
+    data.decidesBy ?? null,
+    Date.now(),
+  );
+  // The window has fully elapsed: there is no slot left to add, and opening the picker would feed it
+  // inverted bounds. Show why instead of a (crash-prone) composer - the plan locks onto its existing
+  // candidates next deadline sweep.
+  if (closed) {
+    return (
+      <AppText variant="caption" style={{ color: ui.muted, marginTop: 8 }}>
+        This meetup's time window has passed - no new times can be added.
+      </AppText>
+    );
+  }
+  const horizonMs = data.timeCandidates.length ? maxMs : null;
+  const addMinDate = new Date(minMs);
+  const addMaxDate = new Date(maxMs);
 
   const newMs = newIso ? new Date(newIso).getTime() : null;
   const invalidNote =
