@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
-"""Rebuild the branded HTML for the markdown-driven docs (HCD portfolio, legal
-report) by injecting the current .md into each existing brand template, then
-re-export every PDF with headless Chrome.
+"""Rebuild the BeThere project-documentation deliverables (root: project-doc/).
+
+Steps: (1) render the impact-asset image cover-story.png from cover-story.html;
+(2) rebuild the branded HTML for the markdown-driven docs (HCD portfolio, legal
+report) by injecting the current .md into each brand template; (3) re-export
+every PDF with headless Chrome. Self-contained: reads only files in this folder.
 
 The pitch leaflet HTML is hand-authored (not generated from .md), so it is only
-re-exported, never regenerated. Run from docs/m4-final/."""
+re-exported, never regenerated. Run from this folder: `python3 build.py`."""
 import os, re, shutil, subprocess, sys, tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -63,6 +66,30 @@ def rebuild(html_name, md_name, portfolio=False):
     print(f"rebuilt {html_name} ({len(html)} bytes)")
 
 
+def render_cover():
+    """Render the impact-asset image cover-story.png from cover-story.html."""
+    html = os.path.join(HERE, "cover-story.html")
+    png = os.path.join(HERE, "cover-story.png")
+    pdftoppm = shutil.which("pdftoppm")
+    if not os.path.exists(html) or not pdftoppm:
+        print("  skipping cover render (need cover-story.html + pdftoppm); keeping existing png")
+        return
+    tmp = tempfile.mkdtemp()
+    try:
+        pdf = os.path.join(tmp, "cover.pdf")
+        subprocess.run([
+            CHROME, "--headless=new", "--disable-gpu", "--no-sandbox",
+            "--virtual-time-budget=20000", "--run-all-compositor-stages-before-draw",
+            "--no-pdf-header-footer", f"--print-to-pdf={pdf}", "file://" + html,
+        ], check=True, stderr=subprocess.DEVNULL)
+        subprocess.run([pdftoppm, "-png", "-r", "150", "-singlefile", pdf,
+                        os.path.join(tmp, "cover")], check=True, stderr=subprocess.DEVNULL)
+        shutil.copy(os.path.join(tmp, "cover.png"), png)
+        print(f"  rendered cover-story.png ({os.path.getsize(png)} bytes)")
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def export_pdf(html_name):
     html_path = os.path.join(HERE, html_name)
     pdf_path = os.path.splitext(html_path)[0] + ".pdf"
@@ -77,6 +104,7 @@ def export_pdf(html_name):
 
 
 if __name__ == "__main__":
+    render_cover()
     rebuild("hcd-portfolio.html", "hcd-portfolio.md", portfolio=True)
     rebuild("copyright-legal-report.html", "copyright-legal-report.md")
     for h in ("hcd-portfolio.html", "copyright-legal-report.html", "pitch-leaflet.html"):
