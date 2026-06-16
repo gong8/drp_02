@@ -4,7 +4,9 @@ import { freshInviteCode } from "./groups.js";
 import {
   candidateReactions,
   eventCandidates,
+  eventGroups,
   eventOptOuts,
+  eventParticipants,
   events,
   groupMembers,
   groups,
@@ -91,9 +93,14 @@ async function insertDemoData(): Promise<void> {
 
 // Wipe + re-insert the clean demo (local dev: SEED_ON_BOOT defaults to "reset").
 export async function reseedDemo(): Promise<void> {
+  // Delete children before parents. event_participants and event_groups also FK to events (ad-hoc
+  // participants / multi-group attach); they are empty on a fresh local DB but populated on the live
+  // backends from real use, so omitting them makes `delete(events)` fail a foreign key there.
   await db.delete(responses);
   await db.delete(candidateReactions);
   await db.delete(eventOptOuts);
+  await db.delete(eventParticipants);
+  await db.delete(eventGroups);
   await db.delete(eventCandidates);
   await db.delete(events);
   await db.delete(groupMembers);
