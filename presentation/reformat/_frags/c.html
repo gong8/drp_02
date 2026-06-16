@@ -1,9 +1,4 @@
-<section data-label="Demo: Suggesting" data-screen-label="19" data-speaker-notes="Section: a demonstration of suggesting a meetup." class="slide slide--blush" style="padding:110px 120px;justify-content:center;">
-  <div class="eyebrow" style="font-size:26px;color:var(--pink);">Demonstration</div>
-  <h1 class="title" style="font-size:120px;letter-spacing:-4px;margin-top:18px;">Suggesting a <span class="hl" style="padding:0 20px 8px;">meetup</span></h1>
-</section>
-
-<section data-label="User Story: suggest" data-screen-label="20" data-speaker-notes="The user story behind suggesting: a social organiser who wants to suggest meetups easily, so they can see friends more without chasing responses." class="slide slide--paper" style="padding:90px 110px;flex-direction:row;gap:70px;align-items:center;">
+<section data-label="User Story: suggest" data-screen-label="19" data-speaker-notes="The user story behind suggesting: a social organiser who wants to suggest meetups easily, so they can see friends more without chasing responses." class="slide slide--paper" style="padding:90px 110px;flex-direction:row;gap:70px;align-items:center;">
   <div style="flex:1;">
     <h1 class="title" style="font-size:72px;letter-spacing:-2px;">User <span class="hl">Story</span></h1>
     <div style="margin-top:42px;display:flex;flex-direction:column;gap:26px;max-width:920px;">
@@ -17,91 +12,77 @@
   </div>
 </section>
 
-<section data-label="Core: simplify suggesting" data-screen-label="21" data-speaker-notes="Section: the core interaction we focused on - simplifying how you suggest a meetup." class="slide slide--paper" style="padding:110px 120px;justify-content:center;">
-  <div class="eyebrow" style="font-size:26px;color:var(--purple);">Core Interaction</div>
-  <h1 class="title" style="font-size:112px;letter-spacing:-4px;margin-top:18px;">Simplify suggesting a <span class="hl" style="padding:0 20px 8px;">meetup</span></h1>
-</section>
-
-<section data-label="Our Initial Design" data-screen-label="22" data-speaker-notes="Our initial design: a meetups dashboard and a single suggest-a-meet form." class="slide slide--paper" style="padding:64px 110px 56px;">
-  <h1 class="title" style="font-size:62px;letter-spacing:-2px;">Our Initial <span class="hl" style="padding:0 14px 6px;">Design</span></h1>
-  <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:90px;">
-    <div style="text-align:center;">
-      <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--surface);font-size:0;display:inline-block;"><img src="assets/screens/init-dashboard.jpg" alt="Your meetups dashboard" style="display:block;height:680px;width:auto;"></div>
-      <div style="font-family:Inter;font-weight:600;font-size:24px;color:var(--muted);margin-top:18px;">Your meetups dashboard</div>
+<section data-label="Initial design + feedback" data-screen-label="20" data-speaker-notes="Our initial suggest-a-meet design, with the research that shaped it: testers liked using it to check availability with a vague idea, found a fixed time restrictive, and weren't sure why there were flexible and fixed options for times." class="slide slide--paper" style="padding:58px 100px 52px;">
+  <h1 class="title" style="font-size:58px;letter-spacing:-2px;">Our initial <span class="hl" style="padding:0 14px 6px;">design</span></h1>
+  <div style="flex:1;display:flex;align-items:center;gap:60px;margin-top:14px;">
+    <div style="display:flex;gap:34px;flex-shrink:0;">
+      <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--surface);font-size:0;"><img src="assets/screens/init-suggest.jpg" alt="Suggest a meet form" style="display:block;height:600px;width:auto;"></div>
+      <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--surface);font-size:0;"><img src="assets/screens/voting-when.jpg" alt="Flexible vs fixed times" style="display:block;height:600px;width:auto;"></div>
     </div>
-    <div style="text-align:center;">
-      <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--surface);font-size:0;display:inline-block;"><img src="assets/screens/init-suggest.jpg" alt="Suggest a meet form" style="display:block;height:680px;width:auto;"></div>
-      <div style="font-family:Inter;font-weight:600;font-size:24px;color:var(--muted);margin-top:18px;">Suggest a meet</div>
-    </div>
-  </div>
-</section>
-
-<section data-label="Demo video: suggesting" data-screen-label="23" data-speaker-notes="A short live demo of suggesting a meetup in the app." class="slide slide--blush" style="padding:120px;justify-content:center;align-items:center;">
-  <div style="display:flex;align-items:center;gap:40px;background:var(--surface);border:3px solid var(--ink);box-shadow:10px 10px 0 var(--ink);padding:46px 56px;">
-    <div style="width:120px;height:120px;background:var(--ink);border:3px solid var(--ink);box-shadow:5px 5px 0 var(--pink);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-      <div style="width:0;height:0;border-top:26px solid transparent;border-bottom:26px solid transparent;border-left:40px solid var(--surface);margin-left:8px;"></div>
-    </div>
-    <div>
-      <div class="eyebrow" style="font-size:20px;color:var(--pink);">Live demo</div>
-      <div style="font-family:Archivo;font-weight:900;font-size:54px;letter-spacing:-1px;color:var(--ink);margin-top:6px;">Suggesting a meetup</div>
-      <div style="font-family:Inter;font-weight:500;font-size:28px;color:var(--muted);margin-top:6px;">on a real device</div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:18px;">
+      <div style="background:var(--surface);border:3px solid var(--ink);box-shadow:6px 6px 0 var(--ink);padding:20px 24px;">
+        <p style="font-family:Archivo;font-weight:700;font-size:24px;line-height:1.3;color:var(--ink);margin:0;">&ldquo;I could see this being used to just check for people's availability - sending out a vague idea of &lsquo;I want to meetup&rsquo; and seeing what everyone wants to do.&rdquo;</p>
+      </div>
+      <div style="background:var(--surface);border:3px solid var(--ink);box-shadow:6px 6px 0 var(--ink);padding:20px 24px;">
+        <p style="font-family:Archivo;font-weight:700;font-size:24px;line-height:1.3;color:var(--ink);margin:0;">&ldquo;Having a set time seems quite restrictive - it would be nice to agree on a time within the group.&rdquo;</p>
+      </div>
+      <div style="background:var(--ink);border:3px solid var(--ink);box-shadow:6px 6px 0 var(--pink);padding:20px 24px;">
+        <p style="font-family:Archivo;font-weight:700;font-size:24px;line-height:1.3;color:var(--surface);margin:0;">&ldquo;It's not immediately obvious why there's a flexible and fixed option for times.&rdquo;</p>
+      </div>
     </div>
   </div>
 </section>
 
-<section data-label="Added voting on times" data-screen-label="24" data-speaker-notes="We added voting on times: the creator offers flexible or fixed times, and the group taps the times that work for them." class="slide slide--paper" style="padding:60px 110px 48px;">
-  <h1 class="title" style="font-size:62px;letter-spacing:-2px;">Added voting on <span class="hl" style="padding:0 14px 6px;">times</span></h1>
-  <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:100px;">
-    <div style="text-align:center;">
-      <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--surface);font-size:0;display:inline-block;"><img src="assets/screens/voting-when.jpg" alt="Flexible vs fixed times" style="display:block;height:720px;width:auto;"></div>
-      <div style="font-family:Inter;font-weight:600;font-size:24px;color:var(--muted);margin-top:16px;">Flexible vs fixed times</div>
-    </div>
-    <div style="text-align:center;">
-      <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--surface);font-size:0;display:inline-block;"><img src="assets/screens/voting-pick.jpg" alt="Vote on the times that work" style="display:block;height:720px;width:auto;"></div>
-      <div style="font-family:Inter;font-weight:600;font-size:24px;color:var(--muted);margin-top:16px;">Vote on the times that work</div>
-    </div>
-  </div>
-</section>
-
-<section data-label="User feedback" data-screen-label="25" data-speaker-notes="Feedback from usability testing: the form felt cluttered, and people needed a second to work out where everything went." class="slide slide--paper" style="padding:80px 120px;position:relative;">
-  <div style="display:flex;align-items:flex-start;gap:24px;">
-    <h1 class="title" style="font-size:62px;letter-spacing:-2px;">Feed<span class="hl" style="padding:0 12px 6px;">back</span></h1>
-    <span style="font-family:'Space Mono',monospace;font-weight:700;font-size:18px;color:var(--ink);border:2px solid var(--ink);padding:8px 14px;align-self:center;">from usability testing</span>
-  </div>
-  <div style="flex:1;position:relative;margin-top:30px;">
-    <div style="position:absolute;left:0;top:30px;max-width:620px;background:var(--surface);border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);padding:34px 40px;">
-      <span style="font-family:Archivo;font-weight:900;font-size:56px;color:var(--pink);line-height:.4;display:block;margin-bottom:12px;">&ldquo;</span>
-      <p style="font-family:Archivo;font-weight:700;font-size:38px;line-height:1.25;color:var(--ink);margin:0;">This form feels quite cluttered</p>
-    </div>
-    <div style="position:absolute;right:0;bottom:40px;max-width:680px;background:var(--ink);border:3px solid var(--ink);box-shadow:8px 8px 0 var(--pink);padding:34px 40px;">
-      <span style="font-family:Archivo;font-weight:900;font-size:56px;color:var(--pink);line-height:.4;display:block;margin-bottom:12px;">&ldquo;</span>
-      <p style="font-family:Archivo;font-weight:700;font-size:36px;line-height:1.28;color:var(--surface);margin:0;">It takes me a second to read through to make sure I understand where to put everything</p>
-    </div>
-  </div>
-</section>
-
-<section data-label="After some refinement" data-screen-label="26" data-speaker-notes="After refinement: a single guided flow - how pinned down is it, who is it for, what's the spark, and roughly when." class="slide slide--paper" style="padding:56px 80px 44px;">
+<section data-label="After refinement + feedback" data-screen-label="21" data-speaker-notes="After refinement we tried a guided flow with how-pinned-down options, but a tester found the rough-plan option confusing and couldn't see when they'd use it." class="slide slide--paper" style="padding:58px 90px 50px;">
   <h1 class="title" style="font-size:58px;letter-spacing:-2px;">After some <span class="hl" style="padding:0 14px 6px;">refinement</span></h1>
-  <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:34px;">
-    <div style="text-align:center;">
-      <div style="border:3px solid var(--ink);box-shadow:7px 7px 0 var(--ink);background:var(--surface);font-size:0;display:inline-block;"><img src="assets/screens/refine-1.jpg" alt="How pinned down is this" style="display:block;height:600px;width:auto;"></div>
-      <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:17px;color:var(--muted);margin-top:14px;">How pinned down?</div>
+  <div style="flex:1;display:flex;align-items:center;gap:56px;margin-top:12px;">
+    <div style="display:flex;gap:26px;flex-shrink:0;">
+      <div style="border:3px solid var(--ink);box-shadow:7px 7px 0 var(--ink);background:var(--surface);font-size:0;"><img src="assets/screens/refine-1.jpg" alt="How pinned down is this" style="display:block;height:580px;width:auto;"></div>
+      <div style="border:3px solid var(--ink);box-shadow:7px 7px 0 var(--ink);background:var(--surface);font-size:0;"><img src="assets/screens/refine-2.jpg" alt="Who is it for" style="display:block;height:580px;width:auto;"></div>
+      <div style="border:3px solid var(--ink);box-shadow:7px 7px 0 var(--ink);background:var(--surface);font-size:0;"><img src="assets/screens/refine-4.jpg" alt="Roughly when" style="display:block;height:580px;width:auto;"></div>
     </div>
-    <div style="text-align:center;">
-      <div style="border:3px solid var(--ink);box-shadow:7px 7px 0 var(--ink);background:var(--surface);font-size:0;display:inline-block;"><img src="assets/screens/refine-2.jpg" alt="Who is it for" style="display:block;height:600px;width:auto;"></div>
-      <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:17px;color:var(--muted);margin-top:14px;">Who's it for?</div>
-    </div>
-    <div style="text-align:center;">
-      <div style="border:3px solid var(--ink);box-shadow:7px 7px 0 var(--ink);background:var(--surface);font-size:0;display:inline-block;"><img src="assets/screens/refine-3.jpg" alt="What's the spark" style="display:block;height:600px;width:auto;"></div>
-      <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:17px;color:var(--muted);margin-top:14px;">What's the spark?</div>
-    </div>
-    <div style="text-align:center;">
-      <div style="border:3px solid var(--ink);box-shadow:7px 7px 0 var(--ink);background:var(--surface);font-size:0;display:inline-block;"><img src="assets/screens/refine-4.jpg" alt="Roughly when" style="display:block;height:600px;width:auto;"></div>
-      <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:17px;color:var(--muted);margin-top:14px;">Roughly when?</div>
+    <div style="flex:1;max-width:520px;background:var(--ink);border:3px solid var(--ink);box-shadow:8px 8px 0 var(--pink);padding:34px 38px;">
+      <span style="font-family:Archivo;font-weight:900;font-size:60px;color:var(--pink);line-height:.4;display:block;margin-bottom:14px;">&ldquo;</span>
+      <p style="font-family:Archivo;font-weight:700;font-size:32px;line-height:1.3;color:var(--surface);margin:0;">These options are quite confusing - I don't really understand when you would ever use the rough plan option.</p>
+      <div style="font-family:Inter;font-weight:600;font-size:21px;color:var(--muted-2);margin-top:16px;">- usability test</div>
     </div>
   </div>
 </section>
 
-<section data-label="(pause)" data-screen-label="27" data-speaker-notes="(pause / transition)" class="slide slide--blush" style="padding:0;align-items:center;justify-content:center;">
-  <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:40px;letter-spacing:18px;color:var(--grey);opacity:.5;">&middot;&middot;&middot;</div>
+<section data-label="User Story: conditional" data-screen-label="22" data-speaker-notes="The user story behind conditional attendance: a new, introverted member who only wants to attend social events if they already know people going, so they feel comfortable." class="slide slide--paper" style="padding:90px 110px;flex-direction:row;gap:70px;align-items:center;">
+  <div style="flex:1;">
+    <h1 class="title" style="font-size:72px;letter-spacing:-2px;">User <span class="hl">Story</span></h1>
+    <div style="margin-top:42px;display:flex;flex-direction:column;gap:26px;max-width:920px;">
+      <p style="font-family:Inter;font-weight:500;font-size:34px;line-height:1.32;color:var(--ink);margin:0;"><b style="font-weight:800;">As a</b> new and introverted member of a friend group</p>
+      <p style="font-family:Inter;font-weight:500;font-size:34px;line-height:1.32;color:var(--ink);margin:0;"><b style="font-weight:800;">I want</b> to only attend social events if I already know people going</p>
+      <p style="font-family:Inter;font-weight:500;font-size:34px;line-height:1.32;color:var(--ink);margin:0;"><b style="font-weight:800;">So that</b> I feel comfortable</p>
+    </div>
+  </div>
+  <div style="width:480px;height:540px;border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--sand);overflow:hidden;flex-shrink:0;">
+    <img src="assets/personas/persona-milly.jpg" alt="Milly, the participant" style="width:100%;height:100%;object-fit:cover;display:block;">
+  </div>
+</section>
+
+<section data-label="Conditional: initial mock-up" data-screen-label="23" data-speaker-notes="We sketched the conditional RSVP by hand and iterated it with users: I'll go if a person goes, or a group goes - kept simple, with an and/or on the ifs, and these were exactly the things people said they'd be thinking about." class="slide slide--paper" style="padding:58px 100px 52px;">
+  <div style="display:flex;align-items:baseline;gap:22px;">
+    <h1 class="title" style="font-size:58px;letter-spacing:-2px;">Initial <span class="hl" style="padding:0 14px 6px;">mock-up</span></h1>
+    <span style="font-family:Inter;font-weight:600;font-size:24px;color:var(--muted);">Conditional attendance - &ldquo;I'll go if&hellip;&rdquo;</span>
+  </div>
+  <div style="flex:1;display:flex;align-items:center;gap:56px;margin-top:14px;">
+    <div style="display:flex;gap:30px;flex-shrink:0;">
+      <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--surface);font-size:0;"><img src="assets/sketches/conditional-early.jpg" alt="Early conditional sketch" style="display:block;height:600px;width:auto;"></div>
+      <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--surface);font-size:0;"><img src="assets/sketches/conditional-detail.jpg" alt="Conditional sketch with named friends" style="display:block;height:600px;width:auto;"></div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:18px;">
+      <div style="background:var(--surface);border:3px solid var(--ink);box-shadow:6px 6px 0 var(--ink);padding:20px 24px;">
+        <p style="font-family:Archivo;font-weight:700;font-size:24px;line-height:1.3;color:var(--ink);margin:0;">&ldquo;It's either I'll go if one person goes, or if a group of people go. I don't think I'd need something this complex.&rdquo;</p>
+      </div>
+      <div style="background:var(--surface);border:3px solid var(--ink);box-shadow:6px 6px 0 var(--ink);padding:20px 24px;">
+        <p style="font-family:Archivo;font-weight:700;font-size:24px;line-height:1.3;color:var(--ink);margin:0;">&ldquo;There's gotta be an and/or type thing with the ifs - I'll go if Adi and Lily are going, or if either of them are going.&rdquo;</p>
+      </div>
+      <div style="background:var(--ink);border:3px solid var(--ink);box-shadow:6px 6px 0 var(--pink);padding:20px 24px;">
+        <p style="font-family:Archivo;font-weight:700;font-size:24px;line-height:1.3;color:var(--surface);margin:0;">&ldquo;These two options are definitely the things I'll be thinking about if it were a meeting where I'd conditionally go.&rdquo;</p>
+      </div>
+    </div>
+  </div>
 </section>

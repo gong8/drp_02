@@ -1,11 +1,16 @@
 # BeThere - Final Presentation (reformat)
 
 This is the team's human-made final deck (`presentation/human/DRP - Final
-Presentation (2).pdf`), reproduced slide-for-slide but **re-styled in the
+Presentation (3).pdf`), reproduced slide-for-slide but **re-styled in the
 refined-neobrutalist BeThere brand** used by `presentation/v0/`. Same content
-and sequence (50 slides); v0's visual language (Archivo / Inter / Space Mono,
+and sequence (43 slides); v0's visual language (Archivo / Inter / Space Mono,
 ink borders, hard zero-blur shadows, the pink `.hl` highlight, paper / blush /
 ink canvases).
+
+> Tracks the **(3)** source. The conditional-attendance section in the source is
+> a 9-frame hand-drawn animation of one sketch (click-through build steps); it is
+> collapsed here into a single "Initial mock-up" slide (sketch + the research
+> quotes that shaped it), since this is a static deck. Everything else is 1:1.
 
 ## Files
 
