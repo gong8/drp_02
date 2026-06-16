@@ -249,3 +249,8 @@
                       stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset .6s ease; }
 .frag.is-shown .curve-seg { stroke-dashoffset: 0; }
 @media print       { .curve-seg { stroke-dashoffset: 0 !important; } }
+
+/* growing survey bar: fills from 0 to its --w width when its step is reached. */
+.frag--bar          { opacity: 1; translate: 0 0; width: 0; overflow: hidden; white-space: nowrap; transition: width .62s cubic-bezier(.2,.7,.2,1); }
+.frag--bar.is-shown { width: var(--w); }
+@media print       { .frag--bar { width: var(--w) !important; } }
