@@ -12,18 +12,19 @@ import type {
 // the dashboard has every bucket populated (Going / Open / Done); a blind moment carries a pending
 // "I'll go if" conditional to resolve on stage. Keep it coherent with the deck if either changes.
 
-// The three BINDABLE identities. Each defaults to a fake seed id, but can be pointed at a real Clerk
-// user id via env on the App Runner service so that signing in with that Google account lands you in
-// the seeded groups/plans AS that persona (the user row is re-created with the persona name on
-// reseed, so a later sign-in is a no-op). Everyone else in DEMO_USERS is a pure prop that never logs
-// in. The mapping for the live (prod-web + Google) demo:
-//   DEMO_VASANTH_ID = <noah's Clerk user id>   (the organiser)
-//   DEMO_MILLY_ID   = <leixin's Clerk user id> (the hesitant participant)
-// ME_ID stays u_dev for the phone APK / dev-web "Continue as test user" fallback path.
+// The three BINDABLE identities. Each is a real Clerk user id so that signing into the live app with
+// that Google account lands you in the seeded groups/plans AS that persona (the user row is
+// re-created with the persona name on reseed, so a later sign-in is a no-op). Everyone else in
+// DEMO_USERS is a pure prop that never logs in. The live (prod-web + Google) two-phone demo mapping:
+//   Vasanth (organiser)            = noahseymour2006@gmail.com
+//   Milly   (hesitant participant) = gonglx8@gmail.com
+// Each can still be overridden via env (DEMO_VASANTH_ID / DEMO_MILLY_ID) without a code change. ME_ID
+// stays u_dev for the phone APK / dev-web "Continue as test user" fallback path. (These Clerk ids are
+// opaque identifiers, not secrets; swap them here if the demo accounts change.)
 export const ME_ID = process.env.DEMO_ME_ID ?? "u_dev";
 export const ME_NAME = process.env.DEMO_ME_NAME ?? "You";
-export const VASANTH_ID = process.env.DEMO_VASANTH_ID ?? "u_vasanth";
-export const MILLY_ID = process.env.DEMO_MILLY_ID ?? "u_milly";
+export const VASANTH_ID = process.env.DEMO_VASANTH_ID ?? "user_3Ea1MTBkIBa2lMSG10fjuqP8niv";
+export const MILLY_ID = process.env.DEMO_MILLY_ID ?? "user_3EXYDJ0W6va8SHr72VYOVG8gyCq";
 
 export const DEMO_USERS = [
   { id: ME_ID, name: ME_NAME, avatarColor: "#5F9472" },
