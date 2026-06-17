@@ -13,7 +13,7 @@ import {
   responses,
   users,
 } from "./schema.js";
-import { candId, DEMO_USERS, dayAt, GROUPS, PLANS, timeStarts } from "./seed-data.js";
+import { buildPlans, candId, DEMO_USERS, dayAt, GROUPS, timeStarts } from "./seed-data.js";
 
 async function insertDemoData(): Promise<void> {
   for (const u of DEMO_USERS) {
@@ -31,7 +31,9 @@ async function insertDemoData(): Promise<void> {
       await db.insert(groupMembers).values({ groupId: g.id, userId }).onConflictDoNothing();
     }
   }
-  for (const p of PLANS) {
+  // Recompute the demo plans now (call-time), so moment windows are fresh on every reseed.
+  const plans = buildPlans();
+  for (const p of plans) {
     const sorted = timeStarts(p.candidates); // Date[], ascending
     const chosen = p.chosenSuffix
       ? p.candidates.find((c) => c.suffix === p.chosenSuffix)
