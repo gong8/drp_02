@@ -42,13 +42,21 @@ export function extractInviteCode(url: string): string | null {
 const isWeb = Platform.OS === "web";
 
 // The web origin the share link points at. Prefers an explicit build-time origin (the Vercel domain),
-// then the browser's own origin on web, then a placeholder. The server-built link (from PUBLIC_WEB_URL)
-// is preferred when present; this is the client fallback for when it is not (local dev / native).
+// then the browser's own origin on web, then the production web app. The server-built link (from
+// PUBLIC_WEB_URL) is preferred when present; this is the client fallback for when it is not.
+//
+// On WEB, window.location.origin self-adapts (bethere-dev on the dev deploy, bethere-beta on prod), so
+// the literal default is only ever reached on NATIVE with no EXPO_PUBLIC_WEB_URL baked in. That env var
+// IS baked per-environment: the prod APK via .github/workflows/cd.yml, and `pnpm phone` / `pnpm demo`
+// set it too. The last-resort default is therefore the production public app - a misconfigured native
+// build should land on prod, never on a dev URL or a non-existent domain.
+export const DEFAULT_WEB_ORIGIN = "https://bethere-beta.vercel.app";
+
 export function webOrigin(): string {
   const env = process.env.EXPO_PUBLIC_WEB_URL?.trim();
   if (env) return env.replace(/\/+$/, "");
   if (isWeb && typeof window !== "undefined") return window.location.origin;
-  return "https://bethere.app";
+  return DEFAULT_WEB_ORIGIN;
 }
 
 // The shareable join URL for a code. The `/join/<code>` path mirrors the navigation linking config,

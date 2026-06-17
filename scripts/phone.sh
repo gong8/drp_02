@@ -41,5 +41,11 @@ trap 'pkill -f "tsx watch src/index.ts" 2>/dev/null || true; [ -n "${API_PID:-}"
 API_PID=$!
 sleep 2
 
+# Share/invite links the bundle builds (join + meetup) need a web origin: native has no
+# window.location to fall back on, so without this they'd hit the in-code production default. A
+# local run is a dev context, so point them at the dev web app (override with WEB_URL=... pnpm phone).
+# The link can't resolve to data created against THIS local DB - it just shows a real, plausible URL.
+WEB_URL="${WEB_URL:-https://bethere-dev.vercel.app}"
+
 cd apps/mobile
-EXPO_PUBLIC_API_URL="http://$LAN_IP:3000" pnpm exec expo start
+EXPO_PUBLIC_API_URL="http://$LAN_IP:3000" EXPO_PUBLIC_WEB_URL="$WEB_URL" pnpm exec expo start

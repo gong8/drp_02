@@ -22,7 +22,18 @@ cd "$ROOT"
 # The deployed backend. Override with API_URL=... pnpm demo (e.g. the dev App Runner above).
 API_URL="${API_URL:-https://96mgvmgcbj.us-east-1.awsapprunner.com}"
 
+# The web origin the bundle stamps into share/invite links (native has no window.location to fall
+# back on). Derive it from the API target so the link lands on the web app wired to the SAME backend:
+# prod App Runner -> bethere-beta, dev App Runner (wumksaeb3j) -> bethere-dev. Override with WEB_URL=...
+if [ -z "${WEB_URL:-}" ]; then
+  case "$API_URL" in
+    *wumksaeb3j*) WEB_URL="https://bethere-dev.vercel.app" ;;
+    *) WEB_URL="https://bethere-beta.vercel.app" ;;
+  esac
+fi
+
 echo "Demo target: $API_URL    (live deployed API - the phone must be on this machine's Wi-Fi for the bundle)"
+echo "Share links: $WEB_URL    (join/meetup links the bundle builds point here)"
 
 # Confirm the live API is actually reachable before we hand a QR to anyone. /trpc/health is the
 # App Runner health route; a 200 with {"ok":true} means we're good. Warn-but-continue so a transient
@@ -33,8 +44,8 @@ else
   echo "Health check OK: $API_URL/trpc/health responded {\"ok\":true}"
 fi
 
-# The mobile bundle reads EXPO_PUBLIC_API_URL at build time; set it only for Expo. The Clerk
+# The mobile bundle reads EXPO_PUBLIC_API_URL + EXPO_PUBLIC_WEB_URL at build time; set them only for Expo. The Clerk
 # key and dev-auth flag come from apps/mobile/.env, which Expo loads automatically. Extra args
 # (e.g. --tunnel) are forwarded to expo. Use `exec` - there is no local API to clean up.
 cd apps/mobile
-exec env EXPO_PUBLIC_API_URL="$API_URL" pnpm exec expo start "$@"
+exec env EXPO_PUBLIC_API_URL="$API_URL" EXPO_PUBLIC_WEB_URL="$WEB_URL" pnpm exec expo start "$@"

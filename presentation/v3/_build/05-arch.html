@@ -1,0 +1,133 @@
+<section data-label="Implementation" data-screen-label="28" data-speaker-notes="Section divider: how BeThere is actually built." class="slide slide--ink" style="padding:0;justify-content:center;align-items:center;">
+  <h1 style="font-family:Archivo;font-weight:900;font-size:152px;letter-spacing:-5px;color:var(--surface);line-height:1;margin:0;">Implementation</h1>
+</section>
+
+<section id="arch-base" data-label="Architecture" data-screen-label="29" data-speaker-notes="Quickly, under the hood. BeThere is one typed pnpm monorepo - TypeScript runs end to end, from the database all the way to the screen. Here is the whole system on a single diagram; let me walk each layer in turn - the client, the API, the data, the shared core that ties them together, and how it all ships. [Advance to spotlight each layer.]" data-focus-steps="client api db shared ship" class="slide slide--paper arch" style="padding:64px 90px 290px;">
+  <div class="scrim"></div>
+  <h1 class="title arch-title" style="font-size:70px;letter-spacing:-3px;">Under the <span class="hl" style="padding:0 16px 6px;">hood</span></h1>
+  <div class="arch-sub">One typed pnpm monorepo &middot; TypeScript end to end</div>
+
+  <div class="arch-diagram">
+    <div class="arch-cols">
+      <!-- DEPLOYMENT: where it ships -->
+      <div class="card arch-col spot spot--ship" style="flex:.96;box-shadow:7px 7px 0 var(--ink);">
+        <div class="tier-h" style="background:var(--ink);">Deployment</div>
+        <div class="acol-b">
+          <span class="tier-pkg">ships to iOS &middot; Android &middot; web</span>
+          <span class="ship-chip" style="font-size:15px;"><span class="logo" style="width:32px;height:32px;padding:6px;"><svg class="ico i-vercel"><use href="#l-vercel"/></svg></span>Web build &rarr; Vercel</span>
+          <span class="ship-chip" style="font-size:15px;"><span class="logo" style="width:32px;height:32px;padding:6px;"><svg class="ico i-gha"><use href="#l-gha"/></svg></span>Android APK &rarr; CI</span>
+          <span class="ship-chip" style="font-size:15px;"><span class="logo" style="width:32px;height:32px;padding:6px;"><svg class="ico i-docker"><use href="#l-docker"/></svg></span><span class="logo" style="width:32px;height:32px;padding:6px;"><svg class="ico i-aws"><use href="#l-aws"/></svg></span>API &rarr; App Runner</span>
+        </div>
+      </div>
+
+      <!-- FRONTEND: the screens a user taps, each calling a real endpoint -->
+      <div class="card arch-col spot spot--client" style="flex:1.62;box-shadow:7px 7px 0 var(--ink);">
+        <div class="tier-h" style="background:var(--pink);">Frontend</div>
+        <div class="acol-b">
+          <div class="acol-meta">
+            <span class="tier-pkg">@bethere/mobile</span>
+            <div class="logo-row" style="gap:7px;">
+              <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-expo"><use href="#l-expo"/></svg></span>
+              <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-react"><use href="#l-react"/></svg></span>
+              <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-clerk"><use href="#l-clerk"/></svg></span>
+              <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-ts"><use href="#l-ts"/></svg></span>
+            </div>
+          </div>
+          <div class="screen-rows">
+            <div class="screen-row"><span class="sr-name">Send a plan</span></div>
+            <div class="screen-row"><span class="sr-name">Vote / +1</span></div>
+            <div class="screen-row"><span class="sr-name">Lock the round</span></div>
+            <div class="screen-row"><span class="sr-name">The blind moment</span></div>
+            <div class="screen-row"><span class="sr-name">Join by link</span></div>
+            <div class="screen-row"><span class="sr-name">Your dashboard</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- tRPC bus -->
+      <div class="arch-conn"><div class="lbl">tRPC<br>typed JSON</div><div style="display:flex;align-items:center;"><div class="arrow-bar" style="width:46px;"></div><div class="arrow-head"></div></div></div>
+
+      <!-- BACKEND + DATABASE -->
+      <div class="arch-rightcol" style="flex:1.28;">
+        <div class="card arch-col spot spot--api" style="flex:1;box-shadow:7px 7px 0 var(--ink);">
+          <div class="tier-h" style="background:var(--purple);">Backend</div>
+          <div class="acol-b">
+            <div class="acol-meta">
+              <span class="tier-pkg">@bethere/api</span>
+              <div class="logo-row" style="gap:6px;">
+                <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-node"><use href="#l-node"/></svg></span>
+                <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-fastify"><use href="#l-fastify"/></svg></span>
+                <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-trpc"><use href="#l-trpc"/></svg></span>
+                <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-zod"><use href="#l-zod"/></svg></span>
+                <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-drizzle"><use href="#l-drizzle"/></svg></span>
+              </div>
+            </div>
+            <div class="tier-names">Node &middot; Fastify 5 &middot; tRPC v11 &middot; Zod-validated</div>
+            <div class="router-row">
+              <span class="router-chip">events</span><span class="router-chip">groups</span><span class="router-chip">users</span>
+              <span class="router-note">32 typed procedures</span>
+            </div>
+          </div>
+        </div>
+        <div class="arch-vconn"><div class="arrow-vhead"></div><div class="lbl">Drizzle &middot; SQL</div></div>
+        <div class="card arch-col spot spot--db" style="flex:0 0 auto;box-shadow:7px 7px 0 var(--ink);">
+          <div class="tier-h" style="background:var(--green);">Database</div>
+          <div class="acol-b" style="flex-direction:row;align-items:center;gap:16px;">
+            <span class="logo" style="width:46px;height:46px;padding:8px;"><svg class="ico i-pg"><use href="#l-pg"/></svg></span>
+            <div><span class="tier-pkg">PostgreSQL</span><div class="tier-names" style="margin-top:5px;">10 relational tables &middot; integrity for free</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arch-shared spot spot--shared">
+      <span style="font-family:'Space Mono',monospace;font-weight:700;font-size:16px;background:var(--ink);color:var(--surface);padding:6px 11px;white-space:nowrap;">@bethere/shared</span>
+      <span class="logo" style="width:42px;height:42px;padding:7px;"><svg class="ico i-zod"><use href="#l-zod"/></svg></span>
+      <span class="logo" style="width:42px;height:42px;padding:7px;"><svg class="ico i-ts"><use href="#l-ts"/></svg></span>
+      <span style="font-family:Inter;font-weight:600;font-size:20px;color:var(--ink);line-height:1.3;"><b>One source of truth.</b> Zod schemas + pure logic - vote tally, conditional-RSVP, blind reveal - typed into both client and server.</span>
+    </div>
+  </div>
+
+  <div class="arch-hint">press <b>&rarr;</b> to walk through each layer &darr;</div>
+
+  <div class="arch-cap" data-for="client">
+    <div class="cap-tag">Frontend &middot; @bethere/mobile</div>
+    <ul>
+      <li><b>Expo + React Native</b> - one codebase ships to iOS, Android <i>and</i> web</li>
+      <li>Every screen is one <b>typed tRPC call</b> - <code>events.create</code>, <code>respond</code>, <code>joinByCode</code></li>
+      <li><b>Clerk</b> (third-party) for Google sign-in; the web target makes <b>no-download onboarding</b> possible</li>
+    </ul>
+  </div>
+  <div class="arch-cap" data-for="api">
+    <div class="cap-tag">Backend &middot; @bethere/api</div>
+    <ul>
+      <li><b>Fastify 5</b> + <b>tRPC v11</b> on Node - the events, groups + users routers, <b>32 typed procedures</b></li>
+      <li>The demo as real endpoints: <code>create &rarr; toggleReaction &rarr; lock &rarr; respond &rarr; resolve</code></li>
+      <li><b>Zod</b> validates every input; phases <b>settle on read</b> - no scheduler</li>
+    </ul>
+  </div>
+  <div class="arch-cap" data-for="db">
+    <div class="cap-tag">Data &middot; Postgres</div>
+    <ul>
+      <li><b>Postgres</b> - 10 relational tables give us <b>integrity for free</b></li>
+      <li><b>Drizzle ORM</b> - fully typed SQL, no hand-written query types</li>
+      <li>The privacy guarantees live <b>inside the queries</b>, out of the client&rsquo;s reach</li>
+    </ul>
+  </div>
+  <div class="arch-cap" data-for="shared">
+    <div class="cap-tag">Shared core &middot; @bethere/shared</div>
+    <ul>
+      <li><b>Zod schemas + framework-free logic</b> - vote tally, conditional-RSVP, blind reveal</li>
+      <li><b>One source of truth</b> feeds the same types + validation into client and server</li>
+      <li>A change that would break the client fails at <b>compile time</b>, not in front of a user</li>
+    </ul>
+  </div>
+  <div class="arch-cap" data-for="ship">
+    <div class="cap-tag">Deployment &middot; Git &rarr; CI &rarr; CD</div>
+    <ul>
+      <li>Every push runs <b>lint, typecheck and tests</b> on GitHub Actions</li>
+      <li>Ships <b>Android APK</b>, <b>web &rarr; Vercel</b>, <b>API &rarr; AWS App Runner</b> (Docker)</li>
+      <li>A deployed build real friends used on their own phones - iOS, Android, web</li>
+    </ul>
+  </div>
+</section>

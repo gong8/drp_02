@@ -13,26 +13,39 @@ vanilla runtime. (Authored `<section>`s number ~38; the architecture
 **spotlight tour** generates 5 more at load, so the PDF is 43 pages - see
 "Architecture spotlight tour".)
 
-**Decks are versioned in self-contained folders. The CURRENT deck is `v1/` -
-edit `v1/index.html` + `v1/styles.css` and export with `v1/export-pdf.sh`.**
-`v0/` is a frozen earlier snapshot; `v2/` is an empty placeholder for the next
-iteration. Each version folder is independent (its own assets + export script),
-so paths below are relative to the version folder you are editing.
+**Decks are versioned in self-contained folders. The CURRENT (final) deck is
+`v4/` - edit `v4/index.html` + `v4/styles.css` and export with
+`v4/export-pdf.sh`.** `v4/` is a clone of `v3/` with a feedback pass: on-slide
+step reveals are OFF everywhere except the two journey-map slides
+(`.slide--animate`, screens 3 & 6), the presenter control bar is hidden, the
+journey maps gained green/red positive/negative axis bands, slide 18 is a
+left-to-right design timeline, and the demo-1 intro card + the whole onboarding
+user story (incl. demo 2) were cut - leaving 36 slides. In `v4/`, `index.html`
+is canonical: the `_build/` fragments were NOT re-synced, so do not rebuild from
+them. `v3/` keeps `v2/`'s animated engine and visual language and
+folds in the team's human deck (`reformat/`) for the persona/problem framing,
+the four user stories, and the whole evaluation / impact / looking-ahead
+section; it had 41 slides and uses the team's official survey figures (n=47).
+`v0/`, `v1/`, `v2/` and `v3/` are frozen earlier snapshots; `reformat/` is the team's
+human-made reference deck (re-styled in the brand). Each version folder is
+independent (its own assets + export script), so paths below are relative to the
+version folder you are editing.
 
 ```
 presentation/
-  v1/                 the CURRENT deck (edit this)
-    index.html        the deck: one <section> per slide + the runtime (bottom <script>)
+  v4/                 the CURRENT (final) deck (edit this; clone of v3 + feedback pass)
+    index.html        the deck: one <section> per slide + the runtime (bottom <script>) - CANONICAL
     styles.css        :root brand tokens + component classes + viewer chrome
     bethere-deck.pdf  the exported submission PDF (regenerate after edits)
     export-pdf.sh     headless-Chrome PDF export (faithful: same engine, fonts embedded)
     README.md         how to present / export (keyboard nav, etc.)
-    assets/           images referenced by slides (personas, process, sketches)
+    assets/           images referenced by slides (personas, screens, sketches, process)
+    _build/           STALE in v4 (fragments not re-synced after the feedback pass)
     reference/        architecture-slides.html (richer arch reference), preview.png
-  v0/                 frozen earlier snapshot of the deck
-  v2/                 next iteration (empty placeholder)
+  v0/ v1/ v2/ v3/     frozen earlier snapshots (v3 = the deck v4 was cloned from)
+  reformat/           the team's human-made reference deck (re-styled in the brand)
   context/            design-language-prompt.txt, helpful-documents/, project-context/
-  human/              the team's human-made reference decks
+  human/              the team's raw human-made reference decks (PDFs)
   CLAUDE.md           this file
 ```
 
