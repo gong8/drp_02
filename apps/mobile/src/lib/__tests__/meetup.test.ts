@@ -13,37 +13,41 @@ import {
 
 describe("extractMeetupToken", () => {
   it("pulls the token out of a /m/<token> URL", () => {
-    expect(extractMeetupToken("https://bethere.app/m/e_abc123")).toBe("e_abc123");
+    expect(extractMeetupToken("https://bethere-beta.vercel.app/m/e_abc123")).toBe("e_abc123");
     expect(extractMeetupToken("bethere://m/e_abc123")).toBe("e_abc123");
   });
 
   it("trims a trailing slash, query, or hash after the token", () => {
-    expect(extractMeetupToken("https://bethere.app/m/e_abc123/")).toBe("e_abc123");
-    expect(extractMeetupToken("https://bethere.app/m/e_abc123?utm=chat")).toBe("e_abc123");
-    expect(extractMeetupToken("https://bethere.app/m/e_abc123#x")).toBe("e_abc123");
+    expect(extractMeetupToken("https://bethere-beta.vercel.app/m/e_abc123/")).toBe("e_abc123");
+    expect(extractMeetupToken("https://bethere-beta.vercel.app/m/e_abc123?utm=chat")).toBe(
+      "e_abc123",
+    );
+    expect(extractMeetupToken("https://bethere-beta.vercel.app/m/e_abc123#x")).toBe("e_abc123");
   });
 
   it("returns null for a non-meetup URL or an empty token", () => {
-    expect(extractMeetupToken("https://bethere.app/join/ABCD2345")).toBeNull();
-    expect(extractMeetupToken("https://bethere.app/")).toBeNull();
-    expect(extractMeetupToken("https://bethere.app/m/")).toBeNull();
+    expect(extractMeetupToken("https://bethere-beta.vercel.app/join/ABCD2345")).toBeNull();
+    expect(extractMeetupToken("https://bethere-beta.vercel.app/")).toBeNull();
+    expect(extractMeetupToken("https://bethere-beta.vercel.app/m/")).toBeNull();
   });
 });
 
 describe("extractMeetupVia", () => {
   it("pulls the sharer ref off a meetup link's query", () => {
-    expect(extractMeetupVia("https://bethere.app/m/e_abc123?via=u_1")).toBe("u_1");
-    expect(extractMeetupVia("https://bethere.app/m/e_abc123?utm=chat&via=u_1#x")).toBe("u_1");
+    expect(extractMeetupVia("https://bethere-beta.vercel.app/m/e_abc123?via=u_1")).toBe("u_1");
+    expect(extractMeetupVia("https://bethere-beta.vercel.app/m/e_abc123?utm=chat&via=u_1#x")).toBe(
+      "u_1",
+    );
   });
 
   it("decodes a percent-encoded value", () => {
-    expect(extractMeetupVia("https://bethere.app/m/e_abc?via=u%5F1")).toBe("u_1");
+    expect(extractMeetupVia("https://bethere-beta.vercel.app/m/e_abc?via=u%5F1")).toBe("u_1");
   });
 
   it("returns null off a non-meetup link, an absent param, or a blank value", () => {
-    expect(extractMeetupVia("https://bethere.app/join/ABCD2345?via=u_1")).toBeNull();
-    expect(extractMeetupVia("https://bethere.app/m/e_abc123")).toBeNull();
-    expect(extractMeetupVia("https://bethere.app/m/e_abc123?via=")).toBeNull();
+    expect(extractMeetupVia("https://bethere-beta.vercel.app/join/ABCD2345?via=u_1")).toBeNull();
+    expect(extractMeetupVia("https://bethere-beta.vercel.app/m/e_abc123")).toBeNull();
+    expect(extractMeetupVia("https://bethere-beta.vercel.app/m/e_abc123?via=")).toBeNull();
   });
 });
 

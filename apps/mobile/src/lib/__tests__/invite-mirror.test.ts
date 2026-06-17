@@ -58,11 +58,13 @@ describe("normalizeCode (mobile mirror)", () => {
   // The documented mobile-only superset (invite.ts lines 22-25), asserted explicitly so the
   // divergence is a tested contract, not an accident.
   it("extracts the code from a /join/CODE URL, which shared deliberately does not", () => {
-    expect(mobileInvite.normalizeCode("https://bethere.app/join/ABCD-EF12")).toBe("ABCDEF12");
-    // Shared keeps the host chars (no URL extraction), so it does NOT yield the bare code.
-    expect(sharedInvite.normalizeInviteCode("https://bethere.app/join/ABCDEF12")).not.toBe(
+    expect(mobileInvite.normalizeCode("https://bethere-beta.vercel.app/join/ABCD-EF12")).toBe(
       "ABCDEF12",
     );
+    // Shared keeps the host chars (no URL extraction), so it does NOT yield the bare code.
+    expect(
+      sharedInvite.normalizeInviteCode("https://bethere-beta.vercel.app/join/ABCDEF12"),
+    ).not.toBe("ABCDEF12");
   });
 
   it("caps the result at CODE_LENGTH, while shared returns the full uppercased run uncapped", () => {

@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BeThere - DRP Final Presentation</title>
+<meta name="description" content="BeThere - turning 'we should hang out' into a firm plan. No organiser. No maybe. DRP Group 02 final presentation.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!-- tech-logo sprite (simple-icons, CC0). Hidden; instantiated by <use href="#l-*">.
+     Kept outside #deck-canvas so the runtime never treats it as a slide. -->
+<svg aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="l-expo" viewBox="0 0 24 24"><path d="M0 20.084c.043.53.23 1.063.718 1.778.58.849 1.576 1.315 2.303.567.49-.505 5.794-9.776 8.35-13.29a.761.761 0 011.248 0c2.556 3.514 7.86 12.785 8.35 13.29.727.748 1.723.282 2.303-.567.57-.835.728-1.42.728-2.046 0-.426-8.26-15.798-9.092-17.078-.8-1.23-1.044-1.498-2.397-1.542h-1.032c-1.353.044-1.597.311-2.398 1.542C8.267 3.991.33 18.758 0 19.77Z"/></symbol>
+  <symbol id="l-react" viewBox="0 0 24 24"><path d="M14.23 12.004a2.236 2.236 0 0 1-2.235 2.236 2.236 2.236 0 0 1-2.236-2.236 2.236 2.236 0 0 1 2.235-2.236 2.236 2.236 0 0 1 2.236 2.236zm2.648-10.69c-1.346 0-3.107.96-4.888 2.622-1.78-1.653-3.542-2.602-4.887-2.602-.41 0-.783.093-1.106.278-1.375.793-1.683 3.264-.973 6.365C1.98 8.917 0 10.42 0 12.004c0 1.59 1.99 3.097 5.043 4.03-.704 3.113-.39 5.588.988 6.38.32.187.69.275 1.102.275 1.345 0 3.107-.96 4.888-2.624 1.78 1.654 3.542 2.603 4.887 2.603.41 0 .783-.09 1.106-.275 1.374-.792 1.683-3.263.973-6.365C22.02 15.096 24 13.59 24 12.004c0-1.59-1.99-3.097-5.043-4.032.704-3.11.39-5.587-.988-6.38-.318-.184-.688-.277-1.092-.278zm-.005 1.09v.006c.225 0 .406.044.558.127.666.382.955 1.835.73 3.704-.054.46-.142.945-.25 1.44-.96-.236-2.006-.417-3.107-.534-.66-.905-1.345-1.727-2.035-2.447 1.592-1.48 3.087-2.292 4.105-2.295zm-9.77.02c1.012 0 2.514.808 4.11 2.28-.686.72-1.37 1.537-2.02 2.442-1.107.117-2.154.298-3.113.538-.112-.49-.195-.964-.254-1.42-.23-1.868.054-3.32.714-3.707.19-.09.4-.127.563-.132zm4.882 3.05c.455.468.91.992 1.36 1.564-.44-.02-.89-.034-1.345-.034-.46 0-.915.01-1.36.034.44-.572.895-1.096 1.345-1.565zM12 8.1c.74 0 1.477.034 2.202.093.406.582.802 1.203 1.183 1.86.372.64.71 1.29 1.018 1.946-.308.655-.646 1.31-1.013 1.95-.38.66-.773 1.288-1.18 1.87-.728.063-1.466.098-2.21.098-.74 0-1.477-.035-2.202-.093-.406-.582-.802-1.204-1.183-1.86-.372-.64-.71-1.29-1.018-1.946.303-.657.646-1.313 1.013-1.954.38-.66.773-1.286 1.18-1.868.728-.064 1.466-.098 2.21-.098zm-3.635.254c-.24.377-.48.763-.704 1.16-.225.39-.435.782-.635 1.174-.265-.656-.49-1.31-.676-1.947.64-.15 1.315-.283 2.015-.386zm7.26 0c.695.103 1.365.23 2.006.387-.18.632-.405 1.282-.66 1.933-.2-.39-.41-.783-.64-1.174-.225-.392-.465-.774-.705-1.146zm3.063.675c.484.15.944.317 1.375.498 1.732.74 2.852 1.708 2.852 2.476-.005.768-1.125 1.74-2.857 2.475-.42.18-.88.342-1.355.493-.28-.958-.646-1.956-1.1-2.98.45-1.017.81-2.01 1.085-2.964zm-13.395.004c.278.96.645 1.957 1.1 2.98-.45 1.017-.812 2.01-1.086 2.964-.484-.15-.944-.318-1.37-.5-1.732-.737-2.852-1.706-2.852-2.474 0-.768 1.12-1.742 2.852-2.476.42-.18.88-.342 1.356-.494zm11.678 4.28c.265.657.49 1.312.676 1.948-.64.157-1.316.29-2.016.39.24-.375.48-.762.705-1.158.225-.39.435-.788.636-1.18zm-9.945.02c.2.392.41.783.64 1.175.23.39.465.772.705 1.143-.695-.102-1.365-.23-2.006-.386.18-.63.406-1.282.66-1.933zM17.92 16.32c.112.493.2.968.254 1.423.23 1.868-.054 3.32-.714 3.708-.147.09-.338.128-.563.128-1.012 0-2.514-.807-4.11-2.28.686-.72 1.37-1.536 2.02-2.44 1.107-.118 2.154-.3 3.113-.54zm-11.83.01c.96.234 2.006.415 3.107.532.66.905 1.345 1.727 2.035 2.446-1.595 1.483-3.092 2.295-4.11 2.295-.22-.005-.406-.05-.553-.132-.666-.38-.955-1.834-.73-3.703.054-.46.142-.944.25-1.438zm4.56.64c.44.02.89.034 1.345.034.46 0 .915-.01 1.36-.034-.44.572-.895 1.095-1.345 1.565-.455-.47-.91-.993-1.36-1.565z"/></symbol>
+  <symbol id="l-clerk" viewBox="0 0 24 24"><path d="m21.47 20.829-2.881-2.881a.572.572 0 0 0-.7-.084 6.854 6.854 0 0 1-7.081 0 .576.576 0 0 0-.7.084l-2.881 2.881a.576.576 0 0 0-.103.69.57.57 0 0 0 .166.186 12 12 0 0 0 14.113 0 .58.58 0 0 0 .239-.423.576.576 0 0 0-.172-.453Zm.002-17.668-2.88 2.88a.569.569 0 0 1-.701.084A6.857 6.857 0 0 0 8.724 8.08a6.862 6.862 0 0 0-1.222 3.692 6.86 6.86 0 0 0 .978 3.764.573.573 0 0 1-.083.699l-2.881 2.88a.567.567 0 0 1-.864-.063A11.993 11.993 0 0 1 6.771 2.7a11.99 11.99 0 0 1 14.637-.405.566.566 0 0 1 .232.418.57.57 0 0 1-.168.448Zm-7.118 12.261a3.427 3.427 0 1 0 0-6.854 3.427 3.427 0 0 0 0 6.854Z"/></symbol>
+  <symbol id="l-ts" viewBox="0 0 24 24"><path d="M1.125 0C.502 0 0 .502 0 1.125v21.75C0 23.498.502 24 1.125 24h21.75c.623 0 1.125-.502 1.125-1.125V1.125C24 .502 23.498 0 22.875 0zm17.363 9.75c.612 0 1.154.037 1.627.111a6.38 6.38 0 0 1 1.306.34v2.458a3.95 3.95 0 0 0-.643-.361 5.093 5.093 0 0 0-.717-.26 5.453 5.453 0 0 0-1.426-.2c-.3 0-.573.028-.819.086a2.1 2.1 0 0 0-.623.242c-.17.104-.3.229-.393.374a.888.888 0 0 0-.14.49c0 .196.053.373.156.529.104.156.252.304.443.444s.423.276.696.41c.273.135.582.274.926.416.47.197.892.407 1.266.628.374.222.695.473.963.753.268.279.472.598.614.957.142.359.214.776.214 1.253 0 .657-.125 1.21-.373 1.656a3.033 3.033 0 0 1-1.012 1.085 4.38 4.38 0 0 1-1.487.596c-.566.12-1.163.18-1.79.18a9.916 9.916 0 0 1-1.84-.164 5.544 5.544 0 0 1-1.512-.493v-2.63a5.033 5.033 0 0 0 3.237 1.2c.333 0 .624-.03.872-.09.249-.06.456-.144.623-.25.166-.108.29-.234.373-.38a1.023 1.023 0 0 0-.074-1.089 2.12 2.12 0 0 0-.537-.5 5.597 5.597 0 0 0-.807-.444 27.72 27.72 0 0 0-1.007-.436c-.918-.383-1.602-.852-2.053-1.405-.45-.553-.676-1.222-.676-2.005 0-.614.123-1.141.369-1.582.246-.441.58-.804 1.004-1.089a4.494 4.494 0 0 1 1.47-.629 7.536 7.536 0 0 1 1.77-.201zm-15.113.188h9.563v2.166H9.506v9.646H6.789v-9.646H3.375z"/></symbol>
+  <symbol id="l-node" viewBox="0 0 24 24"><path d="M11.998,24c-0.321,0-0.641-0.084-0.922-0.247l-2.936-1.737c-0.438-0.245-0.224-0.332-0.08-0.383 c0.585-0.203,0.703-0.25,1.328-0.604c0.065-0.037,0.151-0.023,0.218,0.017l2.256,1.339c0.082,0.045,0.197,0.045,0.272,0l8.795-5.076 c0.082-0.047,0.134-0.141,0.134-0.238V6.921c0-0.099-0.053-0.192-0.137-0.242l-8.791-5.072c-0.081-0.047-0.189-0.047-0.271,0 L3.075,6.68C2.99,6.729,2.936,6.825,2.936,6.921v10.15c0,0.097,0.054,0.189,0.139,0.235l2.409,1.392 c1.307,0.654,2.108-0.116,2.108-0.89V7.787c0-0.142,0.114-0.253,0.256-0.253h1.115c0.139,0,0.255,0.112,0.255,0.253v10.021 c0,1.745-0.95,2.745-2.604,2.745c-0.508,0-0.909,0-2.026-0.551L2.28,18.675c-0.57-0.329-0.922-0.945-0.922-1.604V6.921 c0-0.659,0.353-1.275,0.922-1.603l8.795-5.082c0.557-0.315,1.296-0.315,1.848,0l8.794,5.082c0.57,0.329,0.924,0.944,0.924,1.603 v10.15c0,0.659-0.354,1.273-0.924,1.604l-8.794,5.078C12.643,23.916,12.324,24,11.998,24z M19.099,13.993 c0-1.9-1.284-2.406-3.987-2.763c-2.731-0.361-3.009-0.548-3.009-1.187c0-0.528,0.235-1.233,2.258-1.233 c1.807,0,2.473,0.389,2.747,1.607c0.024,0.115,0.129,0.199,0.247,0.199h1.141c0.071,0,0.138-0.031,0.186-0.081 c0.048-0.054,0.074-0.123,0.067-0.196c-0.177-2.098-1.571-3.076-4.388-3.076c-2.508,0-4.004,1.058-4.004,2.833 c0,1.925,1.488,2.457,3.895,2.695c2.88,0.282,3.103,0.703,3.103,1.269c0,0.983-0.789,1.402-2.642,1.402 c-2.327,0-2.839-0.584-3.011-1.742c-0.02-0.124-0.126-0.215-0.253-0.215h-1.137c-0.141,0-0.254,0.112-0.254,0.253 c0,1.482,0.806,3.248,4.655,3.248C17.501,17.007,19.099,15.91,19.099,13.993z"/></symbol>
+  <symbol id="l-fastify" viewBox="0 0 24 24"><path d="M23.245 6.49L24 4.533l-.031-.121-7.473 1.967c.797-1.153.523-2.078.523-2.078s-2.387 1.524-4.193 1.485c-1.804-.04-2.387-.52-5.155.362-2.768.882-3.551 3.59-4.351 4.173-.804.583-3.32 2.477-3.32 2.477l.006.034 2.27-.724s-.622.585-1.945 2.37l-.062-.057.002.011s1.064 1.626 2.107 1.324a2.14 2.14 0 0 0 .353-.147c.419.234.967.463 1.572.525 0 0-.41-.475-.752-1.017l.238-.154.865.318-.096-.812c.003-.003.006-.003.008-.006l.849.311-.105-.738a5.65 5.65 0 0 1 .322-.158l.885-3.345 3.662-2.497-.291.733c-.741 1.826-2.135 2.256-2.135 2.256l-.582.22c-.433.512-.614.637-.764 2.353.348-.088.682-.107.984-.028 1.564.421 2.107 2.307 1.685 2.827-.104.13-.356.354-.673.617H7.77l-.008.514-.065.051h-.645l-.009.504-.17.127c-.607.011-1.373-.518-1.373-.518 0 .481.401 1.225.401 1.225l.07-.034-.061.045s1.625 1.083 2.646.681c.91-.356 3.263-2.213 5.296-3.093l6.15-1.62.811-2.1-4.688 1.235v-1.889l5.5-1.448.811-2.1-6.31 1.662V8.367zm-11.163 4l1.459-.384.02.074-.455 1.179-1.513.398zm.503 2.526l-1.512.398.489-1.266 1.459-.385.02.074zm1.971-.424l-1.513.398.49-1.266 1.459-.385.02.073Z"/></symbol>
+  <symbol id="l-trpc" viewBox="0 0 24 24"><path d="M24 12c0 6.62-5.38 12-12 12S0 18.62 0 12 5.38 0 12 0s12 5.38 12 12ZM1.21 12A10.78 10.78 0 0 0 12 22.79 10.78 10.78 0 0 0 22.79 12 10.78 10.78 0 0 0 12 1.21 10.78 10.78 0 0 0 1.21 12Zm10.915-6.086 2.162 1.248a.25.25 0 0 1 .125.217v1.103l2.473 1.428a.25.25 0 0 1 .125.217v2.355l.955.551a.25.25 0 0 1 .125.217v2.496a.25.25 0 0 1-.125.217l-2.162 1.248a.25.25 0 0 1-.25 0l-.956-.552-2.472 1.427a.25.25 0 0 1-.25 0l-2.472-1.427-.956.552a.25.25 0 0 1-.25 0l-2.162-1.248a.25.25 0 0 1-.125-.217V13.25a.25.25 0 0 1 .125-.217l.955-.551v-2.355a.25.25 0 0 1 .125-.217l2.473-1.428V7.38a.25.25 0 0 1 .125-.217l2.162-1.248a.25.25 0 0 1 .25 0Zm1.268 10.049a.25.25 0 0 1-.125-.217V13.25a.25.25 0 0 1 .125-.217l2.16-1.248a.25.25 0 0 1 .25 0l.707.408v-1.922l-2.098-1.21v.814a.25.25 0 0 1-.125.217l-2.162 1.248a.25.25 0 0 1-.25 0l-2.162-1.248a.25.25 0 0 1-.125-.217V9.06L7.49 10.271v1.922l.707-.408a.25.25 0 0 1 .25 0l2.16 1.248a.25.25 0 0 1 .125.217v2.496a.25.25 0 0 1-.125.217l-.705.408L12 17.582l2.098-1.211ZM10.088 9.73l1.662.96V8.766l-1.662-.955Zm3.824 0V7.811l-1.662.955v1.924ZM12 6.418l-1.66.96 1.66.954 1.66-.954Zm-5.59 9.184 1.66.958v-1.921l-1.66-.956Zm3.822 0v-1.92l-1.662.957v1.923Zm-1.91-3.311-1.662.96 1.661.955 1.66-.956Zm5.446 3.31 1.66.96v-1.922l-1.66-.956Zm3.822 0v-1.918l-1.662.956v1.922Zm-1.912-3.31-1.66.96 1.66.955 1.66-.956Z"/></symbol>
+  <symbol id="l-zod" viewBox="0 0 24 24"><path d="M2.584 3.582a2.247 2.247 0 0 1 2.112-1.479h14.617c.948 0 1.794.595 2.115 1.487l2.44 6.777a2.248 2.248 0 0 1-.624 2.443l-9.61 8.52a2.247 2.247 0 0 1-2.963.018L.776 12.773a2.248 2.248 0 0 1-.64-2.467Zm12.038 4.887-9.11 5.537 5.74 5.007c.456.399 1.139.396 1.593-.006l5.643-5.001H14.4l6.239-3.957c.488-.328.69-.947.491-1.5l-1.24-3.446a1.535 1.535 0 0 0-1.456-1.015H5.545a1.535 1.535 0 0 0-1.431 1.01l-1.228 3.37z"/></symbol>
+  <symbol id="l-drizzle" viewBox="0 0 24 24"><path d="M5.353 11.823a1.036 1.036 0 0 0-.395-1.422 1.063 1.063 0 0 0-1.437.399L.138 16.702a1.035 1.035 0 0 0 .395 1.422 1.063 1.063 0 0 0 1.437-.398l3.383-5.903Zm11.216 0a1.036 1.036 0 0 0-.394-1.422 1.064 1.064 0 0 0-1.438.399l-3.382 5.902a1.036 1.036 0 0 0 .394 1.422c.506.283 1.15.104 1.438-.398l3.382-5.903Zm7.293-4.525a1.036 1.036 0 0 0-.395-1.422 1.062 1.062 0 0 0-1.437.399l-3.383 5.902a1.036 1.036 0 0 0 .395 1.422 1.063 1.063 0 0 0 1.437-.399l3.383-5.902Zm-11.219 0a1.035 1.035 0 0 0-.394-1.422 1.064 1.064 0 0 0-1.438.398l-3.382 5.903a1.036 1.036 0 0 0 .394 1.422c.506.282 1.15.104 1.438-.399l3.382-5.902Z"/></symbol>
+  <symbol id="l-pg" viewBox="0 0 24 24"><path d="M23.5594 14.7228a.5269.5269 0 0 0-.0563-.1191c-.139-.2632-.4768-.3418-1.0074-.2321-1.6533.3411-2.2935.1312-2.5256-.0191 1.342-2.0482 2.445-4.522 3.0411-6.8297.2714-1.0507.7982-3.5237.1222-4.7316a1.5641 1.5641 0 0 0-.1509-.235C21.6931.9086 19.8007.0248 17.5099.0005c-1.4947-.0158-2.7705.3461-3.1161.4794a9.449 9.449 0 0 0-.5159-.0816 8.044 8.044 0 0 0-1.3114-.1278c-1.1822-.0184-2.2038.2642-3.0498.8406-.8573-.3211-4.7888-1.645-7.2219.0788C.9359 2.1526.3086 3.8733.4302 6.3043c.0409.818.5069 3.334 1.2423 5.7436.4598 1.5065.9387 2.7019 1.4334 3.582.553.9942 1.1259 1.5933 1.7143 1.7895.4474.1491 1.1327.1441 1.8581-.7279.8012-.9635 1.5903-1.8258 1.9446-2.2069.4351.2355.9064.3625 1.39.3772a.0569.0569 0 0 0 .0004.0041 11.0312 11.0312 0 0 0-.2472.3054c-.3389.4302-.4094.5197-1.5002.7443-.3102.064-1.1344.2339-1.1464.8115-.0025.1224.0329.2309.0919.3268.2269.4231.9216.6097 1.015.6331 1.3345.3335 2.5044.092 3.3714-.6787-.017 2.231.0775 4.4174.3454 5.0874.2212.5529.7618 1.9045 2.4692 1.9043.2505 0 .5263-.0291.8296-.0941 1.7819-.3821 2.5557-1.1696 2.855-2.9059.1503-.8707.4016-2.8753.5388-4.1012.0169-.0703.0357-.1207.057-.1362.0007-.0005.0697-.0471.4272.0307a.3673.3673 0 0 0 .0443.0068l.2539.0223.0149.001c.8468.0384 1.9114-.1426 2.5312-.4308.6438-.2988 1.8057-1.0323 1.5951-1.6698zM2.371 11.8765c-.7435-2.4358-1.1779-4.8851-1.2123-5.5719-.1086-2.1714.4171-3.6829 1.5623-4.4927 1.8367-1.2986 4.8398-.5408 6.108-.13-.0032.0032-.0066.0061-.0098.0094-2.0238 2.044-1.9758 5.536-1.9708 5.7495-.0002.0823.0066.1989.0162.3593.0348.5873.0996 1.6804-.0735 2.9184-.1609 1.1504.1937 2.2764.9728 3.0892.0806.0841.1648.1631.2518.2374-.3468.3714-1.1004 1.1926-1.9025 2.1576-.5677.6825-.9597.5517-1.0886.5087-.3919-.1307-.813-.5871-1.2381-1.3223-.4796-.839-.9635-2.0317-1.4155-3.5126zm6.0072 5.0871c-.1711-.0428-.3271-.1132-.4322-.1772.0889-.0394.2374-.0902.4833-.1409 1.2833-.2641 1.4815-.4506 1.9143-1.0002.0992-.126.2116-.2687.3673-.4426a.3549.3549 0 0 0 .0737-.1298c.1708-.1513.2724-.1099.4369-.0417.156.0646.3078.26.3695.4752.0291.1016.0619.2945-.0452.4444-.9043 1.2658-2.2216 1.2494-3.1676 1.0128zm2.094-3.988-.0525.141c-.133.3566-.2567.6881-.3334 1.003-.6674-.0021-1.3168-.2872-1.8105-.8024-.6279-.6551-.9131-1.5664-.7825-2.5004.1828-1.3079.1153-2.4468.079-3.0586-.005-.0857-.0095-.1607-.0122-.2199.2957-.2621 1.6659-.9962 2.6429-.7724.4459.1022.7176.4057.8305.928.5846 2.7038.0774 3.8307-.3302 4.7363-.084.1866-.1633.3629-.2311.5454zm7.3637 4.5725c-.0169.1768-.0358.376-.0618.5959l-.146.4383a.3547.3547 0 0 0-.0182.1077c-.0059.4747-.054.6489-.115.8693-.0634.2292-.1353.4891-.1794 1.0575-.11 1.4143-.8782 2.2267-2.4172 2.5565-1.5155.3251-1.7843-.4968-2.0212-1.2217a6.5824 6.5824 0 0 0-.0769-.2266c-.2154-.5858-.1911-1.4119-.1574-2.5551.0165-.5612-.0249-1.9013-.3302-2.6462.0044-.2932.0106-.5909.019-.8918a.3529.3529 0 0 0-.0153-.1126 1.4927 1.4927 0 0 0-.0439-.208c-.1226-.4283-.4213-.7866-.7797-.9351-.1424-.059-.4038-.1672-.7178-.0869.067-.276.1831-.5875.309-.9249l.0529-.142c.0595-.16.134-.3257.213-.5012.4265-.9476 1.0106-2.2453.3766-5.1772-.2374-1.0981-1.0304-1.6343-2.2324-1.5098-.7207.0746-1.3799.3654-1.7088.5321a5.6716 5.6716 0 0 0-.1958.1041c.0918-1.1064.4386-3.1741 1.7357-4.4823a4.0306 4.0306 0 0 1 .3033-.276.3532.3532 0 0 0 .1447-.0644c.7524-.5706 1.6945-.8506 2.802-.8325.4091.0067.8017.0339 1.1742.081 1.939.3544 3.2439 1.4468 4.0359 2.3827.8143.9623 1.2552 1.9315 1.4312 2.4543-1.3232-.1346-2.2234.1268-2.6797.779-.9926 1.4189.543 4.1729 1.2811 5.4964.1353.2426.2522.4522.2889.5413.2403.5825.5515.9713.7787 1.2552.0696.087.1372.1714.1885.245-.4008.1155-1.1208.3825-1.0552 1.717-.0123.1563-.0423.4469-.0834.8148-.0461.2077-.0702.4603-.0994.7662zm.8905-1.6211c-.0405-.8316.2691-.9185.5967-1.0105a2.8566 2.8566 0 0 0 .135-.0406 1.202 1.202 0 0 0 .1342.103c.5703.3765 1.5823.4213 3.0068.1344-.2016.1769-.5189.3994-.9533.6011-.4098.1903-1.0957.333-1.7473.3636-.7197.0336-1.0859-.0807-1.1721-.151zm.5695-9.2712c-.0059.3508-.0542.6692-.1054 1.0017-.055.3576-.112.7274-.1264 1.1762-.0142.4368.0404.8909.0932 1.3301.1066.887.216 1.8003-.2075 2.7014a3.5272 3.5272 0 0 1-.1876-.3856c-.0527-.1276-.1669-.3326-.3251-.6162-.6156-1.1041-2.0574-3.6896-1.3193-4.7446.3795-.5427 1.3408-.5661 2.1781-.463zm.2284 7.0137a12.3762 12.3762 0 0 0-.0853-.1074l-.0355-.0444c.7262-1.1995.5842-2.3862.4578-3.4385-.0519-.4318-.1009-.8396-.0885-1.2226.0129-.4061.0666-.7543.1185-1.0911.0639-.415.1288-.8443.1109-1.3505.0134-.0531.0188-.1158.0118-.1902-.0457-.4855-.5999-1.938-1.7294-3.253-.6076-.7073-1.4896-1.4972-2.6889-2.0395.5251-.1066 1.2328-.2035 2.0244-.1859 2.0515.0456 3.6746.8135 4.8242 2.2824a.908.908 0 0 1 .0667.1002c.7231 1.3556-.2762 6.2751-2.9867 10.5405zm-8.8166-6.1162c-.025.1794-.3089.4225-.6211.4225a.5821.5821 0 0 1-.0809-.0056c-.1873-.026-.3765-.144-.5059-.3156-.0458-.0605-.1203-.178-.1055-.2844.0055-.0401.0261-.0985.0925-.1488.1182-.0894.3518-.1226.6096-.0867.3163.0441.6426.1938.6113.4186zm7.9305-.4114c.0111.0792-.049.201-.1531.3102-.0683.0717-.212.1961-.4079.2232a.5456.5456 0 0 1-.075.0052c-.2935 0-.5414-.2344-.5607-.3717-.024-.1765.2641-.3106.5611-.352.297-.0414.6111.0088.6356.1851z"/></symbol>
+  <symbol id="l-pnpm" viewBox="0 0 24 24"><path d="M0 0v7.5h7.5V0zm8.25 0v7.5h7.498V0zm8.25 0v7.5H24V0zM2 2h3.5v3.5H2zm8.25 0h3.498v3.5H10.25zm8.25 0H22v3.5h-3.5zM8.25 8.25v7.5h7.498v-7.5zm8.25 0v7.5H24v-7.5zm2 2H22v3.5h-3.5zM0 16.5V24h7.5v-7.5zm8.25 0V24h7.498v-7.5zm8.25 0V24H24v-7.5z"/></symbol>
+  <symbol id="l-gha" viewBox="0 0 24 24"><path d="M10.984 13.836a.5.5 0 0 1-.353-.146l-.745-.743a.5.5 0 1 1 .706-.708l.392.391 1.181-1.18a.5.5 0 0 1 .708.707l-1.535 1.533a.504.504 0 0 1-.354.146zm9.353-.147l1.534-1.532a.5.5 0 0 0-.707-.707l-1.181 1.18-.392-.391a.5.5 0 1 0-.706.708l.746.743a.497.497 0 0 0 .706-.001zM4.527 7.452l2.557-1.585A1 1 0 0 0 7.09 4.17L4.533 2.56A1 1 0 0 0 3 3.406v3.196a1.001 1.001 0 0 0 1.527.85zm2.03-2.436L4 6.602V3.406l2.557 1.61zM24 12.5c0 1.93-1.57 3.5-3.5 3.5a3.503 3.503 0 0 1-3.46-3h-2.08a3.503 3.503 0 0 1-3.46 3 3.502 3.502 0 0 1-3.46-3h-.558c-.972 0-1.85-.399-2.482-1.042V17c0 1.654 1.346 3 3 3h.04c.244-1.693 1.7-3 3.46-3 1.93 0 3.5 1.57 3.5 3.5S13.43 24 11.5 24a3.502 3.502 0 0 1-3.46-3H8c-2.206 0-4-1.794-4-4V9.899A5.008 5.008 0 0 1 0 5c0-2.757 2.243-5 5-5s5 2.243 5 5a5.005 5.005 0 0 1-4.952 4.998A2.482 2.482 0 0 0 7.482 12h.558c.244-1.693 1.7-3 3.46-3a3.502 3.502 0 0 1 3.46 3h2.08a3.503 3.503 0 0 1 3.46-3c1.93 0 3.5 1.57 3.5 3.5zm-15 8c0 1.378 1.122 2.5 2.5 2.5s2.5-1.122 2.5-2.5-1.122-2.5-2.5-2.5S9 19.122 9 20.5zM5 9c2.206 0 4-1.794 4-4S7.206 1 5 1 1 2.794 1 5s1.794 4 4 4zm9 3.5c0-1.378-1.122-2.5-2.5-2.5S9 11.122 9 12.5s1.122 2.5 2.5 2.5 2.5-1.122 2.5-2.5zm9 0c0-1.378-1.122-2.5-2.5-2.5S18 11.122 18 12.5s1.122 2.5 2.5 2.5 2.5-1.122 2.5-2.5zm-13 8a.5.5 0 1 0 1 0 .5.5 0 0 0-1 0zm2 0a.5.5 0 1 0 1 0 .5.5 0 0 0-1 0zm12 0c0 1.93-1.57 3.5-3.5 3.5a3.503 3.503 0 0 1-3.46-3.002c-.007.001-.013.005-.021.005l-.506.017h-.017a.5.5 0 0 1-.016-.999l.506-.017c.018-.002.035.006.052.007A3.503 3.503 0 0 1 20.5 17c1.93 0 3.5 1.57 3.5 3.5zm-1 0c0-1.378-1.122-2.5-2.5-2.5S18 19.122 18 20.5s1.122 2.5 2.5 2.5 2.5-1.122 2.5-2.5z"/></symbol>
+  <symbol id="l-docker" viewBox="0 0 24 24"><path d="M13.983 11.078h2.119a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.119a.185.185 0 00-.185.185v1.888c0 .102.083.185.185.185m-2.954-5.43h2.118a.186.186 0 00.186-.186V3.574a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m0 2.716h2.118a.187.187 0 00.186-.186V6.29a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.887c0 .102.082.185.185.186m-2.93 0h2.12a.186.186 0 00.184-.186V6.29a.185.185 0 00-.185-.185H8.1a.185.185 0 00-.185.185v1.887c0 .102.083.185.185.186m-2.964 0h2.119a.186.186 0 00.185-.186V6.29a.185.185 0 00-.185-.185H5.136a.186.186 0 00-.186.185v1.887c0 .102.084.185.186.186m5.893 2.715h2.118a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m-2.93 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.083.185.185.185m-2.964 0h2.119a.185.185 0 00.185-.185V9.006a.185.185 0 00-.184-.186h-2.12a.186.186 0 00-.186.186v1.887c0 .102.084.185.186.185m-2.92 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.082.185.185.185M23.763 9.89c-.065-.051-.672-.51-1.954-.51-.338.001-.676.03-1.01.087-.248-1.7-1.653-2.53-1.716-2.566l-.344-.199-.226.327c-.284.438-.49.922-.612 1.43-.23.97-.09 1.882.403 2.661-.595.332-1.55.413-1.744.42H.751a.751.751 0 00-.75.748 11.376 11.376 0 00.692 4.062c.545 1.428 1.355 2.48 2.41 3.124 1.18.723 3.1 1.137 5.275 1.137.983.003 1.963-.086 2.93-.266a12.248 12.248 0 003.823-1.389c.98-.567 1.86-1.288 2.61-2.136 1.252-1.418 1.998-2.997 2.553-4.4h.221c1.372 0 2.215-.549 2.68-1.009.309-.293.55-.65.707-1.046l.098-.288z"/></symbol>
+  <symbol id="l-aws" viewBox="0 0 24 24"><path d="M6.763 10.036c0 .296.032.535.088.71.064.176.144.368.256.576.04.063.056.127.056.183 0 .08-.048.16-.152.24l-.503.335a.383.383 0 0 1-.208.072c-.08 0-.16-.04-.239-.112a2.47 2.47 0 0 1-.287-.375 6.18 6.18 0 0 1-.248-.471c-.622.734-1.405 1.101-2.347 1.101-.67 0-1.205-.191-1.596-.574-.391-.384-.59-.894-.59-1.533 0-.678.239-1.23.726-1.644.487-.415 1.133-.623 1.955-.623.272 0 .551.024.846.064.296.04.6.104.918.176v-.583c0-.607-.127-1.03-.375-1.277-.255-.248-.686-.367-1.3-.367-.28 0-.568.031-.863.103-.295.072-.583.16-.862.272a2.287 2.287 0 0 1-.28.104.488.488 0 0 1-.127.023c-.112 0-.168-.08-.168-.247v-.391c0-.128.016-.224.056-.28a.597.597 0 0 1 .224-.167c.279-.144.614-.264 1.005-.36a4.84 4.84 0 0 1 1.246-.151c.95 0 1.644.216 2.091.647.439.43.662 1.085.662 1.963v2.586zm-3.24 1.214c.263 0 .534-.048.822-.144.287-.096.543-.271.758-.51.128-.152.224-.32.272-.512.047-.191.08-.423.08-.694v-.335a6.66 6.66 0 0 0-.735-.136 6.02 6.02 0 0 0-.75-.048c-.535 0-.926.104-1.19.32-.263.215-.39.518-.39.917 0 .375.095.655.295.846.191.2.47.296.838.296zm6.41.862c-.144 0-.24-.024-.304-.08-.064-.048-.12-.16-.168-.311L7.586 5.55a1.398 1.398 0 0 1-.072-.32c0-.128.064-.2.191-.2h.783c.151 0 .255.025.31.08.065.048.113.16.16.312l1.342 5.284 1.245-5.284c.04-.16.088-.264.151-.312a.549.549 0 0 1 .32-.08h.638c.152 0 .256.025.32.08.063.048.12.16.151.312l1.261 5.348 1.381-5.348c.048-.16.104-.264.16-.312a.52.52 0 0 1 .311-.08h.743c.127 0 .2.065.2.2 0 .04-.009.08-.017.128a1.137 1.137 0 0 1-.056.2l-1.923 6.17c-.048.16-.104.263-.168.311a.51.51 0 0 1-.303.08h-.687c-.151 0-.255-.024-.32-.08-.063-.056-.119-.16-.15-.32l-1.238-5.148-1.23 5.14c-.04.16-.087.264-.15.32-.065.056-.177.08-.32.08zm10.256.215c-.415 0-.83-.048-1.229-.143-.399-.096-.71-.2-.918-.32-.128-.071-.215-.151-.247-.223a.563.563 0 0 1-.048-.224v-.407c0-.167.064-.247.183-.247.048 0 .096.008.144.024.048.016.12.048.2.08.271.12.566.215.878.279.319.064.63.096.95.096.502 0 .894-.088 1.165-.264a.86.86 0 0 0 .415-.758.777.777 0 0 0-.215-.559c-.144-.151-.416-.287-.807-.415l-1.157-.36c-.583-.183-1.014-.454-1.277-.813a1.902 1.902 0 0 1-.4-1.158c0-.335.073-.63.216-.886.144-.255.335-.479.575-.654.24-.184.51-.32.83-.415.32-.096.655-.136 1.006-.136.175 0 .359.008.535.032.183.024.35.056.518.088.16.04.312.08.455.127.144.048.256.096.336.144a.69.69 0 0 1 .24.2.43.43 0 0 1 .071.263v.375c0 .168-.064.256-.184.256a.83.83 0 0 1-.303-.096 3.652 3.652 0 0 0-1.532-.311c-.455 0-.815.071-1.062.223-.248.152-.375.383-.375.71 0 .224.08.416.24.567.159.152.454.304.877.44l1.134.358c.574.184.99.44 1.237.767.247.327.367.702.367 1.117 0 .343-.072.655-.207.926-.144.272-.336.511-.583.703-.248.2-.543.343-.886.447-.36.111-.734.167-1.142.167zM21.698 16.207c-2.626 1.94-6.442 2.969-9.722 2.969-4.598 0-8.74-1.7-11.87-4.526-.247-.223-.024-.527.272-.351 3.384 1.963 7.559 3.153 11.877 3.153 2.914 0 6.114-.607 9.06-1.852.439-.2.814.287.383.607zM22.792 14.961c-.336-.43-2.22-.207-3.074-.103-.255.032-.295-.192-.063-.36 1.5-1.053 3.967-.75 4.254-.399.287.36-.08 2.826-1.485 4.007-.215.184-.423.088-.327-.151.32-.79 1.03-2.57.695-2.994z"/></symbol>
+</svg>
+<div id="deck-progress"></div>
+<div id="deck-root" data-design-w="1920" data-design-h="1080">
+  <div id="deck-stage">
+    <div id="deck-canvas">
+<section data-label="Cover" data-screen-label="01" data-speaker-notes="Hi everyone. Before I say a single word about what we built, picture the last time your group chat said 'we should hang out' and then nothing happened. Hold that thought. We're BeThere, DRP group 02, and our whole project is about that gap. The promise in one line: no organiser, and no maybe." class="slide slide--blush" style="padding:96px 110px;justify-content:center;position:relative;">
+  <div style="position:absolute;top:84px;right:110px;font-family:'Space Mono',monospace;font-weight:700;font-size:22px;color:var(--ink);border:2px solid var(--ink);border-radius:0;padding:8px 15px;background:var(--surface);">DRP &middot; GROUP 02</div>
+  <div>
+    <span style="font-family:Archivo;font-weight:800;font-size:80px;letter-spacing:-1.5px;color:var(--ink);line-height:1;">Get the whole group to</span>
+    <h1 class="frag" style="font-family:Archivo;font-weight:900;font-size:224px;letter-spacing:-10px;line-height:.84;margin:12px 0 0;color:var(--ink);">Be<span style="color:var(--pink);">There</span>.</h1>
+    <p class="frag" style="font-family:Inter;font-weight:600;font-size:32px;color:var(--muted);margin:42px 0 0;max-width:1100px;">No organiser. No maybe - just the whole group, there.</p>
+  </div>
+  <div class="frag" style="position:absolute;left:110px;bottom:84px;font-family:Inter;font-weight:700;font-size:24px;color:var(--muted);">Nelson &middot; Lukas &middot; Noah &middot; James</div>
+</section>
+
+<section data-label="Meet Vasanth" data-screen-label="02" data-speaker-notes="Before any numbers, meet the person we built this for. Vasanth, 21, studies Law at St Andrews, plays volleyball and board games, loves to cook for his friends. Extroverted and reliable - he's the friend who always ends up being the organiser. Keep him in mind: the whole problem is easiest to feel through him." class="slide slide--blush" style="padding:80px 110px 76px;">
+  <h1 class="title" style="font-size:84px;letter-spacing:-3px;">Meet <span class="hl" style="padding:0 20px 6px;">Vasanth</span></h1>
+
+  <div style="display:flex;gap:60px;margin-top:38px;flex:1;align-items:center;">
+    <div class="frag" style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:40px 46px;">
+      <ul style="margin:0;padding:0;display:flex;flex-direction:column;gap:18px;">
+        <li style="list-style:none;font-family:Inter;font-weight:600;font-size:30px;color:var(--ink);display:flex;gap:16px;align-items:baseline;"><span style="color:var(--pink);font-weight:900;">&bull;</span>Age 21</li>
+        <li style="list-style:none;font-family:Inter;font-weight:600;font-size:30px;color:var(--ink);display:flex;gap:16px;align-items:baseline;"><span style="color:var(--pink);font-weight:900;">&bull;</span>Studies Law at St. Andrews</li>
+        <li style="list-style:none;font-family:Inter;font-weight:600;font-size:30px;color:var(--ink);display:flex;gap:16px;align-items:baseline;"><span style="color:var(--pink);font-weight:900;">&bull;</span>Enjoys playing volleyball and board games</li>
+        <li style="list-style:none;font-family:Inter;font-weight:600;font-size:30px;color:var(--ink);display:flex;gap:16px;align-items:baseline;"><span style="color:var(--pink);font-weight:900;">&bull;</span>Loves to cook for his friends</li>
+        <li style="list-style:none;font-family:Inter;font-weight:600;font-size:30px;color:var(--ink);display:flex;gap:16px;align-items:baseline;"><span style="color:var(--pink);font-weight:900;">&bull;</span>Extroverted and reliable</li>
+      </ul>
+    </div>
+    <div class="frag frag--right" style="flex-shrink:0;position:relative;">
+      <div style="width:540px;height:600px;border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--sand);overflow:hidden;"><img src="assets/personas/persona-vasanth.jpg" alt="Vasanth" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+      <span class="sticker" style="position:absolute;top:24px;right:-14px;background:var(--pink);font-size:24px;transform:rotate(-4deg);">The Organiser</span>
+    </div>
+  </div>
+</section>
+
+<section data-label="Vasanth, as he felt it" data-screen-label="03" data-speaker-notes="Here is how organising actually feels for Vasanth - a real Christmas-break trip he tried to set up, mapped the way he experienced it. He sparks the plan, hopeful. Then silence, and he's pushing for replies. A brief yes, then a maybe. He's still chasing, late at night. And eventually it's just too late, and he gives up. Notice the shape: from his seat, the line only ever goes down." class="slide slide--paper slide--animate" style="padding:80px 110px 56px;">
+  <h1 class="title" style="font-size:60px;letter-spacing:-2px;">Vasanth's Christmas break, <span class="hl" style="padding:0 14px 6px;">mapped as he felt it</span></h1>
+  <div style="flex:1;display:flex;align-items:center;margin-top:6px;">
+    <svg viewBox="0 0 1720 600" style="width:100%;height:auto;" preserveAspectRatio="xMidYMid meet">
+      <rect x="80" y="60" width="1580" height="250" fill="var(--green)" fill-opacity="0.13"></rect>
+      <rect x="80" y="310" width="1580" height="230" fill="var(--pink)" fill-opacity="0.11"></rect>
+      <line x1="80" y1="60" x2="80" y2="540" stroke="var(--axis-warm)" stroke-width="3"></line>
+      <line x1="80" y1="310" x2="1660" y2="310" stroke="var(--axis-warm)" stroke-width="3"></line>
+      <polygon points="1660,300 1682,310 1660,320" fill="var(--axis-warm)"></polygon>
+      <text transform="translate(44,340) rotate(-90)" font-family="Inter" font-weight="700" font-size="22" fill="var(--muted)">Happiness</text>
+      <text x="1648" y="352" text-anchor="end" font-family="Inter" font-weight="700" font-size="22" fill="var(--muted)">Time</text>
+      <g text-anchor="middle">
+        <g class="frag frag--still">
+          <circle cx="240" cy="130" r="13" fill="var(--green)" stroke="var(--ink)" stroke-width="3"></circle>
+          <text x="240" y="82" font-family="'Space Mono',monospace" font-weight="700" font-size="18" fill="var(--muted)">MON 14:01<tspan x="240" dy="26" font-family="Inter" font-weight="700" font-size="21" fill="var(--ink)">messages the chat - hopeful</tspan></text>
+        </g>
+        <g class="frag frag--still">
+          <path class="curve-seg" pathLength="1" d="M240,130 L480,265"></path>
+          <circle cx="480" cy="265" r="12" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"></circle>
+          <text x="480" y="217" font-family="'Space Mono',monospace" font-weight="700" font-size="18" fill="var(--muted)">TUE 11:00<tspan x="480" dy="26" font-family="Inter" font-weight="700" font-size="21" fill="var(--ink)">silence - pushes for replies</tspan></text>
+        </g>
+        <g class="frag frag--still">
+          <path class="curve-seg" pathLength="1" d="M480,265 L720,215"></path>
+          <circle cx="720" cy="215" r="12" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"></circle>
+          <text x="720" y="167" font-family="'Space Mono',monospace" font-weight="700" font-size="18" fill="var(--muted)">TUE 12:14<tspan x="720" dy="26" font-family="Inter" font-weight="700" font-size="21" fill="var(--ink)">&ldquo;Yeah I'm in&rdquo;</tspan></text>
+        </g>
+        <g class="frag frag--still">
+          <path class="curve-seg" pathLength="1" d="M720,215 L975,302"></path>
+          <circle cx="975" cy="302" r="12" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"></circle>
+          <text x="975" y="254" font-family="'Space Mono',monospace" font-weight="700" font-size="18" fill="var(--muted)">TUE 14:37<tspan x="975" dy="26" font-family="Inter" font-weight="700" font-size="21" fill="var(--ink)">&ldquo;Maybe&rdquo;</tspan></text>
+        </g>
+        <g class="frag frag--still">
+          <path class="curve-seg" pathLength="1" d="M975,302 L1235,400"></path>
+          <circle cx="1235" cy="400" r="12" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"></circle>
+          <text x="1235" y="352" font-family="'Space Mono',monospace" font-weight="700" font-size="18" fill="var(--muted)">TUE 23:11<tspan x="1235" dy="26" font-family="Inter" font-weight="700" font-size="21" fill="var(--ink)">still no replies - he chases</tspan></text>
+        </g>
+        <g class="frag frag--still">
+          <path class="curve-seg" pathLength="1" d="M1235,400 L1510,485"></path>
+          <circle cx="1510" cy="485" r="17" fill="var(--pink)" stroke="var(--ink)" stroke-width="3"></circle>
+          <text x="1510" y="437" font-family="'Space Mono',monospace" font-weight="700" font-size="18" fill="var(--muted)">WED 5:00<tspan x="1510" dy="26" font-family="Inter" font-weight="700" font-size="21" fill="var(--ink)">too late - gives up</tspan></text>
+        </g>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<section data-label="Vasanth's problem" data-screen-label="04" data-speaker-notes="Stated plainly: Vasanth loves seeing his friends, but organising is hard and chasing replies is the frustrating part. That is the organiser's problem." class="slide slide--blush" style="padding:96px 110px;justify-content:center;">
+  <div class="eyebrow" style="font-size:24px;color:var(--pink);">The organiser's problem</div>
+  <p class="frag frag--rise-lg" style="font-family:Archivo;font-weight:800;font-size:60px;letter-spacing:-1.5px;line-height:1.25;color:var(--ink);margin:28px 0 0;max-width:1540px;">Vasanth loves to meet his friends, but organising is <span style="color:var(--pink);">difficult</span> and chasing replies from hesitant group members is <span style="color:var(--pink);">frustrating</span>.</p>
+</section>
+
+<section data-label="Meet Milly" data-screen-label="05" data-speaker-notes="The organiser is only half the story. Milly, 19, studies English Literature at St Andrews, plays cello and reads, and just joined the netball society. Shy and introverted - she would love to go to more socials, but she will not commit unless she's sure her own friends are going too." class="slide slide--blush" style="padding:80px 110px 76px;">
+  <h1 class="title" style="font-size:84px;letter-spacing:-3px;">Meet <span class="hl" style="padding:0 20px 6px;">Milly</span></h1>
+
+  <div style="display:flex;gap:60px;margin-top:38px;flex:1;align-items:center;">
+    <div class="frag" style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:40px 46px;">
+      <ul style="margin:0;padding:0;display:flex;flex-direction:column;gap:18px;">
+        <li style="list-style:none;font-family:Inter;font-weight:600;font-size:30px;color:var(--ink);display:flex;gap:16px;align-items:baseline;"><span style="color:var(--purple);font-weight:900;">&bull;</span>Age 19</li>
+        <li style="list-style:none;font-family:Inter;font-weight:600;font-size:30px;color:var(--ink);display:flex;gap:16px;align-items:baseline;"><span style="color:var(--purple);font-weight:900;">&bull;</span>Studies English Literature at St. Andrews</li>
+        <li style="list-style:none;font-family:Inter;font-weight:600;font-size:30px;color:var(--ink);display:flex;gap:16px;align-items:baseline;"><span style="color:var(--purple);font-weight:900;">&bull;</span>Likes to play cello and read</li>
+        <li style="list-style:none;font-family:Inter;font-weight:600;font-size:30px;color:var(--ink);display:flex;gap:16px;align-items:baseline;"><span style="color:var(--purple);font-weight:900;">&bull;</span>Recently joined her university's netball society</li>
+        <li style="list-style:none;font-family:Inter;font-weight:600;font-size:30px;color:var(--ink);display:flex;gap:16px;align-items:baseline;"><span style="color:var(--purple);font-weight:900;">&bull;</span>Shy and introverted</li>
+      </ul>
+    </div>
+    <div class="frag frag--right" style="flex-shrink:0;position:relative;">
+      <div style="width:540px;height:600px;border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--sand);overflow:hidden;"><img src="assets/personas/persona-milly.jpg" alt="Milly" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+      <span class="sticker" style="position:absolute;top:24px;right:-14px;background:var(--purple);font-size:24px;transform:rotate(-4deg);">The Participant</span>
+    </div>
+  </div>
+</section>
+
+<section data-label="Milly, as she felt it" data-screen-label="06" data-speaker-notes="The same week from Milly's side. The netball social drops - she's keen. But she waits for her friend Abby to say she's in first. Abby doesn't respond, then sends a maybe. Nobody actually commits, people start dropping out, and the meetup falls apart. The same downward shape as Vasanth - but for the opposite reason. His problem is effort; hers is uncertainty." class="slide slide--paper slide--animate" style="padding:80px 110px 56px;">
+  <h1 class="title" style="font-size:60px;letter-spacing:-2px;">Milly's netball social, <span class="hl" style="padding:0 14px 6px;">mapped as she felt it</span></h1>
+  <div style="flex:1;display:flex;align-items:center;margin-top:6px;">
+    <svg viewBox="0 0 1720 600" style="width:100%;height:auto;" preserveAspectRatio="xMidYMid meet">
+      <rect x="80" y="60" width="1580" height="250" fill="var(--green)" fill-opacity="0.13"></rect>
+      <rect x="80" y="310" width="1580" height="230" fill="var(--pink)" fill-opacity="0.11"></rect>
+      <line x1="80" y1="60" x2="80" y2="540" stroke="var(--axis-warm)" stroke-width="3"></line>
+      <line x1="80" y1="310" x2="1660" y2="310" stroke="var(--axis-warm)" stroke-width="3"></line>
+      <polygon points="1660,300 1682,310 1660,320" fill="var(--axis-warm)"></polygon>
+      <text transform="translate(44,340) rotate(-90)" font-family="Inter" font-weight="700" font-size="22" fill="var(--muted)">Happiness</text>
+      <text x="1648" y="352" text-anchor="end" font-family="Inter" font-weight="700" font-size="22" fill="var(--muted)">Time</text>
+      <g text-anchor="middle">
+        <g class="frag frag--still">
+          <circle cx="240" cy="310" r="13" fill="var(--green)" stroke="var(--ink)" stroke-width="3"></circle>
+          <text x="240" y="262" font-family="'Space Mono',monospace" font-weight="700" font-size="18" fill="var(--muted)">THU 17:10<tspan x="240" dy="26" font-family="Inter" font-weight="700" font-size="21" fill="var(--ink)">netball social drops</tspan></text>
+        </g>
+        <g class="frag frag--still">
+          <path class="curve-seg" pathLength="1" d="M240,310 L480,155"></path>
+          <circle cx="480" cy="155" r="12" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"></circle>
+          <text x="480" y="107" font-family="'Space Mono',monospace" font-weight="700" font-size="18" fill="var(--muted)">THU 18:22<tspan x="480" dy="26" font-family="Inter" font-weight="700" font-size="21" fill="var(--ink)">waits on Abby's reply</tspan></text>
+        </g>
+        <g class="frag frag--still">
+          <path class="curve-seg" pathLength="1" d="M480,155 L720,420"></path>
+          <circle cx="720" cy="420" r="12" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"></circle>
+          <text x="720" y="462" font-family="'Space Mono',monospace" font-weight="700" font-size="18" fill="var(--muted)">FRI<tspan x="720" dy="26" font-family="Inter" font-weight="700" font-size="21" fill="var(--ink)">Abby doesn't respond</tspan></text>
+        </g>
+        <g class="frag frag--still">
+          <path class="curve-seg" pathLength="1" d="M720,420 L975,225"></path>
+          <circle cx="975" cy="225" r="12" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"></circle>
+          <text x="975" y="177" font-family="'Space Mono',monospace" font-weight="700" font-size="18" fill="var(--muted)">SAT 13:44<tspan x="975" dy="26" font-family="Inter" font-weight="700" font-size="21" fill="var(--ink)">Abby says &ldquo;maybe&rdquo;</tspan></text>
+        </g>
+        <g class="frag frag--still">
+          <path class="curve-seg" pathLength="1" d="M975,225 L1235,310"></path>
+          <circle cx="1235" cy="310" r="12" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"></circle>
+          <text x="1235" y="262" font-family="'Space Mono',monospace" font-weight="700" font-size="18" fill="var(--muted)">SUN 10:53<tspan x="1235" dy="26" font-family="Inter" font-weight="700" font-size="21" fill="var(--ink)">people start dropping out</tspan></text>
+        </g>
+        <g class="frag frag--still">
+          <path class="curve-seg" pathLength="1" d="M1235,310 L1510,490"></path>
+          <circle cx="1510" cy="490" r="17" fill="var(--pink)" stroke="var(--ink)" stroke-width="3"></circle>
+          <text x="1510" y="532" font-family="'Space Mono',monospace" font-weight="700" font-size="18" fill="var(--muted)">SUN 19:43<tspan x="1510" dy="26" font-family="Inter" font-weight="700" font-size="21" fill="var(--ink)">meetup falls apart</tspan></text>
+        </g>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<section data-label="Milly's problem" data-screen-label="07" data-speaker-notes="Stated plainly: Milly would love to engage with the netball socials more, but she is hesitant unless she's sure her own friends are going too. That is the participant's problem." class="slide slide--blush" style="padding:96px 110px;justify-content:center;">
+  <div class="eyebrow" style="font-size:24px;color:var(--purple);">The participant's problem</div>
+  <p class="frag frag--rise-lg" style="font-family:Archivo;font-weight:800;font-size:60px;letter-spacing:-1.5px;line-height:1.25;color:var(--ink);margin:28px 0 0;max-width:1540px;">Milly would love to engage with her netball society's socials more, but she is <span style="color:var(--purple);">hesitant</span> because she wants to be sure her friends are <span style="color:var(--purple);">going too</span>.</p>
+</section>
+<section data-label="Why we interviewed" data-screen-label="08" data-speaker-notes="Vasanth and Milly are not invented - they are composites of real people we spoke to. To ground the problem in real people, we interviewed university students about how they actually plan and join social meetups. Everything that follows came straight out of what they told us." class="slide slide--paper" style="padding:96px 120px;justify-content:center;">
+  <div class="eyebrow" style="font-size:24px;color:var(--muted);">Research</div>
+  <p class="frag frag--rise-lg" style="font-family:Archivo;font-weight:800;font-size:62px;letter-spacing:-1.5px;line-height:1.18;color:var(--ink);margin:28px 0 0;max-width:1480px;">To better understand this problem, we interviewed <span class="hl" style="box-shadow:5px 5px 0 var(--ink);padding:0 16px 5px;">university students</span> about their social lives.</p>
+</section>
+
+<section data-label="Interview: Eddie" data-screen-label="09" data-speaker-notes="First, the organiser's side. Eddie is a third-year Psychology student at Goldsmiths - the Vasanth of his group. He told us that when he has drummed up a plan, put in considerable time on logistics, pricing, checking everyone is okay with it, and it then falls through, that is genuinely frustrating. That sunk effort, wasted, is exactly the organiser burden we saw in Vasanth's week." class="slide slide--blush" style="padding:84px 110px;flex-direction:row;gap:70px;align-items:center;">
+  <div style="width:420px;flex-shrink:0;">
+    <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);border-radius:0;overflow:hidden;background:var(--sand);height:600px;">
+      <img src="assets/personas/interview-eddie.jpg" alt="Eddie" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block;">
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;margin-top:18px;">
+      <div><div style="font-family:Archivo;font-weight:900;font-size:32px;line-height:1;">Eddie, 21</div><div style="font-family:Inter;font-weight:500;font-size:20px;color:var(--muted);">Psychology &middot; Goldsmiths</div></div>
+      <span style="margin-left:auto;background:var(--pink);color:var(--surface);font-family:Archivo;font-weight:800;font-size:19px;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);padding:6px 12px;border-radius:0;transform:rotate(-3deg);white-space:nowrap;">The organiser</span>
+    </div>
+  </div>
+  <div style="flex:1;">
+    <p class="frag" style="font-family:Archivo;font-weight:700;font-size:46px;line-height:1.3;color:var(--ink);margin:0;max-width:900px;">&ldquo;If I drummed up the plan, and it&rsquo;s taken <span style="color:var(--green);">considerable time</span> - logistics, pricing, whether everyone&rsquo;s okay with it - and then it falls through after all of that, that&rsquo;s <span style="color:var(--green);">quite frustrating</span>.&rdquo;</p>
+  </div>
+</section>
+
+<section data-label="Interview: Chloe" data-screen-label="10" data-speaker-notes="Then the participant's side. Chloe studies International Relations at King's. She described exactly the slow death we map on Milly's curve: as the days went past, the meetup got more drawn out, second thoughts crept in, and more and more people ended up pulling out. Nobody made a decision - the delay itself killed it." class="slide slide--paper" style="padding:84px 110px;flex-direction:row;gap:70px;align-items:center;">
+  <div style="width:420px;flex-shrink:0;">
+    <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);border-radius:0;overflow:hidden;background:var(--sand);height:600px;">
+      <img src="assets/personas/interview-chloe.jpg" alt="Chloe" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block;">
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;margin-top:18px;">
+      <div><div style="font-family:Archivo;font-weight:900;font-size:32px;line-height:1;">Chloe, 19</div><div style="font-family:Inter;font-weight:500;font-size:20px;color:var(--muted);">Int. Relations &middot; King&rsquo;s College</div></div>
+      <span style="margin-left:auto;background:var(--purple);color:var(--surface);font-family:Archivo;font-weight:800;font-size:19px;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);padding:6px 12px;border-radius:0;transform:rotate(-3deg);white-space:nowrap;">The participant</span>
+    </div>
+  </div>
+  <div style="flex:1;">
+    <p class="frag" style="font-family:Archivo;font-weight:700;font-size:46px;line-height:1.3;color:var(--ink);margin:0;max-width:900px;">&ldquo;As days went past, the meetup got <span style="color:var(--pink);">more drawn out</span>, second thoughts crept in, and more and more people ended up <span style="color:var(--pink);">pulling out</span>.&rdquo;</p>
+  </div>
+</section>
+
+<section data-label="Interview: Luca" data-screen-label="11" data-speaker-notes="And Luca gave us the insight that became a whole feature. He studies BioChem at Oxford, and he told us that when he is invited to something with a friend of a friend, his attendance is conditional - he will not say yes until he knows his own friend is going. He waits for them to respond first, then decides. That single sentence is the seed of our conditional RSVP, the 'I'll go if' you will see in the demo." class="slide slide--blush" style="padding:84px 110px;flex-direction:row;gap:70px;align-items:center;">
+  <div style="width:420px;flex-shrink:0;">
+    <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);border-radius:0;overflow:hidden;background:var(--sand);height:600px;">
+      <img src="assets/personas/interview-luca.jpg" alt="Luca" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block;">
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;margin-top:18px;">
+      <div><div style="font-family:Archivo;font-weight:900;font-size:32px;line-height:1;">Luca, 20</div><div style="font-family:Inter;font-weight:500;font-size:20px;color:var(--muted);">BioChem &middot; Oxford</div></div>
+      <span style="margin-left:auto;background:var(--purple);color:var(--surface);font-family:Archivo;font-weight:800;font-size:19px;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);padding:6px 12px;border-radius:0;transform:rotate(-3deg);white-space:nowrap;">The conditional</span>
+    </div>
+  </div>
+  <div style="flex:1;">
+    <p class="frag" style="font-family:Archivo;font-weight:700;font-size:46px;line-height:1.3;color:var(--ink);margin:0;max-width:900px;">&ldquo;If I&rsquo;m meeting a friend of a friend, my attendance is <span style="color:var(--purple);">conditional</span> on my friend being there. I&rsquo;ll <span style="color:var(--purple);">wait for them to respond first</span>, then decide.&rdquo;</p>
+  </div>
+</section>
+
+<section data-label="Two stakeholder groups" data-screen-label="12" data-speaker-notes="Two key stakeholder groups fall out of the research. Suggestors, for whom organising is one-sided and exhausting and awkward to push for replies. And participants, whose uncertainty compounds because their participation is contingent on others. Every design decision serves one or both of these groups." class="slide slide--ink" style="padding:96px 110px;justify-content:center;">
+  <h1 style="font-family:Archivo;font-weight:900;font-size:74px;letter-spacing:-2px;line-height:1.02;color:var(--surface);margin:0 0 56px;">Two key stakeholder <span style="display:inline-block;background:var(--pink);color:var(--surface);border:3px solid var(--surface);box-shadow:6px 6px 0 var(--surface);padding:0 16px 6px;border-radius:0;">groups</span></h1>
+  <div style="display:flex;gap:0;align-items:stretch;">
+    <div class="frag" style="flex:1;padding-right:60px;">
+      <div class="eyebrow" style="font-size:22px;color:var(--green);">1. Suggestors</div>
+      <p style="font-family:Inter;font-weight:600;font-size:34px;line-height:1.35;color:var(--surface);margin:22px 0 0;">One sided and exhausting. <span style="color:var(--green);font-style:italic;">Awkward</span> to push for replies.</p>
+    </div>
+    <div style="width:0;border-left:2px solid var(--ink-3);"></div>
+    <div class="frag" style="flex:1;padding-left:60px;">
+      <div class="eyebrow" style="font-size:22px;color:var(--green);">2. Participants</div>
+      <p style="font-family:Inter;font-weight:600;font-size:34px;line-height:1.35;color:var(--surface);margin:22px 0 0;">Uncertainty <span style="color:var(--green);font-style:italic;">compounds</span> uncertainty. Some people's participation is <span style="color:var(--green);font-style:italic;">contingent</span> on others.</p>
+    </div>
+  </div>
+</section>
+<section data-label="The bigger picture" data-screen-label="13" data-speaker-notes="And this isn't just our friends being flaky. Young people today are the most connected generation in history - and the loneliest. The US Surgeon General's 2023 advisory found 15 to 24 year-olds spend seventy percent less time with friends in person than two decades ago. In the UK, 16 to 24s are the loneliest age group - forty percent feel lonely often or very often. And most young adults say seeing their friends is exactly how they look after their wellbeing. The everyday cost of making it happen is the gap we work in." class="slide slide--ink" style="padding:84px 110px 88px;">
+  <h1 style="font-family:Archivo;font-weight:900;font-size:74px;letter-spacing:-3px;line-height:1.02;color:var(--surface);margin:0 0 auto;">The most connected generation - and the <span style="display:inline-block;background:var(--pink);color:var(--surface);border:3px solid var(--surface);box-shadow:6px 6px 0 var(--surface);padding:0 16px 6px;border-radius:0;">loneliest</span></h1>
+
+  <div style="display:flex;gap:30px;margin-top:auto;margin-bottom:auto;">
+    <div class="frag" style="flex:1;background:var(--ink-2);border:3px solid var(--ink-3);border-radius:0;padding:34px;display:flex;flex-direction:column;">
+      <div style="font-family:Archivo;font-weight:900;font-size:120px;line-height:.9;color:var(--pink);font-variant-numeric:tabular-nums;">70<span style="font-size:56px;">%</span></div>
+      <p style="font-family:Inter;font-weight:600;font-size:27px;line-height:1.3;color:var(--surface);margin:18px 0 0;">less time 15-24s spend with friends in person than two decades ago.</p>
+      <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:14px;color:rgba(255,255,255,.4);margin-top:auto;padding-top:22px;">US Surgeon General, 2023</div>
+    </div>
+    <div class="frag" style="flex:1;background:var(--ink-2);border:3px solid var(--ink-3);border-radius:0;padding:34px;display:flex;flex-direction:column;">
+      <div style="font-family:Archivo;font-weight:900;font-size:120px;line-height:.9;color:var(--purple);font-variant-numeric:tabular-nums;">40<span style="font-size:56px;">%</span></div>
+      <p style="font-family:Inter;font-weight:600;font-size:27px;line-height:1.3;color:var(--surface);margin:18px 0 0;">of UK 16-24s feel lonely often or very often - the loneliest age group.</p>
+      <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:14px;color:rgba(255,255,255,.4);margin-top:auto;padding-top:22px;">BBC Loneliness Experiment, 2018</div>
+    </div>
+    <div class="frag" style="flex:1;background:var(--ink-2);border:3px solid var(--ink-3);border-radius:0;padding:34px;display:flex;flex-direction:column;">
+      <div style="font-family:Archivo;font-weight:900;font-size:120px;line-height:.9;color:var(--green);font-variant-numeric:tabular-nums;">76<span style="font-size:56px;">%</span></div>
+      <p style="font-family:Inter;font-weight:600;font-size:27px;line-height:1.3;color:var(--surface);margin:18px 0 0;">of young adults say seeing friends is how they look after their wellbeing.</p>
+      <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:14px;color:rgba(255,255,255,.4);margin-top:auto;padding-top:22px;">ONS, Social Trends, 2025</div>
+    </div>
+  </div>
+</section>
+
+<section data-label="Survey landscape" data-screen-label="14" data-speaker-notes="And this is not just us and our friends. We surveyed forty-seven people. Eighty-seven percent send a maybe or delay their reply to a plan they are unsure about. Sixty percent say the meet-up time gets moved half the time or more. And over half say at least a third of their meet-ups never make it out of the chat. The failure mode is real, common, and measurable." class="slide slide--blush" style="padding:84px 110px 80px;">
+  <h1 class="title" style="font-size:84px;letter-spacing:-3px;">Plans dying is the <span class="hl">norm</span>.</h1>
+  <p style="font-family:Inter;font-weight:500;font-size:30px;color:var(--muted);margin:18px 0 0;">We surveyed 47 people about how they plan meet-ups.</p>
+
+  <div style="display:flex;gap:40px;margin-top:auto;margin-bottom:auto;">
+    <div class="frag" style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:40px 36px;">
+      <div style="font-family:Archivo;font-weight:900;font-size:150px;line-height:.9;color:var(--pink);font-variant-numeric:tabular-nums;">87<span style="font-size:70px;">%</span></div>
+      <p style="font-family:Inter;font-weight:600;font-size:30px;line-height:1.35;color:var(--ink);margin:20px 0 0;">send a &ldquo;maybe&rdquo; or delay their reply to a plan they are unsure about.</p>
+    </div>
+    <div class="frag" style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:40px 36px;">
+      <div style="font-family:Archivo;font-weight:900;font-size:150px;line-height:.9;color:var(--purple);font-variant-numeric:tabular-nums;">60<span style="font-size:70px;">%</span></div>
+      <p style="font-family:Inter;font-weight:600;font-size:30px;line-height:1.35;color:var(--ink);margin:20px 0 0;">say the meet-up time gets moved half the time or more.</p>
+    </div>
+    <div class="frag" style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:40px 36px;">
+      <div style="font-family:Archivo;font-weight:900;font-size:150px;line-height:.9;color:var(--green);font-variant-numeric:tabular-nums;">50<span style="font-size:70px;">%+</span></div>
+      <p style="font-family:Inter;font-weight:600;font-size:30px;line-height:1.35;color:var(--ink);margin:20px 0 0;">say over a third of their meet-ups never make it out of the chat.</p>
+    </div>
+  </div>
+</section>
+
+<section data-label="What people send" data-screen-label="15" data-speaker-notes="Here is the question that defined who we are designing for. When you are only slightly unsure you can make a plan, what do you actually send back? Almost nobody gives a straight answer - the overwhelming majority reach for a maybe or just delay. The maybe is not an accident. It is the default. So we asked: what if the interface simply did not offer one?" class="slide slide--paper" style="padding:92px 110px 84px;">
+  <h1 class="title" style="font-size:80px;letter-spacing:-3px;">Almost nobody gives a <span class="hl">straight answer</span></h1>
+  <p style="font-family:Inter;font-weight:500;font-size:30px;color:var(--muted);margin:22px 0 0;">&ldquo;When you are only slightly unsure you can make a plan, what do you send?&rdquo; &middot; n=47</p>
+
+  <div style="margin-top:auto;margin-bottom:auto;display:flex;flex-direction:column;gap:34px;max-width:1500px;">
+    <div style="display:flex;align-items:center;gap:28px;">
+      <div style="width:320px;font-family:Inter;font-weight:700;font-size:30px;text-align:right;flex-shrink:0;">A &ldquo;maybe&rdquo; or delay</div>
+      <div class="frag frag--bar" style="--w:87%;height:84px;background:var(--pink);border:3px solid var(--ink);box-shadow:6px 6px 0 var(--ink);border-radius:0;display:flex;align-items:center;justify-content:flex-end;padding-right:24px;font-family:Archivo;font-weight:900;font-size:44px;color:var(--surface);font-variant-numeric:tabular-nums;">87%</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:28px;">
+      <div style="width:320px;font-family:Inter;font-weight:700;font-size:30px;text-align:right;flex-shrink:0;color:var(--green);">A clear yes / no</div>
+      <div class="frag frag--bar" style="--w:13%;height:84px;background:var(--green);border:3px solid var(--ink);box-shadow:6px 6px 0 var(--ink);border-radius:0;display:flex;align-items:center;justify-content:flex-end;padding-right:24px;font-family:Archivo;font-weight:900;font-size:44px;color:var(--surface);font-variant-numeric:tabular-nums;">13%</div>
+    </div>
+  </div>
+</section>
+<section data-label="How might we" data-screen-label="16" data-speaker-notes="The opportunity, stated as a how-might-we: reduce hesitancy in undergraduate friend groups when planning to meet up, so groups go from frustrating maybe responses to a clear consensus. Every word came straight out of the research." class="slide slide--ink" style="padding:96px 120px;justify-content:center;">
+  <div class="eyebrow" style="font-size:24px;color:var(--pink);">Opportunity - how might we</div>
+  <p class="frag frag--rise-lg" style="font-family:Archivo;font-weight:800;font-size:58px;letter-spacing:-1px;line-height:1.26;color:var(--surface);margin:30px 0 0;max-width:1580px;">How might we reduce <span style="color:var(--green);">hesitancy</span> in undergraduate friend groups when planning to meet up so that groups go from frustrating <span style="color:var(--green);">&lsquo;maybe&rsquo;</span> responses to a clear <span style="display:inline-block;background:var(--green);color:var(--surface);border:3px solid var(--surface);box-shadow:5px 5px 0 var(--surface);padding:0 14px 4px;border-radius:0;">consensus</span>?</p>
+</section>
+
+<section data-label="User Story: suggest" data-screen-label="17" data-speaker-notes="Our first user story, the organiser's: as a social member of my friend group who tends to organise things, I want to easily suggest meetups to my friends, so I can see them more without the frustration of chasing responses." class="slide slide--paper" style="padding:90px 110px;flex-direction:row;gap:70px;align-items:center;">
+  <div style="flex:1;">
+    <h1 class="title" style="font-size:72px;letter-spacing:-2px;">User <span class="hl">Story</span></h1>
+    <div style="margin-top:42px;display:flex;flex-direction:column;gap:26px;max-width:920px;">
+      <p class="frag" style="font-family:Inter;font-weight:500;font-size:34px;line-height:1.32;color:var(--ink);margin:0;"><b style="font-weight:800;">As a</b> social member of my friend group who tends to organise things</p>
+      <p class="frag" style="font-family:Inter;font-weight:500;font-size:34px;line-height:1.32;color:var(--ink);margin:0;"><b style="font-weight:800;">I want</b> to be able to easily suggest meetups to my friends</p>
+      <p class="frag" style="font-family:Inter;font-weight:500;font-size:34px;line-height:1.32;color:var(--ink);margin:0;"><b style="font-weight:800;">So that</b> I can see my friends more without the frustration of chasing responses</p>
+    </div>
+  </div>
+  <div class="frag frag--right" style="width:480px;height:540px;border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--sand);overflow:hidden;flex-shrink:0;">
+    <img src="assets/personas/persona-vasanth.jpg" alt="Vasanth, the organiser" style="width:100%;height:100%;object-fit:cover;display:block;">
+  </div>
+</section>
+
+<section data-label="Initial design + feedback" data-screen-label="18" data-speaker-notes="Our initial suggest-a-meet design, with the research that shaped it: testers liked using it to check availability with a vague idea, found a fixed time restrictive, and weren't sure why there were flexible and fixed options for times." class="slide slide--paper" style="padding:58px 100px 52px;">
+  <div style="display:flex;align-items:baseline;gap:22px;">
+    <h1 class="title" style="font-size:54px;letter-spacing:-2px;">Our initial <span class="hl" style="padding:0 14px 6px;">design</span></h1>
+    <span style="font-family:Inter;font-weight:600;font-size:23px;color:var(--muted);">Suggesting a meet - what we tried, and what testers told us</span>
+  </div>
+  <div style="flex:1;display:flex;align-items:center;gap:26px;margin-top:18px;">
+    <div style="flex:1;display:flex;flex-direction:column;gap:14px;">
+      <div class="eyebrow" style="font-size:20px;color:var(--pink);">Try 1 &middot; Suggest a meet</div>
+      <div style="display:flex;gap:22px;align-items:center;">
+        <div style="border:3px solid var(--ink);box-shadow:7px 7px 0 var(--ink);background:var(--surface);font-size:0;flex-shrink:0;"><img src="assets/screens/init-suggest.jpg" alt="Suggest a meet form" style="display:block;height:430px;width:auto;"></div>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div style="background:var(--surface);border:3px solid var(--ink);box-shadow:5px 5px 0 var(--ink);padding:15px 19px;">
+            <p style="font-family:Archivo;font-weight:700;font-size:20px;line-height:1.3;color:var(--ink);margin:0;">&ldquo;I could see this being used to just check for people's availability - sending out a vague idea of &lsquo;I want to meetup&rsquo; and seeing what everyone wants to do.&rdquo;</p>
+          </div>
+          <div style="background:var(--surface);border:3px solid var(--ink);box-shadow:5px 5px 0 var(--ink);padding:15px 19px;">
+            <p style="font-family:Archivo;font-weight:700;font-size:20px;line-height:1.3;color:var(--ink);margin:0;">&ldquo;Having a set time seems quite restrictive - it would be nice to agree on a time within the group.&rdquo;</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <span style="font-family:Archivo;font-weight:900;font-size:50px;color:var(--ink);flex-shrink:0;">&rarr;</span>
+    <div style="flex:1;display:flex;flex-direction:column;gap:14px;">
+      <div class="eyebrow" style="font-size:20px;color:var(--pink);">Try 2 &middot; Flexible vs fixed time</div>
+      <div style="display:flex;gap:22px;align-items:center;">
+        <div style="border:3px solid var(--ink);box-shadow:7px 7px 0 var(--ink);background:var(--surface);font-size:0;flex-shrink:0;"><img src="assets/screens/voting-when.jpg" alt="Flexible vs fixed times" style="display:block;height:430px;width:auto;"></div>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div style="background:var(--ink);border:3px solid var(--ink);box-shadow:5px 5px 0 var(--pink);padding:15px 19px;">
+            <p style="font-family:Archivo;font-weight:700;font-size:20px;line-height:1.3;color:var(--surface);margin:0;">&ldquo;It's not immediately obvious why there's a flexible and fixed option for times.&rdquo;</p>
+          </div>
+          <div style="background:var(--paper);border:3px dashed var(--ink);padding:15px 19px;">
+            <p style="font-family:Inter;font-weight:600;font-size:19px;line-height:1.3;color:var(--muted);margin:0;">&rarr; So we cut the modes down to two simple switches.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section data-label="After refinement + feedback" data-screen-label="19" data-speaker-notes="After refinement we tried a guided flow with how-pinned-down options, but a tester found the rough-plan option confusing and couldn't see when they'd use it. That pushback is what eventually collapsed three modes into two simple switches." class="slide slide--paper" style="padding:58px 90px 50px;">
+  <h1 class="title" style="font-size:58px;letter-spacing:-2px;">After some <span class="hl" style="padding:0 14px 6px;">refinement</span></h1>
+  <div style="flex:1;display:flex;align-items:center;gap:56px;margin-top:12px;">
+    <div style="display:flex;gap:26px;flex-shrink:0;">
+      <div style="border:3px solid var(--ink);box-shadow:7px 7px 0 var(--ink);background:var(--surface);font-size:0;"><img src="assets/screens/refine-1.jpg" alt="How pinned down is this" style="display:block;height:580px;width:auto;"></div>
+      <div style="border:3px solid var(--ink);box-shadow:7px 7px 0 var(--ink);background:var(--surface);font-size:0;"><img src="assets/screens/refine-2.jpg" alt="Who is it for" style="display:block;height:580px;width:auto;"></div>
+      <div style="border:3px solid var(--ink);box-shadow:7px 7px 0 var(--ink);background:var(--surface);font-size:0;"><img src="assets/screens/refine-4.jpg" alt="Roughly when" style="display:block;height:580px;width:auto;"></div>
+    </div>
+    <div class="frag" style="flex:1;max-width:520px;background:var(--ink);border:3px solid var(--ink);box-shadow:8px 8px 0 var(--pink);padding:34px 38px;">
+      <span style="font-family:Archivo;font-weight:900;font-size:60px;color:var(--pink);line-height:.4;display:block;margin-bottom:14px;">&ldquo;</span>
+      <p style="font-family:Archivo;font-weight:700;font-size:32px;line-height:1.3;color:var(--surface);margin:0;">These options are quite confusing - I don't really understand when you would ever use the rough plan option.</p>
+      <div style="font-family:Inter;font-weight:600;font-size:21px;color:var(--muted-2);margin-top:16px;">- Aisha, 2nd year</div>
+    </div>
+  </div>
+</section>
+
+<section data-label="User Story: conditional" data-screen-label="20" data-speaker-notes="Our second user story, the participant's: as a new and introverted member of a friend group, I want to only attend social events if I already know people going, so that I never feel out of place. This is Milly's story, and Luca's." class="slide slide--paper" style="padding:90px 110px;flex-direction:row;gap:70px;align-items:center;">
+  <div style="flex:1;">
+    <h1 class="title" style="font-size:72px;letter-spacing:-2px;">User <span class="hl">Story</span></h1>
+    <div style="margin-top:42px;display:flex;flex-direction:column;gap:26px;max-width:920px;">
+      <p class="frag" style="font-family:Inter;font-weight:500;font-size:34px;line-height:1.32;color:var(--ink);margin:0;"><b style="font-weight:800;">As a</b> new and introverted member of a friend group</p>
+      <p class="frag" style="font-family:Inter;font-weight:500;font-size:34px;line-height:1.32;color:var(--ink);margin:0;"><b style="font-weight:800;">I want</b> to only attend social events if I already know people going</p>
+      <p class="frag" style="font-family:Inter;font-weight:500;font-size:34px;line-height:1.32;color:var(--ink);margin:0;"><b style="font-weight:800;">So that</b> I never feel out of place</p>
+    </div>
+  </div>
+  <div class="frag frag--right" style="width:480px;height:540px;border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--sand);overflow:hidden;flex-shrink:0;">
+    <img src="assets/personas/persona-milly.jpg" alt="Milly, the participant" style="width:100%;height:100%;object-fit:cover;display:block;">
+  </div>
+</section>
+
+<section data-label="Conditional: initial mock-up" data-screen-label="21" data-speaker-notes="We sketched the conditional RSVP by hand and iterated it with users: I'll go if a person goes, or a group goes - kept simple, with an and/or on the ifs, and these were exactly the things people said they'd be thinking about." class="slide slide--paper" style="padding:58px 100px 52px;">
+  <div style="display:flex;align-items:baseline;gap:22px;">
+    <h1 class="title" style="font-size:58px;letter-spacing:-2px;">Initial <span class="hl" style="padding:0 14px 6px;">mock-up</span></h1>
+    <span style="font-family:Inter;font-weight:600;font-size:24px;color:var(--muted);">Conditional attendance - &ldquo;I'll go if&hellip;&rdquo;</span>
+  </div>
+  <div style="flex:1;display:flex;align-items:center;gap:56px;margin-top:14px;">
+    <div style="display:flex;gap:30px;flex-shrink:0;">
+      <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--surface);font-size:0;"><img src="assets/sketches/conditional-andor.png" alt="Conditional sketch - I'll go if Joe AND / OR others are going" style="display:block;height:600px;width:auto;"></div>
+      <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--surface);font-size:0;"><img src="assets/sketches/conditional-detail.jpg" alt="Conditional sketch with named friends" style="display:block;height:600px;width:auto;"></div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:18px;">
+      <div class="frag" style="background:var(--surface);border:3px solid var(--ink);box-shadow:6px 6px 0 var(--ink);padding:20px 24px;">
+        <p style="font-family:Archivo;font-weight:700;font-size:24px;line-height:1.3;color:var(--ink);margin:0;">&ldquo;It's either I'll go if one person goes, or if a group of people go. I don't think I'd need something this complex.&rdquo;</p>
+      </div>
+      <div class="frag" style="background:var(--surface);border:3px solid var(--ink);box-shadow:6px 6px 0 var(--ink);padding:20px 24px;">
+        <p style="font-family:Archivo;font-weight:700;font-size:24px;line-height:1.3;color:var(--ink);margin:0;">&ldquo;There's gotta be an and/or type thing with the ifs - I'll go if Adi and Lily are going, or if either of them are going.&rdquo;</p>
+      </div>
+      <div class="frag" style="background:var(--ink);border:3px solid var(--ink);box-shadow:6px 6px 0 var(--pink);padding:20px 24px;">
+        <p style="font-family:Archivo;font-weight:700;font-size:24px;line-height:1.3;color:var(--surface);margin:0;">&ldquo;These two options are definitely the things I'll be thinking about if it were a meeting where I'd conditionally go.&rdquo;</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section data-label="Before vs after" data-screen-label="22" data-speaker-notes="Step back and look at the shape. The faint line is the old way - the same plan dying in the group chat, the curve we mapped for Vasanth and Milly. On BeThere it starts lower, on purpose, a low-stakes anonymous float instead of a big public ask. But it never collapses: the votes build momentum, the deadline locks it in, the blind moment turns that into commitment. Same Friday, same friends - we only removed the maybe and the organiser, and the whole curve inverts." class="slide slide--blush" style="padding:84px 110px 76px;">
+  <h1 class="title" style="font-size:72px;letter-spacing:-3px;">And the curve <span class="hl" style="padding:0 16px 6px;">inverts</span></h1>
+  <p style="font-family:Inter;font-weight:500;font-size:27px;color:var(--muted);margin:14px 0 0;">Same Friday, same friends. The faint line is Vasanth's journey from before - the same plan in the group chat. BeThere inverts it.</p>
+
+  <div style="flex:1;display:flex;align-items:center;margin-top:6px;">
+    <svg viewBox="0 0 1760 470" style="width:100%;height:auto;" preserveAspectRatio="xMidYMid meet">
+      <rect x="40" y="14" width="1640" height="221" fill="var(--green)" fill-opacity="0.13"></rect>
+      <rect x="40" y="235" width="1640" height="211" fill="var(--pink)" fill-opacity="0.11"></rect>
+      <line x1="40" y1="14" x2="40" y2="446" stroke="var(--axis-warm)" stroke-width="3"></line>
+      <line x1="40" y1="235" x2="1700" y2="235" stroke="var(--ink)" stroke-width="3"></line>
+      <text x="1696" y="226" font-family="Inter" font-weight="700" font-size="20" fill="var(--muted)" text-anchor="end">time &rarr;</text>
+      <text x="54" y="112" font-family="Inter" font-weight="700" font-size="22" fill="var(--green)">positive</text>
+      <text x="54" y="376" font-family="Inter" font-weight="700" font-size="22" fill="var(--pink)">negative</text>
+
+      <!-- the old way: Vasanth's "as he felt it" journey from slide 3, ghosted -
+           the SAME curve shape from before (hopeful -> dip -> "Yeah I'm in" blip
+           -> "Maybe" -> chases -> gives up), mapped into this viewBox and faded. -->
+      <g opacity="0.5">
+        <polyline points="180,55 450,190 720,140 1007,227 1300,325 1610,408" fill="none" stroke="var(--grey)" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"></polyline>
+        <circle cx="180" cy="55" r="9" fill="var(--surface)" stroke="var(--grey)" stroke-width="3"></circle>
+        <circle cx="450" cy="190" r="8" fill="var(--surface)" stroke="var(--grey)" stroke-width="3"></circle>
+        <circle cx="720" cy="140" r="8" fill="var(--surface)" stroke="var(--grey)" stroke-width="3"></circle>
+        <circle cx="1007" cy="227" r="8" fill="var(--surface)" stroke="var(--grey)" stroke-width="3"></circle>
+        <circle cx="1300" cy="325" r="8" fill="var(--surface)" stroke="var(--grey)" stroke-width="3"></circle>
+        <circle cx="1610" cy="408" r="11" fill="var(--grey)" stroke="var(--grey)" stroke-width="3"></circle>
+      </g>
+      <text x="1610" y="438" font-family="Inter" font-weight="700" font-size="20" fill="var(--muted)" text-anchor="end">the group chat (the curve from before) - it dies</text>
+
+      <!-- BeThere: the curve builds upward, segment by segment -->
+      <g class="frag frag--still">
+        <circle cx="180" cy="225" r="13" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"></circle>
+        <text x="180" y="197" font-family="Archivo" font-weight="900" font-size="26" fill="var(--ink)" text-anchor="middle">Send</text>
+        <text x="180" y="259" font-family="Inter" font-weight="500" font-size="19" fill="var(--muted)" text-anchor="middle">anonymous float</text>
+      </g>
+      <g class="frag frag--still">
+        <path class="curve-seg" pathLength="1" d="M180,225 L470,193"></path>
+        <circle cx="470" cy="193" r="13" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"></circle>
+        <text x="470" y="165" font-family="Archivo" font-weight="900" font-size="26" fill="var(--ink)" text-anchor="middle">Vote</text>
+        <text x="470" y="227" font-family="Inter" font-weight="500" font-size="19" fill="var(--muted)" text-anchor="middle">+1s, no maybe</text>
+      </g>
+      <g class="frag frag--still">
+        <path class="curve-seg" pathLength="1" d="M470,193 L760,160"></path>
+        <circle cx="760" cy="160" r="13" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"></circle>
+        <text x="760" y="132" font-family="Archivo" font-weight="900" font-size="26" fill="var(--ink)" text-anchor="middle">Lock</text>
+        <text x="760" y="194" font-family="Inter" font-weight="500" font-size="19" fill="var(--muted)" text-anchor="middle">deadline auto-picks</text>
+      </g>
+      <g class="frag frag--still">
+        <path class="curve-seg" pathLength="1" d="M760,160 L1050,127"></path>
+        <circle cx="1050" cy="127" r="13" fill="var(--purple)" stroke="var(--ink)" stroke-width="3"></circle>
+        <text x="1050" y="99" font-family="Archivo" font-weight="900" font-size="26" fill="var(--ink)" text-anchor="middle">Moment</text>
+        <text x="1050" y="161" font-family="Inter" font-weight="500" font-size="19" fill="var(--muted)" text-anchor="middle">blind yes / can't / if</text>
+      </g>
+      <g class="frag frag--still">
+        <path class="curve-seg" pathLength="1" d="M1050,127 L1340,96"></path>
+        <circle cx="1340" cy="96" r="13" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"></circle>
+        <text x="1340" y="68" font-family="Archivo" font-weight="900" font-size="26" fill="var(--ink)" text-anchor="middle">Reveal</text>
+        <text x="1340" y="130" font-family="Inter" font-weight="500" font-size="19" fill="var(--muted)" text-anchor="middle">it clears</text>
+      </g>
+      <g class="frag frag--still">
+        <path class="curve-seg" pathLength="1" d="M1340,96 L1610,66"></path>
+        <circle cx="1610" cy="66" r="18" fill="var(--green)" stroke="var(--ink)" stroke-width="3"></circle>
+        <text x="1610" y="38" font-family="Archivo" font-weight="900" font-size="26" fill="var(--green)" text-anchor="middle">You're in</text>
+        <text x="1610" y="100" font-family="Inter" font-weight="500" font-size="19" fill="var(--muted)" text-anchor="middle">or quietly fizzles</text>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<section data-label="User Story: cross-group" data-screen-label="26" data-speaker-notes="Our third user story, on cross-group meetups and plus-ones: as a student in numerous friend groups, I want to suggest meetups bringing together several groups, and to allow friends to bring along their friends, so that I can invite people I don't yet know who would improve the event." class="slide slide--paper" style="padding:90px 110px;flex-direction:row;gap:70px;align-items:center;">
+  <div style="flex:1;">
+    <h1 class="title" style="font-size:72px;letter-spacing:-2px;">User <span class="hl">Story</span></h1>
+    <div style="margin-top:38px;display:flex;flex-direction:column;gap:24px;max-width:960px;">
+      <p class="frag" style="font-family:Inter;font-weight:500;font-size:32px;line-height:1.32;color:var(--ink);margin:0;"><b style="font-weight:800;">As a</b> student in numerous friend groups</p>
+      <p class="frag" style="font-family:Inter;font-weight:500;font-size:32px;line-height:1.32;color:var(--ink);margin:0;"><b style="font-weight:800;">I want</b> to suggest meetups bringing together several groups of people, and to allow friends to bring along their friends</p>
+      <p class="frag" style="font-family:Inter;font-weight:500;font-size:32px;line-height:1.32;color:var(--ink);margin:0;"><b style="font-weight:800;">So that</b> I can invite people I don't know who would improve the event</p>
+    </div>
+  </div>
+  <div class="frag frag--right" style="width:480px;height:540px;border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--sand);overflow:hidden;flex-shrink:0;">
+    <img src="assets/personas/persona-vasanth.jpg" alt="The organiser" style="width:100%;height:100%;object-fit:cover;display:block;">
+  </div>
+</section>
+
+<section data-label="After refinement + feedback (cross-group)" data-screen-label="27" data-speaker-notes="After refinement: a meetup can pull in several groups and plus-ones, with a clear who's-it-for and who's-invited. One tester reminded us that group chemistry matters - a stranger in the room can change the feel of an event, which is why plus-ones stay in the group's control." class="slide slide--paper" style="padding:58px 100px 52px;">
+  <h1 class="title" style="font-size:58px;letter-spacing:-2px;">After some <span class="hl" style="padding:0 14px 6px;">refinement</span></h1>
+  <div style="flex:1;display:flex;align-items:center;gap:60px;margin-top:14px;">
+    <div style="display:flex;gap:34px;flex-shrink:0;">
+      <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--surface);font-size:0;"><img src="assets/screens/onboard-spark.jpg" alt="Who's it for - choose groups" style="display:block;height:600px;width:auto;"></div>
+      <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--surface);font-size:0;"><img src="assets/screens/onboard-summit.jpg" alt="Who's invited" style="display:block;height:600px;width:auto;"></div>
+    </div>
+    <div class="frag" style="flex:1;max-width:560px;background:var(--ink);border:3px solid var(--ink);box-shadow:8px 8px 0 var(--pink);padding:36px 40px;">
+      <span style="font-family:Archivo;font-weight:900;font-size:64px;color:var(--pink);line-height:.4;display:block;margin-bottom:16px;">&ldquo;</span>
+      <p style="font-family:Archivo;font-weight:700;font-size:32px;line-height:1.3;color:var(--surface);margin:0;">Going to a group event is a lot about the chemistry between the group. If someone was there I didn't really know, it might ruin that.</p>
+      <div style="font-family:Inter;font-weight:600;font-size:21px;color:var(--muted-2);margin-top:18px;">- Daniel, 3rd year</div>
+    </div>
+  </div>
+</section>
+<section data-label="Implementation" data-screen-label="28" data-speaker-notes="Section divider: how BeThere is actually built." class="slide slide--ink" style="padding:0;justify-content:center;align-items:center;">
+  <h1 style="font-family:Archivo;font-weight:900;font-size:152px;letter-spacing:-5px;color:var(--surface);line-height:1;margin:0;">Implementation</h1>
+</section>
+
+<section id="arch-base" data-label="Architecture" data-screen-label="29" data-speaker-notes="Quickly, under the hood. BeThere is one typed pnpm monorepo - TypeScript runs end to end, from the database all the way to the screen. Here is the whole system on a single diagram; let me walk each layer in turn - the client, the API, the data, the shared core that ties them together, and how it all ships. [Advance to spotlight each layer.]" data-focus-steps="client api db shared ship" class="slide slide--paper arch" style="padding:64px 90px 290px;">
+  <div class="scrim"></div>
+  <h1 class="title arch-title" style="font-size:70px;letter-spacing:-3px;">Under the <span class="hl" style="padding:0 16px 6px;">hood</span></h1>
+  <div class="arch-sub">One typed pnpm monorepo &middot; TypeScript end to end</div>
+
+  <div class="arch-diagram">
+    <div class="arch-cols">
+      <!-- DEPLOYMENT: where it ships -->
+      <div class="card arch-col spot spot--ship" style="flex:.96;box-shadow:7px 7px 0 var(--ink);">
+        <div class="tier-h" style="background:var(--ink);">Deployment</div>
+        <div class="acol-b">
+          <span class="tier-pkg">ships to iOS &middot; Android &middot; web</span>
+          <span class="ship-chip" style="font-size:15px;"><span class="logo" style="width:32px;height:32px;padding:6px;"><svg class="ico i-vercel"><use href="#l-vercel"/></svg></span>Web build &rarr; Vercel</span>
+          <span class="ship-chip" style="font-size:15px;"><span class="logo" style="width:32px;height:32px;padding:6px;"><svg class="ico i-gha"><use href="#l-gha"/></svg></span>Android APK &rarr; CI</span>
+          <span class="ship-chip" style="font-size:15px;"><span class="logo" style="width:32px;height:32px;padding:6px;"><svg class="ico i-docker"><use href="#l-docker"/></svg></span><span class="logo" style="width:32px;height:32px;padding:6px;"><svg class="ico i-aws"><use href="#l-aws"/></svg></span>API &rarr; App Runner</span>
+        </div>
+      </div>
+
+      <!-- FRONTEND: the screens a user taps, each calling a real endpoint -->
+      <div class="card arch-col spot spot--client" style="flex:1.62;box-shadow:7px 7px 0 var(--ink);">
+        <div class="tier-h" style="background:var(--pink);">Frontend</div>
+        <div class="acol-b">
+          <div class="acol-meta">
+            <span class="tier-pkg">@bethere/mobile</span>
+            <div class="logo-row" style="gap:7px;">
+              <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-expo"><use href="#l-expo"/></svg></span>
+              <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-react"><use href="#l-react"/></svg></span>
+              <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-clerk"><use href="#l-clerk"/></svg></span>
+              <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-ts"><use href="#l-ts"/></svg></span>
+            </div>
+          </div>
+          <div class="screen-rows">
+            <div class="screen-row"><span class="sr-name">Send a plan</span></div>
+            <div class="screen-row"><span class="sr-name">Vote / +1</span></div>
+            <div class="screen-row"><span class="sr-name">Lock the round</span></div>
+            <div class="screen-row"><span class="sr-name">The blind moment</span></div>
+            <div class="screen-row"><span class="sr-name">Join by link</span></div>
+            <div class="screen-row"><span class="sr-name">Your dashboard</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- tRPC bus -->
+      <div class="arch-conn"><div class="lbl">tRPC<br>typed JSON</div><div style="display:flex;align-items:center;"><div class="arrow-bar" style="width:46px;"></div><div class="arrow-head"></div></div></div>
+
+      <!-- BACKEND + DATABASE -->
+      <div class="arch-rightcol" style="flex:1.28;">
+        <div class="card arch-col spot spot--api" style="flex:1;box-shadow:7px 7px 0 var(--ink);">
+          <div class="tier-h" style="background:var(--purple);">Backend</div>
+          <div class="acol-b">
+            <div class="acol-meta">
+              <span class="tier-pkg">@bethere/api</span>
+              <div class="logo-row" style="gap:6px;">
+                <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-node"><use href="#l-node"/></svg></span>
+                <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-fastify"><use href="#l-fastify"/></svg></span>
+                <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-trpc"><use href="#l-trpc"/></svg></span>
+                <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-zod"><use href="#l-zod"/></svg></span>
+                <span class="logo" style="width:38px;height:38px;padding:6px;"><svg class="ico i-drizzle"><use href="#l-drizzle"/></svg></span>
+              </div>
+            </div>
+            <div class="tier-names">Node &middot; Fastify 5 &middot; tRPC v11 &middot; Zod-validated</div>
+            <div class="router-row">
+              <span class="router-chip">events</span><span class="router-chip">groups</span><span class="router-chip">users</span>
+              <span class="router-note">32 typed procedures</span>
+            </div>
+          </div>
+        </div>
+        <div class="arch-vconn"><div class="arrow-vhead"></div><div class="lbl">Drizzle &middot; SQL</div></div>
+        <div class="card arch-col spot spot--db" style="flex:0 0 auto;box-shadow:7px 7px 0 var(--ink);">
+          <div class="tier-h" style="background:var(--green);">Database</div>
+          <div class="acol-b" style="flex-direction:row;align-items:center;gap:16px;">
+            <span class="logo" style="width:46px;height:46px;padding:8px;"><svg class="ico i-pg"><use href="#l-pg"/></svg></span>
+            <div><span class="tier-pkg">PostgreSQL</span><div class="tier-names" style="margin-top:5px;">10 relational tables &middot; integrity for free</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arch-shared spot spot--shared">
+      <span style="font-family:'Space Mono',monospace;font-weight:700;font-size:16px;background:var(--ink);color:var(--surface);padding:6px 11px;white-space:nowrap;">@bethere/shared</span>
+      <span class="logo" style="width:42px;height:42px;padding:7px;"><svg class="ico i-zod"><use href="#l-zod"/></svg></span>
+      <span class="logo" style="width:42px;height:42px;padding:7px;"><svg class="ico i-ts"><use href="#l-ts"/></svg></span>
+      <span style="font-family:Inter;font-weight:600;font-size:20px;color:var(--ink);line-height:1.3;"><b>One source of truth.</b> Zod schemas + pure logic - vote tally, conditional-RSVP, blind reveal - typed into both client and server.</span>
+    </div>
+  </div>
+
+  <div class="arch-hint">press <b>&rarr;</b> to walk through each layer &darr;</div>
+
+  <div class="arch-cap" data-for="client">
+    <div class="cap-tag">Frontend &middot; @bethere/mobile</div>
+    <ul>
+      <li><b>Expo + React Native</b> - one codebase ships to iOS, Android <i>and</i> web</li>
+      <li>Every screen is one <b>typed tRPC call</b> - <code>events.create</code>, <code>respond</code>, <code>joinByCode</code></li>
+      <li><b>Clerk</b> (third-party) for Google sign-in; the web target makes <b>no-download onboarding</b> possible</li>
+    </ul>
+  </div>
+  <div class="arch-cap" data-for="api">
+    <div class="cap-tag">Backend &middot; @bethere/api</div>
+    <ul>
+      <li><b>Fastify 5</b> + <b>tRPC v11</b> on Node - the events, groups + users routers, <b>32 typed procedures</b></li>
+      <li>The demo as real endpoints: <code>create &rarr; toggleReaction &rarr; lock &rarr; respond &rarr; resolve</code></li>
+      <li><b>Zod</b> validates every input; phases <b>settle on read</b> - no scheduler</li>
+    </ul>
+  </div>
+  <div class="arch-cap" data-for="db">
+    <div class="cap-tag">Data &middot; Postgres</div>
+    <ul>
+      <li><b>Postgres</b> - 10 relational tables give us <b>integrity for free</b></li>
+      <li><b>Drizzle ORM</b> - fully typed SQL, no hand-written query types</li>
+      <li>The privacy guarantees live <b>inside the queries</b>, out of the client&rsquo;s reach</li>
+    </ul>
+  </div>
+  <div class="arch-cap" data-for="shared">
+    <div class="cap-tag">Shared core &middot; @bethere/shared</div>
+    <ul>
+      <li><b>Zod schemas + framework-free logic</b> - vote tally, conditional-RSVP, blind reveal</li>
+      <li><b>One source of truth</b> feeds the same types + validation into client and server</li>
+      <li>A change that would break the client fails at <b>compile time</b>, not in front of a user</li>
+    </ul>
+  </div>
+  <div class="arch-cap" data-for="ship">
+    <div class="cap-tag">Deployment &middot; Git &rarr; CI &rarr; CD</div>
+    <ul>
+      <li>Every push runs <b>lint, typecheck and tests</b> on GitHub Actions</li>
+      <li>Ships <b>Android APK</b>, <b>web &rarr; Vercel</b>, <b>API &rarr; AWS App Runner</b> (Docker)</li>
+      <li>A deployed build real friends used on their own phones - iOS, Android, web</li>
+    </ul>
+  </div>
+</section>
+<section data-label="What went well" data-screen-label="30" data-speaker-notes="Section divider: what went well." class="slide slide--ink" style="padding:0;justify-content:center;align-items:center;">
+  <h1 style="font-family:Archivo;font-weight:900;font-size:140px;letter-spacing:-5px;color:var(--surface);line-height:1;margin:0;">What went <span style="color:var(--green);">well</span></h1>
+</section>
+
+<section data-label="What went well: detail" data-screen-label="31" data-speaker-notes="Continuous feedback from new and recurring users gave us diverse insight, and letting real friends plan real meetups surfaced the app's actual pain points." class="slide slide--paper" style="padding:96px 110px 88px;justify-content:center;">
+  <div style="max-width:1000px;">
+    <p style="font-family:Archivo;font-weight:800;font-size:46px;line-height:1.25;letter-spacing:-1px;color:var(--ink);margin:0;">Continuous feedback from <span style="color:var(--green);">new</span> and <span style="color:var(--green);">recurring</span> users gave us diverse insights into how the problem is actually solved.</p>
+  </div>
+  <div class="frag" style="max-width:1000px;align-self:flex-end;text-align:right;margin-top:64px;">
+    <p style="font-family:Archivo;font-weight:800;font-size:46px;line-height:1.25;letter-spacing:-1px;color:var(--ink);margin:0;">Letting users plan <span style="color:var(--pink);">real</span> meetups with their friends using BeThere helped identify the pain points of the app.</p>
+  </div>
+</section>
+
+<section data-label="Agile development" data-screen-label="32" data-speaker-notes="We worked in an agile loop: Trello to map user needs and evidence, Linear to track engineering issues milestone by milestone. Research on one board, code on the other, with a tight loop between them." class="slide slide--paper" style="padding:74px 110px 66px;">
+  <h1 class="title" style="font-size:74px;letter-spacing:-3px;">Agile <span class="hl">development</span></h1>
+
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:90px;margin-top:8px;">
+    <div class="frag" style="display:flex;flex-direction:column;align-items:center;gap:20px;">
+      <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--surface);font-size:0;"><img src="assets/screens/trello.jpg" alt="Trello board mapping user needs" style="display:block;height:540px;width:auto;"></div>
+      <div style="font-family:Archivo;font-weight:700;font-size:26px;color:var(--ink);"><b>Trello</b> for mapping user needs.</div>
+    </div>
+    <div class="frag" style="display:flex;flex-direction:column;align-items:center;gap:20px;">
+      <div style="border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--surface);font-size:0;"><img src="assets/screens/linear.jpg" alt="Linear issue list" style="display:block;height:402px;width:auto;"></div>
+      <div style="font-family:Archivo;font-weight:700;font-size:26px;color:var(--ink);"><b>Linear</b> for engineering issues.</div>
+    </div>
+  </div>
+</section>
+
+<section data-label="What we'd do differently" data-screen-label="33" data-speaker-notes="Section divider: what we would do differently." class="slide slide--ink" style="padding:0 120px;justify-content:center;align-items:center;text-align:center;">
+  <h1 style="font-family:Archivo;font-weight:900;font-size:112px;letter-spacing:-4px;color:var(--surface);line-height:1.02;margin:0;">What we would do <span style="color:var(--pink);">differently</span></h1>
+</section>
+
+<section data-label="Differently: detail" data-screen-label="34" data-speaker-notes="We would build a stronger test suite to stop bugs recurring, and plan sprints around user stories from the start rather than leaving them an afterthought." class="slide slide--paper" style="padding:96px 110px 88px;justify-content:center;">
+  <div style="max-width:1040px;">
+    <p style="font-family:Archivo;font-weight:800;font-size:44px;line-height:1.28;letter-spacing:-1px;color:var(--ink);margin:0;"><span style="color:var(--pink);">Testing</span>: a stronger test suite with wider code coverage would've prevented bugs from recurring.</p>
+  </div>
+  <div class="frag" style="max-width:1040px;align-self:flex-end;text-align:right;margin-top:64px;">
+    <p style="font-family:Archivo;font-weight:800;font-size:44px;line-height:1.28;letter-spacing:-1px;color:var(--ink);margin:0;"><span style="color:var(--pink);">Sprint planning</span>: earlier iterations were too feature-focused - user stories were an afterthought.</p>
+  </div>
+</section>
+
+<section data-label="Impact" data-screen-label="35" data-speaker-notes="Section divider: impact - what BeThere changes for the people who use it, and for the world around them." class="slide slide--ink" style="padding:0;justify-content:center;align-items:center;">
+  <h1 style="font-family:Archivo;font-weight:900;font-size:160px;letter-spacing:-5px;color:var(--surface);line-height:1;margin:0;">Impact</h1>
+</section>
+
+<section data-label="User impacts and benefits" data-screen-label="36" data-speaker-notes="For the two people we built for: Vasanth now goes out with his friends regularly despite a busy schedule and feels less lonely; Milly is more comfortable meeting new people and has started suggesting meetups of her own." class="slide slide--paper" style="padding:72px 110px 64px;">
+  <h1 class="title" style="font-size:70px;letter-spacing:-3px;">User impacts &amp; <span class="hl">benefits</span></h1>
+
+  <div style="flex:1;display:flex;gap:48px;margin-top:34px;align-items:stretch;">
+    <div style="flex:0 0 460px;border:3px solid var(--ink);box-shadow:8px 8px 0 var(--ink);background:var(--sand);overflow:hidden;"><img src="assets/personas/impact-group.jpg" alt="A group of friends together at a pub" style="width:100%;height:100%;object-fit:cover;display:block;"></div>
+
+    <div style="flex:1;display:flex;flex-direction:column;gap:26px;justify-content:center;">
+      <div class="frag" style="background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:7px 7px 0 var(--ink);padding:28px 32px;border-top:14px solid var(--pink);">
+        <div style="font-family:Archivo;font-weight:900;font-size:36px;line-height:1;margin-bottom:16px;">Vasanth</div>
+        <div style="display:flex;flex-direction:column;gap:13px;">
+          <div style="display:flex;gap:14px;align-items:baseline;"><span style="color:var(--green);font-family:Archivo;font-weight:900;font-size:24px;flex-shrink:0;">&#10003;</span><span style="font-family:Inter;font-weight:500;font-size:26px;line-height:1.3;color:var(--ink);">Goes out with his friends regularly, despite his busy schedule.</span></div>
+          <div style="display:flex;gap:14px;align-items:baseline;"><span style="color:var(--green);font-family:Archivo;font-weight:900;font-size:24px;flex-shrink:0;">&#10003;</span><span style="font-family:Inter;font-weight:500;font-size:26px;line-height:1.3;color:var(--ink);">Feels less lonely.</span></div>
+        </div>
+      </div>
+      <div class="frag" style="background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:7px 7px 0 var(--ink);padding:28px 32px;border-top:14px solid var(--purple);">
+        <div style="font-family:Archivo;font-weight:900;font-size:36px;line-height:1;margin-bottom:16px;">Milly</div>
+        <div style="display:flex;flex-direction:column;gap:13px;">
+          <div style="display:flex;gap:14px;align-items:baseline;"><span style="color:var(--green);font-family:Archivo;font-weight:900;font-size:24px;flex-shrink:0;">&#10003;</span><span style="font-family:Inter;font-weight:500;font-size:26px;line-height:1.3;color:var(--ink);">Is more comfortable with meeting new people.</span></div>
+          <div style="display:flex;gap:14px;align-items:baseline;"><span style="color:var(--green);font-family:Archivo;font-weight:900;font-size:24px;flex-shrink:0;">&#10003;</span><span style="font-family:Inter;font-weight:500;font-size:26px;line-height:1.3;color:var(--ink);">Has begun suggesting meetups of her own.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section data-label="Wider impacts" data-screen-label="37" data-speaker-notes="The ripple effects: fewer plans dying means less of the loneliness that strains university counselling services and NHS mental-health provision, and more engagement for university societies and local venues." class="slide slide--blush" style="padding:74px 110px 66px;">
+  <h1 class="title" style="font-size:70px;letter-spacing:-3px;">Wider <span class="hl">impacts</span></h1>
+  <p style="font-family:Inter;font-weight:500;font-size:28px;color:var(--muted);margin:16px 0 0;">If fewer plans die in the chat, the benefit ripples outward.</p>
+
+  <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:34px;">
+    <div class="frag" style="background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:7px 7px 0 var(--ink);padding:30px 34px;display:flex;flex-direction:column;justify-content:center;border-left:14px solid var(--green);">
+      <div class="eyebrow" style="font-size:19px;color:var(--green);">Mental health</div>
+      <div style="font-family:Archivo;font-weight:900;font-size:38px;line-height:1.08;margin-top:10px;">University counselling services</div>
+      <p style="font-family:Inter;font-weight:500;font-size:23px;line-height:1.3;color:var(--muted);margin:10px 0 0;">Less isolation to pick up.</p>
+    </div>
+    <div class="frag" style="background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:7px 7px 0 var(--ink);padding:30px 34px;display:flex;flex-direction:column;justify-content:center;border-left:14px solid var(--purple);">
+      <div class="eyebrow" style="font-size:19px;color:var(--purple);">Public health</div>
+      <div style="font-family:Archivo;font-weight:900;font-size:38px;line-height:1.08;margin-top:10px;">NHS mental health provision</div>
+      <p style="font-family:Inter;font-weight:500;font-size:23px;line-height:1.3;color:var(--muted);margin:10px 0 0;">Loneliness is a population-level cost.</p>
+    </div>
+    <div class="frag" style="background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:7px 7px 0 var(--ink);padding:30px 34px;display:flex;flex-direction:column;justify-content:center;border-left:14px solid var(--pink);">
+      <div class="eyebrow" style="font-size:19px;color:var(--pink);">Community</div>
+      <div style="font-family:Archivo;font-weight:900;font-size:38px;line-height:1.08;margin-top:10px;">University societies</div>
+      <p style="font-family:Inter;font-weight:500;font-size:23px;line-height:1.3;color:var(--muted);margin:10px 0 0;">More socials that actually happen.</p>
+    </div>
+    <div class="frag" style="background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:7px 7px 0 var(--ink);padding:30px 34px;display:flex;flex-direction:column;justify-content:center;border-left:14px solid var(--ink);">
+      <div class="eyebrow" style="font-size:19px;color:var(--muted);">Local economy</div>
+      <div style="font-family:Archivo;font-weight:900;font-size:38px;line-height:1.08;margin-top:10px;">Local venues</div>
+      <p style="font-family:Inter;font-weight:500;font-size:23px;line-height:1.3;color:var(--muted);margin:10px 0 0;">Plans that land fill seats.</p>
+    </div>
+  </div>
+</section>
+
+<section data-label="Looking ahead" data-screen-label="38" data-speaker-notes="And where does BeThere go next? Three things, all straight from edge cases our users raised. First, availability changes: once Milly has confirmed she'll be there, the people who said 'I'll go if Milly' should be told the moment that changes. Second, plus-ones: Vasanth might welcome a guest, but there are some people he'd rather not see turn up, so plus-ones need to stay in the group's control. And third, a per-meetup chat that opens only after a plan confirms, so the group can sort the last details without reopening the dead-chat problem we started with." class="slide slide--blush" style="padding:84px 110px 78px;">
+  <h1 class="title" style="font-size:78px;letter-spacing:-3px;">Looking <span class="hl">ahead</span></h1>
+  <div style="display:flex;gap:28px;margin-top:44px;flex:1;">
+    <div class="frag" style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:32px;border-top:14px solid var(--purple);display:flex;flex-direction:column;">
+      <div style="font-family:Archivo;font-weight:900;font-size:34px;line-height:1.08;">Availability changes</div>
+      <p style="font-family:Inter;font-weight:500;font-size:26px;line-height:1.4;color:var(--ink);margin:18px 0 0;">When Milly&rsquo;s plans change after she confirms, tell the people who said &ldquo;I&rsquo;ll go <span style="color:var(--purple);font-weight:700;">if Milly</span>&rdquo; - right away.</p>
+    </div>
+    <div class="frag" style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:32px;border-top:14px solid var(--pink);display:flex;flex-direction:column;">
+      <div style="font-family:Archivo;font-weight:900;font-size:34px;line-height:1.08;">Plus-ones, in the group&rsquo;s control</div>
+      <p style="font-family:Inter;font-weight:500;font-size:26px;line-height:1.4;color:var(--ink);margin:18px 0 0;">Vasanth can welcome a guest without the <span style="color:var(--pink);font-weight:700;">people he&rsquo;d rather not</span> see turn up.</p>
+    </div>
+    <div class="frag" style="flex:1;background:var(--surface);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--ink);padding:32px;border-top:14px solid var(--green);display:flex;flex-direction:column;">
+      <div style="font-family:Archivo;font-weight:900;font-size:34px;line-height:1.08;">A chat once it&rsquo;s on</div>
+      <p style="font-family:Inter;font-weight:500;font-size:26px;line-height:1.4;color:var(--ink);margin:18px 0 0;">A per-meetup chat that opens <span style="color:var(--green);font-weight:700;">only after a plan confirms</span> - settle details without reopening the dead chat.</p>
+    </div>
+  </div>
+</section>
+
+<section data-label="Closing" data-screen-label="39" data-speaker-notes="So that's BeThere. We took the most ordinary failure in the world - a plan that dies in a group chat - and we found the real reason it dies: not flaking, but the social cost of committing out loud. We removed it. No organiser. No maybe. And I'll leave you with the line from our interviews that kept us honest the whole way through: someone told us she cares less about what they do, she just wants to see them. That's who we built this for." class="slide slide--blush" style="padding:90px 110px 80px;">
+  <div style="display:flex;align-items:center;gap:30px;">
+    <div style="font-family:Archivo;font-weight:900;font-size:132px;letter-spacing:-6px;line-height:.9;color:var(--ink);">BeThere</div>
+    <span style="background:var(--green);color:var(--surface);font-family:Archivo;font-weight:800;font-size:28px;border:3px solid var(--ink);box-shadow:5px 5px 0 var(--ink);padding:8px 18px;border-radius:0;transform:rotate(-4deg);">You're in</span>
+  </div>
+  <p class="frag" style="font-family:Archivo;font-weight:800;font-size:60px;letter-spacing:-1.5px;color:var(--ink);margin:30px 0 0;">Be there - without the <span class="hl">organiser</span>.</p>
+
+  <div style="margin-top:auto;display:flex;align-items:flex-end;justify-content:space-between;gap:40px;">
+    <div class="frag" style="background:var(--ink);border:3px solid var(--ink);border-radius:0;box-shadow:8px 8px 0 var(--pink);padding:32px 38px;max-width:1180px;">
+      <p style="font-family:Archivo;font-weight:700;font-size:40px;line-height:1.25;color:var(--surface);margin:0;">I care less about what we do. I just want to see them.</p>
+      <div style="font-family:Inter;font-weight:600;font-size:24px;color:rgba(255,255,255,.65);margin-top:14px;">- the reason we built it</div>
+    </div>
+    <div class="frag" style="font-family:Inter;font-weight:700;font-size:24px;color:var(--muted);text-align:right;white-space:nowrap;">DRP &middot; Group 02<br><span style="font-weight:500;">Nelson &middot; Lukas &middot; Noah &middot; James</span></div>
+  </div>
+</section>
+    </div>
+  </div>
+</div>
+
+<div id="deck-help">Use <b>&larr; &rarr;</b> to build &amp; move &middot; <b>N</b> notes &middot; <b>F</b> fullscreen &middot; <b>1-9</b> jump</div>
+
+<div id="deck-controls">
+  <button class="deck-btn" id="c-prev" title="Previous (Left arrow)" aria-label="Previous slide">&lsaquo;</button>
+  <span id="deck-counter">01 / 36</span>
+  <button class="deck-btn pink" id="c-next" title="Next (Right arrow)" aria-label="Next slide">&rsaquo;</button>
+  <span id="deck-steps"></span>
+  <button class="deck-btn" id="c-notes" title="Speaker notes (N)">Notes</button>
+  <button class="deck-btn" id="c-full" title="Fullscreen (F)">Full</button>
+</div>
+
+<aside id="deck-notes" aria-label="Speaker notes">
+  <button class="deck-btn nclose" id="n-close" aria-label="Close notes">&times;</button>
+  <p class="nlabel" id="n-label"></p>
+  <p class="nbody" id="n-body"></p>
+</aside>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---- <image-slot>: user-fillable photo placeholder (drag/drop or click), -
+     persisted in localStorage so a dropped photo survives a reload. ---- */
+  class ImageSlot extends HTMLElement {
+    connectedCallback() {
+      if (this._wired) return;
+      this._wired = true;
+      this._input = document.createElement("input");
+      this._input.type = "file";
+      this._input.accept = "image/*";
+      this._input.style.display = "none";
+      this.appendChild(this._input);
+      this._input.addEventListener("change", () => {
+        var f = this._input.files && this._input.files[0];
+        this._input.value = "";
+        if (f) this._read(f);
+      });
+      this.addEventListener("click", (e) => {
+        if (e.target.closest(".is-clear")) return;
+        if (!this._has()) this._input.click();
+      });
+      this.addEventListener("dragover", (e) => { e.preventDefault(); this.classList.add("drag"); });
+      this.addEventListener("dragleave", (e) => { if (e.target === this) this.classList.remove("drag"); });
+      this.addEventListener("drop", (e) => {
+        e.preventDefault();
+        this.classList.remove("drag");
+        var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (f) this._read(f);
+      });
+      this._render();
+    }
+    _key() { return "bethere-deck.imageslot." + (this.id || "anon"); }
+    _get() { try { return localStorage.getItem(this._key()); } catch (_) { return null; } }
+    _set(v) { try { localStorage.setItem(this._key(), v); } catch (_) {} }
+    _del() { try { localStorage.removeItem(this._key()); } catch (_) {} }
+    _has() { return !!(this._get() || this.getAttribute("src")); }
+    _read(file) {
+      if (!/^image\//.test(file.type)) return;
+      var fr = new FileReader();
+      fr.onload = () => { this._set(String(fr.result)); this._render(); };
+      fr.readAsDataURL(file);
+    }
+    _render() {
+      var src = this._get() || this.getAttribute("src");
+      Array.prototype.slice.call(this.children).forEach((c) => { if (c !== this._input) c.remove(); });
+      if (src) {
+        var img = document.createElement("img");
+        img.src = src; img.alt = "persona photo";
+        this.appendChild(img);
+        var btn = document.createElement("button");
+        btn.className = "is-clear"; btn.type = "button"; btn.title = "Remove photo";
+        btn.textContent = "\u00d7";
+        btn.addEventListener("click", (e) => { e.stopPropagation(); this._del(); this._render(); });
+        this.appendChild(btn);
+      } else {
+        var wrap = document.createElement("div");
+        wrap.className = "is-empty";
+        wrap.innerHTML = '<div class="ic">+</div><div class="cap"></div><div class="hint">click or drop a photo</div>';
+        wrap.querySelector(".cap").textContent = this.getAttribute("placeholder") || "Drop an image";
+        this.appendChild(wrap);
+      }
+    }
+  }
+  customElements.define("image-slot", ImageSlot);
+
+  /* ---- deck runtime: scale-to-fit + letterbox, keyboard / click nav, -
+     speaker-notes drawer, fullscreen. Each <section> is authored at the -
+     design size and centred + scaled to the viewport. ---- */
+  var root = document.getElementById("deck-root");
+  var stage = document.getElementById("deck-stage");
+  var canvas = document.getElementById("deck-canvas");
+  var progress = document.getElementById("deck-progress");
+  var counter = document.getElementById("deck-counter");
+  var help = document.getElementById("deck-help");
+  var notes = document.getElementById("deck-notes");
+  var nLabel = document.getElementById("n-label");
+  var nBody = document.getElementById("n-body");
+  var W = parseInt(root.dataset.designW, 10) || 1920;
+  var H = parseInt(root.dataset.designH, 10) || 1080;
+  var steps = document.getElementById("deck-steps");
+  var slides = Array.prototype.slice.call(canvas.querySelectorAll(":scope > section"));
+  var idx = 0, step = 0;
+
+  /* ---- build engine: a slide reveals its .frag pieces one step per Right-
+     arrow press (DOM order). The architecture slide instead steps through its
+     data-focus-steps tokens. Step 0 shows only the slide's static content. ---- */
+  slides.forEach(function (s) {
+    s._frags = Array.prototype.slice.call(s.querySelectorAll(".frag"));
+    var foci = (s.getAttribute("data-focus-steps") || "").trim();
+    s._foci = foci ? foci.split(/\s+/) : null;
+    s._steps = s._foci ? s._foci.length : (s.classList.contains("slide--animate") ? s._frags.length : 0);
+  });
+
+  function pad2(n) { return String(n).length < 2 ? "0" + n : String(n); }
+  function label(s, i) {
+    return s.getAttribute("data-label") || ("Slide " + (i + 1));
+  }
+  function applyStep(s, n) {
+    if (s._foci) { if (n > 0) s.setAttribute("data-focus", s._foci[n - 1]); else s.removeAttribute("data-focus"); }
+    else s._frags.forEach(function (f, j) { f.classList.toggle("is-shown", j < n); });
+  }
+  function renderPips(total, n) {
+    if (!steps) return;
+    var html = "";
+    for (var j = 1; j <= total; j++) html += '<i class="deck-pip' + (j <= n ? " on" : "") + '"></i>';
+    steps.innerHTML = html;
+  }
+  function syncHash() {
+    var hash = "#" + (idx + 1) + (step > 0 ? "." + step : "");
+    if (location.hash !== hash) { try { history.replaceState(null, "", hash); } catch (_) {} }
+  }
+  function fit() {
+    var s = Math.min(stage.clientWidth / W, stage.clientHeight / H);
+    canvas.style.transform = "scale(" + s + ")";
+  }
+  function show(i, atStep) {
+    idx = Math.max(0, Math.min(slides.length - 1, i));
+    var cur = slides[idx], total = cur._steps;
+    step = atStep === "end" ? total : Math.max(0, Math.min(total, atStep || 0));
+    for (var k = 0; k < slides.length; k++) {
+      var on = k === idx;
+      slides[k].classList.toggle("is-active", on);
+      if (!on) applyStep(slides[k], 0);
+    }
+    applyStep(cur, step);
+    counter.textContent = pad2(idx + 1) + " / " + pad2(slides.length);
+    progress.style.width = ((idx + 1) / slides.length * 100) + "%";
+    renderPips(total, step);
+    nLabel.textContent = pad2(idx + 1) + "  -  " + label(cur, idx);
+    nBody.textContent = cur.getAttribute("data-speaker-notes") || "(no speaker notes for this slide)";
+    syncHash();
+  }
+  function go(i) { show(i, 0); }
+  function advance(d) {
+    var total = slides[idx]._steps;
+    if (d > 0) {
+      if (step < total) { step++; applyStep(slides[idx], step); renderPips(total, step); syncHash(); }
+      else if (idx < slides.length - 1) show(idx + 1, 0);
+    } else {
+      if (step > 0) { step--; applyStep(slides[idx], step); renderPips(total, step); syncHash(); }
+      else if (idx > 0) show(idx - 1, "end");
+    }
+  }
+
+  function toggleNotes(force) {
+    var open = typeof force === "boolean" ? force : !notes.classList.contains("open");
+    notes.classList.toggle("open", open);
+    document.getElementById("c-notes").classList.toggle("on", open);
+    if (open) { root.classList.remove("idle"); }
+  }
+  function toggleFull() {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen();
+    } else {
+      var el = document.documentElement;
+      if (el.requestFullscreen) el.requestFullscreen();
+    }
+  }
+
+  window.addEventListener("keydown", function (e) {
+    var t = e.target;
+    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    var k = e.key, handled = true;
+    if (k === "ArrowRight" || k === "PageDown" || k === " " || k === "Spacebar") advance(1);
+    else if (k === "ArrowLeft" || k === "PageUp") advance(-1);
+    else if (k === "Home") go(0);
+    else if (k === "End") go(slides.length - 1);
+    else if (k === "r" || k === "R") go(0);
+    else if (k === "n" || k === "N") toggleNotes();
+    else if (k === "f" || k === "F") toggleFull();
+    else if (k === "Escape") toggleNotes(false);
+    else if (/^[0-9]$/.test(k)) { var n = k === "0" ? 9 : parseInt(k, 10) - 1; if (n < slides.length) go(n); }
+    else handled = false;
+    if (handled) { e.preventDefault(); if (help) help.classList.add("hide"); }
+  });
+
+  stage.addEventListener("click", function (e) {
+    if (e.target.closest("image-slot, a, button, input")) return;
+    var r = stage.getBoundingClientRect();
+    advance(e.clientX < r.left + r.width / 2 ? -1 : 1);
+    if (help) help.classList.add("hide");
+  });
+
+  document.getElementById("c-prev").addEventListener("click", function () { advance(-1); });
+  document.getElementById("c-next").addEventListener("click", function () { advance(1); });
+  document.getElementById("c-notes").addEventListener("click", function () { toggleNotes(); });
+  document.getElementById("c-full").addEventListener("click", function () { toggleFull(); });
+  document.getElementById("n-close").addEventListener("click", function () { toggleNotes(false); });
+
+  window.addEventListener("resize", fit);
+  if (window.visualViewport) window.visualViewport.addEventListener("resize", fit);
+
+  /* idle-hide the control bar while presenting */
+  var idleTimer;
+  function activity() {
+    root.classList.remove("idle");
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(function () { if (!notes.classList.contains("open")) root.classList.add("idle"); }, 2800);
+  }
+  window.addEventListener("mousemove", activity, { passive: true });
+  window.addEventListener("keydown", activity);
+  window.addEventListener("touchstart", activity, { passive: true });
+
+  /* boot: honour a #N or #N.S deep-link (slide.step), fit, then reveal */
+  var hm = (location.hash || "").replace("#", "").split(".");
+  var hSlide = parseInt(hm[0], 10), hStep = parseInt(hm[1], 10);
+  fit();
+  show(isFinite(hSlide) && hSlide >= 1 ? hSlide - 1 : 0, isFinite(hStep) ? hStep : 0);
+  activity();
+  setTimeout(function () { if (help) help.classList.add("hide"); }, 6000);
+  document.fonts && document.fonts.ready && document.fonts.ready.then(fit);
+})();
+</script>
+</body>
+</html>

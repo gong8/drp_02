@@ -390,7 +390,10 @@ describe("GroupDetail", () => {
       trpc.groups.get,
       makeDetail({ id: "g1", members: [makeMember({ id: "u1", name: "Ada" })] }),
     );
-    const invite: Invite = { code: "ABCD2345", url: "https://bethere.app/join/ABCD2345" };
+    const invite: Invite = {
+      code: "ABCD2345",
+      url: "https://bethere-beta.vercel.app/join/ABCD2345",
+    };
     mockQuery(trpc.groups.inviteByGroup, invite);
 
     mountStack(GroupDetail, {
@@ -408,7 +411,9 @@ describe("GroupDetail", () => {
     );
     expect(await screen.findByText("ABCD-2345")).toBeOnTheScreen();
     expect(screen.getByText(LABEL_JOIN_CODE)).toBeOnTheScreen();
-    expect(screen.getByDisplayValue("https://bethere.app/join/ABCD2345")).toBeOnTheScreen();
+    expect(
+      screen.getByDisplayValue("https://bethere-beta.vercel.app/join/ABCD2345"),
+    ).toBeOnTheScreen();
   });
 
   test("renaming to a new name calls groups.rename with the trimmed name", async () => {
