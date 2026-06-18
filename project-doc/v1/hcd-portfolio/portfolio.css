@@ -18,7 +18,7 @@ body{ font-family:Inter, system-ui, sans-serif; -webkit-font-smoothing:antialias
 /* ---- A4 portrait page ---- */
 .page{
   position:relative; width:210mm; height:297mm; margin:0 auto; overflow:hidden;
-  background:var(--paper); padding:18mm 17mm 16mm; display:flex; flex-direction:column;
+  background:var(--paper); padding:25mm; display:flex; flex-direction:column;
 }
 .page + .page{ margin-top:10mm; }              /* gap between pages on screen only */
 .page--blush{ background:linear-gradient(150deg, var(--blush) 0%, var(--lav) 100%); }
@@ -86,6 +86,8 @@ table.tbl.tight td{ padding:6px 12px 6px 0; font-size:12.5px; line-height:1.3; }
 .node{ border:3px solid var(--ink); background:var(--surface); box-shadow:var(--sh-sm); padding:10px 12px; font-family:Inter; font-weight:600; font-size:13px; }
 .arrow-bar{ height:6px; background:var(--ink); }
 .arrow-head{ width:0; height:0; border-top:9px solid transparent; border-bottom:9px solid transparent; border-left:14px solid var(--ink); }
+/* journey emotion-curve segment (ported from presentation/v4; static, fully drawn) */
+.curve-seg{ fill:none; stroke:var(--ink); stroke-width:7; stroke-linecap:round; stroke-linejoin:round; }
 
 /* reflection / discussion callout */
 .reflect .tag{ font-family:Archivo; font-weight:800; font-size:13px; letter-spacing:1.5px; text-transform:uppercase; color:var(--pink); margin:0 0 10px; }

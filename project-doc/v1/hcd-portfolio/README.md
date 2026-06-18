@@ -16,7 +16,8 @@ written discussion is concentrated on the Reflection page; pages 2-10 are eviden
 - `portfolio.css` - the brand: tokens + component classes ported from `presentation/v4/styles.css`
   (Archivo / Inter / Space Mono; ink + pink palette; hard offset shadows; A4 print rules).
 - `build.py` - renders `portfolio.html` to `hcd-portfolio.pdf` with headless Chrome.
-- `hcd-portfolio.pdf` - the deliverable (11 A4 portrait pages).
+- `hcd-portfolio.pdf` - the deliverable (11 A4 portrait pages, 2.5cm margins).
+- `assets/personas/` - the Vasanth and Milly photos (copied from `presentation/v4`, used on page 3).
 
 ## Rebuild
 
@@ -24,13 +25,20 @@ written discussion is concentrated on the Reflection page; pages 2-10 are eviden
 python3 build.py     # needs Google Chrome (macOS path hardcoded in build.py); also needs the web at build time for the Google Fonts
 ```
 
-## Real assets the team must drop in (currently `.slot` placeholders)
+## Brand + content notes
 
-- **Persona photos** (page 3) - real licensed stock photos of people of roughly the right age.
-  Never AI-generated faces.
+- **Personas are Vasanth (organiser) + Milly (participant)** - the same two used in
+  `presentation/v4` and the pitch leaflet (consistency, per EdStem #157); real photos live in
+  `assets/personas/`. The journey maps (page 6) are the deck's emotion curves, pulled from
+  `presentation/v4`.
+- **Margins are 2.5cm all sides; body >=11pt, table text >=9pt** (staff rule, EdStem #156).
+  Fit by cutting words, never by shrinking margins or fonts.
+
+## Real assets the team must still drop in (currently `.slot` placeholders)
+
 - **App screenshots** (page 8) - three live-app screens: the create wizard; the collecting
   EventDetail with public vote counts and no names; a cleared "You're in" moment.
-- **Cover-story image** (page 10) - the speculative 2028 cover-story mock.
+- **Cover-story / impact-asset image** (page 10) - the speculative 2028 cover-story mock.
 
 ## Conventions
 
