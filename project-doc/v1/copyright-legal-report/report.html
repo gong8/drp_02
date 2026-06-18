@@ -10,7 +10,7 @@
   html, body { margin: 0; padding: 0; }
   body {
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    font-size: 11pt; line-height: 1.22; color: #000;
+    font-size: 11pt; line-height: 1.19; color: #000;
   }
   h1 { font-size: 17pt; margin: 0 0 2pt; letter-spacing: -0.2px; }
   .sub { font-size: 9.5pt; color: #333; margin: 0 0 6pt; }
@@ -56,13 +56,13 @@
 <p class="note">No photography or icon packs are bundled, so no licensed "pictures" are in scope; the only third-party creative assets are the fonts above and React Navigation's small UI glyphs (MIT). Hosted services (Clerk, AWS, Vercel, Expo / EAS, GitHub Actions) run under commercial terms of service, discussed in section 4.</p>
 
 <h2>2. Licence implications</h2>
-<p>The stack is permissive-dominant - an overwhelming MIT majority plus Apache-2.0, BSD-2-Clause, MPL-2.0 and the PostgreSQL licence - with no GPL, LGPL or AGPL anywhere, so no copyleft reaches BeThere's own code and there is no relicensing risk. The only obligation is to retain the upstream copyright and licence notices (including the OFL fonts' text and any Apache-2.0 NOTICE), which a release would surface in an in-app "Licences" screen.</p>
+<p>Every third-party library uses a permissive open-source licence - mostly MIT, with some Apache-2.0, BSD-2-Clause, MPL-2.0 and the PostgreSQL licence. Permissive means the team can use them freely, even in a closed commercial product, as long as it keeps the upstream copyright and licence notices (which a release would list in an in-app "Licences" screen). None are "copyleft" licences like the GPL, which would have forced BeThere's own code to be released too - so the team can keep the app closed.</p>
 
 <h2>3. Copyright and ownership</h2>
 <p>Copyright in the project's code and brand rests with the student authors (Team DRP_02). The substantive content on a live service is user-generated - group, plan and profile names, notes and RSVPs - and stays the users' copyright, so a release would set terms of service that license BeThere to display it while disclaiming ownership. Because BeThere is the team's own product, a release would also declare an explicit repository licence - most naturally a proprietary "all rights reserved" notice, given the intent to keep developing it, or a permissive licence such as MIT if the code were ever opened up.</p>
 
 <h2>4. Wider legal implications (on an official release)</h2>
-<p>The principal consideration is data protection: BeThere would handle personal data (names, emails, group membership and RSVPs), so an official release would operate under UK GDPR - a lawful basis, a privacy notice and data-subject rights - and put an international-transfer mechanism in place for its US hosting (the UK IDTA or EU SCCs). Carrying user-posted text and shareable invite links, it would also fall under the Online Safety Act 2023 and the mobile app-store terms - most concretely a required in-app account-deletion path.</p>
+<p>The principal consideration is data protection: BeThere would handle personal data (names, emails, group membership and RSVPs), so an official release would operate under UK GDPR - a lawful basis, a privacy notice, data-subject rights, and a transfer mechanism for its US hosting (the UK IDTA or EU SCCs). It would also count as a user-to-user service under the Online Safety Act 2023, since members post free text and share invite links - bringing duties to risk-assess illegal content and to let users report and remove it. The app stores add their own terms, notably a required in-app account-deletion path.</p>
 
 </body>
 </html>
