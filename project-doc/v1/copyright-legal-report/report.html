@@ -4,77 +4,65 @@
 <meta charset="utf-8">
 <title>BeThere - Copyright and Legal Issues Report</title>
 <style>
-  @page { size: A4; margin: 8mm 11mm; }
+  /* Formatting per DRP guidance (EdStem #156): standard 2.5cm margins, 11pt body;
+     table text may be a little smaller but not below 9pt. Do not change margins. */
+  @page { size: A4; margin: 25mm; }
   html, body { margin: 0; padding: 0; }
   body {
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    font-size: 8.4pt; line-height: 1.18; color: #000;
+    font-size: 11pt; line-height: 1.22; color: #000;
   }
-  h1 { font-size: 13.5pt; margin: 0 0 1pt; letter-spacing: -0.2px; }
-  .sub { font-size: 7.8pt; margin: 0 0 5pt; }
-  .scope { margin: 0 0 5pt; }
-  h2 { font-size: 9.2pt; margin: 5pt 0 1.5pt; }
-  p { margin: 0 0 3pt; }
-  table { border-collapse: collapse; width: 100%; font-size: 7.9pt; margin: 1.5pt 0; }
-  th { text-align: left; font-weight: 700; padding: 0 10pt 2pt 0; white-space: nowrap; }
-  td { text-align: left; vertical-align: top; padding: 0.5pt 10pt 0.5pt 0; }
-  td.lic, th.lic, td.ship, th.ship { white-space: nowrap; }
-  .note { font-size: 7.5pt; margin: 1pt 0 0; line-height: 1.18; }
-  ul { margin: 0; padding: 0; list-style: none; }
-  li { margin: 0 0 1.8pt; }
+  h1 { font-size: 17pt; margin: 0 0 2pt; letter-spacing: -0.2px; }
+  .sub { font-size: 9.5pt; color: #333; margin: 0 0 6pt; }
+  .scope { margin: 0 0 6pt; }
+  h2 { font-size: 12.5pt; margin: 6pt 0 2.5pt; }
+  p { margin: 0 0 5pt; }
+
+  table.res { border-collapse: collapse; width: 100%; font-size: 9pt; margin: 2pt 0 3pt; }
+  table.res th { text-align: left; font-weight: 700; padding: 0 8pt 2.5pt 0; white-space: nowrap; border-bottom: 0.8pt solid #999; }
+  table.res td { text-align: left; vertical-align: top; padding: 1pt 8pt 1pt 0; border-bottom: 0.5pt solid #ddd; }
+  table.res td:last-child, table.res th:last-child { padding-right: 0; }
+  table.res td.lic, table.res th.lic, table.res td.ship, table.res th.ship { white-space: nowrap; }
+  .note { font-size: 9pt; color: #333; margin: 2pt 0 0; }
 </style>
 </head>
 <body>
 
 <h1>BeThere - Copyright and Legal Issues Report</h1>
-<div class="sub">Team DRP_02 (Imperial College London x Royal College of Art) &middot; Designing for Real People &middot; 2026</div>
+<div class="sub">DRP02, 2026</div>
 
-<p class="scope">This report inventories the third-party libraries, code and assets shipped in the BeThere touchpoint (an Expo React Native client for iOS, Android and web; a Fastify / tRPC / Drizzle / Postgres backend; and Vercel invite-link functions) and the legal constraints a future team would face if it officially released the product. Licences are as declared by each package; build- and test-only tooling is listed separately, and transitive dependencies are out of scope.</p>
+<p class="scope">This report acknowledges the third-party code and assets shipped in the BeThere touchpoint (an Expo React Native app for iOS / Android / web, with a Fastify / tRPC / Drizzle / Postgres backend), and the legal issues to consider on an official release. Build- and test-only tooling is listed separately; transitive dependencies are out of scope.</p>
 
 <h2>1. Third-party resources and their licences</h2>
-<table>
+<table class="res">
   <thead>
     <tr><th>Resource (grouped)</th><th class="lic">Licence</th><th class="ship">Ships?</th></tr>
   </thead>
   <tbody>
     <tr><td>React 19, React Native 0.81, React DOM, react-native-web</td><td class="lic">MIT</td><td class="ship">Yes</td></tr>
-    <tr><td>Expo SDK 54 and expo-* modules (auth-session, secure-store, notifications, font, web-browser, clipboard, linear-gradient, status-bar)</td><td class="lic">MIT</td><td class="ship">Yes</td></tr>
-    <tr><td>React Navigation 7 (native, stacks, tabs) and its bundled UI icons</td><td class="lic">MIT</td><td class="ship">Yes</td></tr>
-    <tr><td>react-native-screens, react-native-safe-area-context, @react-native-community/datetimepicker</td><td class="lic">MIT</td><td class="ship">Yes</td></tr>
-    <tr><td>tRPC 11 (client and server), Fastify 5 (+ cors, + rate-limit), pg, pino, Zod</td><td class="lic">MIT</td><td class="ship">Yes</td></tr>
+    <tr><td>Expo SDK 54 and expo-* modules (auth-session, secure-store, notifications, font, web-browser, clipboard, etc.)</td><td class="lic">MIT</td><td class="ship">Yes</td></tr>
+    <tr><td>React Navigation 7 (native, stacks, tabs) and its bundled UI glyphs</td><td class="lic">MIT</td><td class="ship">Yes</td></tr>
+    <tr><td>react-native-screens, react-native-safe-area-context, datetimepicker</td><td class="lic">MIT</td><td class="ship">Yes</td></tr>
+    <tr><td>tRPC 11 (client + server), Fastify 5 (+ cors / rate-limit), pg, pino, Zod</td><td class="lic">MIT</td><td class="ship">Yes</td></tr>
     <tr><td>@clerk/clerk-expo, @clerk/backend</td><td class="lic">MIT</td><td class="ship">Yes</td></tr>
     <tr><td>drizzle-orm</td><td class="lic">Apache-2.0</td><td class="ship">Yes</td></tr>
     <tr><td>dotenv</td><td class="lic">BSD-2-Clause</td><td class="ship">Yes</td></tr>
     <tr><td>@vercel/og (invite-link card images)</td><td class="lic">MPL-2.0</td><td class="ship">Yes</td></tr>
     <tr><td>Fonts: Archivo, Inter, Space Mono (@expo-google-fonts)</td><td class="lic">MIT and OFL-1.1</td><td class="ship">Yes</td></tr>
     <tr><td>PostgreSQL database engine</td><td class="lic">PostgreSQL (BSD-style)</td><td class="ship">Service</td></tr>
-    <tr><td>Build / test only: TypeScript, drizzle-kit, Biome, tsx, Jest, jest-expo, Vitest, Babel, Metro, @types/*</td><td class="lic">MIT / Apache-2.0</td><td class="ship">No</td></tr>
+    <tr><td>Build / test only: TypeScript, drizzle-kit, Biome, Jest, Babel, Metro, @types/*</td><td class="lic">MIT / Apache-2.0</td><td class="ship">No</td></tr>
   </tbody>
 </table>
-<p class="note">No third-party photography or icon packs are bundled, so no licensed "pictures" are in scope; the only third-party creative assets are the fonts above and React Navigation's small UI glyphs (MIT). Hosted services (Clerk, AWS, Vercel, Expo / EAS, GitHub Actions) are governed by commercial terms of service rather than software licences and are covered in section 4.</p>
+<p class="note">No photography or icon packs are bundled, so no licensed "pictures" are in scope; the only third-party creative assets are the fonts above and React Navigation's small UI glyphs (MIT). Hosted services (Clerk, AWS, Vercel, Expo / EAS, GitHub Actions) run under commercial terms of service, discussed in section 4.</p>
 
 <h2>2. Licence implications</h2>
-<p>The stack is permissive-dominant: an overwhelming MIT majority, plus Apache-2.0, BSD-2-Clause and the PostgreSQL licence. There is no GPL, LGPL or AGPL anywhere, so no copyleft obligation reaches BeThere's own source and there is no "viral" relicensing risk. These duties bite on distribution of the app bundle, not on code used purely as a hosted service (the Postgres engine on RDS, and @vercel/og running server-side). For what ships, MIT, BSD-2-Clause and the PostgreSQL licence require only that copyright and licence notices be retained, which a release should satisfy via an in-app "Licences" screen and a NOTICE file (neither exists yet). Apache-2.0 (drizzle-orm) adds an express patent grant in the team's favour (forfeited if the team sues a contributor over the software) and a duty to reproduce any upstream NOTICE on redistribution. @vercel/og (MPL-2.0) is file-level: even if its files were distributed, the duty is only to keep its notice and offer those files' source, and it never reaches BeThere's own code. The OFL fonts may be bundled provided the OFL text and copyright lines are kept and the fonts are not sold on their own.</p>
+<p>The stack is permissive-dominant - an overwhelming MIT majority plus Apache-2.0, BSD-2-Clause, MPL-2.0 and the PostgreSQL licence - with no GPL, LGPL or AGPL anywhere, so no copyleft reaches BeThere's own code and there is no relicensing risk. The only obligation is to retain the upstream copyright and licence notices (including the OFL fonts' text and any Apache-2.0 NOTICE), which a release would surface in an in-app "Licences" screen.</p>
 
 <h2>3. Copyright and ownership</h2>
-<p>Course guidance confirms that copyright in the project code rests with the student authors (Team DRP_02), not the College or any collaborator. The code, the BeThere wordmark and the visual system are the team's own work; the only bundled third-party creative assets are the licensed fonts (used, not owned), and no stock photography or icon packs ship. A running service's substantive content is user-generated - plan and activity names, group names, notes, profile names and RSVP data - and users keep copyright in what they write, so a release would need terms of service granting BeThere a licence to store and display that content to the group while disclaiming any ownership of it; seeded demo data is fictional and team-authored. One gap to close before any distribution: the repository declares no licence (no LICENSE file and no package.json "license" field), which defaults to "all rights reserved" and bars reuse, so a future team should choose and declare a licence (for example MIT, or an explicit proprietary notice).</p>
+<p>Copyright in the project code rests with the student authors (Team DRP_02); the BeThere wordmark and visual system are the team's own work, and the only third-party creative assets are the licensed fonts (used, not owned). User-generated content - group, plan and profile names, notes and RSVPs - remains the users' copyright, so a release would add terms of service licensing BeThere to display it while disclaiming ownership, and would declare an explicit repository licence (currently none).</p>
 
 <h2>4. Wider legal implications (on an official release)</h2>
-<ul>
-  <li><b class="lead">Data protection (UK GDPR).</b> A release processes personal data - names, optional emails, group membership, plan participation and RSVPs (including conditional "I'll go if [people]" responses that reference other users) - so it needs a lawful basis, a privacy notice, and working access, rectification, erasure, export, retention and breach-notification mechanisms; none exist yet, though always-on creator anonymity and silent fizzles already aid data minimisation.</li>
-  <li><b class="lead">International transfers.</b> Personal data is processed in the United States (AWS App Runner and RDS in us-east-1), so serving UK or EU users requires a transfer mechanism (the UK IDTA, or the UK Addendum to the EU SCCs) and a transfer risk assessment.</li>
-  <li><b class="lead">Online Safety Act 2023.</b> Free-text fields and re-shareable invite links make BeThere a user-to-user service, bringing duties to risk-assess illegal content and to offer reporting and content / user removal; today only IP rate-limiting and a closable invite "door" exist.</li>
-  <li><b class="lead">Children's data.</b> There is no age gate (sign-in is Google OAuth via Clerk); if under-18s can join, the ICO Age Appropriate Design (Children's) Code applies.</li>
-  <li><b class="lead">Security as a release blocker.</b> The supervised prototype deliberately runs with an auth bypass (a spoofable user-id header, no token verification) and open CORS; this is acceptable for demo-only data but must be closed (verified Clerk tokens) before real personal data is stored, both to meet GDPR's security duty and to limit liability.</li>
-  <li><b class="lead">Processors and agreements.</b> Clerk, AWS and Vercel act as data processors, each needing a data-processing agreement with sub-processor disclosure, plus compliance with their acceptable-use terms and free-tier limits.</li>
-  <li><b class="lead">Trademark.</b> The "BeThere" name should be cleared by a UK trademark search before launch to avoid infringement or passing-off (not yet verified).</li>
-  <li><b class="lead">Accessibility.</b> A public consumer service should meet accessibility expectations (the Equality Act 2010 and WCAG; the European Accessibility Act if offered in the EU).</li>
-  <li><b class="lead">App store terms.</b> Shipping on iOS and Android binds BeThere to the Apple App Store and Google Play developer agreements - privacy-label / Data Safety disclosures, an in-app account-deletion path and age ratings - the most certain compliance gate for a mobile release.</li>
-  <li><b class="lead">Liability and warranties.</b> Every dependency is provided "as is" with no warranty, so the released product itself needs terms of service that limit liability and disclaim warranties to users.</li>
-  <li><b class="lead">Electronic communications (PECR).</b> The web build's cookies / local storage and any future marketing push notifications engage PECR consent rules; the current scheduled reminders are device-local and functional, not marketing.</li>
-</ul>
-
-<p class="note"><b>To verify before release:</b> a UK trademark search for "BeThere"; and confirmation of the exact licence and NOTICE texts shipped under node_modules so the in-app licences screen is complete.</p>
+<p>The principal consideration is data protection: BeThere would handle personal data (names, emails, group membership and RSVPs), so an official release would operate under UK GDPR - a lawful basis, a privacy notice and data-subject rights - and put an international-transfer mechanism in place for its US hosting (the UK IDTA or EU SCCs). Carrying user-posted text and shareable invite links, it would also fall under the Online Safety Act 2023 and the mobile app-store terms - most concretely a required in-app account-deletion path.</p>
 
 </body>
 </html>
