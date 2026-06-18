@@ -1,0 +1,231 @@
+==============================================================
+Guild: egg (drp)
+Channel: Text channels / gong-queue
+==============================================================
+
+[6/3/2026 1:57 PM] the_jlh
+67676767767
+
+
+[6/3/2026 1:57 PM] gong8
+very good
+
+
+[6/3/2026 1:57 PM] gong8
+implement
+
+
+[6/3/2026 1:57 PM] gong8
+everything
+
+
+[6/3/2026 1:57 PM] gong8
+finish DRP today
+
+
+[6/3/2026 2:07 PM] the_jlh
+"send @SeventhInch your sister's number" - Noah
+
+
+[6/3/2026 2:31 PM] lxkast
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1511730420809728281/1511739146090057840/RPReplay_Final1780496136.mov?ex=6a30b58b&is=6a2f640b&hm=096e71f8726bed3395f9d8794282021800c0988f2b98ce14739175a5eb4a61f8&
+
+
+[6/3/2026 2:31 PM] lxkast
+happens on website as well (non beta)
+
+
+[6/3/2026 2:44 PM] gong8
+long bombaclart day
+
+
+[6/3/2026 3:50 PM] lxkast
+can we uh
+
+
+[6/3/2026 3:50 PM] lxkast
+make it so float it lets u choose the deadline for floating
+
+
+[6/3/2026 3:50 PM] lxkast
+idk how it's decided like sometimes it's 2 hours sometimes it's 2 days
+
+
+[6/3/2026 3:58 PM] lxkast
+i can do that after refactoring is done actualyll
+
+
+[6/3/2026 3:58 PM] lxkast
+@gong
+
+
+[6/3/2026 4:24 PM] gong8
+sure
+
+
+[6/3/2026 4:24 PM] gong8
+but its a while longer
+
+
+[6/3/2026 4:24 PM] gong8
+ill do it
+
+
+[6/3/2026 4:24 PM] gong8
+refactor probaly 1 more hour
+
+
+[6/3/2026 4:24 PM] lxkast
+ok calm
+
+
+[6/3/2026 4:24 PM] lxkast
+we going china town now with adam
+
+
+[6/3/2026 4:24 PM] lxkast
+for noodles
+
+
+[6/3/2026 4:25 PM] lxkast
+i’m guessing you’re not available for that
+
+
+[6/3/2026 4:27 PM] gong8
+im in chinatown
+
+
+[6/3/2026 4:27 PM] gong8
+but ill leave at 9pm
+
+
+[6/3/2026 4:27 PM] gong8
+maybe 10pm
+
+
+[6/3/2026 4:28 PM] gong8
+church thijng
+
+
+[6/3/2026 4:28 PM] gong8
+i cannot come
+
+
+[6/3/2026 4:28 PM] gong8
+i would come
+
+
+[6/3/2026 4:28 PM] gong8
+actaully
+
+
+[6/3/2026 4:28 PM] gong8
+if its like
+
+
+[6/3/2026 4:28 PM] gong8
+6pm-7pm
+
+
+[6/3/2026 4:28 PM] gong8
+i can come
+
+
+[6/3/2026 4:28 PM] gong8
+im hungry
+
+
+[6/3/2026 4:28 PM] gong8
+:c
+
+
+[6/3/2026 4:28 PM] gong8
+@lxkast
+
+
+[6/3/2026 4:28 PM] lxkast
+very good
+
+
+[6/3/2026 4:28 PM] lxkast
+ok
+
+
+[6/3/2026 4:28 PM] lxkast
+we need to collect noah and james
+
+
+[6/3/2026 4:29 PM] lxkast
+ok let’s go
+
+
+[6/3/2026 4:29 PM] lxkast
+we on our way
+
+
+[6/3/2026 4:30 PM] lxkast
+adam will send location
+
+
+[6/3/2026 4:39 PM] gong8
+what time
+
+
+[6/3/2026 4:40 PM] gong8
+are you arriving
+
+
+[6/3/2026 4:40 PM] gong8
+send me eta
+
+
+[6/4/2026 7:27 PM] gong8
+UX complaints:
+- voting screen is hella ugly, adding an activity and add a time is inconsistent. the UX here is supremely ugly
+- add a time after pressing has gotten worse, the add and cancel are not in theme and very ugly
+- i dont like how when going onto a meetup, the bit at the top is just the group this doesnt make sense and is very arbitrary
+- the meetups dashboard is really chopped
+- the bottom bar should be highlighted on each one, instead of just the word, you cant see the boundaries
+- it's really inconsistent that when you click on a voting meetup, a meetup after its happened, a meetup that is in the " ill go, cant make it screen are all different and inconsistent, the meetup should be more clear.
+the badges like "weigh in" and "you've had your say" its just so much AI slop. there's too many words.
+- on the main screen, where it says action required and then the number of them on the right. just write 3 ACTION(S) required, to make it more clear
+- actually move the account into the top right as a circle when youre on either main screen, meetups or groups tab
+- the filter on all/going/awaiting/declined is ugly, should be more coloured or themed better, each one has its own colour or something, maybe default onto going. just think more of how to categorise it
+- the awaiting tab is silly, is bugged, stuff in the past that was not voted for is in awaiting.
+- maybe sort by time or something. shit in the past should be harder to show.
+- "3 on the table" just bullshit everywhere.
+- the boxes are inconsistent and dont particularly make sense. too much shit like RSVP closes in 7 hours isnt frightening enough. it isnt clear. the time left should be more obvious. 
+- generally just reduce some bullshit text
+- going should show, but stuff truly in the past
+- on the event card where it says. "3 going" just hvae this, remove the profile icons, its useless
+- UX components that could be shared are all just inconsistent its so annoying
+
+DEFERRED:
+- calendar for events
+
+
+[6/4/2026 8:11 PM] gong8
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1511730420809728281/1512187147132604649/message.txt?ex=6a310546&is=6a2fb3c6&hm=f967fafa75526e30e1de44e85797067069a46e23554e7774c0b5f9fef08eb281&
+
+
+[6/5/2026 1:10 PM] gong8
+bring back actions required as a banner
+
+
+[6/5/2026 1:10 PM] gong8
+dont like how it looks rn
+
+
+[6/5/2026 1:10 PM] gong8
+ugly asf
+
+
+==============================================================
+Exported 49 message(s)
+==============================================================

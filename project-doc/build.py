@@ -4,7 +4,12 @@
 Steps: (1) render the impact-asset image cover-story.png from cover-story.html;
 (2) rebuild the branded HTML for the markdown-driven docs (HCD portfolio, legal
 report) by injecting the current .md into each brand template; (3) re-export
-every PDF with headless Chrome. Self-contained: reads only files in this folder.
+every PDF with headless Chrome.
+
+Each deliverable lives in its own subfolder (copyright-legal-report/,
+hcd-portfolio/, pitch-leaflet/); cover-story.{html,png} sits inside
+hcd-portfolio/ since the portfolio embeds it via the relative path
+cover-story.png. Self-contained: reads only files under this folder.
 
 The pitch leaflet HTML is hand-authored (not generated from .md), so it is only
 re-exported, never regenerated. Run from this folder: `python3 build.py`."""
@@ -12,6 +17,11 @@ import os, re, shutil, subprocess, sys, tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+
+# each deliverable lives in its own subfolder under HERE
+LEGAL_DIR = os.path.join(HERE, "copyright-legal-report")
+HCD_DIR = os.path.join(HERE, "hcd-portfolio")
+PITCH_DIR = os.path.join(HERE, "pitch-leaflet")
 
 SRC_OPEN = '<script id="src" type="text/plain">'
 SRC_CLOSE = '</script>'
@@ -47,9 +57,9 @@ def inject_md(html, md):
     return html[:i] + md + html[j:]
 
 
-def rebuild(html_name, md_name, portfolio=False):
-    html_path = os.path.join(HERE, html_name)
-    md_path = os.path.join(HERE, md_name)
+def rebuild(doc_dir, html_name, md_name, portfolio=False):
+    html_path = os.path.join(doc_dir, html_name)
+    md_path = os.path.join(doc_dir, md_name)
     with open(html_path) as f:
         html = f.read()
     with open(md_path) as f:
@@ -68,8 +78,8 @@ def rebuild(html_name, md_name, portfolio=False):
 
 def render_cover():
     """Render the impact-asset image cover-story.png from cover-story.html."""
-    html = os.path.join(HERE, "cover-story.html")
-    png = os.path.join(HERE, "cover-story.png")
+    html = os.path.join(HCD_DIR, "cover-story.html")
+    png = os.path.join(HCD_DIR, "cover-story.png")
     pdftoppm = shutil.which("pdftoppm")
     if not os.path.exists(html) or not pdftoppm:
         print("  skipping cover render (need cover-story.html + pdftoppm); keeping existing png")
@@ -90,8 +100,8 @@ def render_cover():
         shutil.rmtree(tmp, ignore_errors=True)
 
 
-def export_pdf(html_name):
-    html_path = os.path.join(HERE, html_name)
+def export_pdf(doc_dir, html_name):
+    html_path = os.path.join(doc_dir, html_name)
     pdf_path = os.path.splitext(html_path)[0] + ".pdf"
     subprocess.run([
         CHROME, "--headless=new", "--disable-gpu", "--no-sandbox",
@@ -105,8 +115,10 @@ def export_pdf(html_name):
 
 if __name__ == "__main__":
     render_cover()
-    rebuild("hcd-portfolio.html", "hcd-portfolio.md", portfolio=True)
-    rebuild("copyright-legal-report.html", "copyright-legal-report.md")
-    for h in ("hcd-portfolio.html", "copyright-legal-report.html", "pitch-leaflet.html"):
-        export_pdf(h)
+    rebuild(HCD_DIR, "hcd-portfolio.html", "hcd-portfolio.md", portfolio=True)
+    rebuild(LEGAL_DIR, "copyright-legal-report.html", "copyright-legal-report.md")
+    for doc_dir, h in ((HCD_DIR, "hcd-portfolio.html"),
+                       (LEGAL_DIR, "copyright-legal-report.html"),
+                       (PITCH_DIR, "pitch-leaflet.html")):
+        export_pdf(doc_dir, h)
     print("done")

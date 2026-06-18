@@ -1,0 +1,324 @@
+==============================================================
+Guild: egg (drp)
+Channel: Text channels / resources
+==============================================================
+
+[5/20/2026 12:47 PM] gong8
+FORM RESPONSES
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1506639345073918084/1506639441534652438/Friend_Meetup_Dynamics_Survey_Responses_-_Form_Responses_1.pdf?ex=6a309d12&is=6a2f4b92&hm=f873e57e7cde11557092bfad2ba5bb2198ef57a5f84d280ce93d071345ccf6eb&
+
+
+[5/20/2026 12:48 PM] gong8
+DRP WEEK ONE GOOGLE SLIDES https://docs.google.com/presentation/d/1eFXVYS8qu4fgWuBpw1zZs7vOBC9VY8QWW4LIKCE-P7A/edit?slide=id.g3e37e46a866_1_0#slide=id.g3e37e46a866_1_0
+
+{Embed}
+https://docs.google.com/presentation/d/1eFXVYS8qu4fgWuBpw1zZs7vOBC9VY8QWW4LIKCE-P7A/edit?slide=id.g3e37e46a866_1_0
+DRP week 1
+Initial Problem Statement Walkers in urban areas don’t have enough information about the routes they take, specifically temporal information. All left guessing. Target-user & key stakeholder Main Targets women don’t know which streets are safe, neurodivergent people want to avoid loud constructio...
+https://images-ext-1.discordapp.net/external/CDRpoxwjfQ8wbEaHokbFUsgo5fCfkAgcqcBt32LJT5Y/https/lh7-us.googleusercontent.com/docs/AHkbwyLZqR7yD1Rg2SymdmQCCTP3uGYR68o9Pgn1q8sH5kqrI1260CgOkqvCyf8ZR6WHcU8aTEGMEvytGjn5QfSsTpqIdNDE9sNWOYrUHLpDPLLx1oBQeGY%3Dw1200-h630-p
+
+
+[5/20/2026 12:49 PM] gong8
+GOOGLE FORM
+https://docs.google.com/forms/d/1DiN9ltbLDfxaskAx028p7giATKGvVHaKl-N0-WVdeAk/edit
+
+{Embed}
+https://docs.google.com/forms/d/1DiN9ltbLDfxaskAx028p7giATKGvVHaKl-N0-WVdeAk/edit
+Friend Meet-up Dynamics Survey
+Help us understand common pain points and failure modes when organising group meetups with friends.
+https://images-ext-1.discordapp.net/external/xgsuozGTxInSIsHQZNS2IAmhm4aVlwEJQCWWmc_Teac/https/lh5.googleusercontent.com/AyhTtzarSuK4rbLgfHibxar0mu37_6ywJGlGVk-rOXnpEgcw2xZtRLF-wo6rTP6DYmFnZP5KaxiV21k%3Dw1200-h630-p
+
+
+[5/20/2026 12:51 PM] seventhspark_40504
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1506639345073918084/1506640530111594587/20_May_at_11-53.m4a?ex=6a309e16&is=6a2f4c96&hm=06c8f44c1ad8acbb560b321f87be597a4203edc01e2045f6ec5db46dfe15b8a7&
+
+
+[5/20/2026 12:51 PM] gong8
+NEW GOOGLE SLIDES, MILESTONE 1
+https://docs.google.com/presentation/d/1DMwfBIoeGPGEFx8UkQE1xTV_w8mGrl_41fLrHJBJFUE/edit?usp=sharing
+
+{Embed}
+https://docs.google.com/presentation/d/1DMwfBIoeGPGEFx8UkQE1xTV_w8mGrl_41fLrHJBJFUE/edit?usp=sharing
+DRP-Milestone-1-Pitch
+Hi. Our project is about why group plans between friends so often fall apart. Our angle, in one line: friends don't fail to meet — the plan fails to survive contact with the group chat. Over the next three minutes I'll walk you through the problem, who we're designing for, what 39 people in our c...
+https://images-ext-1.discordapp.net/external/Btp6B2gjsupZBEsm9VxSqls0h0IG5Hsb0FVrG0IIaAQ/https/lh7-us.googleusercontent.com/docs/AHkbwyJM2hc0sUf5JeqzYZsu_c-wHSFO3fUtHamizZN4G-djDosEj4Mp6J7w9bdxZlZyx35uJLZbmFz7EqOiromhVKuy2vE-Hi5b-yIa4wX1VcI7X2FOINc%3Dw1200-h630-p
+
+
+[5/20/2026 12:53 PM] seventhspark_40504
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1506639345073918084/1506640960589660210/20_May_at_11-53.txt?ex=6a309e7d&is=6a2f4cfd&hm=dc21bd0e08337363fc67cc454ccc184fe1fdeb7eaf2c756b7aa0d203ebb32d06&
+
+
+[5/20/2026 1:32 PM] gong8
+CLAUDE DESIGN FOR TS [not working]
+https://claude.ai/design/p/92cfe0cb-4c3d-45d5-991d-b00778279285?file=Pitch+Deck+v2.html&via=share
+
+
+[5/20/2026 1:44 PM] seventhspark_40504
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1506639345073918084/1506653732887330949/20_May_at_14-27.m4a?ex=6a30aa62&is=6a2f58e2&hm=531024ed649e6d01c1f4a4197028cbadae8593ccb97ad8d09045bb62514267b4&
+
+
+[5/20/2026 1:47 PM] seventhspark_40504
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1506639345073918084/1506654590479765605/20_May_at_14-27.txt?ex=6a30ab2e&is=6a2f59ae&hm=16ed6bf94b01b6e39cccbc297749989c3f3d09804a10e30deef1afe2673415e8&
+
+
+[5/20/2026 2:30 PM] lxkast
+# how might we
+How might we help friend groups of young adults cut through scheduling clashes, slow replies, and non-committal "maybes" so plans actually come together?
+
+
+[5/20/2026 2:41 PM] the_jlh
+[DRP Milestone 1 - Script](https://docs.google.com/document/d/1QABs-K88YYtFAvPOeJghmNagAsdfR-r4jjvChHh4QvI/edit?usp=sharing)
+
+{Embed}
+https://docs.google.com/document/d/1QABs-K88YYtFAvPOeJghmNagAsdfR-r4jjvChHh4QvI/edit?usp=sharing
+DRP Milestone 1 - Script
+We are the most socially connected generation in human history — and one of the loneliest.
+https://images-ext-1.discordapp.net/external/hxhjdhQkoVTUDBG5OyMy2lzNUYlCJfvY6We5gDEBYpA/https/lh7-us.googleusercontent.com/docs/AHkbwyL0h9Nf6W_Eu8BBui2hwUIW61nZOM8jj3_6D5o8247n6jlU_JvFwD8zBMyRAX9YG2o3UpucO442WME9woMgfgGNiSyHdi-iaoAvLZg_upErb5O7qNVl%3Dw1200-h630-p
+
+
+[5/20/2026 3:09 PM] the_jlh
+read ts rn
+
+
+[5/20/2026 4:03 PM] lxkast
+
+
+{Forwarded Message}
+Here's ur lil interview pic
+Originally sent: 5/20/2026 10:43 AM
+{Attachments}
+https://cdn.discordapp.com/attachments/1506639345073918084/1506688844718936114/PXL_20260520_104315463.MP.jpg?ex=6a30cb15&is=6a2f7995&hm=f2f965952fb6659772a812000b7a399710d18a836d21bfdb7a3ddc21602859b0&
+
+
+
+[5/20/2026 4:03 PM] the_jlh
+too cold
+
+
+[5/20/2026 6:04 PM] seventhspark_40504
+Transcript from my interview with a friend. Meetups fail for him about once a week & main reason is poor communication - people not saying whether or not they can make it
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1506639345073918084/1506719300705325117/20_May_at_18-42.txt?ex=6a30e772&is=6a2f95f2&hm=f16e8d3d06d127a3a64791ecf086c1c7578937c309c2a6d926cd9f4c8cba72af&
+
+
+[5/20/2026 6:05 PM] seventhspark_40504
+also said he would wait until at least one other person gives their availability before he replies
+
+
+[5/20/2026 6:05 PM] seventhspark_40504
+If only there was a discrete way to say whether or not you can make it...
+
+
+[5/20/2026 6:33 PM] seventhspark_40504
+This guy looks really friendly
+
+
+[5/20/2026 6:38 PM] lxkast
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1506639345073918084/1506727929109811331/image.png?ex=6a30ef7b&is=6a2f9dfb&hm=6d898d8135ce2c3fe4cfc682490fae2434c7fa6a4fed81c03881f01ac3e0a937&
+
+{Reactions}
+😂
+
+[5/20/2026 8:57 PM] gong8
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1506639345073918084/1506762795327295498/message.txt?ex=6a310ff4&is=6a2fbe74&hm=32634df0066965ac37c2287f13e690c42e015ee576898aa5d5a50a81728371d3&
+
+
+[5/21/2026 11:40 AM] gong8
+SLIDESHOW
+https://docs.google.com/presentation/d/1DDhR6vH_gzs7YPrVKQxCH9L9CEXF192_O_Skl7Rfhxw/edit?usp=sharing
+
+{Embed}
+https://docs.google.com/presentation/d/1DDhR6vH_gzs7YPrVKQxCH9L9CEXF192_O_Skl7Rfhxw/edit?usp=sharing
+DRP_pitch_week_1_final
+Maintaining friendships in early adulthood is not passive. It requires someone to suggest something, coordinate schedules, absorb the awkwardness of chasing people for a response, and still show up even when momentum has died. 1 Wanting to see your friends, and it actually happening, are two diff...
+https://images-ext-1.discordapp.net/external/w1cPI2mVpzBZqIW6WhHMztrS1-UbA3wbCL8kzyzD9ik/https/lh7-us.googleusercontent.com/docs/AHkbwyK8orx42GkPi4TR3nJvDOfSARkL6q67qd8VNly2ruak_3hGJao5mstbcb0I5jeR6ZbRRSAfLo8f-rCkOxaaj4fLnUYcww8LW5Ibc9OKCjIhKV9kgSZc%3Dw1200-h630-p
+
+
+[5/27/2026 12:09 PM] the_jlh
+https://docs.google.com/document/d/1sSKmS7Y7gp6sIJzrCm2HaEHDJQE0zmK8rrjfV3w-pBU/edit?usp=sharing
+
+{Embed}
+https://docs.google.com/document/d/1sSKmS7Y7gp6sIJzrCm2HaEHDJQE0zmK8rrjfV3w-pBU/edit?usp=sharing
+DRP Milestone 2 Questions
+
+
+[5/27/2026 12:17 PM] the_jlh
+https://github.com/jhug146/drp_02/actions/runs/26451192675
+
+{Embed}
+https://github.com/jhug146/drp_02/actions/runs/26451192675
+Android CD · jhug146/drp_02@e15150f
+Contribute to jhug146/drp_02 development by creating an account on GitHub.
+
+
+[5/27/2026 12:17 PM] the_jlh
+the .apk is here
+
+
+[5/27/2026 12:49 PM] the_jlh
+https://docs.google.com/presentation/d/1xyyEkfKLvUoRj1p05s013hQa7ZIWstpQhwZRqsX0Y7g/edit?usp=sharing
+
+{Embed}
+https://docs.google.com/presentation/d/1xyyEkfKLvUoRj1p05s013hQa7ZIWstpQhwZRqsX0Y7g/edit?usp=sharing
+DRP Milestone 2 - Interactive Mock-Up
+
+
+[5/27/2026 12:49 PM] the_jlh
+for the mock-up
+
+
+[5/27/2026 3:30 PM] the_jlh
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1506639345073918084/1509217201092034711/DRP-Milestone2-Iteration1-Transcript.txt?ex=6a30c34c&is=6a2f71cc&hm=bdf0b41e52f6a80108158974627fd9e5cdc59a1ae83ada8d51d8e433df555cc2&
+
+
+[5/28/2026 10:09 AM] the_jlh
+https://linear.app/drp-02/join/a2c73cd2b96429d1b84ce3d31685795d?s=0
+
+
+[5/28/2026 10:49 AM] seventhspark_40504
+https://edstem.org/us/courses/86565/discussion/8097536
+
+{Embed}
+https://edstem.org/us/courses/86565/discussion/8097536
+Ed Discussion
+Ed Discussion helps scale course communication in a beautiful and intuitive interface. Questions reach and benefit all students in the class. Less email, more time saved.
+
+
+[5/28/2026 10:49 AM] seventhspark_40504
+walking skeleton expectations
+
+
+[5/28/2026 2:13 PM] seventhspark_40504
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1506639345073918084/1509560337442275519/28_May_at_14-59.m4a?ex=6a30b15e&is=6a2f5fde&hm=53301f4556349ae7b561ec7260f28f710537cbb38aab427a8f931cfd595546a4&
+
+
+[5/28/2026 3:02 PM] the_jlh
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1506639345073918084/1509572623284305970/message.txt?ex=6a30bccf&is=6a2f6b4f&hm=9c189966e3337747bfc7713cc76b6b9d66b1bc645973369344be3caa4b239388&
+
+
+[5/28/2026 3:02 PM] the_jlh
+agamjeet interview summary
+
+
+[5/28/2026 3:08 PM] gong8
+❯ curl https://96mgvmgcbj.us-east-1.awsapprunner.com/trpc/health
+
+
+[5/28/2026 3:08 PM] gong8
+BACKEND UP!!!!
+
+
+[5/28/2026 3:08 PM] the_jlh
+good gooning!
+
+
+[5/28/2026 3:42 PM] lxkast
+How might we give hesitant members of a friend group the certainty that their friends will actually show up to a meetup, and surface the small tweaks that would win over people who'd otherwise drop out, so 'maybe' plans become confirmed meetups?
+
+
+[5/28/2026 5:56 PM] the_jlh
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1506639345073918084/1509616316238135527/WhatsApp_Audio_2026-05-28_at_18.36.16.mp4?ex=6a30e581&is=6a2f9401&hm=729fa166a47caa45af7ca2a5c773b7c8850a8c80b7cab0d13833912997e93855&
+
+
+[6/2/2026 1:40 PM] gong8
+
+
+{Attachments}
+https://cdn.discordapp.com/attachments/1506639345073918084/1511363787830067310/IMG_0900.png?ex=6a30a976&is=6a2f57f6&hm=5f960231f49142d04e62b00230b0cedb40b394a1839116ab011996f88712a444&
+https://cdn.discordapp.com/attachments/1506639345073918084/1511363788279120064/IMG_0899.png?ex=6a30a976&is=6a2f57f6&hm=d1579fb0ba4ec870d511c5c033bc1df55c98bd5121cf56eed0e6671482d984d2&
+
+
+[6/3/2026 1:47 PM] seventhspark_40504
+https://trello.com/invite/b/6a1ed07108320fe2ae2468e9/ATTI7af08b3981d2557f7041c42f64ecf343512B048D/drp
+
+{Embed}
+https://trello.com/invite/b/6a1ed07108320fe2ae2468e9/ATTI7af08b3981d2557f7041c42f64ecf343512B048D/drp
+Trello
+Organize anything, together. Trello is a collaboration tool that organizes your projects into boards. In one glance, know what's being worked on, who's working on what, and where something is in a process.
+
+
+[6/4/2026 11:49 AM] seventhspark_40504
+https://www.mediafire.com/file/8j08hamo1ayhbq7/Screen_Recording_2026-06-03_at_14.56.27.mov/file
+
+{Embed}
+https://www.mediafire.com/file/8j08hamo1ayhbq7/Screen_Recording_2026-06-03_at_14.56.27.mov/file
+Screen Recording 2026-06-03 at 14.56.27
+https://images-ext-1.discordapp.net/external/WTvScoZE7bglloy-GvlzX8B5ZewKcabhd73W6OtURUE/https/static.mediafire.com/images/filetype/download/video.jpg
+
+
+[6/4/2026 2:29 PM] lxkast
+https://trello.com/b/8dUXwYWe
+
+{Embed}
+https://trello.com/b/8dUXwYWe
+Trello
+Organize anything, together. Trello is a collaboration tool that organizes your projects into boards. In one glance, know what's being worked on, who's working on what, and where something is in a process.
+
+
+[6/4/2026 8:39 PM] lxkast
+https://www.mediafire.com/file/buun55ew7f8gu8q/Desktop_2026.06.04_-_20.58.22.01.mp4/file
+
+{Embed}
+https://www.mediafire.com/file/buun55ew7f8gu8q/Desktop_2026.06.04_-_20.58.22.01.mp4/file
+Desktop 2026.06.04 - 20.58.22.01
+https://images-ext-1.discordapp.net/external/WTvScoZE7bglloy-GvlzX8B5ZewKcabhd73W6OtURUE/https/static.mediafire.com/images/filetype/download/video.jpg
+
+
+[6/8/2026 12:24 PM] gong8
+vc?
+
+
+[6/8/2026 12:24 PM] gong8
+anyone?
+
+
+[6/15/2026 11:24 AM] lxkast
+https://imperial.cloud.panopto.eu/Panopto/Pages/Sessions/List.aspx#folderID=%22c48136fc-772c-4b46-869e-b44a008e5134%22
+
+{Embed}
+https://imperial.cloud.panopto.eu/Panopto/Pages/Sessions/List.aspx
+Panopto
+Capture, manage, and search all your video content.
+https://images-ext-1.discordapp.net/external/IYAvTOiqVOEhcmSzw2t4mysJVaEZ___-3KRRd66Pp7A/https/static-assets-cdn.i.cloud.panopto.eu/Panopto/Cache/16.10.1.00001/Styles/Less/Application/Images/Logo/panoptoLogoIcon.png
+
+
+[6/15/2026 11:24 AM] lxkast
+^ best 24-25 final prezzies
+
+
+==============================================================
+Exported 47 message(s)
+==============================================================

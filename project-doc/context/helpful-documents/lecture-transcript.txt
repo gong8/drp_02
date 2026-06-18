@@ -1,0 +1,2186 @@
+[Auto-generated transcript. Edits may have been applied for clarity.]
+So presentation week. Hopefully you're getting everything ready for that.
+
+
+
+We're going to be talking most this morning about the assessment criteria for the presentations.
+
+
+
+But before we get into that this is how you don't do it.
+
+
+
+So we are DRP group zero I'm excitable Mark I'm heavily scripted Mark.
+
+
+
+And somewhere hiding down there is hiding in the corner so no one can see it.
+
+
+
+Mark. So we can talk to you about the lab service that yes, is a Ruby and Docker based auto testing system developed by our Department of Computing,
+
+
+
+is designed for programming based coursework providing automated testing for students code.
+
+
+
+This system helps ensure that students programs function correctly by running pre-determined tests and giving instant feedback.
+
+
+
+Lab tests streamlines the testing process, making it easier for students to verify their work.
+
+
+
+This presentation will cover the following points. There will be an overview of the presentation that we're doing right now.
+
+
+
+This overview of the presentation. There will be a presentation of a persona to make it really clear we have a persona.
+
+
+
+We spoke to some people there will be a problem that we will have.
+
+
+
+We will then demo how we solve that problem.
+
+
+
+Then we'll give a summary of the presentation that will summarise the presentation, and then we'll have some question and answer time for you guys.
+
+
+
+We will begin by discussing the presentation of persona to understand the context.
+
+
+
+Then we will address the problem that labs aims to solve, followed by a live demonstration.
+
+
+
+We will conclude with a summary of the key points and open the floor. Mark, don't read this part.
+
+
+
+It's been duplicated. Bob is a student who enjoys building things such as compilers.
+
+
+
+He owns a blue cat, which is, well, unusual, adds to his unique character.
+
+
+
+Bob faces a challenge. He is unsure if his compiler works correctly.
+
+
+
+Our goal is to help Bob by providing tools and methods for testing his compiler, ensuring it functions as intended.
+
+
+
+This will not only help Bob, but also other students with similar needs.
+
+
+
+So here is our research that we've done.
+
+
+
+We took a survey of people and we said to them, do you agree that testing code is sometimes hard and it would be helpful to have a system to do this?
+
+
+
+And all of these people over here, nearly 100% of users said yes.
+
+
+
+And then a couple of people said no, but they're in group Y. What's in Group Y?
+
+
+
+Never mind. Everyone that mattered said yes. Not these people. Let's not worry about those crazy people that said no.
+
+
+
+So clearly we need a testing system. So we did some interviews, people.
+
+
+
+Um, Bob said my code isn't compiling. Why isn't my code compiling.
+
+
+
+And then if I try and play. Oh. Okay, that's not working.
+
+
+
+But Bob is saying, why is it my code compiling? And I wish there was a laboratory testing system server so that I could test my code.
+
+
+
+Ah, really helpful Bob. Thanks. We can solve that for you. So here is our problem statement.
+
+
+
+Testing code is sometimes hard. I think students need help with this.
+
+
+
+I want to help students test their code. Let's make an online testing service.
+
+
+
+Woo! So here is our opportunity statement.
+
+
+
+How might we create a web based service to help students to test their code so that they can know if their code passes the automated tests?
+
+
+
+Thank you. Mark. Very helpful. It's demo time. So here's our demo.
+
+
+
+So this is the lab tier system which anybody would love. It's amazing.
+
+
+
+We can log into it and you can use your Ldap password. And if you just type some silly password and sign in, then oh, errors.
+
+
+
+Uh, Mark, what did you do? Mark, did you start the server?
+
+
+
+Uh. Can't trust Mark.
+
+
+
+Do anything? Not.
+
+
+
+Belong. Some of this is not scripted.
+
+
+
+Come on. I wasn't paying attention to me. Let's make sure she started properly.
+
+
+
+I mean, this is why you shouldn't actually debug a cloud during the presentation. Just saying. Oh, I know what's happened here.
+
+
+
+It's got confused about an object. As I was saying.
+
+
+
+So if you type in some rubbish and it doesn't sign, you win.
+
+
+
+Isn't that great? There's a pop up of everything that says you can't get in. Wonderful. And if you did put in a proper password.
+
+
+
+And it's really responsive and loads really quickly. There we go.
+
+
+
+And you can see all your pet groups and things that you have. Isn't that amazing? Wonderful.
+
+
+
+Anyway, let's carry on. That took a while so we can log in via Ldap on BTS.
+
+
+
+It's really, really cool because that means people don't have to remember their username and password.
+
+
+
+And we just looked at that before. But it's good to talk about it again for some reason. So here's our system architecture diagram.
+
+
+
+So as you can see is a front end and a back end. The whole thing is written in Ruby on Rails and it has an SQLite database.
+
+
+
+For some reason I can't remember. Um, probably. It's good. Oh it's small.
+
+
+
+It's small and lightweight and responsive. That's good. Uh, Carolyn, you can explain.
+
+
+
+Paige, aren't you sorry? No. I'm fine.
+
+
+
+I'll do it. So this is our home page. And the important thing is that when you log into it with log in, which is really important,
+
+
+
+it kind of works out who your repos are and, like, find some things and then displays all your exercises.
+
+
+
+And if you're an admin, you have different viewpoints. It looks at the current year.
+
+
+
+And yeah that obviously implemented easy peasy.
+
+
+
+So here's our summary then. So what went well?
+
+
+
+Well, I made a testing service. It can test code. I think it looks really good.
+
+
+
+And I use git to do it because it gets amazing. Differently.
+
+
+
+Learning rails is hard. Could have done with more time. Always more time.
+
+
+
+I think I should have interviewed more people that have been helpful. And what's next?
+
+
+
+I'm going to colour code the test results because that seems like it might be nice.
+
+
+
+I think staff need better account levels and some control supports, so we can print things in a nicer way with that Ansi,
+
+
+
+which everyone knows what Ansi is, so I'm not going to bother exposing that. Any questions.
+
+
+
+So hopefully you can appreciate that was dreadful and hopefully none of you will do anything like that.
+
+
+
+It is an amalgamation of all the worst habits I've seen from people over the last decade of me doing the kind of thing.
+
+
+
+Question if we have a video on this path, we should not put any of that stuff on the back.
+
+
+
+No, I think having text is fine, but the clip not playing was the problem. So I think we should do.
+
+
+
+Let's go through this this presentation presentation and just quickly look at and highlight what was particularly bad about it.
+
+
+
+Right. So first things first. We sat on this opening slide for ages.
+
+
+
+And I spoke for quite a long time before going anywhere, which is, I think, not the first best thing.
+
+
+
+What's the problem with this? Any thoughts?
+
+
+
+Like an interactive session? Why is this bad? Right? I think this is an objectively bad thing to put on a short presentation at least.
+
+
+
+I know there's an ad that says, tell them what you're going to tell them. Tell them and tell them what to tell them.
+
+
+
+That's terrible marketing advice. It's not really good. But obviously you're going to have an overview.
+
+
+
+Obviously you're going to go through these things. There's no point having a slide to tell us the structure of what's coming.
+
+
+
+Just get on with it and tell the presentation. But don't sit here for ages.
+
+
+
+Um, giving us the structure we told you to have more or less for the presentations. This personas dreadful y question for you.
+
+
+
+All the problems of this. Yeah. Yeah.
+
+
+
+So I've said it's a persona. First of all, other things that are bad about this persona. There's many, many thoughts.
+
+
+
+Yeah. The name is very generic. Yeah. The image is of the cartoon character.
+
+
+
+The name is Bob the builder. But the name is. Yeah. The name is Bob. And we kind of said, no, Alice.
+
+
+
+Bob. Charlie's. Because that's just. If we if we don't say that everyone has added Bob and Charlie because of all the messaging,
+
+
+
+encryption, security stuff that you guys see, and it's just not very imaginative. Um, yeah.
+
+
+
+Irrelevant information. Like Bob owns a cat. Who cares? This has nothing to do with the problem, right?
+
+
+
+Bob is a guess. Maybe that's fine. It's a bit abstract again, but technical.
+
+
+
+Um, but again, this is very focussed on, like, my preconceived technical solution.
+
+
+
+Right. I'm decided that I'm going to build for this presentation effectively and come [INAUDIBLE] or high water I'm going to do that.
+
+
+
+So I'm going to reverse engineer everything that I've shown you to try and make it seem. That's a good idea.
+
+
+
+It doesn't really work, right. It's very, very forced and builds a terrible narrative structure.
+
+
+
+This research was garbage, right? I found this random graph online somewhere.
+
+
+
+It's not actually flat. No idea what x and y were in that graph either, right?
+
+
+
+It's just a bit unclear what it means. So make sure any data you present is clearly labelled and well-defined.
+
+
+
+If it's stuff from government surveys, fine. It's probably easy enough to present or from newspaper headlines and things.
+
+
+
+That's easy enough to do. Just make sure you do cite it in a text big enough we can see somewhere so we understand the source.
+
+
+
+If you do your own surveys, then think carefully about what are you actually showing with that.
+
+
+
+And this question is the most leading question I've deliberately ever written, right? It's awful.
+
+
+
+It's basically saying, you agree with me, don't you? Yes. Great. Cool. Let's move on.
+
+
+
+Um, so yeah, just just think carefully about what you're presenting, particularly if you have your own survey.
+
+
+
+It's like having some of your own surveys is good.
+
+
+
+I know that we focus mostly on qualitative feedback, but part now of going back to the beginning of telling the whole story this week.
+
+
+
+So we've got to go all the way through the evidence. And that includes the big data, the newspaper headlines, the government data,
+
+
+
+whatever that back up the context and then your own surveys to explore and then the qualitative stuff as well.
+
+
+
+So don't forget the qualitative research you did beginning and have done probably throughout the presentation that the the product process.
+
+
+
+Um, yes. Interviews.
+
+
+
+I said make sure that works I actually did I probably shouldn't have put the quotes on the site, because it's arguably a good thing to show you.
+
+
+
+Well, having said that, none of these quotes are particularly interesting, right?
+
+
+
+They're a little bit specific or a little bit drilled down without any context in them, which makes them hard to interpret and know what they mean.
+
+
+
+And I don't think Bob ever said this. Right. This is a very strange thing for some user to say.
+
+
+
+I wish there was a level of service to my code. I don't think anyone before a lab tested no.
+
+
+
+One Tom Thomas, but I worked out lab test should exist. From observing students struggling to make their compilers compile.
+
+
+
+Um, and my own [INAUDIBLE] of having to debug that problem. Yeah, that may be inauthentic.
+
+
+
+Quote, maybe, but it's not very helpful. Again, the clip should play.
+
+
+
+Oh, I should go back a bit. I read from the phone for a good five minutes.
+
+
+
+Hopefully you hated that. I really hate that.
+
+
+
+By all means, write a script, but then just try to remember enough of it that you can go a bit ad libbing and off script.
+
+
+
+I think if you stand there looking at your phones like this. It's really, really offputting to the audience.
+
+
+
+It really does not set a good tone, and it kind of destroys the engagement and the emotive ness of the presentation.
+
+
+
+Like, it just end up feeling very dry. Very strictly scripted. It doesn't work very well, particularly if you've got there.
+
+
+
+I've forgotten I've written the thing twice, right? Actually, I didn't check this this morning.
+
+
+
+I read it off the script directly,
+
+
+
+and there's a bit where educate itself horribly because someone had copy pasted when I first wrote it with Ivan for a joke.
+
+
+
+So yes, to be very careful scripts. If the script gets mocked up, then you will just say what's mucked up and sound like a complete idiot.
+
+
+
+So try to be careful with that. Yeah, yeah it's amazing.
+
+
+
+Slide. So why is that video. Should we also promise that.
+
+
+
+So you might want a more elaborate version where you highlight the critical moment from it.
+
+
+
+Perhaps that could work a little bit up to your choice. The important thing is if it's going to play, make sure it plays right.
+
+
+
+This is actually just an image that's on the slide. It's not a video at all to make this thing work, but also make sure you can hear the audio, right?
+
+
+
+If you're going to play it in the room, I would invite you to try and pop into the room that you're scheduled into, maybe late today or tomorrow,
+
+
+
+and just plug in to make sure you can hear your download, because if it can't be heard, that's a serious problem, right?
+
+
+
+And even if it was really noisy in the background, again, sometimes having the text there can help you just make it clear what's being said.
+
+
+
+If it's very noisy, you did it in the street or in a library or whatever. It's a bit noise or chatter in the background.
+
+
+
+Then you can try and pull out the key moments probably don't have.
+
+
+
+Again, be picky with this, but you can't afford to show five minute video clips in your final presentation.
+
+
+
+You've got 20 minutes. Pretty strictly timed. You can't have any clips that last more than about 20 or 30s.
+
+
+
+It's just not an efficient. Sometimes you've got to be.
+
+
+
+You've got to cherry pick your moments quite carefully and just focus on the evidence we need, the moments we need to to motivate your problem,
+
+
+
+particularly at the beginning, we are doing the understanding the the user problem, the problem context, the getting to how might we statement.
+
+
+
+That's the most important place to show us some user feedback, probably from week one,
+
+
+
+maybe during the project as well when you're doing the iterations, you might want to show a little bit, but don't go overboard, right?
+
+
+
+We're not marking really heavily the iterations this week. That's what we do the last four weeks.
+
+
+
+We want to see a hint of your development, so we can give you a bit of help on that as well,
+
+
+
+because it's part of the story of how you built what you built, but it's not the main focus, right?
+
+
+
+So huge amounts of video feedback and interviews is not the point of the presentation.
+
+
+
+A few select moments is key. Probably using text for a lot of the rest of them.
+
+
+
+Kind of gather things together and try and collate similar themed feedback together on a slide to show you where you are,
+
+
+
+then analysing that to pull out the theme, to pull out the common consensus about what the problem is that died.
+
+
+
+That wasn't good. Okay, cool.
+
+
+
+So problem statement. So again, the point here is this is a very, very badly written one.
+
+
+
+Why is it badly written? It's all about what I think and what I want. It's not about the needs.
+
+
+
+You don't necessarily have to have a problem statement. I find it is usually helpful.
+
+
+
+I think in week one we might have kind of let you get away with not having one. I think for these presentations you've got more time.
+
+
+
+I would probably expect you to go from all your research and background stuff to then redefine the problem in more concrete terms,
+
+
+
+and then have your hand at the opportunity statement that, for me, is the right narrative structure to present your problem clearly and coherently.
+
+
+
+And then the whole point of the interview is you have a couple slides before is to explain, to justify that it's a real world problem.
+
+
+
+It's not just something you've made up. There are real people, real users that have the problem and it's really relevant to them.
+
+
+
+And you've got some experiential evidence to back that up, and not just your vibes on what you think the problem is.
+
+
+
+And this is hopefully obviously a really bad one because it's entirely solution focussed, right.
+
+
+
+How might we create a web service that's technical to help students test their code as a technical need,
+
+
+
+so they can therefore know if they test their code. It's self repeating and not really making any sense, right?
+
+
+
+So be very careful. I think most groups have taken their how might we to their tutors mostly to get feedback.
+
+
+
+Um, so hopefully they're in a good state now. But again you can still kind of need to draft that again in labs this afternoon.
+
+
+
+Feel free and double check them. It's fine to do another thing I thought to highlight here.
+
+
+
+You notice I've got ADHD with my background slides. They just change every single time.
+
+
+
+Don't do that, but try and make sure I recommend that you try and make the theme of your slides match with the theme of your application or service.
+
+
+
+You've probably got a colour theme on your website or service, maybe to do with the logo as well.
+
+
+
+It's nice if you can match that all the way through. So everything feels like a coherence all working together.
+
+
+
+So don't use a vastly different theme for your slides from what your actual service looks like.
+
+
+
+So when you hop over to it in the demo, it doesn't look totally different. This is dark mode I guess, but still, you might not look too different.
+
+
+
+This slide is dreadful for several reasons actually. Surprisingly, you can see it on here that you can down here, but it's almost legible.
+
+
+
+Do you think about the contrast between your text and your slides?
+
+
+
+So the one back here somewhere, this one, some projectors that obviously these ones are newer make great yellow really hard to see.
+
+
+
+So just be very careful to try and use more stark contrast than that.
+
+
+
+If in doubt, go to the presentation room and check it yourself and make sure it looks good on the projector, not on your laptop.
+
+
+
+It looks very different to here, so it is up there because the projectors sometimes don't have as clear or sharp image as your laptop screen might do.
+
+
+
+Um, yeah. Demo time. So it's a very bad idea. I think I mentioned it briefly last week.
+
+
+
+Sandwiched your demo in the middle, right? You don't want a demo right at the end of the whole presentation,
+
+
+
+because the thing you've built is a kind of, put it, a passion that you've been working on for four weeks.
+
+
+
+Right. You'll be really proud of the service you've built.
+
+
+
+It won't be fully complete, but you've done a great job to get whatever it is into whatever state is in at this point in time.
+
+
+
+You're proud of that, so don't park at the end of your presentation as like the last thing you look at,
+
+
+
+and also try to make the presentation about it, right, with representing your work that you've done over the last four weeks.
+
+
+
+So if you've got it's demo time and then tab away to one side and then play
+
+
+
+around with lab or whatever the thing is for a bit and then come back again,
+
+
+
+that's not really making good use a of the two screens you've got available, but also of the audience attention.
+
+
+
+What you should be doing there is not just doing random things. Logging in is the worst thing to demo.
+
+
+
+Who cares? It's not very interesting. I should demo the journey through lab tests doing something interesting like running a test.
+
+
+
+Seeing it fail, fixing my code, and then showing it past again. That would be a good journey to go through with my test, and I can have.
+
+
+
+The journey that I'm going through can be summarised in some way on the slide, and the other screen can then be used for showing the service itself.
+
+
+
+Right. So don't have screenshots again here there's a screenshot of lab test login page.
+
+
+
+What's the point in this? I could just show you the lab test login page and log in.
+
+
+
+I shouldn't log into the bad thing to demo, but I should at least show you the server itself, right?
+
+
+
+Show don't tell. Don't spend ages and ages telling me what you can do.
+
+
+
+Just show me it working. Show the user story, the user journey and then go through it.
+
+
+
+Maybe at the start presentation, go through it with the bad experience where it all goes wrong and nothing's really working properly.
+
+
+
+The person is very unhappy and then come back to that experience, that journey and go through it again.
+
+
+
+But now insert your demo in the middle of that journey.
+
+
+
+So now you capture the problem and you solve it in some way, and that should be a much neater discussion.
+
+
+
+And the slides can move along with discussion as you go. And then the next thing you want to do is do a little bit of.
+
+
+
+How do we make that happen then. So what I suggest a good now structure is you have a user journey.
+
+
+
+You demo how you make that happen and then you say, well, how do we get there?
+
+
+
+And at that point you can take a Segway and do a discussion of the iterative development.
+
+
+
+You did maybe 4 or 5 slices to get that particular interaction working well, and then talk about a little bit about how technically it works.
+
+
+
+If it's I'm interested to say there is something about WebSockets or, or whatever. It's making it be real time or whatever other stuff you did there.
+
+
+
+That's a good point to talk about that particular interaction. How do you make that work? Explain in detail.
+
+
+
+Does that make sense? Yeah. No question in that process is something that we have a lot of those files in case something.
+
+
+
+Yeah. If the final screenshot of an iteration discussion is the service that's fine.
+
+
+
+But I mean just don't have a screen like this saying we can log into TTS, log in works this way.
+
+
+
+Just show me. Right. So never have a screen that lots of screenshots of your current thing because you've got two screens.
+
+
+
+You can just have the current app on one of the screens and just show us, right? Show Don't Tell is so important in presentations.
+
+
+
+It really makes a massive difference. Yeah. Don't tell us anything if you can show it.
+
+
+
+But don't tell us what the users think. If you can show us, the user saying, I think this or I'm struggling with this, right.
+
+
+
+I need to show the actual raw thing and then summarise a little bit around that, rather than only summarising what people have said.
+
+
+
+Um, yeah. We want to hear it in their words, even if their words in quotes.
+
+
+
+I want to hear it from through the voice of the user ideally, rather than your voice layered on top.
+
+
+
+But all of the things at the moment on System Architect diagrams.
+
+
+
+So this is technically a system architecture diagram for us.
+
+
+
+Any comments on what the issues with this are? Because it's super bad.
+
+
+
+As a diagram thoughts? You're very quiet, which either means it's blindingly obvious you're too scared.
+
+
+
+Say anything, or maybe you don't know what's wrong, which is even more where I'm not sure which is worse. So what?
+
+
+
+This could be any system. Right front end, back end could describe probably every single application.
+
+
+
+You guys have written this this term. So it's way, way too vague.
+
+
+
+I guess this makes it a bit more lab tests, but again, not helpful.
+
+
+
+So you want to make sure you break down your system architecture diagram into a sensible number of components.
+
+
+
+Sure, there should be some separation between the front end and the back end, the user facing part, and the kind of behind the scenes code.
+
+
+
+But those should be like regions of your diagram that have got connections between them.
+
+
+
+With many components. You don't want too many components like don't draw a UML diagram of entire service Uma diagrams.
+
+
+
+I don't think we teach those anymore. If we do, we should stop. Are awful. They're just legit terrible.
+
+
+
+Nobody ever reads them their way too detailed.
+
+
+
+They'd be better off just looking at the code base and looking at the classes yourself, rather than reading the YAML diagram.
+
+
+
+My experience. So you want, I don't know, 4 or 5, six kind of boxes in your front end, back end,
+
+
+
+depending on what your architecture looks like that show the different components, right?
+
+
+
+So if you've got like a different front end renderer for mobile and for laptop,
+
+
+
+then you might want to show that in some way it's built on the front end.
+
+
+
+If your back end server's got parts that are kind of cooling off to external services,
+
+
+
+make sure you clearly show what's inside your back end and what's kind of in the cloud external to your code.
+
+
+
+Like if you're calling out to an AI agent to help summarise some texts for you or something, that's completely fine,
+
+
+
+but just make sure you clearly delineate which code is yours that you own and what a third party thinks.
+
+
+
+And any libraries or chunks of work in the back end.
+
+
+
+So again, you might have there'll be an SQL server, probably a database server, some kind on the back end that should be a component.
+
+
+
+And then whatever wrappers around that might be something you want to draw about as well.
+
+
+
+So just try and think about what are the significant significant components of your system.
+
+
+
+And that comes down to probably how many different files classes, whatever have you got within your code base.
+
+
+
+And those are probably each a subcomponent, a significant subcomponent of your system because you've chosen to put them in different files.
+
+
+
+Right? So they're probably conceptually at least different units of work or different units of functionality of your system.
+
+
+
+You also want to explain why you made these choices so you could be on the same side.
+
+
+
+There could be a different slide, but just listing what you've done is not good enough.
+
+
+
+We want you to justify why you've chosen to work with the frameworks,
+
+
+
+and try and think carefully about why you choose stuff like saying, I chose Ruby on Rails because I like it.
+
+
+
+It's not very useful, right? So don't use things that are subjective, I like it.
+
+
+
+It's popular. Who cares? I don't care what lots of people think. I want to know why you chose to work with this.
+
+
+
+So things like.
+
+
+
+I know it has really good library support for so-and-so, or probably wouldn't even say lots of tutorials because that's pretty obvious.
+
+
+
+Most languages have lots of rules, but try and try and find something technical and objective that you can hang your hat on and say,
+
+
+
+this is why we chose to work with this and try to be honest with your group.
+
+
+
+But saying like we had previous experience against not the best reason, right? It's like it's very subjective to your group.
+
+
+
+That won't help somebody else decide to use that framework in the future. So really try to think about that performance, about your library utility.
+
+
+
+Um, maybe that good idea support something.
+
+
+
+These are all sensible things because there are objective things that do exist and not subjective personal opinions too much,
+
+
+
+because that's just not very useful for a future group to make that choice or not.
+
+
+
+Yeah. If you liked it, great. It doesn't help me know if I want to like it. Working to work with it as a technology.
+
+
+
+Then this one, the main point this slide is don't present lots of codes. I'd be amazed that anybody can read that.
+
+
+
+It's only just about double here. I mean, they have terrible glasses, but it's really hard to read and it's also just not interesting.
+
+
+
+There's nothing on this page that anybody should care about. I think it is actually the code from lab tests home page, but it's just not not relevant.
+
+
+
+It's just doing a whole bunch of filtering to display things in a nice way. So show don't tell.
+
+
+
+Show us the code doing something and talk maybe about a few challenges you had on the way, but don't list entire pages and pages of source code.
+
+
+
+Bear in mind that half of your audience assessment team are from the RCA.
+
+
+
+They're not programmers, by and large, so they probably don't understand this stuff.
+
+
+
+I even through to carry the joke trying to explain this. And of course you can't write. It's ridiculous.
+
+
+
+Also, make sure your team members are prepared. You don't want team members that are getting thrown to you in a Segway who go what?
+
+
+
+Out of nowhere. So pay attention to each other.
+
+
+
+Don't sit in the corner and chat amongst other, because the microphones pick that up and we can hear it really clearly in the audience.
+
+
+
+So you might think of being really smart and quiet, but you're not. So just be careful with that as well.
+
+
+
+Summary. So this is again a dreadful summary. Why? Because I haven't said anything of interest.
+
+
+
+Right? So what went well was all my own opinions. I've just repeated what I did without talking about benefits.
+
+
+
+But come back to your users. So I said this to a lot of groups in my Twitter stream last week.
+
+
+
+Your persona, like Bob, should not be somebody that you introduce back here.
+
+
+
+Hey, Bob. And then park on a bench and leave there for the entire presentation.
+
+
+
+I didn't use Bob again at all, right? Bob was introduced badly and then just left alone to rot in the corner for the rest of the presentation.
+
+
+
+Bob or the persona should be being used for the whole thing.
+
+
+
+So when I'm explaining the problem, I should be telling it through the eyes of my persona.
+
+
+
+When I then demo the solution, I should be doing it through the eyes of one or more of my personas.
+
+
+
+And then when I come to summarise at the end and say, what do I do?
+
+
+
+Well, I should be talking about it again, ideally through the eyes of your persona, through the eyes of Bob, about what can Bob now achieve?
+
+
+
+What can Bob now do? That's my achievement is what I've what needs a Bob?
+
+
+
+Have I provided and even the future work. Rather, I don't want to see on anybody a list of 5 or 6 things that you could do in the future.
+
+
+
+Great. Sure, we can all do things in the future. Who cares about these things?
+
+
+
+In fact, some of these are done now because I made this a couple years ago. But who cares? It's not really important.
+
+
+
+What's the need I'm providing? Why am I providing colour coding?
+
+
+
+That doesn't count. That's one way to do this. But why? Why most levels?
+
+
+
+But why did I do that? I did that so I can make it self-service. Staff can now make their own exercise and test without going through me personally.
+
+
+
+But for a decade I've been doing that myself, which is really stupid. Yeah.
+
+
+
+And you control support you. You saw this in work. You're. If you have colour coded error message in whack, they come out colour coded.
+
+
+
+Right. We added that last year. So there's a need for that because it makes us more useful to you, a student, to use as a service.
+
+
+
+You can get more information out of it, but just listing these three things does not help anybody know anything.
+
+
+
+So come back to the needs and again tell them through Bob. Bob is your persona.
+
+
+
+Don't use Bob's name, obviously, but your persona will have some needs that you haven't fulfilled yet,
+
+
+
+because there's no way every group will have been able to have fulfilled every possible needs of the year is simply impossible in timeframe.
+
+
+
+So there'll be need you haven't met yet. Just be honest and tell us what they are and then go through those and then differently stuff here.
+
+
+
+The problem there is, again, I've been very, very kind of subjective and pointless.
+
+
+
+Right? Learning rails is hard. I'm sure learning a framework is always hard.
+
+
+
+Who cares? There's nothing to learn from that. I needed more time. Great.
+
+
+
+And we've got a time machine they can lend me. So I can go back and travel in time and get more time in the future.
+
+
+
+No, that's impossible to solve. Interview more people. Well, duh. But again, it's a time problem, right?
+
+
+
+So try to think of things that you would do differently that actually are achievable in some way, and not inventing more time or just trying harder.
+
+
+
+Right. It's just not useful. Try and think about things you actually could change.
+
+
+
+Like was there some part of your process or communication that could be improved?
+
+
+
+Was there something in the way maybe you styled your code, you wrote test?
+
+
+
+Maybe you didn't write tests very much. Probably you don't want to push. Maybe that's a problem, right?
+
+
+
+Think about things technically you could have done differently that you think might actually improve
+
+
+
+the result of the project and talk about those not just random things you have no control over.
+
+
+
+Cool. Jamie's not here. Jamie.
+
+
+
+We're here. Jamie would say this is an awful last slide for a presentation. Any thoughts on why?
+
+
+
+Not what I thought of until last year when Jamie said his last slide at some point. My thoughts?
+
+
+
+No, this is the last thing the audience is going to see. So this is going to be sticky in their mind.
+
+
+
+And what they're going to stick in the mind is, do I have questions?
+
+
+
+What you want sticky in your mind is wasn't that a great presentation about whatever service finished with something which is your service?
+
+
+
+I mean, this is not a good example, but show an image of your app saying this is thinking maybe maybe have your impact asset.
+
+
+
+Right. And so this is the thing, it's amazing. It's going to solve the problem in this way. Right.
+
+
+
+And leave that impression in the mind of the audience. So when we're thinking about things, we're not thinking about questions.
+
+
+
+We think, oh, it's really cool. I really like what they've done with so-and-so, and it lingers in our minds a bit while we're typing up our feedback.
+
+
+
+If anything, it would just help. You probably get a slightly better mark, maybe because we've got a better lasting impression at the end.
+
+
+
+Jamie is very passionate about not having any questions. Slides on the end. Other things I'm going to go through in don't don't fill your slides with
+
+
+
+bullet points because they get really small and they're quite painful to read.
+
+
+
+Um, I call it death by bullets. Yeah. Think about what you want.
+
+
+
+The slide list, everything you would say. Focus on key points. Oh, don't read from the slide.
+
+
+
+I did that a couple times in the presentation. Don't don't look at it and read. It's really bad stuff.
+
+
+
+We should be talking to the audience.
+
+
+
+I spent almost whole presentation looking at my phone or at the screen behind me or on my laptop, not at you guys.
+
+
+
+So try and, like, include the audience. Um, anything that's important here.
+
+
+
+Now let's get silly towards the end. The other thing that's even worse than death by bullets.
+
+
+
+Number one is this one. What's worse than a page of bullets? A page of bullet points are slowly revealed.
+
+
+
+One at a time. Ah, it's so annoying.
+
+
+
+It just wastes a huge amount of time, right? You're not allowing the audience to read what's on the slide.
+
+
+
+You slow him down to your pace, and it probably makes the whole slight drag out a lot longer.
+
+
+
+Needs to. So be careful with that. I would get rid of bullet points about that about you, but use.
+
+
+
+It's not the best structure I've got everywhere besides, but I would use something a bit more like this.
+
+
+
+I've got things on the slide, but they're kind of clustered together in some way.
+
+
+
+That's probably a better effect than having lots of bullet points as well. These slides are really, really boring for the bullet points.
+
+
+
+Even this summary stuff right here. Right.
+
+
+
+This should probably be three different slides that are talking about different things rather than lots of subtopics all squashed into one slide,
+
+
+
+but you can use your judgement on that. Uh.
+
+
+
+Image resolution do you think about. Yeah. To make sure it's okay.
+
+
+
+Because otherwise you can't see the picture of what you're doing. No question. Yeah. I'm fine.
+
+
+
+The problem is I made at least seven and a half paragraphs.
+
+
+
+Personally, we need to do want to be with us. I mean, I think it's better to have them just separate like this on different sides.
+
+
+
+I would say I don't think you want them all on them. You're not the very kind. It's like, because this is already quite a lot of text to one slide.
+
+
+
+I mean, you do need to have my hand up on the slide. So that's going to be some text on the slide.
+
+
+
+But you don't want that crowded. Can you imagine if I'm trying to crowd this and this onto one slide.
+
+
+
+It's going to get very compressed. You're going to end up with a slide that looks almost like this, right?
+
+
+
+Just with the actual text rather than in code. And that is way too much text for a slide.
+
+
+
+So be careful with that. Resolution is important. Yes. To make sure we can see your images.
+
+
+
+That's particularly important if you grab things from screen grabs from the internet or whatever.
+
+
+
+Sometimes I've seen people like grab newspaper headlines and they look okay on the laptop, but something up here, it's completely legible.
+
+
+
+So again, good to try and test on a projector somewhere in one of the rooms if you can,
+
+
+
+just to make sure that these things translate well from your laptop up to the big screen.
+
+
+
+Oh, that's a bank slide to say nothing by mistake.
+
+
+
+But yeah, you don't have to either. I think that, Um, cool.
+
+
+
+That was a lightning tour through some things to do and not do.
+
+
+
+Any last question on that. Otherwise we can go have a chat about the assessment criteria themselves for the presentations.
+
+
+
+Any last questions on that? Yeah. So I mean don't do what I did right. That's deliberately awful.
+
+
+
+Yeah. What happens is like genuinely goes down like one of our checkpoints.
+
+
+
+Railway went down globally five minutes into the checkpoint and afterwards was.
+
+
+
+So would you feel like we could split up a third one? I mean, I would say that don't start mucking around with any code, anything.
+
+
+
+I sat there, it took me about a minute because actually I had to wait for lab chairs to actually school up.
+
+
+
+It takes about a minute to spin up a restart that I generally stopped lab for half an hour this morning.
+
+
+
+So if anyone's going to use it, it goes down. Um, just to make that point in the thing in presentation.
+
+
+
+So we don't want to see it crash.
+
+
+
+You should be fairly confident it won't crash if it's completely outside of your control chapters afterwards about it.
+
+
+
+But don't don't do well the presentation. Do it. Okay. That hasn't worked.
+
+
+
+We'll come back to that later on, and maybe someone can do it in the corner and try and get it working, but just carry on.
+
+
+
+Otherwise you just sink so much time. And certainly if it's a problem with the code, do not debug the code during the during the presentation.
+
+
+
+Make sure it's going to work. Test it today. I wouldn't change any of your code after about, I don't know, 3 or 4 p.m. today.
+
+
+
+Just safety right there. There's no point. I mean, you're just risking a huge explosion doing a presentation.
+
+
+
+If you debug something and get it wrong and you just don't want to crash every time it goes wrong,
+
+
+
+we're talking about that there's a criteria for is it stable? And every time something weird happens, it shouldn't be happening.
+
+
+
+That criteria will start to lose marks. So you want to avoid anything going wrong with that at all.
+
+
+
+But the question is can we use the so specification of communication.
+
+
+
+So instead of saying using a person is saying that our board has this issue.
+
+
+
+So yeah. So when you introduce the beginning you can just say you know Sophie has a problem.
+
+
+
+She's testing, she's writing her compiler, but it won't work on the on the other system.
+
+
+
+She can't work out why it's not working on the code systems. And it's a black box to her, but that would be a way of motivating that need.
+
+
+
+And I've just described the problem via Sophie's eyes.
+
+
+
+I haven't said Sophie is a persona, Sophie is a student in first year, Sophie or whatever, but I just explained the problem for her.
+
+
+
+So I think using a persona that way is an effective thing to do to make sure. Yeah.
+
+
+
+So obviously if you've got some user, you say other people have this problem too, and then you can give other elements.
+
+
+
+Right. But the main narrative story driver should be Sophie or Jack or whoever you've got as your as your persona,
+
+
+
+because that's more effective than having some students have problems like this. It's a little bit vague, right?
+
+
+
+You can make it more personal because it's like a human centred. Right? Yeah, yeah.
+
+
+
+I mean, I think a persona is it's a template essentially that you use as a team to it's like an archetype.
+
+
+
+You're putting them together to articulate the problems, the needs and motivations of a target, someone in your target audience.
+
+
+
+From the storytelling point of view, maybe that persona becomes like, imagine you're introducing them to the whole group,
+
+
+
+like their lives and what they're doing and how they might use this app in the context that you're working in, so it should feel very natural.
+
+
+
+It should feel like I think I was working with the group last week who had a persona,
+
+
+
+and they were going to show me the persona on the laptop, and I said, just tell me about them.
+
+
+
+And they did, and it felt like they were real and it made such a difference.
+
+
+
+It sounds like a small thing. So think about, you know, it's designing for real people.
+
+
+
+So all of your presentations should be grounded in a real context, and you're using that context to sell the digital touchpoints you developed.
+
+
+
+And it should it should be relatively seamless.
+
+
+
+So it might take a bit of rehearsing today and before your presentation, but it makes a massive difference.
+
+
+
+So I hope that helps a little bit. Yeah.
+
+
+
+Yeah yeah. Yeah. Yeah yeah.
+
+
+
+And that introduced the new nutrient. So tell us what to do.
+
+
+
+So so I think what I mean by that is you don't. Don't go through what the app can do.
+
+
+
+But but don't tell us what the app does. When you can just show it instead.
+
+
+
+Yeah. So you can basically be like here is Sophie's journey. Sophie's having this problem.
+
+
+
+She encounters the can't get on the bus for whatever reason. And your app is solving that somehow.
+
+
+
+So you tell the whole story at the beginning to motivate problem. And Sophie is having a terrible time because her wheelchair won't fit on the bus,
+
+
+
+and she has no idea there's already a pushchair on there or something like that. It could be the story of going through and then.
+
+
+
+So then the way I presented later on is that. So now we've got a no chair bus app or whatever.
+
+
+
+And so what happens now with Chair Bus app.
+
+
+
+Well, Sophie goes to the bus stop in the morning and she pulls out her app and she sees that the next bus is full of people, way too crowded.
+
+
+
+So she knows to wait for the one that's bombing it behind that where it says it's fine, right?
+
+
+
+So that I haven't told you what the service does, I've just displayed the story with the service now intervening in the way.
+
+
+
+So just revisiting the journey that was broken before, where there's a bad experience before and now going through how that solved problem.
+
+
+
+And then I say, so how do we make that happen? Well, we spoke to users like Sophie,
+
+
+
+and you can show a situation and then maybe unpack some of the technical development if it's interesting for something
+
+
+
+fun to say there about how do we get the communication to go from the bus passengers to her so she can realise time?
+
+
+
+Well, there's websockets happening there that do this and that and the other, and you can talk a little bit about how that works technically.
+
+
+
+Does that make sense?
+
+
+
+But yeah, tell the stories where things are broken and then kind of end up with how might we end that first section and then go back and say,
+
+
+
+right now we've got this application, we've got this new service. Well, how does that help Sophie?
+
+
+
+And then go through her story again? But now you've got the thing, but don't have a whole library.
+
+
+
+Explain the things you do, because what's the point? Show us. To show us how they do that instead.
+
+
+
+Which she. Shouldn't introduce.
+
+
+
+So you do a journey. You do a journey, and then you say.
+
+
+
+You say what the journey is going to be. So you've had the journey before the broken journey, right?
+
+
+
+You've shown that. So now you just revisit that journey later on with how you've solved it,
+
+
+
+and the persona will go through that journey and then finally find the solution and use it, and then talk about how you made that work.
+
+
+
+Does that answer? Any questions?
+
+
+
+Will you show up and say?
+
+
+
+I can't remember, I wrote lots of things, but everything. I've worked so hard.
+
+
+
+I mean, I think I think the thing is that the presentations, um, there's no template for all of your presentations.
+
+
+
+It's your creative judgement. And I think in the storytelling slides that David put together and are in the playbook,
+
+
+
+you can be very creative about the order that you reveal things in. It's just if you think it makes sense, then go for it.
+
+
+
+Okay. There's no there's no prescriptive template or even order I would suggest, but does it make sense?
+
+
+
+Does it reveal, you know, the issues? Does it reveal that you address the issues and can be relate to that?
+
+
+
+And then it's really up to you how you want to communicate. Even the journey.
+
+
+
+It could be a storyboard, it could be an animation. It's probably too late to do that kind of thing now, but it's again, it's about making it real.
+
+
+
+So what I've got on here on estimates is introduce you to a journey that involves your service,
+
+
+
+then with the interactions that take place during that journey and then discuss how you design iterated it.
+
+
+
+So when I say introduced the journey, I mean now Sophie gets on the bus again.
+
+
+
+That's all it takes to introduce it. And you go through the journey. You have to show the whole journey to introduce it.
+
+
+
+You can start the story and then go through it with demo. What I don't mean is like lay out the entire journey all in pictures.
+
+
+
+Or are you telling us because that's wasting time, you're going to go through the whole thing and then go through it again afterwards with demo.
+
+
+
+So again in the presentation there I went. I did log in, and then I went back and spoke about how I did back to front as well.
+
+
+
+Right. So I then went through a slide talk about logging, which is really confusing because it's double double teaching the same thing,
+
+
+
+or double saying the same thing and back to front. So just get rid of the duplication and just go through the new journey.
+
+
+
+But I just mean it's 9 a.m.,
+
+
+
+Sophie trying to get on the bus and that's all it takes to do so you just bring us back into the same context we had in the opening where you said,
+
+
+
+this is the problem, where it goes wrong, and then driving that story through,
+
+
+
+but now your app intervenes, jumps in somewhere and solve the problem and saves the day, basically.
+
+
+
+Does that make more sense? Cool. Yes. Maybe a bit on the part of the sessions for clarifying.
+
+
+
+So yeah. Okay. I only got to talk to you.
+
+
+
+I know some of the very best. Last year, some of them disgraced through a somewhat simplified version of the use of burning draft.
+
+
+
+And that would be a stylistic slack line up and down the pipe.
+
+
+
+At the same time. Some good companies wouldn't show a draft of the arsehole that they would just walk through.
+
+
+
+It all is fine. Either is fine.
+
+
+
+So what I would say is, is you probably don't necessarily need a slide titled User Journey, right?
+
+
+
+Because it's just like persona. Like you don't need to explicitly call these things out.
+
+
+
+You can just present them and that'll be clear enough.
+
+
+
+I mean, you might want a slide that says, you know, how is our system system made for the diagram.
+
+
+
+Some some slides. Having a toddler cannot help but for telling a story.
+
+
+
+You don't want to start ram prodding random topics into the slides titles because it's telling a story,
+
+
+
+and it should come out clear from the story, whether it's a user journey or a particular interview, one person or whatever.
+
+
+
+It should be clear for context, but you don't need to explicitly label everything. I think it's probably a bad habit.
+
+
+
+We all learn from high school where we're kind of told label it all so we can find it really easily because it makes it easier to mark.
+
+
+
+But we're human beings. We can regroup, assessing, and we can see that you've covered everything.
+
+
+
+There's no question back. Then we have to start.
+
+
+
+Yeah. Okay. So when we get up on one scheme, can we have the fixed journey on the other?
+
+
+
+So you got two screens. So you want to think about how to make good use or sensible use of that real estate.
+
+
+
+Right. So all the rooms 144145, 311, three, eight have all got two projects in them.
+
+
+
+So the only thing to be aware of, I did mention maybe just to make sure everyone is clear,
+
+
+
+this lovely three split away cable here has HDMI, USB-C, and some crazy USB.
+
+
+
+Um, these are connected to one thing, so you cannot have two external devices.
+
+
+
+Annoyingly I've asked. This will get fixed next year after redoing this room in next 311 as well.
+
+
+
+And we'll get a better system where we can have USB-C and HDMI at the same time.
+
+
+
+But at the moment I'm afraid we're stuck with 2026 stupid ICT decisions.
+
+
+
+So you cannot have two of your own laptops. You've got a visualiser, so you can have phone visualised on the Visualiser and your own laptop.
+
+
+
+That's fine. You've also got an ICT windows machine and a dock windows machine which you can log in.
+
+
+
+Those can be displayed separately. So you can do two devices, but you can't do both my iPads and my laptop.
+
+
+
+That's impossible. Right? You might notice I'm doing quite a lot because I can't do both at the same time, annoyingly so.
+
+
+
+Just be aware of that. It is a limitation, but everyone is in the same level playing field.
+
+
+
+None of the rooms have that support for them and they should all have that support them in some sense.
+
+
+
+So just plan that accordingly. Yeah. You've only got one of your own devices you can plug in, but you can.
+
+
+
+You can visualise phones by happily on here for apps if you've got phone apps.
+
+
+
+And that's how I would do apps for phones. I think if you're doing a phone application, it's fine.
+
+
+
+If you have an emulator on your laptop, say for part of the presentation.
+
+
+
+But if we do not see it running on a phone under the visualiser for at least some of the presentation,
+
+
+
+we're going to ask the question does it actually work on the phone? So if you if you can't demo that to us live during the session,
+
+
+
+I don't think we'll give you full marks stability because we're not necessarily convinced that you should be confident.
+
+
+
+So yes, it does. I'll prove it. Okay. So just be aware of that as well.
+
+
+
+Cool. Just aware of time. I don't want to rush through the presentation criteria.
+
+
+
+So what I think we'll do and some more questions now. Then we'll take a break before 11.
+
+
+
+And then we'll go through the project evaluation criteria in a bit more detail. And the documentation criteria.
+
+
+
+I think I actually have to do all that. So any more general questions about presentations now for another five minutes or so.
+
+
+
+Just Don't try to rush through 15 minutes. It won't work to do that. I'd rather take time slows to it.
+
+
+
+Any thoughts, questions? Any more bad habits or anything else that I've seen over the years?
+
+
+
+That doesn't work very well. So in terms of timing, um, you will hear some beeping in the room.
+
+
+
+Some of you might notice that we had that happening during the master reviews as well.
+
+
+
+Um, so the system we've got is I didn't bring the paper with me.
+
+
+
+There'll be a one time keeper in the room who will start a clock on our assessment platform.
+
+
+
+Waiting starts. Um, they will get a flash on their screen, not a beep.
+
+
+
+That will tell them to hold up a card that says you've got five minutes left, you've got two minutes left.
+
+
+
+And then there could be a nasty, loud beep. And we sort of wrap it up.
+
+
+
+That means you hit the 20 minutes of the presentation, and you really need to stop.
+
+
+
+Now. For every minute that you run over, you will lose a mark on timing.
+
+
+
+And for every two minutes you finish way too early, you'll lose timing marks.
+
+
+
+That doesn't mean you just try and pad it out, right? We can spot if you're sitting there going, oh crap, we're done.
+
+
+
+Uh, yeah. Let's say some more thing we can tell.
+
+
+
+But we all know we're going to hit the finish button when we feel that you've finished the presentation.
+
+
+
+Just try to make sure that it's not a stupid time. So I would suggest that you all aim for a 19 minute presentation,
+
+
+
+because that gives you a two minute window of error either side to get things to work in.
+
+
+
+Don't aim it to fill exactly 20 minutes, because if somebody slows down or gets lost or something doesn't work in a demo for a second or something,
+
+
+
+miss clicks, we have to reload the page. You will lose time and then you run the risk of running over.
+
+
+
+If you run over, you will get to keep going, to keep presenting stuff until you run about three minutes and then we'll say stop waiting for over now.
+
+
+
+That's eating into your feedback time. You've got a five minute time to give you feedback.
+
+
+
+If you run into that and you mess up, we'll give you almost no feedback verbally because we don't have time.
+
+
+
+You have to get all that moving along. So just be careful with that and make sure, if in doubt, run under by 30s rather than over at all.
+
+
+
+I would prefer because then we have more time to discuss things with you, and in particular during the feedback, we're gonna have a Q&A session.
+
+
+
+We'll ask questions. The purpose of those questions is to try and help you improve your grade.
+
+
+
+But when we're marking this stuff, we've got these three boxes. I bet some of them zero means you miss something entirely.
+
+
+
+One means it wasn't done terribly well, but it was there. Two is kind of. Yep, that's what we expect.
+
+
+
+Good job. And three is excellent. You really understood that cartoon. You did a good job with that criteria.
+
+
+
+So what are we doing with our questions. When our laptops first wake up is trying to get you off all the zeros basically.
+
+
+
+So if you miss something in the presentation because you forgot to put it in, or maybe it was up so quickly we didn't see it.
+
+
+
+Sometimes people have things that they flash up so quickly that blink and miss it.
+
+
+
+Um, we'll give you a chance to earn those credits back in some sense.
+
+
+
+So I think if you miss something in the presentation, you should never expect to get the top marks.
+
+
+
+But at least you can get off of the zero and maybe get a two if you explain it well in the Q&A.
+
+
+
+So we're going to be trying to focus on where you've lost marks and our assessment criteria to try and help you out a little bit.
+
+
+
+So if you eat that time up, we want to do it for you. So you're just not only are you losing marks in terms of overrunning the timer,
+
+
+
+but also you're probably losing marks because we can't help you earn marks elsewhere.
+
+
+
+Everybody has that 25 minute entire slot, including the Q&A for their assessment, and that is going to be super strictly timed.
+
+
+
+We will not run over that by one second for any group, so be really careful not to overrun too much,
+
+
+
+because you're probably shooting yourselves in the foot with tons of other things as well.
+
+
+
+Um, yeah. We'll go through this in more detail after the break.
+
+
+
+Any other thoughts? Questions about anything general? Otherwise, if not,
+
+
+
+we'll take a 15 minute break and at 11:00 we will start looking at all the criteria in a bit more detail
+
+
+
+and going through what exactly we're looking for for these 25 different metrics that are on here.
+
+
+
+Cool. Thank you.
+
+
+
+

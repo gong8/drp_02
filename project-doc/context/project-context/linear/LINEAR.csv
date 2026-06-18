@@ -1,0 +1,890 @@
+"ID","Team","Title","Description","Status","Estimate","Priority","Project ID","Project","Creator","Assignee","Labels","Cycle Number","Cycle Name","Cycle Start","Cycle End","Created","Updated","Started","Triaged","Completed","Canceled","Archived","Due Date","Parent issue","Initiatives","Project Milestone ID","Project Milestone","SLA Status","UUID","Time in status (minutes)","Related to","Blocked by","Duplicate of"
+"DRP-6","DRP_02","monorepo construction",,"Done",,"No priority",,,"gonglx8@gmail.com",,"",,,,,"Thu May 28 2026 11:04:46 GMT+0000 (GMT+00:00)","Thu May 28 2026 11:29:51 GMT+0000 (GMT+00:00)","Thu May 28 2026 11:04:46 GMT+0000 (GMT+00:00)",,"Thu May 28 2026 11:29:51 GMT+0000 (GMT+00:00)",,,,,"",,,,"df2a083a-73b0-48d9-94ee-c4fc0aba4143",25909,,,
+"DRP-7","DRP_02","create staging branch, setup proper ci",,"Done",,"No priority",,,"gonglx8@gmail.com",,"",,,,,"Thu May 28 2026 11:05:31 GMT+0000 (GMT+00:00)","Thu May 28 2026 11:46:39 GMT+0000 (GMT+00:00)","Thu May 28 2026 11:05:31 GMT+0000 (GMT+00:00)",,"Thu May 28 2026 11:46:39 GMT+0000 (GMT+00:00)",,,,,"",,,,"75df5a90-6858-481f-9d3c-e7f2b5fd90e5",25892,,,
+"DRP-8","DRP_02","create pnpm check script","very minimal UI","Done",,"No priority",,,"gonglx8@gmail.com",,"",,,,,"Thu May 28 2026 11:06:00 GMT+0000 (GMT+00:00)","Thu May 28 2026 12:36:04 GMT+0000 (GMT+00:00)","Thu May 28 2026 11:29:56 GMT+0000 (GMT+00:00)",,"Thu May 28 2026 12:36:04 GMT+0000 (GMT+00:00)",,,,,"",,,,"296d3ab5-869e-49c1-970d-96090f1b0f03",25843,,,
+"DRP-9","DRP_02","Conduct iteration 2 interview",,"Done",,"No priority",,,"james.lee.hughff@gmail.com",,"HCD",,,,,"Thu May 28 2026 11:06:41 GMT+0000 (GMT+00:00)","Fri Jun 05 2026 11:54:27 GMT+0000 (GMT+00:00)",,,"Fri Jun 05 2026 11:54:27 GMT+0000 (GMT+00:00)",,,,,"",,,,"43f4b275-37ac-4898-81b4-0cbf3a7a6a70",14365,,,
+"DRP-10","DRP_02","moon lord is alive",,"Done",,"Urgent",,,"lukastrakim@gmail.com",,"",,,,,"Thu May 28 2026 11:08:20 GMT+0000 (GMT+00:00)","Wed Jun 10 2026 11:58:43 GMT+0000 (GMT+00:00)",,,"Wed Jun 10 2026 11:58:43 GMT+0000 (GMT+00:00)",,,,,"",,,,"d93166b3-fc8a-48f7-b681-8c3566485861",7160,,,
+"DRP-11","DRP_02","Need to get Kaleidoscope from Empress of Light",,"Done",,"High",,,"lukastrakim@gmail.com",,"",,,,,"Thu May 28 2026 11:08:53 GMT+0000 (GMT+00:00)","Wed Jun 10 2026 11:58:45 GMT+0000 (GMT+00:00)",,,"Wed Jun 10 2026 11:58:45 GMT+0000 (GMT+00:00)",,,,,"",,,,"0024bd16-4614-4248-9f05-c090b0a53a66",7160,,,
+"DRP-12","DRP_02","write CLAUDE.md file",,"Done",,"No priority",,,"gonglx8@gmail.com",,"",,,,,"Thu May 28 2026 11:30:32 GMT+0000 (GMT+00:00)","Thu May 28 2026 12:36:02 GMT+0000 (GMT+00:00)","Thu May 28 2026 11:30:36 GMT+0000 (GMT+00:00)",,"Thu May 28 2026 12:36:02 GMT+0000 (GMT+00:00)",,,,,"",,,,"053a2849-a829-4194-8ba3-0c5f14335630",25843,,,
+"DRP-13","DRP_02","rename the packages name from drp -> bethere",,"Done",,"No priority",,,"gonglx8@gmail.com",,"",,,,,"Thu May 28 2026 12:16:56 GMT+0000 (GMT+00:00)","Thu May 28 2026 13:23:55 GMT+0000 (GMT+00:00)","Thu May 28 2026 12:36:08 GMT+0000 (GMT+00:00)",,"Thu May 28 2026 13:23:55 GMT+0000 (GMT+00:00)",,,,,"",,,,"b87e77d2-b973-44d0-b5ec-3602415fd8a2",25795,,,
+"DRP-14","DRP_02","Walking skeleton: persist moment loop in Postgres (Drizzle) + architecture diagram","For the M2 (Walking Skeleton) milestone the digital touchpoint must use a **database** for persistent state. Today the moment loop runs end-to-end RN → tRPC → API but with an **in-memory** store.
+
+Scope:
+
+* Replace the in-memory `moments` store with **Drizzle/Postgres** (`moments` + `responses` tables), keeping the thin scope (just the moment loop).
+* Demo seeding: one proposal (""Dinner tonight? · Pho House · Thu 7pm"", quorum 3) with two participants already IN, so the dev user's answer is decisive (Yes → clears 3/3, No → fizzles 2/3).
+* Make `moments.mine` / `respond` / `resolve` DB-backed; keep the privacy shapes (no participant ids / tally leaked).
+* Generate + apply the Drizzle migration; verify end-to-end against a live Postgres (Docker).
+* Add a simple markdown **architecture diagram** (RN → tRPC → API → Postgres).
+* Commit the walking skeleton + DB work properly.
+
+Outcome: a genuine walking skeleton that links all architectural components incl. the DB — satisfies the M2 DB requirement.","Done",,"Urgent",,,"gonglx8@gmail.com","gonglx8@gmail.com","",,,,,"Thu May 28 2026 12:46:51 GMT+0000 (GMT+00:00)","Thu May 28 2026 13:25:00 GMT+0000 (GMT+00:00)","Thu May 28 2026 12:46:51 GMT+0000 (GMT+00:00)",,"Thu May 28 2026 13:25:00 GMT+0000 (GMT+00:00)",,,,,"",,,,"5f2bdb95-3788-4801-b909-501f787dd720",25794,,,
+"DRP-15","DRP_02","BeThere: full-loop walking skeleton (suggest → availability → matching → moment → plan)","Extend the moment-only slice (PR #9, now on `dev`) into the full BeThere loop, partially functional and DB-backed, per the reference implementation spec.
+
+## Scope
+
+* **Shared** (`@bethere/shared`): add `PartOfDay`, `Slot`, `CreateSuggestionInput`, `DropAvailabilityInput`; pure logic `quorum.ts`, `time.ts`, `matching.ts` (`findClearingSlot`), and `findLinchpins`; unit tests.
+* **API** (`@bethere/api`): tables `users/groups/groupMembers/suggestions/availability/plans` + reshaped `moments`; `services/bethere.ts` (`tryFireMoment`, `resolveMoment`); routers `groups`/`suggestions`/`availability` + extended `moments` (`mine` with group members + `msLeft`, `plan` read); reseeded demo; clean baseline migration.
+* **Mobile** (`@bethere/mobile`): `useState` route switcher + screens Home, Suggest, Availability, Floating, The Moment (real ""I'm in if…"" picker + countdown), Reveal.
+
+## Privacy invariants enforced
+
+* Availability never returned except to its owner; no names/counts.
+* `moments.mine` returns the *group's* members (for the conditional picker) — never the moment's participants or any tally.
+* On clear, only the IN crowd is revealed; fizzle is silent.
+
+## Non-goals (this slice)
+
+Fonts (Lora/Inter), push notifications, AI seeding, calendar, real auth, linchpin nudge delivery, websockets. Wired behind existing interfaces later.
+
+Branch `feat/bethere-full-loop` → PR into `dev`.","Done",,"High",,,"gonglx8@gmail.com","gonglx8@gmail.com","",,,,,"Thu May 28 2026 14:04:09 GMT+0000 (GMT+00:00)","Thu May 28 2026 14:43:06 GMT+0000 (GMT+00:00)","Thu May 28 2026 14:04:09 GMT+0000 (GMT+00:00)",,"Thu May 28 2026 14:27:47 GMT+0000 (GMT+00:00)",,,,,"",,,,"4e959c37-d4ff-47e5-9278-4dfb5936c8a3",25731,,,
+"DRP-16","DRP_02","Deploy API to a public live backend (AWS App Runner + RDS) with CD","Move the `@bethere/api` server off localhost onto a public, HTTPS backend the mobile app can connect to, so we satisfy the M2 rubric's ""public deployment + functioning CD"" software criterion.
+
+**Target architecture (AWS, us-east-1):**
+
+* API → **AWS App Runner** (free HTTPS on `*.awsapprunner.com`, autoscaling), container image from **ECR**.
+* DB → **RDS Postgres 16** (`db.t4g.micro`), **private**, reached via an App Runner **VPC connector**.
+* CD → GitHub Actions on push to `main`: build/push image to ECR → trigger App Runner deploy. Uses a **scoped IAM user** (never root keys).
+
+**Phase 1 — code (commit to** `dev`**):**
+
+* `db/client.ts`: enable SSL for non-local connections (RDS forces SSL).
+* `index.ts`: run Drizzle migrations on boot; change `reseedDemo` → seed-only-if-empty (App Runner redeploys must not wipe data).
+* `apps/api/package.json`: add `start` script; pin Node 20.
+* `mobile/src/lib/trpc.ts`: read `EXPO_PUBLIC_API_URL` (fallback localhost).
+* New `apps/api/Dockerfile` + `.dockerignore`.
+* Verify: typecheck, image builds, runs against local Postgres, `/trpc/health` 200, no drizzle schema/migration drift.
+
+**Phase 2 — provision (captured in** `infra/`**):** ECR · RDS · VPC connector + SG rules · IAM ECR-access role · App Runner service.
+
+**Phase 3 — connect + CD:** point mobile at live URL & verify; scoped IAM user → GitHub secrets → deploy workflow.
+
+Account: 208569836255 · region us-east-1.","Done",,"High",,,"gonglx8@gmail.com","gonglx8@gmail.com","",,,,,"Thu May 28 2026 14:30:37 GMT+0000 (GMT+00:00)","Thu May 28 2026 16:42:04 GMT+0000 (GMT+00:00)","Thu May 28 2026 14:30:37 GMT+0000 (GMT+00:00)",,"Thu May 28 2026 15:23:58 GMT+0000 (GMT+00:00)",,,,,"",,,,"5698e038-ef4d-4f22-8234-518b7699684b",25675,"DRP-20",,
+"DRP-17","DRP_02","Align mobile screens to M2 hand-drawn mockups (first pass)","First-pass mockup alignment (Home avatars, moment labels, Reveal who's-going, Suggest copy) plus the M2 mockups and em-dash cleanup. Done and merged into `dev` (commits 9b4e247, 4b90f8a; merge 37d5bf9).
+
+Note: superseded in scope by the concrete-event pivot (see the pivot epic). The group decided to archive the loose-availability model and rebuild around `docs/mockups/m2/ALL_MOCKUPS.pdf`.","Done",,"Medium",,,"gonglx8@gmail.com","gonglx8@gmail.com","",,,,,"Thu May 28 2026 15:11:27 GMT+0000 (GMT+00:00)","Thu May 28 2026 16:14:29 GMT+0000 (GMT+00:00)","Thu May 28 2026 15:11:27 GMT+0000 (GMT+00:00)",,"Thu May 28 2026 16:14:28 GMT+0000 (GMT+00:00)",,,,,"",,,,"71422764-f932-4998-8abc-6950917d2362",25625,,,
+"DRP-18","DRP_02","remove all em dashes",,"Done",,"No priority",,,"gonglx8@gmail.com",,"",,,,,"Thu May 28 2026 15:15:23 GMT+0000 (GMT+00:00)","Thu May 28 2026 15:38:15 GMT+0000 (GMT+00:00)","Thu May 28 2026 15:15:26 GMT+0000 (GMT+00:00)",,"Thu May 28 2026 15:38:15 GMT+0000 (GMT+00:00)",,,,,"",,,,"83c88d50-536b-4516-b771-751a2bf6d88b",25661,,,
+"DRP-19","DRP_02","CD APK needs Metro — build release (standalone) not debug","The Android CD (`.github/workflows/cd.yml`) ran `./gradlew assembleDebug -PbundleInDebug=true`. There is no committed `android/` (it's generated by `expo prebuild` in CI), and that gradle property isn't read by Expo's generated build files, so it's a no-op. Result: a **debug APK with no embedded JS bundle**, which tries to load from Metro (`localhost:8081`) at runtime → on-device error ""unable to load script…"".
+
+**Fix:** build a **release** APK. Verified locally (prebuild + inspect): the Expo SDK 56 / RN 0.85 template's `release` buildType uses `signingConfig signingConfigs.debug`, so `assembleRelease` produces an installable, debug-signed `app-release.apk`; Hermes is enabled so JS is embedded as bytecode. `EXPO_PUBLIC_API_URL` is still inlined during the release bundle step.
+
+Change `cd.yml`: `assembleRelease`; artifact name `app-release`; path `apps/mobile/android/app/build/outputs/apk/release/app-release.apk`.","Done",,"High",,,"gonglx8@gmail.com","gonglx8@gmail.com","",,,,,"Thu May 28 2026 15:40:52 GMT+0000 (GMT+00:00)","Thu May 28 2026 15:51:13 GMT+0000 (GMT+00:00)","Thu May 28 2026 15:40:53 GMT+0000 (GMT+00:00)",,"Thu May 28 2026 15:51:13 GMT+0000 (GMT+00:00)",,,,,"",,,,"19476f86-7866-4fb6-9685-e546b6a3661c",25648,,,
+"DRP-20","DRP_02","Pivot BeThere to a concrete-event RSVP app (M2)","Group consensus: archive the loose-availability model and rebuild around the hand-drawn mockups in `docs/mockups/m2/ALL_MOCKUPS.pdf`. Plan: `docs/superpowers/plans/2026-05-28-concrete-events-pivot.md`. Working on `dev`.
+
+## Locked decisions
+
+* Concrete events: creator sets date/time/place; members RSVP. Loose model archived for next iteration.
+* Two-tab nav: Meetups (dashboard by status then date) + Groups (full CRUD).
+* Conditional response stays people-only (pick people + at-least-one/all).
+* At the deadline: resolve conditionals; event always happens (no quorum/cancel).
+* ""Who's going"" shows only those going.
+* Create form text-only (title, description, date, time, free-text location); generated avatars.
+* Nav via @react-navigation.
+
+## Slices
+
+- [ ] Shared + DB: events + responses(eventId) tables, CreateEventInput; keep resolve.ts
+- [ ] API: events.\* + groups CRUD + users.addable + seed
+- [ ] Mobile nav shell: react-navigation bottom tabs + stacks
+- [ ] Meetups dashboard + EventDetail (respond + conditional + who's-going)
+- [ ] CreateEvent + Groups tab (list, GroupDetail CRUD, CreateGroup)
+- [ ] Archive loose code into archive/loose-availability/; lint/typecheck/test green","Done",,"Urgent",,,"gonglx8@gmail.com","gonglx8@gmail.com","",,,,,"Thu May 28 2026 16:14:36 GMT+0000 (GMT+00:00)","Fri Jun 05 2026 11:53:58 GMT+0000 (GMT+00:00)","Thu May 28 2026 16:14:36 GMT+0000 (GMT+00:00)",,"Fri Jun 05 2026 11:53:58 GMT+0000 (GMT+00:00)",,,,,"",,,,"a30713d4-b819-4856-abe2-c9955d61b859",14365,"DRP-16",,
+"DRP-21","DRP_02","Custom backend logger (Pino + pino-pretty)","Give `apps/api` a single owned logger that prints clear messages for everything at runtime: server boot, HTTP requests, every tRPC procedure call, and (on demand) DB queries. Pretty/colorized in dev via pino-pretty; JSON in prod (gated on NODE_ENV).
+
+Backend only (mobile/shared untouched). Spec: `docs/superpowers/specs/2026-05-28-backend-logger-design.md`.
+
+Scope:
+
+* New `apps/api/src/logger.ts`: singleton Pino, LOG_LEVEL (default info), pretty transport when NODE_ENV !== production, scope binding (boot/http/trpc/db).
+* `index.ts`: `Fastify({ loggerInstance, disableRequestLogging: true })`; scoped boot logs; onResponse HTTP line.
+* `trpc.ts`: put `req.log` in context; logging middleware on the base procedure (path/type/userId/ms/outcome).
+* `db/client.ts`: Drizzle Logger emitting SQL at debug level.
+* Deps: add `pino` (dep) + `pino-pretty` (devDep).
+
+Verify: `pnpm dev:api` output, `LOG_LEVEL=debug` for DB lines, NODE_ENV=production JSON, `pnpm lint` + `pnpm typecheck`.","Done",,"No priority",,,"gonglx8@gmail.com","gonglx8@gmail.com","",,,,,"Thu May 28 2026 17:25:53 GMT+0000 (GMT+00:00)","Thu May 28 2026 17:43:58 GMT+0000 (GMT+00:00)","Thu May 28 2026 17:25:53 GMT+0000 (GMT+00:00)",,"Thu May 28 2026 17:36:47 GMT+0000 (GMT+00:00)",,,,,"",,,,"464fc6a2-e8d1-4a00-8594-31f33fa3d91e",25542,,,
+"DRP-22","DRP_02","Live API stuck on old schema: migrate-on-boot fails (type exists) → App Runner rollback","**Symptom:** Android APK shows ""Couldn't reach the server."" Network/APK are fine (URL baked in, INTERNET perm present, HTTPS cert valid). Root cause is server-side.
+
+**Root cause (confirmed via App Runner application logs):** the concrete-event pivot reset the Drizzle migration baseline (new `0000_greedy_killmonger.sql`), but the live RDS still holds the OLD (suggestion/availability/moment) schema. On boot the new image runs migrate-on-boot → `CREATE TYPE ""response_kind""` → `error: type ""response_kind"" already exists` (code 42710) → process crashes → health check fails → **App Runner rolls back to the old image**. So the live API keeps serving the old model: `events.mine`→404 (app calls this), while `availability.mine`/`moments.mine`→200. Every screen's blanket `.catch(()=>setError(true))` surfaces this as ""Couldn't reach the server.""
+
+This is the ""reset the migration baseline → must reset the DB too"" gotcha from CLAUDE.md.
+
+**Fix:** reset the live RDS schema (throwaway demo data only — no real user data) so the new baseline applies cleanly, then migrate-on-boot + `seedDemoIfEmpty` repopulate. Then redeploy the current concrete-event image and verify `events.mine`→200.
+
+**Follow-up:** make migrate-on-boot resilient to a fresh-baseline-vs-existing-DB drift (or document a reset runbook) so this doesn't recur on the next baseline reset.","Done",,"Urgent",,,"gonglx8@gmail.com","gonglx8@gmail.com","",,,,,"Thu May 28 2026 17:39:32 GMT+0000 (GMT+00:00)","Thu May 28 2026 18:12:18 GMT+0000 (GMT+00:00)","Thu May 28 2026 17:39:32 GMT+0000 (GMT+00:00)",,"Thu May 28 2026 17:46:38 GMT+0000 (GMT+00:00)",,,,,"",,,,"38c7cef0-eee2-45a0-aeff-1aab7acab9a0",25533,,,
+"DRP-23","DRP_02","Optimise CI/CD pipeline (Gradle + Docker caching, paths filter, concurrency)","Four targeted optimisations to the GitHub Actions pipeline:
+
+1. **Gradle caching** in the Android APK build (`cd.yml`) via `gradle/actions/setup-gradle` - the slowest job currently rebuilds Gradle state from cold every run.
+2. **Docker build cache** for the API image (`deploy-api.yml`) via `docker/build-push-action` with `type=gha` layer cache, plus a BuildKit pnpm-store cache mount in the API `Dockerfile`.
+3. `paths:` **filter +** `workflow_dispatch` on the APK build so an API-only push to `main` no longer triggers a full Android build, and APKs can still be cut manually.
+4. `concurrency` **groups** on all three workflows so superseded runs are cancelled (CI + APK) / queued safely (deploy).
+
+Branch: dev.
+
+---
+
+**Done** in commit `57873c9` on `dev` (""perf(ci): cache Gradle + Docker layers, scope APK build, add concurrency""). YAML validated; cache benefit observable on the second-and-later real runs. Will land in prod on the next `dev` -> `main` merge.","Done",,"Medium",,,"gonglx8@gmail.com",,"",,,,,"Thu May 28 2026 18:00:32 GMT+0000 (GMT+00:00)","Thu May 28 2026 18:07:48 GMT+0000 (GMT+00:00)","Thu May 28 2026 18:00:32 GMT+0000 (GMT+00:00)",,"Thu May 28 2026 18:02:51 GMT+0000 (GMT+00:00)",,,,,"",,,,"3deaeabc-9c08-487a-a696-0ed550a658e4",25516,,,
+"DRP-24","DRP_02","Clerk auth (Google OAuth) + Vercel-hosted web target","Add Clerk (Google OAuth) authentication and a Vercel-hostable web build to BeThere from one Expo codebase.
+
+**Approach**
+
+* One Expo app renders the same screens on native + web (react-native-web). No `apps/web`, no duplicated screens.
+* Clerk Google sign-in on both targets via `@clerk/clerk-expo`.
+* API verifies Clerk session tokens networklessly (`@clerk/backend`), resolving a nullable `userId`; `protectedProcedure` enforces auth while `/trpc/health` stays public (App Runner health check).
+* `DEV_AUTH_BYPASS` falls back to the `x-user-id` stub; the sideloaded CD APK ships a flag-gated ""Continue as test user"" button that signs in as seed user `u_dev`.
+
+**Docs**
+
+* Spec: `docs/superpowers/specs/2026-06-01-clerk-auth-and-web-target-design.md`
+* Plan: `docs/superpowers/plans/2026-06-01-clerk-auth-and-web-target.md`
+
+**Tasks**: B1-B6 (backend auth), C1-C7 (client + web), D1-D2 (CD + manual ops), V1 (verification). Working on `dev`.","Done",,"No priority",,,"gonglx8@gmail.com",,"",,,,,"Mon Jun 01 2026 13:12:18 GMT+0000 (GMT+00:00)","Mon Jun 01 2026 15:24:47 GMT+0000 (GMT+00:00)","Mon Jun 01 2026 13:12:18 GMT+0000 (GMT+00:00)",,"Mon Jun 01 2026 15:24:47 GMT+0000 (GMT+00:00)",,,,,"",,,,"18fbf4b2-5128-4a8f-8e0a-b81f7017f208",19914,,,
+"DRP-25","DRP_02","UX overhaul: refined-neobrutalist visual system (Peach to Lavender)","Restyle the whole mobile app from the current flat ""Sage"" identity to a **refined neobrutalist** visual system, chosen through a brainstorming session.
+
+**Look:** peach-to-lavender gradient background, white boxy cards with 2px black outlines and hard offset shadows, heavy Archivo display headings, monospace (Space Mono) date chips, tilted pink ""sticker"" tags, restrained two-accent palette (pink = brand/urgent, green = going).
+
+This is a **restyle, not a rebuild.** No product behaviour, tRPC contracts, navigation graph, or privacy model changes. New tokens go in `apps/mobile/src/theme.ts`.
+
+**Design spec:** `docs/superpowers/specs/2026-06-01-ux-overhaul-visual-system-design.md`
+**Mockup (open in browser):** `docs/mockups/m3-ux-overhaul/all-screens.html`
+
+**Key tokens**
+
+* Gradient `#FCEFE8` to `#ECEAFF`; surface `#FFFFFF`; ink `#111`; muted `#7D7A86`
+* Pink (brand/urgent) `#FF5CA8`; green (going) `#34A853`
+* Fonts: Archivo (display), Inter (UI), Space Mono (chips)
+* Cards 18px radius, 2px borders, hard shadow `4px 4px 0 #111`
+
+**Scope (per screen)**
+
+- [ ] Theme: tokens (colour, type, radius, border, shadow) + load Archivo/Inter/Space Mono fonts + add `expo-linear-gradient`
+- [ ] Reusable primitives: ScreenBackground (gradient), HardShadow wrapper, Card, Button (pink/green/outline), Chip, Field, Tabs, DateChip, StickerTag, StatusCheck, Avatar, BottomSheet, BackBar
+- [ ] Home (featured meet + status tabs + checklist)
+- [ ] Event detail (RSVP: in / I'll go if... / can't)
+- [ ] ""I'll go if..."" bottom sheet (toggle + member picker)
+- [ ] Suggest a meet (create event form)
+- [ ] Your groups (list)
+- [ ] Group detail (members + add)
+- [ ] New group
+
+**Open questions**
+
+* Navigation: keep restyled bottom tabs (recommended) vs top switch
+* Keep two accents (pink + green) vs single pink
+* Confirm home redesign (featured + tabs + checklist) replaces status-sectioned dashboard
+
+**Acceptance**
+
+* All seven screens restyled to the spec; tokens centralised in `theme.ts` (no scattered literals)
+* `pnpm lint`, `pnpm typecheck`, `pnpm test` green; no em dashes; data flow + privacy intact","Done",,"Medium",,,"gonglx8@gmail.com",,"HCD, Improvement",,,,,"Mon Jun 01 2026 14:33:20 GMT+0000 (GMT+00:00)","Fri Jun 05 2026 11:53:56 GMT+0000 (GMT+00:00)","Mon Jun 01 2026 15:54:08 GMT+0000 (GMT+00:00)",,"Fri Jun 05 2026 11:53:56 GMT+0000 (GMT+00:00)",,,,,"",,,,"9b67d143-35ac-489e-8375-0cb2fd6db693",14365,"DRP-27",,
+"DRP-26","DRP_02","prepare interview qs and iterate",,"Done",,"No priority",,,"gonglx8@gmail.com",,"",,,,,"Mon Jun 01 2026 16:14:05 GMT+0000 (GMT+00:00)","Fri Jun 05 2026 11:54:16 GMT+0000 (GMT+00:00)","Mon Jun 01 2026 16:14:05 GMT+0000 (GMT+00:00)",,"Fri Jun 05 2026 11:54:16 GMT+0000 (GMT+00:00)",,,,,"",,,,"84901b50-3a0d-4944-b7bb-88f1245e382e",14365,,,
+"DRP-27","DRP_02","UX: prominent Suggest-a-meetup CTA, drop stat overlines, gate meetups on group membership","Follow-up UX tweaks after the [DRP-25](https://linear.app/drp-02/issue/DRP-25/ux-overhaul-refined-neobrutalist-visual-system-peach-to-lavender) overhaul:
+
+1. Dashboard: bring back a large, prominent ""Suggest a meetup"" button at the bottom (themed to the neobrutalist system). The current inline dashed ""Suggest a meet..."" row is not obvious enough.
+2. Remove the stat overlines (""N this week"" on Dashboard, ""N groups"" on Groups) - they add no value.
+3. When the user is in no groups, do not let them start a meetup. Instead prompt them to create or join a group first.","Done",,"No priority",,,"gonglx8@gmail.com",,"",,,,,"Mon Jun 01 2026 17:47:24 GMT+0000 (GMT+00:00)","Fri Jun 05 2026 11:54:13 GMT+0000 (GMT+00:00)","Mon Jun 01 2026 17:47:24 GMT+0000 (GMT+00:00)",,"Fri Jun 05 2026 11:54:13 GMT+0000 (GMT+00:00)",,,,,"",,,,"03ea5957-2a44-4cb4-abca-f6ed0ebb6a65",14365,"DRP-25",,
+"DRP-28","DRP_02","Local dev: Clerk sign-in 401s every request because API has no CLERK_JWT_KEY","## Symptom
+
+Signed in via Google (Clerk) on the local app, every tRPC call returns 401 UNAUTHORIZED (`user=anon`), the dashboard shows ""Couldn't reach the server"", and the new gating falls back to ""Create a group"". API logs: `[auth] bearer token present but did not verify` repeatedly.
+
+## Root cause
+
+The mobile app sends a real Clerk JWT (`Authorization: Bearer ...`). The local `apps/api/.env` has no `CLERK_JWT_KEY`, so `verifyClerkToken` throws and `resolveAuth` degrades to unauthenticated. `DEV_AUTH_BYPASS=1` did not help because `resolveAuth` only fell back to the `x-user-id` stub when NO bearer token was present - and the Clerk client always attaches one.
+
+## Fix
+
+Added a `clerkConfigured` input to `resolveAuth` (set from `!!process.env.CLERK_JWT_KEY`). When Clerk verification is not even possible (key unset, i.e. local dev) and `DEV_AUTH_BYPASS` is on, an attached but unverifiable bearer token is ignored and the request falls back to the `u_dev` seed user instead of 401ing. Prod is unaffected: App Runner sets `CLERK_JWT_KEY`, so real tokens still verify and bad ones still 401.
+
+Verified: 8/8 auth unit tests pass; live curl with a fake bearer token now returns 200 with u_dev's seed groups.","Done",,"No priority",,,"gonglx8@gmail.com",,"",,,,,"Mon Jun 01 2026 18:23:46 GMT+0000 (GMT+00:00)","Mon Jun 01 2026 18:23:46 GMT+0000 (GMT+00:00)",,,"Mon Jun 01 2026 18:23:46 GMT+0000 (GMT+00:00)",,,,,"",,,,"fa22d07b-88b4-4011-8d5b-bdef64f4ebc4",19735,,,
+"DRP-29","DRP_02","M3: Convergence model revamp (react-to-options -> blind timed moment)","Experimental M3 iteration on branch `feat/m3-convergence-model`. Unifies the M2 concrete-event model with the archived loose-availability ideas into ONE plan whose `when` is expressed with variable precision; the precision silently routes behaviour (no user-facing ""type"").
+
+Design discussion + approved plan: `docs/superpowers/specs/` + `/Users/gong/.claude/plans/ultrathink-we-want-to-rippling-prism.md`.
+
+Core flow:
+
+* CREATE: what + who + WHEN (one exact time | a few specific times | timescale + day-part band).
+* REACT: people tap which candidate times work (cheap feasibility, no availability grid).
+* LOCK: creator sees tally, taps ""lock it"" on the winning slot.
+* MOMENT: blind + timed commitment (in / in-if-\[people\] / can't; no ""maybe""; blind until resolved). Reuses resolveIn + revealGoing.
+* OUTCOME: cleared -> reveal who's in; under-quorum & contingent (fuzzy/options) -> silent fizzle. Exact/committed plans always happen.
+
+Decisions locked:
+
+* Pool size IS the type (1 / few / coarse-window), invisible to user; backend branches.
+* Convergence = react-to-candidates, NOT availability grid.
+* Moment trigger = creator-fired after seeing tally (auto-fire deferred).
+* Real-time = \~5s polling + local notification taste; real remote push = tech debt (needs dev build + device + Apple acct; impossible on iOS Simulator, removed from Expo Go SDK 53+).
+* A/B test: M2 model stays on `main` (version A); this branch is version B; localhost is fine for sessions.
+
+Goal: polished prototype of all three pools by Fri 5 Jun (M3), runnable alongside M2 for real-user A/B testing.","Done",,"High",,,"gonglx8@gmail.com",,"",,,,,"Mon Jun 01 2026 18:36:33 GMT+0000 (GMT+00:00)","Mon Jun 08 2026 15:56:37 GMT+0000 (GMT+00:00)","Mon Jun 01 2026 18:36:33 GMT+0000 (GMT+00:00)",,"Fri Jun 05 2026 11:54:04 GMT+0000 (GMT+00:00)",,,,,"",,,,"8d9beec4-2c9b-45c2-b120-23992681ba2a",14365,"DRP-41, DRP-51",,
+"DRP-30","DRP_02","Iteration 4: Float an idea (anonymous, collaborative, open-ended floating)","M3 iteration-4 feature, from the three iteration interviews (Felicity / Tom / Luca+Nathan). Root problem they all hit: starting a plan carries social risk (""no one wants to say yes first""), which kills meetups before they exist. This attacks the front of the funnel.
+
+**What ships (one feat/ branch, feat/float-an-idea -> PR into dev):**
+
+* A ""Float an idea"": any member floats a loose idea, always unsigned (no names shown) and ownerless. Two collaborative chip axes - IDEA (fused what+where) and TIME (loose bands). Any member adds chips and one-tap +1. Exact +1 counts visible (momentum), identities hidden.
+* A +1 is interest, not commitment. Deadline-only convergence (lazy-settle + staleness clamp). Hybrid tip: clear idea+time (2+ backers on a band) -> blind moment; hot idea, unresolved time -> short collecting round; cold -> fizzle.
+* Create-flow overhaul: ""+ New"" -> ""how pinned down?"" dial (Float / Rough / Set), focused multi-step wizard (merges options+fuzzy into Rough, readable weekdays, drops quick-pick presets). Dashboard ""Brewing"" zone.
+* Push assumed (the only blocker is the GBP99 Apple licence) - notification flows built on the local scaffold, faked, behind a seam for real push.
+
+**Architecture:** reuse the events table (new ""floating"" phase + isAnonymous flag) rather than parallel tables - cleaner anonymity hand-off. reconcileFloat is a pure function so AWS Bedrock can later replace it (smart reconciliation / sparse-float seeding).
+
+**Accepted risks (MVP):** small-group count leak (honest ""no names"" copy + min-heat>=2), free-text chip fragmentation (client dedup; semantic = future Bedrock), anonymous spam (createdByUserId kept server-side for accountability).
+
+**Deferred:** heat-based early tipping, Bedrock reconciler/seeder, light chat integration, semantic chip dedup.
+
+Plan doc: /Users/gong/.claude/plans/docs-drp-context-interviews-m3-intervie-delegated-newt.md","Done",,"No priority",,,"gonglx8@gmail.com",,"",,,,,"Tue Jun 02 2026 20:36:02 GMT+0000 (GMT+00:00)","Thu Jun 04 2026 12:54:47 GMT+0000 (GMT+00:00)","Tue Jun 02 2026 20:36:02 GMT+0000 (GMT+00:00)",,"Wed Jun 03 2026 00:08:09 GMT+0000 (GMT+00:00)",,,,,"",,,,"61d0e980-c3b6-48e5-a347-306bda3e3e63",17951,"DRP-41",,
+"DRP-31","DRP_02","Isolated dev deployment (web + backend) mirroring main","Stand up a second, isolated deployment for the `dev` branch - web frontend (Vercel Preview) + backend (AWS App Runner) + its own RDS Postgres - mirroring the prod (`main`) stack, so in-flight work can be exercised at a stable URL without touching prod.
+
+## Why isolation (not dev web -> prod backend)
+
+The web build bakes `EXPO_PUBLIC_API_URL` at build time, and `dev` is currently 8 commits ahead of `main` with a new migration (`0004_parched_rage.sql`) and changed API contract (new `routers/floats.ts`, `schema.ts`, `packages/shared`). Dev's frontend would call procedures/columns prod doesn't have yet and break. So dev needs its own backend + DB.
+
+## Plan
+
+Mirror the prod AWS stack (set up originally by `infra/aws-deploy.sh`).
+
+**Reused (no new resource):** default VPC + subnets, ECR repo `bethere-api` (separate `:dev` tag), IAM pull role `bethere-apprunner-ecr-role`, VPC connector `bethere-vpc-conn`, RDS SG `bethere-rds-sg`.
+
+**New AWS resources (\~$15-25/mo):**
+
+* RDS `bethere-db-dev` (db.t4g.micro, pg 16.14, SG bethere-rds-sg, subnet group bethere-subnets)
+* App Runner `bethere-api-dev` (image bethere-api:dev, 0.5vCPU/1GB, env mirrors prod with dev DATABASE_URL + fresh ADMIN_RESET_TOKEN)
+
+**Repo changes (to** `dev`**):**
+
+* `vercel.json` - un-gate `dev` in ignoreCommand
+* `.github/workflows/deploy-api-dev.yml` - push `:dev` tag on push to dev
+* `infra/aws-deploy-dev.sh` - reproducible provisioning record
+* `docs/runbook-deploy.md` - dev stack section
+* Broaden `bethere-ci` IAM policy to `service/bethere-api*/*`
+
+**Vercel:** Preview-scoped env (EXPO_PUBLIC_API_URL -> dev API, CLERK publishable key, DEV_AUTH=1).
+
+## Verification
+
+* `curl https://<dev-url>/trpc/health` -> ok; a `floats.*` proc responds (proves :dev image)
+* dev DB isolated from prod; prod web + API untouched
+* push to dev triggers deploy-api-dev.yml; Vercel dev Preview loads against dev API","Done",,"No priority",,,"gonglx8@gmail.com",,"",,,,,"Wed Jun 03 2026 13:32:35 GMT+0000 (GMT+00:00)","Wed Jun 03 2026 13:51:21 GMT+0000 (GMT+00:00)","Wed Jun 03 2026 13:32:35 GMT+0000 (GMT+00:00)",,"Wed Jun 03 2026 13:51:21 GMT+0000 (GMT+00:00)",,,,,"",,,,"be2887cd-78f0-49c3-afb2-444216427d3e",17128,,,
+"DRP-32","DRP_02","Lock-in deadline + bounded additions for flexible plans","Make the lock-in deadline logically correct and good UX for non-exact (options/fuzzy) plans, and bound member-added times.
+
+DONE on `dev` (6 commits, 332f06b..cd10d8d). Spec: docs/superpowers/specs/2026-06-03-lockin-deadline-bounded-additions-design.md; plan: docs/superpowers/plans/2026-06-03-lockin-deadline-bounded-additions.md.
+
+What shipped:
+
+* Two intent-named defaults in packages/shared/src/logic/lock.ts: defaultLockAtForOptions (lead = clamp(T/3, MOMENT, 1 day) before earliest) and defaultLockAtForWindow (react = clamp(span/3, 2h, 3 days) from now), replacing the single naive defaultLockAt.
+* addCandidateHorizon helper bounding member-added times (fuzzy: window's last slot; options: latest + min(span, 2 days)).
+* events router: per-mode create default, override bound tightened to anchor - moment, bounded addCandidate (+ empty-spread guard), settleFloating anchored to last slot.
+* floats router: tip default anchored to window's last slot.
+* mobile: mirrored defaultLockAtForOptions + addCandidateHorizon; add-time picker bounded \[lockAt, horizon\] via new maximumDate support threaded through DateTimeField/Pill.
+
+Verification: lint clean (92 files), typecheck clean (3 pkgs), tests pass (shared 44, api 14, mobile 5). Note: aggregate `pnpm test` does not self-exit due to a pre-existing mobile jest open-handle issue (tests pass, jest just does not terminate) - run per-package.
+
+Out of scope (follow-up): moment duration relative to the event - the blind moment still opens at lockAt and runs \~1h regardless of how far the event is.","Done",,"No priority",,,"gonglx8@gmail.com",,"",,,,,"Wed Jun 03 2026 13:49:10 GMT+0000 (GMT+00:00)","Wed Jun 03 2026 15:14:34 GMT+0000 (GMT+00:00)","Wed Jun 03 2026 13:49:10 GMT+0000 (GMT+00:00)",,"Wed Jun 03 2026 15:11:23 GMT+0000 (GMT+00:00)",,,,,"",,,,"53d03b0c-2bb0-431d-9db5-3e4d4d272169",17048,"DRP-40",,
+"DRP-33","DRP_02","Code-quality refactor pass (2026-06-03)","Automated, adversarially-verified code-quality pass over the whole repo (excl `archive/`), run via the new `/simplify-refactor` command on 2026-06-03.
+
+**No code was changed** - this is a prioritized, verified cleanup plan. Full report with before/after sketches per item: `docs/refactor/2026-06-03-refactor-report.md`.
+
+## How it was produced
+
+82 parallel reviewers (7 lenses: duplication, abstraction, component-reuse, naming, complexity, dead-code, consistency) -> cross-cutting sweep -> triage/cluster -> adversarial verification (each cluster handed to a skeptic told to refute it). \~171 agents total. **359 raw findings -> 43 clusters -> 39 verified** (4 refuted and dropped).
+
+## Themes (see sub-issues)
+
+* Shared UI / design-system reuse - 11 items
+* API router dedup & structure - 10 items
+* Type chain & shared schemas - 6 items
+* Dead code & defensive pruning - 5 items
+* Formatting & shared utils - 4 items
+* Shared React hooks - 3 items
+
+## Suggested quick wins to start
+
+* Consolidate date/time formatting into one home (`consolidate-datetime-string-formatting`)
+* Extract shared loading / error / not-found screen states (`extract-shared-screen-states`)
+* Remove dead code (`remove-dead-api-format-ts`, `prune-dead-exports-props-mobile-lib-ui`, `remove-dead-components-and-findlinchpins`)
+
+Apply low-risk items automatically with `/simplify-refactor apply`, or pick them off by hand. Each sub-issue carries its cluster checklist; the report carries full detail + sketches per cluster.","Done",,"Medium",,,"gonglx8@gmail.com",,"Improvement",,,,,"Wed Jun 03 2026 15:07:02 GMT+0000 (GMT+00:00)","Tue Jun 09 2026 11:22:04 GMT+0000 (GMT+00:00)","Wed Jun 03 2026 16:47:05 GMT+0000 (GMT+00:00)",,"Fri Jun 05 2026 11:53:51 GMT+0000 (GMT+00:00)",,,,,"",,,,"73eff745-a1d6-4fa0-8757-bea3d54517c9",14365,"DRP-54",,
+"DRP-34","DRP_02","Refactor: Shared UI / design-system reuse (11 cleanups)","Part of [DRP-33](https://linear.app/drp-02/issue/DRP-33/code-quality-refactor-pass-2026-06-03) (2026-06-03 code-quality refactor pass). Behavior-preserving cleanups that reuse the `ui/` design system + theme tokens instead of re-implementing them in screens. Full per-item detail + before/after sketches: `docs/refactor/2026-06-03-refactor-report.md`.
+
+Checklist (effort/risk/impact):
+
+- [ ] **Extract shared loading / error / not-found screen states** (`extract-shared-screen-states`) - S/low/med
+- [ ] **Extract a shared DrainBar component + frac/hot math** (`extract-shared-drainbar-component-and-frac-math`) - M/low/med
+- [ ] **Hoist the missing-user avatar fallback colour (#8B948B) into one named constant** (`hoist-missing-user-avatar-fallback-color`) - S/low/low
+- [ ] **Dedupe Dashboard ActionPanel/BrewingZone into one local SectionBand** (`dashboard-sectionband-dedup`) - S/low/low
+- [ ] **Reuse SelectCheck for the opt-out checkbox and dedupe check primitives** (`reuse-selectcheck-optout`) - S/low/low
+- [ ] **Extract a shared Overline/field-label text primitive** (`extract-shared-fieldlabel-primitive`) - S/low/low
+- [ ] **Extract the bordered-surface input/card box (Field/DateTimeField/DateTimePill/Card)** (`extract-bordered-surface-input-card-box`) - S/low/low
+- [ ] **Unify CreateWizard's two divergent Row update idioms and extract the remove badge** (`unify-createwizard-row-update-and-remove-badge`) - S/low/low
+- [ ] **Extract a shared divider-row helper (and optional name-Text style) for hairline list rows** (`extract-shared-personrow-hairline-list-row`) - S/low/low
+- [ ] **Consolidate avatar identity: useDisplayName hook + named API fallback constants** (`extract-shared-avatar-identity-helper`) - S/low/low
+- [ ] **Replace Dashboard BigButton with the shared ui/Button (add a size variant)** (`dashboard-bigbutton-shared-button`) - S/med/low","Done",,"Medium",,,"gonglx8@gmail.com",,"Improvement",,,,,"Wed Jun 03 2026 15:07:25 GMT+0000 (GMT+00:00)","Fri Jun 05 2026 11:53:50 GMT+0000 (GMT+00:00)","Wed Jun 03 2026 16:47:05 GMT+0000 (GMT+00:00)",,"Fri Jun 05 2026 11:53:50 GMT+0000 (GMT+00:00)",,,,"DRP-33","",,,,"b8d90abe-f59c-4a3f-958b-7b633399db29",14365,,,
+"DRP-35","DRP_02","Refactor: API router dedup & structure (10 cleanups)","Part of [DRP-33](https://linear.app/drp-02/issue/DRP-33/code-quality-refactor-pass-2026-06-03) (2026-06-03 code-quality refactor pass). Behavior-preserving dedup + structure cleanups in `apps/api` (mostly `routers/events.ts` and `routers/floats.ts`, the two largest backend files). Full per-item detail + sketches: `docs/refactor/2026-06-03-refactor-report.md`.
+
+Checklist (effort/risk/impact):
+
+- [ ] **Extract the 'best-supported else most-reacted' winner pick into shared logic** (`extract-winner-pick-shared`) - S/low/med
+- [ ] **Dedupe reconcileFloat's two argmax-with-earliest-created-tiebreak loops** (`dedupe-reconcilefloat-argmax-tiebreak`) - S/low/med
+- [ ] **Encapsulate the settleFloating/settleCollecting/settlePhase ordering and remove the dead chosen guard** (`encapsulate-settle-lifecycle-and-drop-dead-chosen-guard`) - S/low/med
+- [ ] **Centralize group-name and user-card fallback literals into db/ accessors** (`db-accessors-fallback-extraction`) - S/low/med
+- [ ] **Factor floats.ts addIdea/addTime dedup-and-vote flow and the insert+castVote block** (`refactor-floats-insert-or-bump`) - S/low/med
+- [ ] **Dedupe floats.mine/get tip projection and fix the floats.mine N+1** (`DRP-floats-dedupe-tip-projection-n1`) - M/low/med
+- [ ] **Factor the fetch-event -> 404 -> requireMember preamble (and dedupe requireMember)** (`refactor-loadevent-preamble-and-dedupe-requiremember`) - M/low/med
+- [ ] **Extract the fizzle-and-persist block in events.ts into a single helper** (`extract-fizzle-helper-events-ts`) - S/low/low
+- [ ] **Dedupe the opt-out-aware myStatus computation between mine and get** (`dedupe-mystatus-optout-mine-get`) - S/low/low
+- [ ] **Unify candidate/suggestion id construction across routers and seed** (`unify-candidate-id-construction`) - S/low/low","Done",,"Low",,,"gonglx8@gmail.com",,"Improvement",,,,,"Wed Jun 03 2026 15:07:33 GMT+0000 (GMT+00:00)","Fri Jun 05 2026 11:53:54 GMT+0000 (GMT+00:00)","Wed Jun 03 2026 16:47:07 GMT+0000 (GMT+00:00)",,"Fri Jun 05 2026 11:53:54 GMT+0000 (GMT+00:00)",,,,"DRP-33","",,,,"c5479399-0adb-43c4-9e2a-a0e97a63d578",14365,,,
+"DRP-36","DRP_02","Refactor: Type chain & shared schemas (6 cleanups)","Part of [DRP-33](https://linear.app/drp-02/issue/DRP-33/code-quality-refactor-pass-2026-06-03) (2026-06-03 code-quality refactor pass). Tighten the Zod-first type chain (schemas in `packages/shared` -> tRPC -> client types follow). Removes hand-redeclared types and cross-boundary naming drift. Full per-item detail + sketches: `docs/refactor/2026-06-03-refactor-report.md`.
+
+Checklist (effort/risk/impact):
+
+- [ ] **Move inline router input schemas into shared and extract a ByEvent base** (`refactor-shared-router-input-schemas`) - M/low/med
+- [ ] **Stop re-listing the PartOfDay band values; consume the shared enum** (`floatboard-partofday-shared-enum`) - S/low/low
+- [ ] **Source seed-data types from shared schemas instead of redeclaring them** (`DRP-seed-types-from-shared`) - S/low/low
+- [ ] **Align cross-boundary field-name drift (floatId->eventId param, band->partOfDay response, partOfDayLabel type)** (`field-name-drift-cleanup`) - S/low/low
+- [ ] **Resolve schema/router type re-declarations (EventRow, VerifyFn) and small naming snags** (`DRP-schema-router-renames`) - S/low/low
+- [ ] **Disambiguate RespondInput (wire) vs ResponseInput (logic) and refresh stale reveal vocabulary** (`disambiguate-response-types-and-reveal-vocab`) - M/low/low","Done",,"Low",,,"gonglx8@gmail.com",,"Improvement",,,,,"Wed Jun 03 2026 15:07:40 GMT+0000 (GMT+00:00)","Fri Jun 05 2026 11:53:53 GMT+0000 (GMT+00:00)","Wed Jun 03 2026 16:47:08 GMT+0000 (GMT+00:00)",,"Fri Jun 05 2026 11:53:53 GMT+0000 (GMT+00:00)",,,,"DRP-33","",,,,"21f998fe-e390-474f-8614-5a0d3be8e2e0",14365,,,
+"DRP-37","DRP_02","Refactor: Shared React hooks for data lifecycle (3 cleanups)","Part of [DRP-33](https://linear.app/drp-02/issue/DRP-33/code-quality-refactor-pass-2026-06-03) (2026-06-03 code-quality refactor pass). The screens repeat the same fetch/poll/tick/optimistic-mutate lifecycle by hand; pull the patterns into shared hooks. Highest-leverage simplification of the big screens (EventDetail 868, FloatBoard 427). Full per-item detail + sketches: `docs/refactor/2026-06-03-refactor-report.md`.
+
+Checklist (effort/risk/impact):
+
+- [ ] **Derive notification types from tRPC payloads and dedupe the reminder scheduling pattern** (`notifications-derive-types-dedupe-scheduling`) - S/low/med
+- [ ] **Collapse the repeated busy-guard mutate-then-reload skeleton in EventDetail and FloatBoard into a local helper** (`refactor/busy-guard-runaction-helper`) - M/low/med
+- [ ] **Extract shared focus-effect hooks (fetch-once lifecycle + live-clock tick/poll)** (`extract-shared-focus-effect-hooks`) - M/med/med","Done",,"Medium",,,"gonglx8@gmail.com",,"Improvement",,,,,"Wed Jun 03 2026 15:07:45 GMT+0000 (GMT+00:00)","Fri Jun 05 2026 11:53:53 GMT+0000 (GMT+00:00)","Wed Jun 03 2026 16:47:09 GMT+0000 (GMT+00:00)",,"Fri Jun 05 2026 11:53:53 GMT+0000 (GMT+00:00)",,,,"DRP-33","",,,,"e194e027-1927-48a3-be95-7eff3fa7c320",14365,,,
+"DRP-38","DRP_02","Refactor: Dead code & defensive-code pruning (5 cleanups)","Part of [DRP-33](https://linear.app/drp-02/issue/DRP-33/code-quality-refactor-pass-2026-06-03) (2026-06-03 code-quality refactor pass). Pure deletions: unused exports/props/components, dead files, and redundant defensive branches. Quick, low-risk wins - good first pickups. Full per-item detail: `docs/refactor/2026-06-03-refactor-report.md`.
+
+Checklist (effort/risk/impact):
+
+- [ ] **Remove dead exports and props in mobile lib/ui (format helpers, HealthResult, props)** (`prune-dead-exports-props-mobile-lib-ui`) - S/low/med
+- [ ] **Remove dead apps/api/src/format.ts (unused formatWhen)** (`remove-dead-api-format-ts`) - S/low/low
+- [ ] **Remove fully-dead components and findLinchpins** (`remove-dead-components-and-findlinchpins`) - S/low/low
+- [ ] **Remove redundant defensive code in shared logic and floats** (`remove-redundant-defensive-code-floats-shared`) - S/low/low
+- [ ] **Fix stale logger scope taxonomy comment in api/index.ts/logger.ts cluster** (`api-logger-scope-comment`) - S/low/low","Done",,"Medium",,,"gonglx8@gmail.com",,"Improvement",,,,,"Wed Jun 03 2026 15:07:50 GMT+0000 (GMT+00:00)","Fri Jun 05 2026 11:53:48 GMT+0000 (GMT+00:00)","Wed Jun 03 2026 16:47:12 GMT+0000 (GMT+00:00)",,"Fri Jun 05 2026 11:53:48 GMT+0000 (GMT+00:00)",,,,"DRP-33","",,,,"75a15f47-a697-40cf-b894-d55a60f685ae",14365,,,
+"DRP-39","DRP_02","Refactor: Formatting & shared utils consolidation (4 cleanups)","Part of [DRP-33](https://linear.app/drp-02/issue/DRP-33/code-quality-refactor-pass-2026-06-03) (2026-06-03 code-quality refactor pass). Collapse duplicated date/time/string formatting and magic-number time math into single homes. Contains the report's #1 ranked item. Full per-item detail + sketches: `docs/refactor/2026-06-03-refactor-report.md`.
+
+Checklist (effort/risk/impact):
+
+- [ ] **Consolidate date/time/string formatting into one shared home** (`consolidate-datetime-string-formatting`) - S/low/med
+- [ ] **Extract the nullable msLeft countdown idiom** (`extract-nullable-msleft-countdown-idiom`) - S/low/low
+- [ ] **Export and reuse window.ts addDays/atBand instead of re-rolling day-stepping** (`refactor-export-window-addDays`) - S/low/low
+- [ ] **Reuse shared MOMENT_MS/DAY_MS instead of re-deriving 60*60*1000 everywhere** (`reuse-shared-moment-ms-day-ms`) - S/low/low","Done",,"Medium",,,"gonglx8@gmail.com",,"Improvement",,,,,"Wed Jun 03 2026 15:07:56 GMT+0000 (GMT+00:00)","Fri Jun 05 2026 11:53:47 GMT+0000 (GMT+00:00)","Wed Jun 03 2026 16:47:13 GMT+0000 (GMT+00:00)",,"Fri Jun 05 2026 11:53:47 GMT+0000 (GMT+00:00)",,,,"DRP-33","",,,,"837221bb-aadb-4d58-8d63-0f93dc915a37",14365,,,
+"DRP-40","DRP_02","Moment duration should scale with how far away the event is","Follow-up from [DRP-32](https://linear.app/drp-02/issue/DRP-32/lock-in-deadline-bounded-additions-for-flexible-plans) (lock-in deadline work). Out of scope there; needs design thought.
+
+## Problem
+
+The blind ""moment"" opens at `lockAt` and runs a fixed \~1h (`momentEnd = min(lockTime + DEFAULT_MOMENT_MINUTES, chosenStartsAt)`), regardless of how far in the future the chosen event is. [DRP-32](https://linear.app/drp-02/issue/DRP-32/lock-in-deadline-bounded-additions-for-flexible-plans) made the lock-in deadline sensible, but the moment timing is still decoupled from the event:
+
+* On a fuzzy/options plan whose winning slot is several days out, the lock can fire days before the event, so the blind, time-pressured RSVP moment opens \~1h that far ahead. The ""decide now, it's soon"" pressure that makes a moment a moment evaporates.
+* Conversely the 1h floor can feel too short for a near-term plan, or mismatched when the chosen time is only a little after lock.
+
+So the lock-in placement is now correct, but ""when does the moment run, and for how long"" is the remaining half of the same question.
+
+## Things to think about (not decided)
+
+* Should the moment open at `lockAt` at all, or closer to the event (e.g. a fixed lead before `chosenStartsAt`)?
+* Should moment duration scale with distance-to-event, with a floor/cap?
+* Interaction with exact plans (which already open the moment at creation and run until the event).
+* Keep it predictable / explainable to users - same bar we held in [DRP-32](https://linear.app/drp-02/issue/DRP-32/lock-in-deadline-bounded-additions-for-flexible-plans).
+
+## Pointers
+
+* `apps/api/src/routers/events.ts`: `settleCollecting` (opens the moment on lock), `momentEnd` helper, `DEFAULT_MOMENT_MINUTES`, the exact-plan path in `create`.
+* Design doc for context: docs/superpowers/specs/2026-06-03-lockin-deadline-bounded-additions-design.md (see its Non-goals section).","Canceled",,"No priority",,,"gonglx8@gmail.com",,"",,,,,"Wed Jun 03 2026 15:14:34 GMT+0000 (GMT+00:00)","Fri Jun 05 2026 11:54:26 GMT+0000 (GMT+00:00)",,,,"Fri Jun 05 2026 11:54:26 GMT+0000 (GMT+00:00)",,,,"",,,,"c45609d9-d05d-43fa-bcf1-b85fab6e269a",14365,"DRP-32",,
+"DRP-41","DRP_02","Unified ""suggest a hangout"" flow: merge float/flexible/concrete into one votable plan","Redesign the meetup-creation workflow. Replaces the create-flow parts of the convergence model ([DRP-29](https://linear.app/drp-02/issue/DRP-29/m3-convergence-model-revamp-react-to-options-blind-timed-moment)) and the standalone float feature ([DRP-30](https://linear.app/drp-02/issue/DRP-30/iteration-4-float-an-idea-anonymous-collaborative-open-ended-floating)).
+
+## Why
+
+The create dial sorts by time-precision (float/rough/set), but users think in intent and start loose then harden. Luca could not map ""an afternoon meetup, just see who's free and who's down to do what"" onto any of the three. Jargon (""auto-tips"", ""spark"", ""brewing"") compounds it. Grounded in all 7 interviews + a competitive scan.
+
+## What
+
+One create flow, one votable plan, one board:
+
+* A plan owns two collaborative candidate lists - **time** and **what/where** - each with **public +1 counts, names never shown**.
+* Two creator checkboxes, **off by default** (group can shape it): **Lock the times**, **Lock the plan**. The old three modes become positions of these two flags + how many times exist.
+* ""auto-tips""/tipAt -> editable **""Decides by""**; tip-vs-lock vocabulary unified to one.
+* **Float frontend nuked**; the evolved voting board is the only board.
+* **Anonymity always on**, clearly communicated on the frontend this iteration.
+* Principle: public for momentum (votes), blind for honesty (the who's-in moment).
+
+## Spec
+
+Design spec: `docs/superpowers/specs/2026-06-04-unified-suggest-flow-design.md` (includes the full change inventory: deletions, merges, generalizations, renames, DB reshape + migration, risks, and a foundation-first sequencing).
+
+## Status
+
+Design approved in brainstorm. Spec committed and pending team review before the implementation plan. Large refactor - to be landed on a `feat/*` branch, PR into `dev`, with frontend/backend/shared changes in one PR (trpc type-chain coupling).","Done",,"High",,,"gonglx8@gmail.com","gonglx8@gmail.com","",,,,,"Thu Jun 04 2026 12:54:47 GMT+0000 (GMT+00:00)","Fri Jun 05 2026 11:54:02 GMT+0000 (GMT+00:00)","Thu Jun 04 2026 12:54:47 GMT+0000 (GMT+00:00)",,"Fri Jun 05 2026 11:54:02 GMT+0000 (GMT+00:00)",,,,,"",,,,"9411a5c4-2769-472e-a704-ee3d3457b946",14365,"DRP-29, DRP-30, DRP-42",,
+"DRP-42","DRP_02","Redo: start a meetup from a previous one","Kill re-creation friction for groups that meet regularly (the ""weekly DnD"" case). Let a creator start a new plan FROM a past one instead of rebuilding it.
+
+## Scope (wizard-only + one read query)
+
+* After group selection in `CreateWizard`, insert a conditional **source** step: **Start fresh** vs **Use a previous meetup** (pickable list).
+* Shown ONLY if the chosen group has >= 1 past (cleared) meetup; otherwise skipped, wizard unchanged.
+* Picking a previous meetup pre-fills **activities, lock settings (lockTimes/lockThings), location, notes**. NOT the time (always stale, left blank) and NOT title (server resolves from winning activity as today). No RSVP/roster carry-over.
+* Both choices flow through the normal steps; the clone reuses the existing `events.create` mutation (no new create path).
+* One new read-only procedure: `events.pastForGroup({ groupId })` returning each cleared plan's clonable shell. Member-scoped, no creator identity, no RSVP data.
+
+## Explicitly deferred / non-goals
+
+* Automated recurring meetups (a self-spawning series). Redo covers the weekly case in a few taps; no scheduler exists by design.
+* Roster / RSVP carry-over (each redo is a fresh honest round).
+* Per-group history surface or dashboard ""redo"" buttons (redo lives only in the wizard).
+
+## Design spec
+
+`docs/superpowers/specs/2026-06-04-redo-from-previous-meetup-design.md` (commit 7fa03c4).
+
+Builds on the unified suggest flow ([DRP-41](https://linear.app/drp-02/issue/DRP-41/unified-suggest-a-hangout-flow-merge-floatflexibleconcrete-into-one)).
+
+## Sequencing
+
+1. `@bethere/shared`: add the `PastForGroup` output schema.
+2. `apps/api`: add `events.pastForGroup` + tests.
+3. `apps/mobile`: conditional source step + pre-fill wiring in `CreateWizard` + tests.
+
+All land together on `dev` (tRPC type chain couples them).","Done",,"Medium",,,"gonglx8@gmail.com","gonglx8@gmail.com","",,,,,"Thu Jun 04 2026 16:45:32 GMT+0000 (GMT+00:00)","Fri Jun 05 2026 12:10:32 GMT+0000 (GMT+00:00)","Thu Jun 04 2026 16:45:32 GMT+0000 (GMT+00:00)",,"Fri Jun 05 2026 11:54:06 GMT+0000 (GMT+00:00)",,,,,"",,,,"16fbcbc1-2c3f-4401-a84d-b40c64501522",14365,"DRP-41, DRP-47",,
+"DRP-43","DRP_02","UX fixes: create-flow lock placement, editable meetups, typography, countdown","Five UX complaints against the unified suggest flow, addressed as one cohesive pass. Design spec: `docs/superpowers/specs/2026-06-04-ux-fixes-design.md`.
+
+1. **Create flow** - move both lock toggles off the bloated ""A few options"" step onto the Times and Activities steps they govern; add an optional Title field at create (still auto-derived if blank).
+2. **Editable meetups** - any group member can edit title/location/notes after creation, before the plan clears. Concurrency-safe via per-field compare-and-set (CAS): no lost updates, no false conflicts, no schema migration. Inline edit bottom sheet on EventDetail.
+3. **Typography** - remove SpaceMono everywhere (e.g. ""4 on the table""); map to Archivo display / Inter bold with tabular-nums.
+4. **Countdown** - delete the green DrainBar; replace with a prominent plain-language ""Voting closes in 2 days"" / ""RSVP closes in 5 hours"" line, urgency via pink text under 1 hour.
+
+Out of scope: realtime sync, editing votes/responses, structural edits (times/activities/locks/deadlines), edit attribution.","Done",,"High",,,"gonglx8@gmail.com",,"",,,,,"Thu Jun 04 2026 17:30:59 GMT+0000 (GMT+00:00)","Thu Jun 04 2026 17:52:31 GMT+0000 (GMT+00:00)","Thu Jun 04 2026 17:30:59 GMT+0000 (GMT+00:00)",,"Thu Jun 04 2026 17:52:31 GMT+0000 (GMT+00:00)",,,,,"",,,,"7e2e6280-c57f-4f81-83a3-14e069c16cbc",15447,,,
+"DRP-44","DRP_02","Polish + unify mobile UI (dashboard, voting, detail, nav, wizard)","A cohesive polish + unification pass on the Expo mobile app, addressing a full punch-list of UX/consistency complaints and unifying as many components as possible into one shared vocabulary. Work lands on branch `feat/redo-from-previous-meetup` (per direction to stay on it). Design spec: `docs/superpowers/specs/2026-06-04-mobile-polish-unify-design.md`.
+
+## Decisions
+
+* Dashboard: pinned pink ""N ACTION(S) REQUIRED"" panel + colour-coded **Going / Open / Done** segmented filter (default Going).
+* Detail top: meetup title in the back bar; group drops to a hero sub-line.
+
+## Punch-list (all must be addressed)
+
+ 1. Voting screen ugly; add-activity vs add-time inconsistent -> one `AddComposer`.
+ 2. Add-time Add/Cancel not in theme -> themed mini-buttons.
+ 3. Detail top shows only the group (arbitrary) -> meetup title in bar.
+ 4. Dashboard ""chopped"" -> one card system, contained action panel.
+ 5. Bottom bar: highlight active tab (filled pill, visible boundaries).
+ 6. Voting / live-RSVP / after meetup screens inconsistent -> one hero shell + rhythm.
+ 7. Badge slop (""weigh in"", ""you've had your say"") -> terse `StatusPill`.
+ 8. ""Action required"" + count -> ""N ACTION(S) REQUIRED"".
+ 9. Account -> top-right avatar circle on Meetups + Groups; drop Account tab.
+10. Filter ugly -> coloured segmented control, default Going.
+11. Awaiting bug: cleared/past/unvoted shown in Awaiting -> routed to Done.
+12. Sort by time; past harder to show.
+13. Kill ""3 on the table"" everywhere.
+14. Time-left must be obvious/scary -> one big `Countdown`.
+15. Reduce slop copy globally.
+16. Going shows upcoming; truly past separated into Done.
+17. Event card: ""3 going"" text only, remove face pile.
+18. Unify inconsistent shared components (the big theme).
+19. Wizard: split location/notes from deadlines into separate steps.
+
+## Unification targets
+
+One header (`ScreenHeader` replacing Heading+BackBar), one segmented control (`Segmented` replacing Tabs+Toggle), one add affordance (`AddComposer`), one `Countdown`, one small-pill family (`Pill`/`StatusPill`/DateChip), one checkbox (`SelectCheck` everywhere; kill bespoke CheckRow box), shared status predicates (`lib/status.ts`), Button `sm`+`ghost`.
+
+## Verification
+
+`pnpm lint` + `pnpm typecheck` + `pnpm test` green; adversarial multi-agent review of categorization correctness + unification completeness + punch-list coverage before done.","Done",,"High",,,"gonglx8@gmail.com","gonglx8@gmail.com","",,,,,"Thu Jun 04 2026 20:34:18 GMT+0000 (GMT+00:00)","Thu Jun 04 2026 21:34:04 GMT+0000 (GMT+00:00)","Thu Jun 04 2026 20:34:18 GMT+0000 (GMT+00:00)",,"Thu Jun 04 2026 21:34:04 GMT+0000 (GMT+00:00)",,,,,"",,,,"3e60e95c-578d-461b-84b3-27ae4920b4db",15225,,,
+"DRP-45","DRP_02","Bottom sheet not keyboard-safe: keyboard covers Edit details fields/Save","On mobile, opening the on-screen keyboard while editing a meetup (the ""Edit details"" bottom sheet) covered the lower fields (Notes) and the Save button, since the sheet content was hidden behind the keyboard.
+
+Root cause: the edit form (and the conditional people-picker) render inside `BottomSheet`, a `Modal` pinned to `flex-end`. React Native does not move modal content for the keyboard automatically.
+
+Fix: wrap the sheet container in a `KeyboardAvoidingView` (`behavior: ""padding""` on iOS, matching the existing `ScreenScroll` convention) so `flex-end` lifts the sheet above the keyboard; the scrim still fills behind it. Fixes every `BottomSheet` consumer at once.
+
+Commit: d885e0f on `dev`. Verified: typecheck, biome, and the full mobile test suite (165 passing).","Done",,"Medium",,,"gonglx8@gmail.com",,"",,,,,"Fri Jun 05 2026 12:08:53 GMT+0000 (GMT+00:00)","Fri Jun 05 2026 12:08:53 GMT+0000 (GMT+00:00)",,,"Fri Jun 05 2026 12:08:53 GMT+0000 (GMT+00:00)",,,,,"",,,,"9b4e2011-db09-4add-9456-3232d5d14cd2",14350,,,
+"DRP-46","DRP_02","Spec-driven test suite + CI Postgres gate","Retroactive ticket for the test infrastructure + suite shipped on `feat/redo-from-previous-meetup` and merged to `dev` (PR #40). Tracked here so the board reflects it (it is one of the strongest ""stable product / architecture"" artifacts for the M3 review).
+
+## What
+
+* DB-backed tRPC `createCaller` integration harness with a per-process throwaway Postgres, making the whole `events.ts` plan lifecycle testable for the first time.
+* React Native render + tRPC-mock harness for mobile screens.
+* \~566 spec-derived tests (derived from ARCHITECTURE.md / CLAUDE.md, not mirrored from the code), which caught and fixed 2 real bugs (create + addCandidate minute-dedup).
+* Fixed the mobile jest non-exit hang (`--forceExit`).
+* CI: added a postgres:16 service to node.js.yml and a new dev-check.yml gate (lint + typecheck + test on push/PR to `dev`).
+
+End state: `pnpm check` is green (lint + typecheck + 521 tests + quality).
+
+## Refs
+
+Commits 537c9b1, 380f921, fa13337, 67eb69e, 72129c6, f647ea1. Summary: docs/summary/2026-06-05-1206-massive-spec-driven-test-overhaul.md","Done",,"High",,,"gonglx8@gmail.com","gonglx8@gmail.com","",,,,,"Fri Jun 05 2026 12:10:13 GMT+0000 (GMT+00:00)","Fri Jun 05 2026 12:10:13 GMT+0000 (GMT+00:00)",,,"Fri Jun 05 2026 12:10:13 GMT+0000 (GMT+00:00)",,,,,"",,,,"fd6f5bc4-6ac9-4056-b9f0-fe0d4d871e07",14349,,,
+"DRP-47","DRP_02","M3 review polish + hardening","Pre-M3-review work from a full multi-lens codebase critique (2026-06-05). The codebase is green (`pnpm check` passes: lint + typecheck + 521 tests + quality); these are demo polish, interview-driven UX, and small robustness fixes, not firefighting.
+
+## P0 - before the review
+
+- [ ] Demo locally (`pnpm phone` / `pnpm web` reseed on boot); do NOT demo off the stale live App Runner backends (prod runs pre-[DRP-42](https://linear.app/drp-02/issue/DRP-42/redo-start-a-meetup-from-a-previous-one) code).
+- [ ] Seed a ""Going"" plan for u_dev so the default Dashboard tab is not empty (cleared plan with a future startsAt + a u_dev ""yes"").
+- [ ] Soften the conditional ""Go if \[people\]"" copy + default to ""At least one"" (felicity could not name friends on camera, even privately).
+- [ ] Bottom-tab inactive label contrast: muted -> ink (App.tsx:107).
+- [ ] Add docs/demo.md presenter script + note the **DEV** ""Decide now"" lock path.
+
+## P1 - polish week (correctness)
+
+- [ ] Settle-on-write: respond/unrespond reject after momentEndsAt; toggleReaction/addCandidate/setOptOut reject after decidesBy (events.ts).
+- [ ] SEED_ON_BOOT fail-safe default (if-empty, not the destructive reset) (index.ts:102).
+- [ ] GroupDetail self-remove dead-end: add `me` to groups.get, hide self remove.
+- [ ] Moment answer buttons guard when liveMsLeft <= 0 (EventDetail).
+- [ ] RespondInput stray cond (bug #3) server strip + un-skip test.
+- [ ] Future-time validation on create/lock (defense in depth).
+
+## P1 - polish week (UX / rubric)
+
+- [ ] Relative / quick-preset times on the create times step (reuse the already-built shared expandWindow).
+- [ ] Surface the thesis (anonymity / momentum / no-organiser) in SignIn tagline + vote-board + moment copy.
+- [ ] First-run onboarding / ""what is a group?"" empty-state explainers.
+- [ ] 12h vs 24h time-format consistency.
+- [ ] a11y labels on the shared ui/ primitives.
+
+## P2 - defer past deadline
+
+duration/end-time (Notes already covers ""park 12-3"") · location-as-place (Maps Linking) · delete dead window.ts band subsystem · durable lock.ts de-dup · web DateTimeField weekday (only if web is graded).","Done",,"High",,,"gonglx8@gmail.com","gonglx8@gmail.com","",,,,,"Fri Jun 05 2026 12:10:32 GMT+0000 (GMT+00:00)","Wed Jun 10 2026 11:58:53 GMT+0000 (GMT+00:00)",,,"Wed Jun 10 2026 11:58:53 GMT+0000 (GMT+00:00)",,,,,"",,,,"3dc6da2a-960f-49ff-9c79-4c64caaf8371",7160,"DRP-42",,
+"DRP-48","DRP_02","Fix 36 bugs from full-project code review (parallel bug hunt)","Whole-project bug hunt (multi-agent code review) surfaced 36 verified findings (30 CONFIRMED, 6 PLAUSIBLE; 35 bugs + 1 cleanup). Fixing all via file-owned parallel lanes on `dev`, committed in modular chunks. This issue tracks the batch.
+
+## High
+
+* `apps/api/src/routers/groups.ts` removeMember: no last-member guard -> removing the final member permanently orphans the group.
+* `apps/api/src/routers/events.ts` respond/unrespond/addCandidate/toggleReaction/lock: gate on stale stored phase (loadEvent never settles) -> writes accepted after the moment/decides-by deadline (blind-window violation).
+
+## Medium (server)
+
+* events.ts lock UPDATE has no phase guard in WHERE -> double-lock clobbers the moment window.
+* events.ts lock bypasses the post-deadline fizzle rule (two settle paths disagree).
+* events.ts toggleReaction +1 insert lacks onConflictDoNothing -> concurrent +1 hits PK -> 500.
+* events.ts create does not trim/dedupe activity candidates -> defeats both-axes-pinned moment shortcut.
+* events.ts create accepts past startsAt -> plan born already-expired, silent self-fizzle.
+* groups.ts removeMember leaves the removed user's reactions/responses/opt-outs (keep counting toward tally/quorum/reveal).
+* groups.ts addMember: no user-existence check -> FK violation surfaced as 500.
+* index.ts RATE_LIMIT_MAX / RATE_LIMIT_WINDOW / PORT: `??`-vs-empty-string trap (outage / random port).
+* shared/schemas.ts startsAt/decidesBy/replyBy bare z.string() -> malformed timestamps cross the boundary.
+
+## Medium (mobile)
+
+* lib/status.ts moment branch missing declined guard -> opted-out members falsely nagged.
+* EventDetail.tsx CAS conflict does not refresh baseline -> spurious save-again loop.
+* CreateWizard.tsx timeIsos not minute-deduped -> preview diverges from server.
+* CreateWizard.tsx stale decidesInvalid permanently disables Send.
+* GroupDetail.tsx error flag never reset; unsaved rename clobbered on reload.
+* ui/DateTimeField.tsx seed ignores min/max -> out-of-bounds dismiss-commit.
+
+## Low / Plausible / Cleanup
+
+* events.ts whitespace/duplicate activity labels; toggleReaction non-atomic +/opt-out.
+* CreateWizard.tsx decidesInvalid missing lower bound; no activity cap (>10 -> generic error).
+* EventDetail.tsx partial CAS save does not reload.
+* admin/reset-auth.ts byte-length vs code-unit-length -> RangeError -> 500.
+* db/schema.ts responses missing unique(event_id,user_id) and FK on user_id (+ migration).
+* notifications.ts moment-open ping cancelled-not-rescheduled.
+* lib/auth.ts empty-string firstName kept (blank name/avatar).
+* GroupDetail.tsx optimistic addable removal on failed addMember.
+
+Verification: pnpm typecheck + lint + test (API tests DB-backed). Generated by Claude Code multi-agent review.","Done",,"High",,,"gonglx8@gmail.com",,"",,,,,"Fri Jun 05 2026 13:18:15 GMT+0000 (GMT+00:00)","Fri Jun 05 2026 13:40:02 GMT+0000 (GMT+00:00)","Fri Jun 05 2026 13:18:15 GMT+0000 (GMT+00:00)",,"Fri Jun 05 2026 13:40:01 GMT+0000 (GMT+00:00)",,,,,"",,,,"a5659b13-0dd1-4318-8bb0-a5eca95b6a34",14259,,,
+"DRP-49","DRP_02","Refactor sweep (2026-06-05): 47 verified code-quality clusters","Tracking issue for the `/simplify-refactor` pass run on 2026-06-05. A massively-parallel, behavior-preserving code-quality review (236 agents) over the whole repo excluding `archive/`, build output, generated migrations, and tests-as-production.
+
+**No features, no bug fixes, no behavior changes.** Every cluster below survived an adversarial skeptic agent prompted to refute it.
+
+## Pipeline
+
+* 236 agents -> **275 raw findings** -> **112 clusters** -> **47 survived adversarial verification**.
+* Full write-up (problem, change steps, before/after sketch, files, effort/risk/impact per cluster): `docs/refactor/2026-06-05-refactor-report.md` in the repo.
+
+## Headline wins
+
+* **Performance (highest raw impact):** two N+1 query-storm clusters - `groups.mine/get` and `events.mine/get` - load per-row data inside loops; bulk loaders are the biggest individual win.
+* **The 982-line** `events.ts` **god-file:** the ""open the blind moment"" transition is encoded twice (auto-lock vs manual-lock); the `events.mine`/`events.get` caller-derivation preamble is copy-pasted; several helpers are misnamed.
+* **Mobile dedup + theme drift:** date/time parsing duplicated between `lib/format.ts` and `ui/DateTimeField`; deadline math duplicated across `CreateWizard`/`Dashboard`/`EventDetail`; hardcoded hex/spacing literals that should use `theme.ts` tokens; user-facing copy inlined in screens instead of `lib/copy.ts`.
+* **Type-chain consistency:** per-screen `Awaited<ReturnType<...>>` instead of a shared `RouterOutputs`; bare-string wizard step keys instead of a typed union; duplicated text-length bounds across Zod schemas.
+
+Effort skews small: 40 S, 6 M, 1 L. All low-or-medium risk.
+
+## Top of the roadmap
+
+| \# | Epic | Effort | Risk | Impact |
+| -- | -- | -- | -- | -- |
+| 1 | Export shared RouterOutputs/RouterInputs from lib/trpc.ts instead of per-screen Awaited<ReturnType<...>> | S | low | med |
+| 2 | Single-source the test-DB connection coordinates + terminate/drop sweep | S | low | med |
+| 3 | Lift deadlineMs into status.ts; route Dashboard + EventDetail through it | S | low | med |
+| 4 | Make wizard step keys a shared typed union | S | low | med |
+| 5 | Fix N+1 query storms in groups.mine/get (+ shared user-card projection) | M | low | high |
+| 6 | Rename misleading getter/action/field helpers in events.ts | S | low | med |
+| 7 | Rename EventDetail's lookalike state pairs (editNote/editNotes, editing/editable) | S | low | med |
+| 8 | Single-source text-length bounds across input schemas | S | low | med |
+| 9 | Replace DateTimeField's private parse helpers with the shared lib/format contract | M | low | med |
+| 10 | Replace events.mine/get per-plan N+1 loads with a shared bulk loader | L | med | high |
+
+The remaining 37 clusters (naming, dead-code, theme-token adoption, copy centralization, smaller dedup) are detailed in the report. To execute: pull a cluster from the report and run `/simplify-refactor apply` or implement directly - each is independently shippable in one commit. Run `pnpm lint && pnpm typecheck && pnpm test` before each PR.","Done",,"No priority",,,"gonglx8@gmail.com",,"Improvement",,,,,"Fri Jun 05 2026 13:24:56 GMT+0000 (GMT+00:00)","Fri Jun 05 2026 15:07:58 GMT+0000 (GMT+00:00)","Fri Jun 05 2026 13:48:06 GMT+0000 (GMT+00:00)",,"Fri Jun 05 2026 15:07:58 GMT+0000 (GMT+00:00)",,,,,"",,,,"7550d183-6621-47d6-8bdf-86e86f28c2f3",14171,,,
+"DRP-50","DRP_02","M4: group onboarding - invite links + join codes + first-run","M4 goal: make BeThere a complete product by letting a real person actually get into a group. Today the only ""add member"" path is the seeded-demo-user picker (`groups.addableUsers`), so a friend who installs the app can't be added - there is no invite, join code, or link anywhere.
+
+Design (brainstormed): WhatsApp/Partiful-style **shareable link + short human-typeable join code** per group, on top of the existing Google sign-in. **Web-first** (Expo web on Vercel is the live surface): a web invite is just a URL you open + sign in; the join **code** is the universal primitive that also works on native and survives a flaky link. The same path-based `/join/<code>` link becomes a native universal link later with zero backend change.
+
+Scope (all of it):
+
+* **Join bridge**: `groups.invite_code` column + generator; `groups.joinByCode`, `groups.inviteByGroup` procedures; React Navigation linking (`join/:code`); `pendingInvite` continuity across the web OAuth redirect; `JoinGroup` screen; invite BottomSheet in GroupDetail (code + share + copy); ""Join a group"" entry in GroupsList.
+* **First-run polish**: real display names in rosters (capture Clerk name on upsert + `users.updateProfile` + editable name in Account); zero-group empty-state guidance.
+* **Create-during-onboard**: after creating a group, land on its shareable invite.
+* Remove the seeded picker from the primary UI (keep behind dev flag for tests).
+
+Plan file: /Users/gong/.claude/plans/we-finished-milestone-3-tranquil-quasar.md
+Approach: design workflow -> backend -> mobile -> adversarial review workflow -> verify. Commit in modular chunks on `dev`.","Done",,"High",,,"gonglx8@gmail.com","gonglx8@gmail.com","",,,,,"Mon Jun 08 2026 15:19:26 GMT+0000 (GMT+00:00)","Mon Jun 08 2026 16:15:53 GMT+0000 (GMT+00:00)","Mon Jun 08 2026 15:19:26 GMT+0000 (GMT+00:00)",,"Mon Jun 08 2026 16:15:53 GMT+0000 (GMT+00:00)",,,,,"",,,,"33292434-2f2b-45ec-a28a-484f246eb61e",9783,"DRP-51",,
+"DRP-51","DRP_02","M4 documentation deliverables: pitch leaflet, copyright/legal report, HCD portfolio, impact cover-story, quantitative evaluation","Produce the M4 + Project Documentation (20%) deliverables, grounded in the team's real research (43-response survey + 7 interviews), product model, tech stack, and the Linear/git iteration history. No fabricated data.
+
+Deliverables (all under `docs/m4/`):
+
+* **DESIGN_LANGUAGE.md** - reusable visual brand kit / AI prompt (done)
+* **pitch-leaflet.html** - Project Pitch Leaflet (10%), print-ready A4
+* **copyright-legal-report.md** - Copyright/Legal Issues Report (10%): dependency + licence table, legal discussion
+* **hcd-portfolio.md** - Human Centred Design Techniques Portfolio (80%): personas, stakeholder map, AEIOU, insights/opportunity, journey maps, service blueprint, prototyping techniques, testing plan canvas, feedback-to-change traceability, impact, cover story, reflection
+* **cover-story.html** - M4 ""impact asset"" (positive wider impact) as a speculative magazine cover
+* **quantitative-evaluation.md** - M4 quantitative + objective evaluation: real survey analysis + ready-to-run SUS/task-success instruments + iteration comparison
+
+Drafted via a multi-agent workflow (parallel drafting -> adversarial rubric critique -> finalize), then to be human-reviewed.
+
+**Team follow-up:** run the SUS / task-success instruments with 5-8 target users to fill the `[TEAM TO FILL]` cells in the quantitative evaluation before submission.","In Progress",,"High",,,"gonglx8@gmail.com",,"HCD",,,,,"Mon Jun 08 2026 15:36:51 GMT+0000 (GMT+00:00)","Mon Jun 15 2026 11:18:16 GMT+0000 (GMT+00:00)","Mon Jun 08 2026 15:36:51 GMT+0000 (GMT+00:00)",,,,,,,"",,,,"d66a5007-5d8e-42ef-8f4d-edd9beee3f82",9822,"DRP-29, DRP-50",,
+"DRP-52","DRP_02","refactor: whole-repo simplify pass (28 verified clusters) - /simplify-refactor","Behavior-preserving code-quality pass over the whole monorepo via `/simplify-refactor` (apply + aggressive), on branch `refactor/simplify-pass`.
+
+**Status: DONE - all 28 clusters applied and verified.** Each is its own commit; the full series is `d7b8603` (report) -> `77393dc` (last cluster), 28 cluster commits, `lint + typecheck + test` green at the end (API 395/0, mobile 193, shared pass). Net: 24 files, +439/-370.
+
+**Report:** `docs/refactor/2026-06-08-refactor-report.md` (full per-cluster detail, before/after sketches).
+
+Reviewed every in-scope source file across 7 lenses (186 agents): 142 raw findings -> 188 after cross-cut -> 55 candidate clusters -> **28 adversarially-verified**, all low-risk and behavior-preserving. No feature/API/DB/UX changes.
+
+Applied (apply order):
+
+- [X] 1\. Extract the shared candidate-sort comparator (startsAt asc, activities last) in events.ts (`8732694`)
+- [X] 2\. Extract the activity-candidate {id,label} projection feeding resolveActivity/displayActivity (`777fa88`)
+- [X] 3\. Extract a time-candidate selector + readyToLock derivation in events.ts (`b4d169b`)
+- [X] 4\. Unify the per-event vs bulk row mappers in events.ts (responses, reactions, candidate sort) (`46ec809`)
+- [X] 5\. Extract the settle+phase-gate preamble shared by 5 gated mutations in events.ts (`fd64418`)
+- [X] 6\. Consolidate repeated error-message literals and the caller opt-out clear in events.ts (`a35d2bd`)
+- [X] 7\. Name the UserCard shape and centralize the row-to-card projection in db/users.ts (`6005290`)
+- [X] 8\. Tighten events.ts exports and local naming (loadEvent export, 'now' alias, 'existing' var) (`31722fd`)
+- [X] 9\. Fix shared/schemas.ts naming and doc drift (ResolveInput/ByGroupInput comments, NOTES_MAX) (`63103e2`)
+- [X] 10\. Extract the resolve-group-by-invite-code preamble in groups.ts (`eea5b5b`)
+- [X] 11\. Use batched getUserCards in groups.get (drop the N+1 per-member roster query) (`704e648`)
+- [X] 12\. Refresh stale schema.ts comments and document the frozen legacy columns (status, isAnonymous) (`cbd59c6`)
+- [X] 13\. Single-source the harness table list and derive its insert-override unions from the schema (`2bf9efa`)
+- [X] 14\. Remove the dead shared formatInviteCode helper (`4a79bae`)
+- [X] 15\. Single-source the weekday/day/month label in lib/format (dayUpper kept as-is) (`6f34358`)
+- [X] 16\. Remove the orphaned formatCountdown vocabulary (and its dead SEC_MS const) (`1d7c4b4`)
+- [X] 17\. Route DateTimeField's time label through lib/format and tokenize the web shadow (`fb8d804`)
+- [X] 18\. Single-source the wizard step list in lib/redo.ts (`e7b234a`)
+- [X] 19\. Dedupe the ""Who's in?"" moment-open notification content in syncReminders (`a0b20b7`)
+- [X] 20\. Remove the dead VERB_VOTE / VERB_VOTED copy constants (`fd1091e`)
+- [X] 21\. Adopt useBusyAction in GroupDetail and fix its now-stale doc comment (`8dd5b93`)
+- [X] 22\. Add an invite-mirror drift test and re-sync the lock.ts mobile mirror structure (`70f9f2d`)
+- [X] 23\. Remove the dead add-time partOfDay parameter and the redundant CollectingView optedOut prop (`375c80e`)
+- [X] 24\. Make saveEdit's field descriptors the single source for the conflict-adopt mapping (`1d963b2`)
+- [X] 25\. Replace EventDetail's StatusHeading raw Text with AppText variant=""rowLabel"" (`e303af5`)
+- [X] 26\. Have PersonRow own the trailing 'right' slot alignment instead of caller marginLeft:auto (`fa8eba0`)
+- [X] 27\. Introduce an uppercase-overline text primitive/variant and route the inline copies through it (`e4bb092`)
+- [X] 28\. Simplify CreateWizard derived state (replyShown fallback, activity count/list, canAdvance, STEPS) (`77393dc`)
+
+*Filed as a single tracking issue (not 28 separate ones) since every cluster was verified low-risk and applied immediately. Branch* `refactor/simplify-pass` *is ready for a PR into* `dev` *(not yet pushed).*","Done",,"No priority",,,"gonglx8@gmail.com",,"Improvement",,,,,"Mon Jun 08 2026 22:10:15 GMT+0000 (GMT+00:00)","Tue Jun 09 2026 11:22:04 GMT+0000 (GMT+00:00)","Mon Jun 08 2026 22:10:15 GMT+0000 (GMT+00:00)",,"Mon Jun 08 2026 23:16:32 GMT+0000 (GMT+00:00)",,,,,"",,,,"7682ff92-fe45-422e-aabc-a7431e0eed23",9363,"DRP-54",,
+"DRP-53","DRP_02","Refactor pass (2026-06-09): verified behavior-preserving cleanups","Tracking issue for the `/simplify-refactor everything apply + aggressive` pass.
+
+A massively-parallel multi-lens code-quality review (186 agents) produced **158 findings -> 56 clusters -> 32 verified epics** (each survived an adversarial skeptic). All are **S effort, low risk, behavior-preserving**.
+
+## Outcome (applied)
+
+All 32 clusters applied on branch `refactor/aggressive-simplify`, **one cluster per commit** (33 commits incl. the report), each verified green before committing. Final branch state: **lint clean, typecheck clean, API 395 tests pass / 0 fail, mobile 193 tests pass**.
+
+* **31 applied in full; 1 applied partially (#12); 0 blocked.**
+* #12: the `Conditional`-type reuse half was applied; the `ActivityText.trim()` half was deliberately skipped (it would shift `addCandidate`'s max-length validation boundary - a real behavior change - since the handler already trims).
+* Optional sub-items left undone by design: the `memberCounts` helper and `getGroup(id)` extraction in #8 (the high-value edits were applied).
+
+Full report (problem / before-after / files per cluster + apply log): `docs/refactor/2026-06-09-refactor-report.md`.
+
+No `refactor` label exists in this team and I lack permission to create one, so this is tagged `Improvement`.
+
+### Clusters (all committed)
+
+**API / shared**
+
+- [X] 1\. `fallbackUserCard` helper in db/users.ts, used by both routers
+- [X] 2\. Reuse shared `CandidateReaction` in events.ts (drop 5x inline type)
+- [X] 3\. Extract the toggleReaction reaction-row predicate (built 2x)
+- [X] 4\. Share the ""clear my response"" delete (respond/unrespond)
+- [X] 5\. Unify addCandidate with create's insert + minute/activity dedupe helpers
+- [X] 6\. Shared `isTerminalPhase` helper (cleared/fizzled) for the API side
+- [X] 7\. `groupBy` map idiom + per-table member-purge dedup
+- [X] 8\. Consolidate group reads (reuse getGroupNames, drop dead getGroupName)
+- [X] 9\. Share `memberIdsOf` so events.ts stops re-inlining the member-id query
+- [X] 10\. Drive `pgEnum` tuples from the shared `z.enum` single source
+- [X] 11\. Parameterize the repeated `FieldEdit.refine(max, message)` in UpdateEventInput
+- [X] 12\. Reuse shared `Conditional` type (ActivityText.trim half skipped - behavior change)
+- [X] 31\. Share the seed time-candidate start-extraction
+
+**Mobile**
+
+- [X] 13\. EventDetail CountdownBanner reuses `activeDeadline`'s label
+- [X] 14\. Rename MomentView's editing/onEdit -> reanswering/onChangeAnswer
+- [X] 15\. De-dup CreateWizard confirm-step SummaryItem note logic
+- [X] 16\. CreateWizard: derive `isConcrete`, factor reply-close line
+- [X] 17\. CreateWizard: use shared `DEADLINE_VOTING` constant
+- [X] 18\. Route Dashboard no-groups title + CTA through copy.ts
+- [X] 19\. compareActions reuses `activeDeadline`'s phase-to-field mapping
+- [X] 20\. Extract one-shot route-param consume hook in GroupDetail
+- [X] 21\. Shared bordered input-frame style constant (Field/DateTimeField/DateTimePill)
+- [X] 22\. De-dup DateTimeField mode-gated picker props
+- [X] 23\. One-letter avatar-initial helper
+- [X] 24\. AppText cardTitle variant (display-font-15 heading recipe)
+- [X] 25\. AppText captionPara variant (lineHeight:18 override)
+- [X] 26\. Extract `AccountHeaderButton` (GroupsList + Dashboard)
+- [X] 27\. GroupsList uses shared `useFetchOnFocus` hook
+- [X] 28\. `ui.gutter` token instead of hardcoded 16 in ScreenBackground
+- [X] 29\. Collapse the dead `dismissedAction` branch in native share
+- [X] 30\. Derive wizard STEPS from the StepKey union
+- [X] 32\. Share the `onPress ? Pressable : View` wrapper via Tappable (Card/Row/PersonRow)
+
+Next: PR `refactor/aggressive-simplify` -> `dev`.","Done",,"Low",,,"gonglx8@gmail.com",,"Improvement",,,,,"Tue Jun 09 2026 00:26:42 GMT+0000 (GMT+00:00)","Wed Jun 10 2026 11:58:41 GMT+0000 (GMT+00:00)","Tue Jun 09 2026 00:26:42 GMT+0000 (GMT+00:00)",,"Wed Jun 10 2026 11:58:41 GMT+0000 (GMT+00:00)",,,,,"",,,,"3ea5d0a4-4955-4a0c-91f1-7da0f25eabf5",7160,"DRP-54",,
+"DRP-54","DRP_02","Refactor pass 2 (structural): /simplify-refactor 2026-06-09","Second `/simplify-refactor everything apply + aggressive` pass, run after the four prior cleanup passes ([DRP-33](https://linear.app/drp-02/issue/DRP-33/code-quality-refactor-pass-2026-06-03), 06-05, [DRP-52](https://linear.app/drp-02/issue/DRP-52/refactor-whole-repo-simplify-pass-28-verified-clusters-simplify), [DRP-53](https://linear.app/drp-02/issue/DRP-53/refactor-pass-2026-06-09-verified-behavior-preserving-cleanups)) had harvested the single-line dedup/reuse/rename wins. This pass deliberately targeted the **structural** work those passes skipped.
+
+162 review agents -> 96 raw findings -> 43 clusters -> **14 verified** (survived an adversarial skeptic). Report: `docs/refactor/2026-06-09-refactor-report-pass2.md`. Branch: `refactor/simplify-everything`.
+
+**Outcome: 13 of 14 applied** (one commit each, sequential, gated by `pnpm lint && typecheck` + the relevant test suite). The 1 med-risk cluster (#14 router-module split) is deferred as a proposal -> [DRP-55](https://linear.app/drp-02/issue/DRP-55/split-eventsts-into-router-membershiplifecyclebundle-modules).
+
+**Coverage caveat:** Dashboard.tsx lens agents stalled/failed this run, so Dashboard got thin review coverage - worth a focused re-run.
+
+### Clusters
+
+- [X] #1 Decompose `events.create()` into pure candidate-normalization + deadline helpers (2 commits)
+- [X] #2 Extract `events.get` projection (counts/mine + members) into module helpers
+- [X] #3 Move EventDetail's phase sub-components into `screens/event-detail/`
+- [X] #4 Extract EventDetail's inline plan-header into `PlanHeaderCard`
+- [X] #5 Extract GroupDetail's invite `BottomSheet` into `InviteSheet`
+- [X] #6 Extract Gate's pending-invite effects into `usePendingInviteRouting`
+- [X] #7 Add `clearMyReactions` + fold `update()`'s 3x CAS blocks into one applier
+- [X] #8 Delete the dead `window.ts` module + its self-only tests; fix invite mirror comment
+- [X] #9 Centralize the 5000ms data-poll cadence as `POLL_MS`
+- [X] #10 Disambiguate EventDetail's `sheet`/`editStatus` state names
+- [X] #11 Route ScreenHeader title + conditional-mode labels through variant/copy vocab
+- [X] #12 Route `db/users.getUserCard` through `userCardFromRow`/`fallbackUserCard`
+- [X] #13 Trim dead test-harness override params + dead env write
+- [ ] #14 **Deferred ->** [DRP-55](https://linear.app/drp-02/issue/DRP-55/split-eventsts-into-router-membershiplifecyclebundle-modules)**:** split `events.ts` into membership/lifecycle/bundle modules (L/med)
+
+### Apply log
+
+* 14 commits (cluster #1 = 2 commits) on `refactor/simplify-everything`. Net **25 files, +2030 / -910**.
+* Final gate green at HEAD: lint clean, typecheck clean, **API 407 / shared 129 / mobile 193**, 0 failures.
+* Two extracted pure API helpers added 12 co-located unit tests (API 395 -> 407). Behavior, wire shapes, and pixels unchanged.","Done",,"No priority",,,"gonglx8@gmail.com",,"",,,,,"Tue Jun 09 2026 11:22:04 GMT+0000 (GMT+00:00)","Tue Jun 09 2026 12:27:13 GMT+0000 (GMT+00:00)","Tue Jun 09 2026 11:22:04 GMT+0000 (GMT+00:00)",,"Tue Jun 09 2026 12:27:13 GMT+0000 (GMT+00:00)",,,,,"",,,,"7360f04c-dad0-4715-8810-5d44bbfacf5c",8572,"DRP-33, DRP-52, DRP-53",,
+"DRP-55","DRP_02","Split events.ts into router + membership/lifecycle/bundle modules","PROPOSAL from the 2026-06-09 pass-2 simplify-refactor (cluster #14). Left unapplied because it is the one **medium-risk** cluster and the highest-churn item, and it overlaps the three events.ts clusters that DID land this pass ([DRP-54](https://linear.app/drp-02/issue/DRP-54/refactor-pass-2-structural-simplify-refactor-2026-06-09) #1/#2/#7: normalizeCreateCandidates, resolveCreateDeadlines, get()-projection helpers, clearMyReactions + applyCas).
+
+> **Re-scope before applying:** the line numbers below are from BEFORE pass-2. events.ts has since shrunk (create() decomposed, deadline + projection helpers extracted to `logic/create-candidates.ts` / `logic/event-schedule.ts`), so `resolveMomentEnd` already lives in `logic/event-schedule.ts` and `startMinute`/`activityKey` in `logic/create-candidates.ts`. Re-derive anchors by content against current `events.ts` (\~970 lines now).
+
+---
+
+## Problem
+
+`apps/api/src/routers/events.ts` is 1101 lines. A \~430-line module-level helper layer sits ahead of the tRPC router. Sibling routers stay thin (`groups.ts` \~200, `users.ts` \~21) and the project already factors API logic into `logic/plan-activity.ts`, `logic/past-meetups.ts`, `db/groups.ts`, `auth/resolve.ts`. The helper layer is three cohesive, independently-extractable concerns, and `groups.ts` imports `requireMember` out of the router file (a router<->router smell).
+
+This is a pure cut-paste-and-import extraction. No logic, call-site, or wire-shape changes.
+
+## Plan
+
+1. `db/event-membership.ts` (new): move `requireMember` + `loadEvent`. Repoint `groups.ts`'s import. Must depend on nothing in the other new modules to avoid a cycle.
+2. `logic/event-lifecycle.ts` (new): move `fizzle`, `settlePhase`, `openMoment`, `settleCollecting`, `settleLifecycle`, `settleAndRequirePhase` plus the shared primitives/readers/constants they share with the router and bundle (`responsesFor`/`reactionsFor`/`candidatesFor`, `isTimeCand`, `activityCandidateInputs`, `goingFromRow`, `isReadyToLock`, `byStartsAtThenNullsLast`, `toMomentResponse`/`toReaction`, `insertCandidates`/`ensureReaction`/`clearOptOut`/`clearMyResponse`/`clearMyReactions`, constants, `EventRow`/`DbOrTx`). Note: `resolveMomentEnd` already moved to `logic/event-schedule.ts` in pass-2 - import it.
+3. `db/event-bundle.ts` (new): move `loadEventBundle`, `derivePlanView`, `computeBaseStatus`, `computeMyStatus`, `groupBy`, `reactionCountsFor`/`projectCandidates`, `MyStatus`.
+4. `routers/events.ts`: delete moved defs, import them; file drops to imports + `eventsRouter`.
+5. Verify: `pnpm --filter @bethere/api typecheck`, `pnpm db:up && pnpm test`, `pnpm lint`.
+
+## Must stay UNCHANGED (behavior preservation)
+
+* Every function body verbatim; every procedure; all Zod input schemas; all returned wire shapes.
+* Settle order `settleCollecting` then `settlePhase`; `openMoment`'s guarded compare-and-set; always-anonymous creator self-check.
+* `requireMember` stays exported; `.js` extensions on all relative imports (ESM).
+* No cycle: `event-membership.ts` imports neither lifecycle nor bundle.
+
+## Verified facts (pre-pass-2)
+
+* Only direct cross-module import of an events.ts internal: `groups.ts` -> `requireMember`.
+* All 16 `events-*.test.ts` files (DB-backed) run through `appRouter.createCaller` via `test/harness.ts` - no test imports an events.ts internal, so extraction breaks no tests.
+
+Effort L, risk med (bounded by the DB-backed events suite), impact med. Report: `docs/refactor/2026-06-09-refactor-report-pass2.md`.","Done",,"No priority",,,"gonglx8@gmail.com",,"",,,,,"Tue Jun 09 2026 12:26:40 GMT+0000 (GMT+00:00)","Mon Jun 15 2026 11:18:21 GMT+0000 (GMT+00:00)",,,"Mon Jun 15 2026 11:18:21 GMT+0000 (GMT+00:00)",,,,"DRP-54","",,,,"5280aa8b-1a19-4f5a-b886-f1defde17ed4",1,,,
+"DRP-56","DRP_02","Meetup-centric share link + web-first conversion funnel","Maximize conversion of the rest of the group chat: turn a meetup link dropped in a chat into a signed-up, responding group member, web-first. From the Luca M4 interview (adoption friction / web seamlessness).
+
+Funnel: `/m/<eventId>` -> public meetup preview BEFORE sign-in -> one-tap ""Join {Group} & respond"" -> Google sign-in -> joins the event's group + lands on the meetup -> respond.
+
+This iteration the joiner becomes a NORMAL group member. Ephemeral guests (respond without joining) are deferred to the next iteration.
+
+Slices:
+
+1. Backend: events.previewByToken (public), joinByToken, shareLink + meetupUrlFor + tests
+2. Client pure helpers: meetup.ts, webview.ts, copy
+3. JoinMeetup funnel screen
+4. Linking + Gate logged-out pivot + pending-meetup routing (riskiest)
+5. Share affordance (EventDetail + post-create)
+6. OG unfurl card: static brand tags (must-ship) + per-meetup Vercel function
+7. In-app-browser escape hatch
+8. Inline create-group in the wizard group step
+9. Soft ""get the app"" nudge after responding
+
+Conversion levers in scope: per-meetup OG unfurl card + in-app-browser/OAuth handling. Deferred: ephemeral guests, notifications, dynamic OG image, Google One-Tap, group-optional meetups.
+
+Plan: /Users/gong/.claude/plans/cheeky-tumbling-cocke.md. Target: Final Demo 16-17 Jun.","Done",,"No priority",,,"gonglx8@gmail.com",,"",,,,,"Tue Jun 09 2026 15:33:19 GMT+0000 (GMT+00:00)","Wed Jun 10 2026 14:44:07 GMT+0000 (GMT+00:00)","Tue Jun 09 2026 15:33:20 GMT+0000 (GMT+00:00)",,"Tue Jun 09 2026 23:59:25 GMT+0000 (GMT+00:00)",,,,,"",,,,"f403b2df-4165-48ff-8043-18eca540c4e8",7880,"DRP-62",,
+"DRP-57","DRP_02","PostHog integration (focused): server Family-D telemetry + web-first client funnels","Focused PostHog integration (NOT ""full PostHog""). Out of scope: session replay, feature flags, A/B testing, surveys, client autocapture.
+
+**Goal:** produce the Family-D product-outcome telemetry defined in `docs/m4/quantitative-evaluation.md` section 3.4 (currently `[TEAM TO FILL - log on staging / live]`). Headline metric: plan clear rate.
+
+**Decisions:**
+
+* Identity: pseudonymous `distinct_id` = internal userId (opaque, never PII, in-app anonymity untouched).
+* Host: PostHog Cloud EU.
+* Client: web-first cross-platform (`posthog-js` web, `posthog-react-native` native), autocapture + replay OFF.
+* Server (`posthog-node`) is the metric backbone; env-gated no-op when unconfigured (tests stay hermetic).
+
+**Server choke points (apps/api/src/routers/events.ts):** `create` -> plan_created; `openMoment` (won race) -> moment_opened; `settlePhase`/`fizzle` -> plan_cleared/plan_fizzled; `respond` -> rsvp_submitted; `toggleReaction` -> candidate_voted; `addCandidate` -> candidate_added.
+
+Design spec: `docs/superpowers/specs/2026-06-09-posthog-integration-design.md`","Backlog",,"No priority",,,"gonglx8@gmail.com",,"",,,,,"Tue Jun 09 2026 16:02:27 GMT+0000 (GMT+00:00)","Mon Jun 15 2026 11:18:12 GMT+0000 (GMT+00:00)",,,,,,,,"",,,,"e55a7d29-7ee4-46c6-8076-79652f7af716",1,,,
+"DRP-58","DRP_02","Deadlines step copy is ambiguous - adopt the voting/RSVP vocabulary","User feedback on the create-wizard Deadlines step: the language (""Decides by"", ""Decides Sat 27 Jun"", ""Reply by"", ""Blind until then, then it reveals who's in"") is extremely ambiguous - it never says WHAT decides, WHO replies, or what happens at each deadline.
+
+Fix: speak the vocabulary the live screens already use (`DEADLINE_VOTING` = ""Voting closes"", `DEADLINE_RSVP` = ""RSVP closes"" from `lib/copy.ts`), with each card stating the time plus the consequence in plain English. Also update the confirm-step summary lines and the ""Decides soon"" notification to the same vocabulary.","Done",,"No priority",,,"gonglx8@gmail.com","gonglx8@gmail.com","",,,,,"Wed Jun 10 2026 12:07:58 GMT+0000 (GMT+00:00)","Wed Jun 10 2026 12:37:41 GMT+0000 (GMT+00:00)","Wed Jun 10 2026 12:07:58 GMT+0000 (GMT+00:00)",,"Wed Jun 10 2026 12:17:15 GMT+0000 (GMT+00:00)",,,,,"",,,,"a67e8e46-583c-4868-b9e8-cca112032706",7142,"DRP-61",,
+"DRP-59","DRP_02","Adding a time on the voting screen can throw the full-screen server error","User feedback: adding a time on the voting (collecting) screen sometimes throws a server error instead of being handled gracefully.
+
+Root cause: `events.addCandidate` rejects times at/before `decidesBy` or past the plan's horizon. The date/time pickers bound the DATE but the combined date+time can still land out of range (e.g. min date Sat 27 Jun but a time earlier than the 13:03 deadline). On rejection, `runAction` (`useBusyAction`) does `setError(true)`, which swaps the WHOLE screen for the full-screen `DetailError` until the next 5s poll clears it.
+
+Fix:
+
+1. Validate the composed date+time client-side in `AddTime` (mirror the server's two rules), disabling Add with a note quoting the actual boundary.
+2. Mutation failures on EventDetail surface as an inline `FormError` + reload-to-reconcile, never the full-screen error (that is for load failures only). Known server rejects map to friendly lines.","Done",,"No priority",,,"gonglx8@gmail.com","gonglx8@gmail.com","",,,,,"Wed Jun 10 2026 12:08:02 GMT+0000 (GMT+00:00)","Wed Jun 10 2026 12:17:15 GMT+0000 (GMT+00:00)","Wed Jun 10 2026 12:08:02 GMT+0000 (GMT+00:00)",,"Wed Jun 10 2026 12:17:15 GMT+0000 (GMT+00:00)",,,,,"",,,,"5046b37c-b7e3-4fb9-bc32-0d42a155fe8c",7142,,,
+"DRP-60","DRP_02","Voting board: ""+ add a time"" / ""+ add an activity"" triggers look like plain text, inconsistent with the UI","User feedback on the collecting (voting) screen: the ""+ add a time"" and ""+ add an activity"" affordances are bare pink text links, which are unclear and inconsistent with the rest of the neobrutalist UI (everything else tappable is a bordered row/card/button).
+
+Fix: restyled the collapsed `AddComposer` trigger (`apps/mobile/src/ui/AddComposer.tsx`) as a dashed-border ""empty slot"" row in the same geometry as the candidate `Row`s above it (same radius `ui.rInput`, border width 2, padding 11/13), with the bold-13 ink label. It reads as the next empty row in the table - tap to fill. Open state (input + Add/Cancel) unchanged; copy unchanged. Both lists share the one component, so one change fixes both.
+
+**Done** in commit `6610854` on `dev` - lint, typecheck, mobile tests (205), and quality gate all green.","Done",,"No priority",,,"gonglx8@gmail.com","gonglx8@gmail.com","",,,,,"Wed Jun 10 2026 12:10:53 GMT+0000 (GMT+00:00)","Wed Jun 10 2026 12:38:31 GMT+0000 (GMT+00:00)","Wed Jun 10 2026 12:10:53 GMT+0000 (GMT+00:00)",,"Wed Jun 10 2026 12:11:51 GMT+0000 (GMT+00:00)",,,,,"",,,,"780d48ab-119b-46a7-9d7f-13f62f09c8a7",7147,"DRP-61",,
+"DRP-61","DRP_02","Deadlines step: full first-time comprehension - timeline layout + half-hour default deadlines","Follow-up to [DRP-58](https://linear.app/drp-02/issue/DRP-58/deadlines-step-copy-is-ambiguous-adopt-the-votingrsvp-vocabulary) after the user pushed on whether the relabelled screen was truly unmistakable for a first-time creator. Two residual problems:
+
+1. **Default deadlines leaked the creation instant's minutes** (""Voting closes Sat 27 Jun, 13:03"" / ""05:03"") - reads as machine noise and makes the screen feel arbitrary.
+2. **Two side-by-side cards still made the user assemble the lifecycle themselves** (vote closes -> winner locked -> blind RSVP -> reveal).
+
+Fix:
+
+* Floor both deadline defaults to a half-hour boundary (shared helper + mobile mirror identically; exact instant kept when flooring would cross the after-now/after-open bound). Side benefit: absorbs render-vs-create clock drift between the wizard preview and the server's stored default.
+* Rebuild the step as a 3-stage drawn timeline (numbered ink dots + rail): ""You send it"" (anonymity + what the group votes on, computed per plan shape), ""Voting closes"" (consequence: most-voted time/activity wins, meetup locked), ""RSVP closes"" (blind until close, then everyone sees who's in). Concrete plans get a 2-stage variant; a no-times plan keeps stage 3 as a plain explainer instead of it vanishing.
+
+User approved the timeline layout from three mockup options.","Done",,"No priority",,,"gonglx8@gmail.com","gonglx8@gmail.com","",,,,,"Wed Jun 10 2026 12:37:41 GMT+0000 (GMT+00:00)","Wed Jun 10 2026 12:37:41 GMT+0000 (GMT+00:00)",,,"Wed Jun 10 2026 12:37:42 GMT+0000 (GMT+00:00)",,,,,"",,,,"c0acea15-000c-44e3-bfb8-6d98ee19b99b",7121,"DRP-60, DRP-58",,
+"DRP-62","DRP_02","Ad-hoc & cross-group meetups (freely-composed roster)","Decouple a meetup's audience from a single group's membership, per the M4 Luca interview.
+
+**Model (owner-approved):** a meetup's roster is the freely-composed **live union** of (origin group members) ∪ (additional attached groups' members) ∪ (ad-hoc individuals who joined by link). Groups stay live (a new group joiner flows into the meetup automatically); individuals are ephemeral, plan-scoped, and never appear in ""My Groups"". Individuals are added **by link only** (no people directory). A cleared meetup can be **crystallized into a permanent group**.
+
+**Data model (additive, no backfill migration):** keep `events.groupId` as the origin group; add `event_groups(eventId, groupId)` and `event_participants(eventId, userId)`. When both are empty the behavior is byte-for-byte today's.
+
+**Core change:** a single `rosterUserIds(eventId, originGroupId)` helper replaces `memberIdsOf(groupId)` / `requireMember`, used by the 5 read paths (`events.get` members, the membership gate, `events.mine`, quorum/`resolveIn`, the conditional picker + reveal). The vote engine (`candidateReactions`/`responses`/`eventOptOuts`, already `(eventId,userId)`-keyed) does not move. `joinByToken` flips from inserting a `group_members` row to an `event_participants` row.
+
+**New flows:** `events.addGroup`, `groups.createFromEvent`, and the compose affordances on the plan (reusing the [DRP-56](https://linear.app/drp-02/issue/DRP-56/meetup-centric-share-link-web-first-conversion-funnel) share sheet for individuals).
+
+**Horizon:** demoable for the Friday M4 progress meeting. Deferred: fully groupless meetups (nullable groupId + migration), ""people you've met"" picker, per-group name-hiding, remove-group/un-invite.
+
+Design spec: `docs/superpowers/specs/2026-06-10-adhoc-cross-group-meetups-design.md`","Done",,"High",,,"gonglx8@gmail.com",,"",,,,,"Wed Jun 10 2026 14:44:07 GMT+0000 (GMT+00:00)","Wed Jun 10 2026 16:04:29 GMT+0000 (GMT+00:00)","Wed Jun 10 2026 14:44:07 GMT+0000 (GMT+00:00)",,"Wed Jun 10 2026 16:04:29 GMT+0000 (GMT+00:00)",,,,,"",,,,"2ed5a8df-1938-4569-bad5-32c0949898f6",6915,"DRP-56",,
+"DRP-63","DRP_02","Iteration 5: +1 trust controls - joins lock, brought-by attribution, Who's-in roster (Nathan M4 interview)","Iteration 5, driven by the Nathan M4 interview (`docs/drp-context/interviews/m4 interviews/nathan interview.md`).
+
+Interview signals:
+
+1. ""Adding +1s has to be a controlled thing"" - he discovered a +1 can re-share the meetup link, so chains are unbounded.
+2. Awareness with a timing edge: ""between when I vote and when the votes are tallied, someone else gets invited"" - the failure mode is showing up and a stranger is there.
+3. (Deferred) ""this person has been to an event with you"" recognition signal.
+
+Scope (3 slices, met-before deferred):
+
+* **Joins lock**: `events.joinsOpen` (door, default open) + `events.lockJoins` (set at suggestion; locked = frozen for everyone, like lockTimes/lockActivity; unlocked = any group member can toggle the door later). Enforced in `joinByToken`; a closed link still previews but won't admit new people. Existing roster members always no-op-rejoin fine.
+* **Brought-by attribution**: `shareLink` mints `?via=<userId>`; `joinByToken` validates via against the live roster and stores `event_participants.invitedBy` (+ `joinedAt`). Soft attribution (bearer link), deliberately not a security boundary - the lock is.
+* **Who's-in sheet**: full roster on EventDetail - origin group, attached groups, and +1s with ""via X's link"" attribution and a ""new since you last looked"" badge (client-side seen marker).
+
+Design decisions logged in the spec: `docs/superpowers/specs/2026-06-11-plus-one-trust-controls-design.md`. Approach 1 (query-param via) chosen over a per-sharer token table - identical forwarding semantics, far smaller diff.","Done",,"No priority",,,"gonglx8@gmail.com","gonglx8@gmail.com","",,,,,"Thu Jun 11 2026 16:18:03 GMT+0000 (GMT+00:00)","Thu Jun 11 2026 17:18:16 GMT+0000 (GMT+00:00)","Thu Jun 11 2026 16:18:03 GMT+0000 (GMT+00:00)",,"Thu Jun 11 2026 17:18:16 GMT+0000 (GMT+00:00)",,,,,"",,,,"4aa4c08e-70cc-42fb-8acb-1b123fa5dc81",5401,,,
