@@ -53,7 +53,7 @@ body{ font-family:Inter, system-ui, sans-serif; -webkit-font-smoothing:antialias
 .sticker{ display:inline-block; color:var(--surface); font-family:Archivo; font-weight:800; font-size:13px; border:3px solid var(--ink); box-shadow:var(--sh-sm); padding:6px 12px; }
 .quote{ font-family:Archivo; font-weight:700; font-size:18px; line-height:1.25; border-left:5px solid var(--pink); padding-left:14px; margin:0; }
 .stat{ font-family:Archivo; font-weight:900; font-size:40px; line-height:.9; font-variant-numeric:tabular-nums; }
-.label{ font-family:Inter; font-weight:700; letter-spacing:1px; text-transform:uppercase; font-size:10px; color:var(--muted); }
+.label{ font-family:Inter; font-weight:700; font-size:12px; color:var(--muted-2); }
 
 /* fills for status colours (use sparingly) */
 .bg-pink{ background:var(--pink); color:var(--surface); }
@@ -70,7 +70,7 @@ body{ font-family:Inter, system-ui, sans-serif; -webkit-font-smoothing:antialias
 
 /* table (methods table, finding->change matrix) */
 table.tbl{ border-collapse:collapse; width:100%; }
-table.tbl th{ font-family:Inter; font-weight:700; font-size:11px; letter-spacing:.5px; text-transform:uppercase; color:var(--muted); text-align:left; padding:0 12px 8px 0; border-bottom:3px solid var(--ink); }
+table.tbl th{ font-family:Inter; font-weight:700; font-size:12px; color:var(--muted-2); text-align:left; padding:0 12px 8px 0; border-bottom:3px solid var(--ink); }
 table.tbl td{ font-family:Inter; font-weight:500; font-size:13.5px; line-height:1.35; vertical-align:top; padding:10px 12px 10px 0; border-bottom:1px solid var(--line); }
 table.tbl td .src{ font-family:Archivo; font-weight:700; font-style:italic; }
 table.tbl.tight th{ padding-bottom:6px; }
@@ -90,7 +90,7 @@ table.tbl.tight td{ padding:6px 12px 6px 0; font-size:12.5px; line-height:1.3; }
 .curve-seg{ fill:none; stroke:var(--ink); stroke-width:7; stroke-linecap:round; stroke-linejoin:round; }
 
 /* reflection / discussion callout */
-.reflect .tag{ font-family:Archivo; font-weight:800; font-size:13px; letter-spacing:1.5px; text-transform:uppercase; color:var(--pink); margin:0 0 10px; }
+.reflect .tag{ font-family:Archivo; font-weight:800; font-size:15px; color:var(--pink); margin:0 0 8px; }
 .reflect p{ font-family:Inter; font-weight:500; font-size:16px; line-height:1.45; margin:0 0 10px; }
 .reflect p:last-child{ margin-bottom:0; }
 .reflect b{ color:var(--pink); }
