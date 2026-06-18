@@ -29,7 +29,7 @@
 <body>
 
 <h1>BeThere - Copyright and Legal Issues Report</h1>
-<div class="sub">DRP02, 2026</div>
+<div class="sub">DRP_02, 2026</div>
 
 <p class="scope">This report acknowledges the third-party code and assets shipped in the BeThere touchpoint (an Expo React Native app for iOS / Android / web, with a Fastify / tRPC / Drizzle / Postgres backend), and the legal issues to consider on an official release. Build- and test-only tooling is listed separately; transitive dependencies are out of scope.</p>
 
@@ -48,7 +48,7 @@
     <tr><td>drizzle-orm</td><td class="lic">Apache-2.0</td><td class="ship">Yes</td></tr>
     <tr><td>dotenv</td><td class="lic">BSD-2-Clause</td><td class="ship">Yes</td></tr>
     <tr><td>@vercel/og (invite-link card images)</td><td class="lic">MPL-2.0</td><td class="ship">Yes</td></tr>
-    <tr><td>Fonts: Archivo, Inter, Space Mono (@expo-google-fonts)</td><td class="lic">MIT and OFL-1.1</td><td class="ship">Yes</td></tr>
+    <tr><td>Fonts: Archivo, Inter (@expo-google-fonts)</td><td class="lic">MIT and OFL-1.1</td><td class="ship">Yes</td></tr>
     <tr><td>PostgreSQL database engine</td><td class="lic">PostgreSQL (BSD-style)</td><td class="ship">Service</td></tr>
     <tr><td>Build / test only: TypeScript, drizzle-kit, Biome, Jest, Babel, Metro, @types/*</td><td class="lic">MIT / Apache-2.0</td><td class="ship">No</td></tr>
   </tbody>
@@ -56,7 +56,7 @@
 <p class="note">No photography or icon packs are bundled, so no licensed "pictures" are in scope; the only third-party creative assets are the fonts above and React Navigation's small UI glyphs (MIT). Hosted services (Clerk, AWS, Vercel, Expo / EAS, GitHub Actions) run under commercial terms of service, discussed in section 4.</p>
 
 <h2>2. Licence implications</h2>
-<p>Every third-party library uses a permissive open-source licence - mostly MIT, with some Apache-2.0, BSD-2-Clause, MPL-2.0 and the PostgreSQL licence. Permissive means the team can use them freely, even in a closed commercial product, as long as it keeps the upstream copyright and licence notices (which a release would list in an in-app "Licences" screen). None are "copyleft" licences like the GPL, which would have forced BeThere's own code to be released too - so the team can keep the app closed.</p>
+<p>Almost every third-party library carries a permissive licence - mostly MIT, plus some Apache-2.0, BSD-2-Clause, OFL-1.1 (fonts) and the PostgreSQL licence. These let the team use them freely in a closed product, provided it preserves the upstream copyright and licence notices in an in-app "Licences" screen. The one exception, @vercel/og (MPL-2.0), is weak "file-level" copyleft covering only its own files, not BeThere's code; none are strong copyleft like the GPL, so the app can stay closed.</p>
 
 <h2>3. Copyright and ownership</h2>
 <p>Copyright in the project's code and brand rests with the student authors (Team DRP_02). The substantive content on a live service is user-generated - group, plan and profile names, notes and RSVPs - and stays the users' copyright, so a release would set terms of service that license BeThere to display it while disclaiming ownership. Because BeThere is the team's own product, a release would also declare an explicit repository licence - most naturally a proprietary "all rights reserved" notice, given the intent to keep developing it, or a permissive licence such as MIT if the code were ever opened up.</p>
