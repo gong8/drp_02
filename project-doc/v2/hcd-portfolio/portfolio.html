@@ -85,6 +85,10 @@
   <p class="body">Appreciating that every failed meetup has two sides to it, we realised the necessity of having a second persona, so we proposed Milly. She is very introverted, and symbolises the quiet participants of a friend group who prefer tagging along to organising their own events.</p>
 
   <p class="body">We did not mean Milly to be antisocial. For this reason, we chose Milly to be a new member of Vasanth's friend group, explaining her shyness without giving the impression she didn't want to engage with her new friends. This allowed us to explore the reasons why people give vague 'maybe' replies, without the assumption that these people simply don't want to see their friends, which we didn't think was the full picture. <b>Milly directly motivated the conditional attendance feature</b>, without her perspective, we may never have recognised that for some people, attending isn't a simple yes or no but a decision that depends entirely on who else is going.</p>
+
+  <div class="card" style="margin-top:16px;">
+    <p class="body"><b>Milly's perspective shaped how attendance works.</b> The conditional "I'll go if..." exists because, for her, going is rarely a flat yes or no - it depends on whether someone she is comfortable with will be there. The blind reveal exists so she never has to commit in front of everyone while they hesitate. The two plain options ("at least one" or "all of them") exist because her dependence is human, not boolean. Whenever a feature risked leaving the quiet member behind, Milly was the test we ran it against.</p>
+  </div>
 </section>
 
 <!-- ===================== 4 - STAKEHOLDERS ===================== -->
@@ -94,8 +98,8 @@
     <div class="hr"></div>
   </div>
 
-  <div style="display:flex;justify-content:center;margin-bottom:18px;">
-    <img src="assets/stakeholders/map.png" alt="Hand-drawn stakeholder map: students (organisers and participants) at the centre, then university, family, school friends, restaurants, pubs, employers, and the outer ring of the NHS, mental health services and government." style="width:108mm;height:auto;" class="imgcard">
+  <div style="display:flex;justify-content:center;margin-bottom:12px;">
+    <img src="assets/stakeholders/map.png" alt="Hand-drawn stakeholder map: students (organisers and participants) at the centre, then university, family, school friends, restaurants, pubs, employers, and the outer ring of the NHS, mental health services and government." style="width:76mm;height:auto;" class="imgcard">
   </div>
 
   <div class="grid2" style="gap:22px;">
@@ -103,6 +107,15 @@
     <div>
       <p class="body">Thinking about the wider impacts, if undergraduates spend more time with their friends, those places they meet will benefit, such as pubs and restaurants. We'd also expect to see improvements to larger university communities as the effects of happier, tighter-knit friend groups ripple outwards. We're the most connected generation, and yet we're the loneliest. The NHS is reporting a loneliness crisis, 15-24s spend 70% less time with their friends in-person than two decades ago, and over 25% of lonely young people have sought therapy; if we can make it easier for friends to meet-up in-person, we can help fix this.</p>
       <p class="cap" style="margin-top:10px;">Time-with-friends figure: US Surgeon General, 2023; therapy figure: BACP, 2025.</p>
+    </div>
+  </div>
+
+  <div style="margin-top:12px;border-top:2px solid var(--ink);padding-top:10px;">
+    <div class="label" style="margin-bottom:8px;">What the wider stakeholders need, and how BeThere serves it</div>
+    <div class="grid3" style="gap:16px;">
+      <p style="margin:0;font-family:Inter;font-weight:500;font-size:12.5px;line-height:1.3;color:var(--muted-2);"><b style="color:var(--ink);">Venues (pubs, cafes):</b> a firm headcount; a resolved plan books better than a maybe-thread.</p>
+      <p style="margin:0;font-family:Inter;font-weight:500;font-size:12.5px;line-height:1.3;color:var(--muted-2);"><b style="color:var(--ink);">Universities:</b> connected students; meet-ups that happen ease the isolation and drop-out behind it.</p>
+      <p style="margin:0;font-family:Inter;font-weight:500;font-size:12.5px;line-height:1.3;color:var(--muted-2);"><b style="color:var(--ink);">Health services:</b> they carry the cost of loneliness; more in-person contact helps upstream.</p>
     </div>
   </div>
 </section>
@@ -153,6 +166,53 @@
   </div>
 </section>
 
+<!-- ===================== AEIOU FIELD RESEARCH ===================== -->
+<section class="page">
+  <div class="head">
+    <h2>AEIOU field research</h2>
+    <div class="hr"></div>
+  </div>
+
+  <p class="body" style="margin-bottom:16px;">Before designing anything, we mapped what people actually told us through <b>AEIOU</b> - Activities, Environments, Interactions, Objects, Users - so the design space stayed grounded in observed behaviour rather than assumption. Every cell points back to an interview or the survey.</p>
+
+  <table class="tbl tight" style="width:100%;">
+    <thead>
+      <tr>
+        <th style="width:15%;">Lens</th>
+        <th style="width:55%;">What we observed</th>
+        <th style="width:30%;">Where it came from</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>Activities</b></td>
+        <td>Planning ad-hoc in a group chat; floating a vague "we should hang out"; running an informal poll and taking the majority time even if someone cannot make it; postponing when the group is split; chasing non-responders, or forgetting the plan entirely.</td>
+        <td>Luca, Luke (polls, postponing, chasing); survey (the first suggested time rarely sticks)</td>
+      </tr>
+      <tr>
+        <td><b>Environments</b></td>
+        <td>WhatsApp group chats as the default venue; term-time dispersion and clashing timetables; the long limbo of an unresolved thread, where second thoughts have time to grow.</td>
+        <td>Felicity ("if you are on WhatsApp anyway"); Matthew, Luke (deadlocked schedules, doubts creeping in)</td>
+      </tr>
+      <tr>
+        <td><b>Interactions</b></td>
+        <td>The "maybe" as a deliberate hedge; silence and non-response; the conditional "I am down if others are down"; cascading uncertainty, where one early "I can't" writes off the whole plan; reluctance to be the first to say yes.</td>
+        <td>Luca, Matthew ("maybe" as a copout); Luke ("cascades uncertainty"); Felicity (fear of being the only yes)</td>
+      </tr>
+      <tr>
+        <td><b>Objects</b></td>
+        <td>Phones; WhatsApp chats and polls; Doodle-style polls; calendars people forget to fill; the BeReal-style push notification people actually respond to.</td>
+        <td>Felicity, Tom (existing tools); Matthew (calendars unfilled); Luke, Tom (the push)</td>
+      </tr>
+      <tr>
+        <td><b>Users</b></td>
+        <td>Small friend groups of four to six; a single reluctant organiser ("mostly one specific friend, not me"); members who hedge to protect themselves; people who care more about seeing each other than about the activity.</td>
+        <td>Survey (group size, lead asymmetry); Felicity ("I just want to see them"); Luca (usually the only organiser)</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
 <!-- ===================== 7 - THE PREFERRED FUTURE + OPPORTUNITY ===================== -->
 <section class="page">
   <div class="head">
@@ -167,7 +227,7 @@
 
   <div class="card-ink">
     <div class="label" style="color:var(--pink);margin-bottom:10px;">Opportunity Statement</div>
-    <p style="font-family:Inter;font-weight:500;font-size:14px;line-height:1.4;margin:0 0 12px;color:var(--grey);">Taken together, the interviews and survey point to a single leverage point: the moment hesitancy becomes visible in the group chat. Removing that friction, for both the organiser chasing replies and the participant waiting on others, is the opportunity we set out to address:</p>
+    <p style="font-family:Inter;font-weight:500;font-size:14px;line-height:1.4;margin:0 0 12px;color:var(--grey);">Taken together, the interviews and survey point to a single leverage point: the moment hesitancy becomes visible in the group chat. Removing that friction, for both the organiser chasing replies and the participant waiting on others, is the opportunity we set out to address - and because every plan that survives is a group that actually meets, it reaches past students to the venues that host them, the universities that want connected campuses, and the loneliness all of them are trying to ease:</p>
     <p class="quote" style="color:var(--surface);border-left-color:var(--pink);font-size:17px;">"How might we reduce hesitancy in undergraduate friend groups when planning to meet up so that groups go from frustrating 'maybe' responses to a clear consensus?"</p>
   </div>
 </section>
@@ -215,9 +275,46 @@
 
   <p class="body">To ensure our development remained focussed on user needs, we conducted several interviews daily with university students, our target audience. Our approach was generally to let the users explore the app themselves, with minimal guidance at first. This ensured we understood exactly what a new user would encounter and how they would proceed. This helped us identify problems in our app's user experience, and keep our user interface as simple and clear as possible. Furthermore, this often led to interviewees volunteering ideas and suggestions that we would have not otherwise considered.</p>
 
-  <p class="quote" style="font-size:19px;margin:22px 0;">Let the users explore the app themselves, with minimal guidance at first.</p>
+  <p class="quote" style="font-size:17px;margin:16px 0;">Let the users explore the app themselves, with minimal guidance at first.</p>
 
   <p class="body">As time went on, we understood the main stakeholder groups of our app better, and decided to only interview people who were more of the organisers of their group with regard to the 'suggest a meetup' feature of our app. Likewise, we started to only interview the more passive participants of groups about the features attendants used like the conditional attendance feature described below. This targeted interviewing of stakeholders helped us to understand stakeholder needs better, and produce an app that fulfilled them.</p>
+
+  <p class="seqlabel" style="margin:18px 0 8px;">Our testing plan</p>
+  <table class="tbl tight" style="width:100%;">
+    <thead>
+      <tr>
+        <th style="width:13%;">Round</th>
+        <th style="width:25%;">Who we recruited</th>
+        <th style="width:30%;">What we put in front of them</th>
+        <th style="width:32%;">What we watched for, and what it changed</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>R1</b> Discovery</td>
+        <td>Organisers and passive participants, several universities</td>
+        <td>Semi-structured interviews on how plans form and fall apart</td>
+        <td>The real failure points and why people send a "maybe"; drove the personas, journey maps and problem</td>
+      </tr>
+      <tr>
+        <td><b>R2</b> Prototype</td>
+        <td>New users first, then organisers specifically</td>
+        <td>Paper form, then first digital form, then the three-mode wizard</td>
+        <td>Could they suggest a meetup unaided? Drove voting over a fixed time, the wizard, and cutting the three modes</td>
+      </tr>
+      <tr>
+        <td><b>R3</b> Touchpoint</td>
+        <td>Organisers (suggest) and passive participants (conditional)</td>
+        <td>The shipped optional-fields flow and the "I'll go if..." sheet</td>
+        <td>Did they understand it with no explanation? Drove optional fields and the two-option conditional</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="card-ink" style="margin-top:16px;">
+    <div class="label" style="color:var(--pink);margin-bottom:8px;">What testing taught us</div>
+    <p style="font-family:Inter;font-weight:500;font-size:14.7px;line-height:1.4;margin:0;color:var(--surface);">The same lesson kept recurring. With the three suggest modes and the boolean "and / or" conditions alike, we were designing for our own mental model, and testing kept pulling us back to the simpler thing a real person would do. Almost every change we shipped was a step of <b style="color:var(--pink);">removing structure, not adding it</b>.</p>
+  </div>
 </section>
 
 <!-- ===================== 10 - SUGGESTING (paper to first digital) ===================== -->
@@ -395,13 +492,33 @@
   </table>
 </section>
 
-<!-- ===================== 16 - IMPACT (asset only) ===================== -->
+<!-- ===================== IMPACT (evidence) ===================== -->
 <section class="page">
   <div class="head">
     <h2>Impact</h2>
     <div class="hr"></div>
   </div>
 
+  <p class="lead" style="margin-bottom:18px;">The same plan, run through BeThere, ends differently. Here is what changed for each group we set out to help.</p>
+
+  <div class="col" style="gap:16px;">
+    <div class="card">
+      <div class="label" style="color:var(--pink);margin-bottom:6px;">For the organiser</div>
+      <p class="body" style="margin:0;">Vasanth's curve reverses: the plan that used to slide into "too late, gives up" now climbs to a meetup that actually happens. In our final sessions people completed the suggest flow with no explanation, where earlier prototypes had to be walked through every time. The chasing that used to kill his plans is gone.</p>
+    </div>
+    <div class="card">
+      <div class="label" style="color:var(--purple);margin-bottom:6px;">For the participant</div>
+      <p class="body" style="margin:0;">Milly's public "maybe" becomes a private "I'll go if...". Passive participants understood the conditional immediately, without explanation, a clear contrast to every earlier iteration. She can signal a real intention without having to commit in front of the whole group.</p>
+    </div>
+    <div class="card">
+      <div class="label" style="margin-bottom:6px;">For everyone around them</div>
+      <p class="body" style="margin:0;">We expect the effect to ripple outward: the venues that host the group get firmer headcounts, universities get better-connected students who are less likely to drop out, and the loneliness the NHS is treating gets a little relief upstream.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 16 - IMPACT (asset only) ===================== -->
+<section class="page">
   <div style="flex:1;display:flex;align-items:center;justify-content:center;min-height:0;">
     <img src="assets/impact/cover.png" alt="BeThere cover story - 'get the whole group to BeThere', the loneliness context, by-the-numbers and a local-venue voice." style="max-height:100%;max-width:100%;width:auto;border:3px solid var(--ink);box-shadow:var(--sh-lg);display:block;">
   </div>
