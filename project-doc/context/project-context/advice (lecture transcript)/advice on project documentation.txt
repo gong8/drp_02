@@ -1,0 +1,1165 @@
+[Auto-generated transcript. Edits may have been applied for clarity.]
+and I'd rather not take the whole hour so you can get on with actually working on your presentations.
+
+You guys want to take your seats and shut up? Thank you. Um, so what I've quickly done here, and I will post on SDM a bit later,
+
+is I've quickly scribbled on this grid kind of what we're looking for in each of the areas,
+
+and a bit more detail to help you think through that little bit.
+
+I'm going to go through them all briefly, and then we can chat about any of them that aren't too clear afterwards.
+
+So we're broken into two main areas the quality of the presentation and then the presentation content,
+
+with most of the focus being on the content of the presentation. Um, the quality stuff must go through fairly quickly.
+
+So there's a mark on pacing articulation separately from Mark for time.
+
+So the mark for time is a raw mark. It will be fully automated by the system.
+
+I've named the time jackets after the alpaca that I posted at the weekend.
+
+That's going to be doing a timing for you.
+
+So that's based on when the clock starts and when the clock stops on the presentation fully automated, I aim for 90 minutes.
+
+For every full minute you go over 20, you lose the mark. For every two minutes under 20, you lose a mark.
+
+And that's automated, that sort of things. The pacing is where we're checking.
+
+Are you delivering a sensible pace presentation? So if you're massively rushing through it or going, oh we're running a bit short.
+
+Pad pad pad pad pad, we can tell. And people will start talking marks on that.
+
+Um, or if people are like, as I did earlier, talking into the microphone, don't do that.
+
+Um, the microphones will be in the room. The plan is to leave them on the edge of the desk.
+
+They actually got a good enough pick up that's so we can hear it good enough for next year so we can share the best ones.
+
+And also, my plan is to make sure that we share around the whole cohort your own presentations.
+
+Not with feedback,
+
+just the presentations so you can see each other if you're interested to see what other people have done in terms of their apps and services.
+
+So you can ignore the microphones, just leave them there.
+
+Just talk.
+
+If you are projecting so we can hear you in the room, then the microphones will pick you up just fine over the not so recording, um, emotive.
+
+So that's about making it feel fun and painful. What do I mean by painful?
+
+I don't mean make it really, really painful for the audience to listen to. What I mean is bring alive the pain point.
+
+If there is a pain point for your end user, try and make us understand their pain, their suffering.
+
+What is so bad about the problem? You know it's a real world problem. You're impacting people hopefully in a real way.
+
+So try and bring out their frustration or their anger with the current system.
+
+Make that kind of pop through the presentation in some way,
+
+So don't be afraid to do a bit of role play or have a slide with people that are being frustrated by something.
+
+Particularly you found a real user explaining the problem.
+
+You've got someone that's getting a bit agitated and a bit verbal about it, and a bit kind of kind of gesticulating.
+
+That's really good because it shows us a real problem. So we'd like to see that where possible.
+
+Also to stay on top for a second. So slides clearly exist.
+
+That basically means you've not got slides that are full of text. And I also mentioned idea of keeping them consistent.
+
+So across the presentation they should have a similar theme and style.
+
+They shouldn't be changing theme every five seconds and ideally make them match the application.
+
+That's a nice thing to do as well. Kind of for me,
+
+the distinguishing feature between a good slide deck and an excellent one is often that it actually is coherent with the entire service.
+
+You've got two, so everything feels like it's a unified pitch that you're presenting over to us.
+
+In some sense, it's kind of a good technique for the pitch. I think it's a bit like Dragon's Den.
+
+You're kind of selling what you've done at this point in the project. You're not really going through the process that much.
+
+Just a couple of slides here and there, but you are trying to really try to sell what you've done in the best light and explain the problem.
+
+Really explain how you solved it and show it off in its best light. Um, so again, branding helps with that.
+
+If you've got an application name, great.
+
+Put it on the front slide somewhere and then make sure when you've gone through the how might we say introducing so and so.
+
+It's quite nice right. It makes it quite fun quite enjoyable. You should be proud of the thing that you've built.
+
+Diagrams and images. Yeah. Please avoid massive walls of text on your slides.
+
+So where possible try to communicate things visually.
+
+So a user journey is much more effectively communicated via kind of a diagram with a few bits of text on it and
+
+maybe some images that are on it much more effectively than just a long list of what's going on in that journey.
+
+Um, written out on the slides, your persona should have a real person picture.
+
+I would recommend trying to find at least a stock real person image.
+
+There's something weird about AI generated people.
+
+You can kind of tell the foreground background distinction, and it kind of rubs everyone up the wrong way.
+
+You guys don't like original content? Neither do we particularly.
+
+Let's maybe try and avoid it on this kind of slide, because I don't think it really helps. The cartoony things can kind of work for storyboarding.
+
+I've in a few of those. Even if those are AI generated that don't mind too much.
+
+I think that works better, but when the persona is obviously AI generated, it just kind of rubs everybody up in the wrong way.
+
+I think so. Just try and find some stock image. The internet is full of them.
+
+I'm sure you can find one to solve that problem. Yeah, but be sensible with diagrams.
+
+Image video. Embedded video. Make sure it works. Make sure we can hear it.
+
+Um, if you can't hear it, don't bother playing it. Just put it as a summarised text on the screen instead, right?
+
+Don't try and ram something in. Play it. No, we can't hear it and then have to bust the point.
+
+There's no point wasting time playing audio we can't hear. So just be careful about what you present in that sense.
+
+And demo. Yeah, don't stick it all at the end. That's really frustrating.
+
+If you've worked on this, you've slaved over this product that you're showing us for like four weeks now.
+
+Don't put it right at the end of the presentation. The application itself is the star of the show, right?
+
+It's the thing you've been working on. It should be front and centre.
+
+So you kind of want to say maybe, maybe you have a little bit of demo of it really early on after you've done, how might you say, here's so-and-so,
+
+here's the application, then show us it doing small and cool and then go through proper user stories with it to kind of show you how it works.
+
+That can work quite well. But the important thing is just not to stick it all at the end.
+
+And by not sandwich, what I mean is don't do what I do, don't have demo time and then add the demo completely separate from the presentation.
+
+But it's just a bunch of demo. And then go back to the presentation. That's a sandwich presentation.
+
+Demo presentation is a demo sandwich. It's not particularly effective as a way of convenience of conveying information.
+
+So try and avoid doing that again. That will cost you marks on that criteria. That's general style.
+
+So in terms of content then let's talk about style. So this is broken down into these sections on the side here.
+
+So storytelling the most important thing there is we're looking at the two types of evidence.
+
+Yes we are bringing back in quantitative evidence when setting up the problem.
+
+This means things like news articles, surveys could be your surveys could be government surveys.
+
+But that kind of data should be there.
+
+So newspaper articles, government surveys, your data, big picture stuff kind of explaining what is the context within which your problem sets.
+
+That's the quantitative background research. And then you've got the qualitative real user stories.
+
+So you're basically refining down your research sort of big data maybe your own survey.
+
+And then after that user interviews or evidence that you've got from users with quotes to back it up to
+
+show the problem is real and has real impact on people and to really dig into their personal stories.
+
+And this is where the emotions come out, right?
+
+You should be focusing on their frustrations, their needs, their problems, and really bringing out the pain of that issue.
+
+Is it just frustration? Is it physical pain? Is it emotional pain? Whatever. Try and bring that through the presentation.
+
+Make it feel alive. You should feel like real people and that comes into the real world evidence driven problem.
+
+Just blow it there. You know,
+
+we want to see you analysing the data that you've gathered and kind of understanding the needs of the users and present that in an authentic way.
+
+So we should feel that, yes, we agree this is a real problem that you've defined very well.
+
+And we understand what you're working on.
+
+And that goes hand in hand with the idea of the clear problem statement, which means you've analysed the problem well.
+
+You've given us a clear problem context for a problem statement. And how might we opportunity statement that summarises it all together in one go.
+
+And we're not just marking that you have those things. None of these marking criteria are tick box for yes, that thing exists or not.
+
+They're all. How good is that thing? So the top marks are for like making the whole thing a coherent story.
+
+That makes sense. Logical step by step. But you have the evidence, the big picture evidence.
+
+The more low level talking to use as qualitative evidence.
+
+Then from that you analyse the problem, you identify user needs, you then have a problem statement that refines that a bit more.
+
+You then have a how might we that summarise everything, what you're actually going to try and do about it.
+
+And that all flows perfectly. You'll get top marks, but it has to make sense all the way through.
+
+It should never be a weird tangent pivot that makes no sense at all.
+
+Going through that process, remember you're presenting what you have done at the end of the project.
+
+So how might we? Probably is in most cases probably hopefully is different and better than what you presented in week one.
+
+You've almost certainly refined it a little bit. Some groups have changed it entirely, which is fine. Don't go through that process.
+
+We don't care about that. We wanted to know what the new how might we is at the end of.
+
+Um, we're right here, right now at this point in the project. Right at the end.
+
+Then about audience. So well defined target audience. That's about understanding your personas.
+
+So you should be presenting the people that your personas. That will probably one per stakeholder group.
+
+Broadly speaking. Sometimes you can have a couple per stakeholder group.
+
+If you're going to use them, tell a story later on, you're going to have characters that appear in your demo or in your user journeys.
+
+It's best to make them be introduced at the start of the presentation.
+
+You don't really want a character popping out of nowhere in the middle, because it's a bit weird. If suddenly you know Jake appears out of nowhere.
+
+You've never seen him before. Where Jake come from, who's this person? Right? It's a bit confusing to try and make sure it's coherent.
+
+Um, and also think about the other stakeholders, right. So you might want to share a stakeholder map perhaps that that can be a little bit dry,
+
+but it can be a way of visualising where the problem sits inside the space
+
+could be useful to your choices about how you want to try and get that across.
+
+But to make it clear that it's not just an isolated problem, it sits within the real world, um, as well.
+
+And then also written here is seeing at some point in the presentation doesn't have to be in order.
+
+This is just a criteria setting that you have shown as some of the iterations you went through for designing and developing.
+
+I would recommend focusing on the core elements of your project and where you've refined those, right?
+
+So don't want to see lots of little tiny bits where you change this one part over here and this part over here, in spite of the scattershot feedback,
+
+should be focussed on a couple of core interactions that are really important,
+
+and just showing how you evolve those from paper to a couple of footage or things to final thing.
+
+And cherry pick the best 3 to 5 moments in your feedback where you think you did something significant.
+
+It shows the entire journey.
+
+You won't have time, but you can show us a bit of the journey about how you got there, just to show us how you're talking to users.
+
+Show us maybe a couple of video clips there. Again, don't make them too long.
+
+Ten 20s Max I would say showing a little bit how you interview people to get that across so we can kind of see what you were doing,
+
+the process you were using and how that's impacting on your project, or how was it impacting on your project during the course of the last four weeks?
+
+It could be from any point in the entire four weeks that can come from that material.
+
+That's all the stuff. On defining the problem. The user experience then is broken down into four areas.
+
+So the first thing is that we're kind of relevant stakeholder groups.
+
+We're seeing that the app actually serves the need that you claimed it does. Right. And it should serve the need for all of your stakeholders.
+
+So this means that you've not left out an entire stakeholder. Oh, we'll deal with them later when this is now right.
+
+We're done. So you have to make sure you cover it.
+
+So if you've got like no customers and shops, you need to have made sure you've dealt with both the customers and the shops in your service.
+
+So that's kind of you will lose credit there if you've got people that have not been considered properly.
+
+We think there are stakeholders you've missed entirely. That's where you would not do well on that.
+
+And it's about not just have you thought about them all,
+
+but have you built something that generally feels like it does meet their needs in the way you've defined the needs that they have?
+
+Early in the presentation. So it's very interconnected, these marketing criteria, but it's different aspects of the same thing.
+
+Then we've got the ones that there's a little bit of in-app user experience.
+
+and in context, user experience. Seamless just means it's nice, right?
+
+So what's the difference there? So the in-app experience is forget the surrounding world for a second when you get to the service,
+
+and then use it as you discuss in your journey that it makes sense.
+
+The experience I go through step by step, through the application, through your service is coherent on your application.
+
+In the digital world, it makes sense. Yes, we can follow along. We understand what someone's trying to do.
+
+Your story shows us what the person tried to do and it feels like, yeah, the experience is good, it's well designed.
+
+You know, people will spend the time to fill in the forms in that way, or at least the forms work.
+
+Everything kind of makes sense. It's a good experience.
+
+Is meeting the need that you set out for those people, and then the in context experience about how does it fit into actually the wider journey.
+
+So if you've got something like a shopping app that's designed to be done on your laptop, that's probably not very good, right?
+
+It's janky because you're not going to have time in a supermarket to pull out your laptop.
+
+That's just not going to work, right? So it's about making sure it makes sense in the context.
+
+But that means things like, would someone really fill in the forms you're asking for them.
+
+Would people really leave reviews at the point you take? You're saying, well, it's these real moments to make sure you've really thought about it.
+
+Not just does it work technically, but would it work in the the reality in the context of where it's being supposedly used?
+
+Yeah. And that's again, you should be able to demonstrate that via user stories. You use a journey, sorry.
+
+The journey you're going through should hopefully convey to us why this makes sense and why it fits in, and why solving the problem nicely.
+
+So it's all part of the same journey. We all look at those two features and then on top of that navigable UI.
+
+So this is objectively about the interface itself forgetting the user needs.
+
+But just as people looking at the interface. Is it legible? Do the forms make sense.
+
+Our labels call to action. Is it clear on every page what I do?
+
+If you've got things like map pins that have no no labelling, you can guarantee these marks right there.
+
+Like, okay, there's some pins on the map. What the [INAUDIBLE] do they mean? If I have to click in and out of things to understand what's going on?
+
+Again, that's problems. Right? So we're looking for all of those problems, the absence of all those kind of problems.
+
+So the UI should be navigable from somebody that doesn't really have an expert opinion of the problem.
+
+At least the elements of the UI should explain what's going on.
+
+If you have to have things like an information overlay that explains your UI, probably means your UI is not very clear.
+
+So pretty. Try and think about fixing the UI rather than adding navigation on top right.
+
+Navigation fallbacks are always to me. Someone admitting they got the navigation wrong.
+
+The UI is not good. Things like hidden swipe gesture. My bugbear I cannot stand hidden.
+
+Put three fingers on and move in some direction. Really irritating right?
+
+How did people discover these things? So just really think carefully. That ought to be.
+
+Interactions in the interface are usable and make sense. So things like swipe, swipe left or swipe right.
+
+Make sure there's some kind of UI keying to swipe left or swipe right.
+
+Otherwise the page would you even know to swipe it. So make sure there's arrows or something to try and make stuff clear.
+
+These are all little things to try and avoid to make the UI navigable. Yeah, make sure we can read things if the contrast are wrong.
+
+If we can't read labels, if the button clicks don't work in nice ways. If the buttons, it's not clear what clicking a button will do.
+
+But you never want a user to guess what clicking a button will do.
+
+I think Lab Test tries to have quite actionable buttons that submit this commit, right?
+
+Hopefully it's clear what it's doing. Well. Used to say submit, which wasn't very clear. Right?
+
+I'll submit. What? What's going on? So you've changed that a couple of years ago. So try and make sure that all of your interfaces.
+
+But when I click a button or fill a form in, I know what I'm doing. I'm not having to think, what do I write here?
+
+What have I done to click this? That's not a good feeling to leave a user with that's navigable.
+
+UI right at any moment should be kind of fairly clear to the user what's going to
+
+happen when they interact with the user interface in some way on technical stuff?
+
+There's not a huge amount here. Um, again, it's more about content, nothing else.
+
+So justified language framework choices.
+
+We want to know why you chose to work with language did not what you chose to work with, but what doesn't really matter that much, right?
+
+So don't just list it out. You say why you chose those things. And I said earlier, it's about making sensible technical justifications, right?
+
+Try and be as objective as possible. So don't say things like it's easy to work in this language.
+
+Why is it easier? The language doesn't destroy opinion, right? There's loads of tutorials. Okay.
+
+Great. Are they good? Are they bad? Who cares? But this stuff's not interesting.
+
+So it's technical. Things like the libraries are doing something particular.
+
+The capabilities of the language for doing something streamlined or doing something efficiently are important.
+
+Or compile it down to small code or, you know, short compile time so you can get out to users faster.
+
+These things are probably more useful, right? Or integration with other frameworks, not things like I like it.
+
+It's easy. It's popular. They're so subjective and they are meaningless and they'll be meaningless very quickly in this world.
+
+Right. Things are like this is a popular framework that opinion changes within one year, even a few months.
+
+So try and make things that are going to survive the test of time a bit more than making your own personal opinions.
+
+Uh, it's just like a diagram we spoke to for this is about making sure you've got the right number of components.
+
+So it shouldn't be front end, back end. It shouldn't be a thousand elements of UML diagram.
+
+It should be something in between.
+
+I would guesstimate, you know, half a dozen front end, half dozen backing components at most is probably about the right granularity to have.
+
+But again, it depends on your individual system. It should be clear that the diagram is specific to your implementation.
+
+If I look at it and think this could be any service in the world or any app in the world, that's not going to get full credit, right?
+
+Because it's just like, okay, great, you've got an app, you've got front end mobile screen, back end database server.
+
+Sure. It's very easy to write things that are a bit meaningless there, so be careful.
+
+Try and make it specific to your service.
+
+Make it clear I said before, if there are external call outs to external sources, external APIs, or API calls out whatever.
+
+Make it clear which things are outside of your system that aren't really fully in your control.
+
+It's really good to acknowledge that and to be aware of that,
+
+because it helps the future dev team that we're doing the same thing, know what they can and can't control in some ways.
+
+Also, there should be arrows between components and those arrows should either be directed maybe or importantly should be labelled in some way.
+
+So if there's a connection between two components, what does that connection signify. Right.
+
+They're connected in what way. So it should probably be either the mode of interaction between them or maybe the data being sent over that connection.
+
+Right. So it might say like the front end is connected to the back end.
+
+It sends a JSON package of information to the server.
+
+The server then converts that into SQL injection database to put the SQL, JSON, etc. or something like that.
+
+All the mode of interaction between the components on there, a label with no labelling,
+
+an error with no labelling is fundamentally just some things going on there.
+
+But what? So try and make sure the components are labelled sensibly.
+
+There are arrows between them when they're connected and the arrows conveys something about that connection.
+
+Otherwise they're probably meaningless arrows. So it's tricky to get that right, but it's good to practice on that.
+
+There are a lot of bad diagrams out there, and unfortunately for architecture diagrams,
+
+I might try and see if I can scrounge up some good ones later on. Interactions.
+
+So we've got user to user interactions and responsive user interactions with two different metrics.
+
+So the user to user is cross user interaction.
+
+We start the project. We're expecting this to have some element of interaction between users.
+
+If it's just an experience by yourself, on a website, on a phone, you've not really answered,
+
+debrief properly, and most problems can't really be solved by yourself in that kind of way.
+
+So there should be some user to user interactions. So that means not just a number of them but are they meaningful.
+
+So if you ramrod in chat and ballrooms and stuff you can expect not to get full marks here.
+
+Yes some exists. You won't get the zero missing mark, but if those things don't make sense to your problem,
+
+they're not meaningful, then they won't score very well on the criteria here. It's about having meaningful user user interactions.
+
+So what element of communication between the users is helping solve the problem.
+
+And then you have implemented that in a solution in some ways. So that's just about those interactions exist and are meaningful.
+
+Responsive then is about how well those flow. So responsive means I don't have to reload the page to see things from on a page these days.
+
+I expect it to be responsive, and I expect if another user does something that my view will.
+
+Live update right? Live updates. Git commits. Live updates. Some testing status as it goes.
+
+I have to sit there and refresh the page. I know you do, but you don't have to play it at all, right?
+
+If you just sit and watch the page.
+
+It uses WebSockets to tell you what's happening, but it's pushed down notifications, so you should be ideally having that kind of response.
+
+I used to call it real time but I mean responsive.
+
+So that means if I click a button it shouldn't sit on a hang for like 30s lab tests would do badly for that on the homepage,
+
+but it hangs for a long time when it load stuff because it's a bit slow.
+
+Talking to the APIs that edtech have that I try and fix that so it would not do well.
+
+And that criteria for responsive interface, because you click a button and then you sit there for 30s going.
+
+Did it work? It's thinking it's doing something that's a bad experience as well. So try and make sure you do things like have loading bars or stuff.
+
+If it's going to be a response that takes more time, give the user some idea that something is taking time.
+
+Something's happening. But be patient and wait. Don't just have an unbounded scrolling pinwheel of death where you think, is it going to die?
+
+Is it okay if you wait for two minutes? Something happen, right? So try and make sure it's responsive.
+
+So ideally real time if things take time to load.
+
+Give some feedback on loading time to users so they can react to that in some way or know what's happening.
+
+Make sense? That's what responsive is different from user user.
+
+So if it's if it works but it's a bit it requires refreshes or quires long loading times,
+
+you can still get the user to user interaction credit because you made it work.
+
+You just won't get the responsive interactions credit because it didn't work nicely.
+
+Does that make sense? This is a little bit of technical stuff where we're trying to separate groups that have done it in the right way,
+
+with things like sockets and whatever, and people that maybe have just done already reload the page.
+
+It's fine because it's a bit of a of an old way of doing things. Stable product.
+
+It's fundamentally something you should all aim to get full marks in. This means it doesn't crash, no crashes during the presentation,
+
+and no weird janky UI glitches where something strange happens, where some page gets rendered in a horrible way or, you know,
+
+something doesn't doesn't come through nicely, or something renders in a weird way,
+
+or you get some or no Ascii errors or whatever, or UTF errors to try and avoid that kind of happening.
+
+So that means you can kind of control that, right? If something isn't working, maybe don't demo it, maybe demo other things instead, or even yet.
+
+But yeah, because we might ask questions in the presentation.
+
+If we think you've got serious problems, say SQL injection attacks or other things like that,
+
+we might ask you to put something into your code and see what happens.
+
+You have to be prepared to take audience suggestions of inputs,
+
+so make sure your inputs are going to work and general purpose work and get that kind of thing fixed.
+
+Maybe today, if it doesn't work,
+
+mostly we want to see it's going to work and be stable and be protected from some obvious attacks or obvious silly inputs,
+
+or at least silly user input. Should shouldn't break your surface, right? Someone put the wrong button or something.
+
+It shouldn't matter for service. Then finally all the conclusion stuff.
+
+This is what went well. What you do differently in past benefits of future work.
+
+The main thing here is to keep remembering your users for the purposes of what went well,
+
+should we talk to you about what needs of the users you have met? What went well with the process that you follow?
+
+This is the time you can talk a bit about the process you followed.
+
+I don't want to see a long discussion before here at hand about, oh, we had to work in four weeks.
+
+Three oh, we had to use git. Of course we told you, right? Don't present things where we mandated to you.
+
+What you had to do, but present things with the process that you think went well.
+
+So that it could be like how you organised yourselves, how you communicate with team you, how you conducted your interviews.
+
+These are all things to really think about. And what have you learned from the projects and other things?
+
+But what have you picked up? Technically, but also it's going to be soft skills from doing the project itself as well.
+
+They're all things to unpack. And what differently.
+
+Basically the same thing, but on those same criteria, you know, where have you learned something and now you would do it differently because of that.
+
+But about how you organise yourself, it could be about the processes you followed.
+
+It could be about how you focussed your work or focus on user needs or the particular focus of the project.
+
+Maybe you're not wrong in some sense. It could be a technical choices. Maybe they were good, maybe they were bad.
+
+But think about those choices and reflect on those in that part. That's kind of the pros and cons of what you have learned from doing the project.
+
+Then we've got the impact benefits users that's basically broadly broke into two parts.
+
+What is the impact you have right now, but also what's the impact you think you can have in the future.
+
+So that's it's basically your impact asset in some sense, but probably presented it differently to asset.
+
+You can have the asset maybe at the end of this section, but I would probably try and put it into your own words on slides in some way.
+
+But yeah. What's going on now? What's going on in the future? Where do you think you fulfil those user needs?
+
+In good ways, and that's why we want to bring it back to your personas.
+
+Bring the personas here and tell us through their eyes how you've made their lives better, how you solve something for them and then future work.
+
+This should not be a list of features, right? Don't forget your percent at the end.
+
+So many groups in years gone past will get to the last slide.
+
+What do you do next? Bullet point. Bullet point. Five bullet points. And it would be like adding this thing.
+
+Adding that thing. Make a new feature a feature feature a feature feature five features. Don't do that.
+
+Think about your user needs. So what are the needs of the users that you haven't met yet?
+
+Be honest. Tell us what isn't there yet. We're not going to mark you down for not having done something in four weeks.
+
+It's a really short period that we know. We want to know that you're aware of what the users need to have working still, and that yours for next.
+
+So what problems do you need to fix with your code base? What's the point you to fix? Generally that's a good as well.
+
+And also things like the pathway to launch. What would you need to change in your service if it was to go live?
+
+So it might be that you're using some, um, some third party libraries that perhaps wouldn't allow you to use that work for your own purposes,
+
+but it could have weird copyright or licensing on them. And tell us about that.
+
+It could be that you need to really get some security stuff out of them,
+
+because you're aware that there are problems with like injection attacks or other things.
+
+Tell us then then we might ask you in the Q&A because you told us it's fine, right?
+
+So make sure you think about what would it need to really launch properly. Yeah.
+
+And maybe ideas about how you would try and get uptake. Where would you advertise? Who would you put it into the hands of next?
+
+If you want to try and get it, really be a thing that survives past the the natural heat death of the end of this
+
+project where most products is going to get put in a bucket and left there forever. How will you try and overcome that?
+
+What would you do next? Cool. So that was a whirlwind tour of all 25 criteria.
+
+Are there any questions on these things? I will say I'll take a snapshot this later on and put it on the centre so you can read it in your own time.
+
+My handwriting is just about legible enough that you can read over that to get a rough idea of what you're after.
+
+any thoughts or questions? Yes, we do have lots of questions on this blog, so we'll be present in just a couple of days.
+
+Yeah. Good question.
+
+So if you've got lots of iterations of core features, which is fine, I would try and cherry pick, say the 3 to 5 most impactful just in terms of time.
+
+Right. You've got 20 minutes to get through quite a lot of stuff.
+
+And if you spend a whole five ten minutes unpacking the iterations, you'll just find that you don't have enough time to get at the end.
+
+You're out of time. And running out of time is a really serious problem.
+
+As I said before, you start losing marks and runs time, but then we can't ask you as many questions in the Q&A.
+
+So criteria where you haven't scored robots or zeros and ones where we're going to focus on trying to ask you questions to try and bump you up,
+
+but we want you to do as well as you possibly can. And if we think you've missed something, we've gone over it too quickly.
+
+We'll try and ask you a question to help you refine that. I'm not guaranteeing you will definitely achieve it in the presentation,
+
+but hopefully we'll give you a chance to try and make that grade up to a higher mark.
+
+Otherwise, it currently is. Any other questions about anything here?
+
+Yeah. So I think for an effective iteration discussion, seeing what changed show don't tell is more effective is telling us what to change.
+
+So yeah, I think be very careful if it's all text only what you describing we can't visualise that.
+
+So I think I would definitely say yes. Some visual cues should be there don't have to be on one slide.
+
+It could be over a few slides right. It could be like every slide could be A to B.
+
+And then next slide B to c, c to d, d to E with some pictures and some feedback that gets you that.
+
+That's a perfectly fine presentation I think trying to get all I say 3 to 5 is approximate, right?
+
+Just understand what's impactful. What had a significant change to how your UI looks or how the workflow works within the system?
+
+Pull out those key moments and you don't want more than about five per interactions.
+
+Otherwise, it's just too much volume of content. Won't get through it in time. So yeah, and it's not about the number you have.
+
+It's about the quality that you show in those.
+
+So you might be able to show in just three steps the quality and say, these were our main moments to do three really well thought out,
+
+chosen moments and show how that really changed things was better than here are five moments.
+
+They're all a bit messy. That don't really make a big difference, right? The second one even has more content.
+
+Score lower because it's not well chosen content or not really relevant content.
+
+Cool thoughts. Questions about presentation stuff in the middle.
+
+Yes, sir. I believe in the ads in the first place.
+
+That has some very elaborate suggestions for us. At the very beginning you said the introduction.
+
+That was an introduction for 3 to 5 minutes somewhere, and there would be a minimum, which is apparently acceptable for the regular demonstration.
+
+So what I mean by that is you might want to, when you have your how might we say.
+
+Right. And then you might say here's insert name here application.
+
+You might want at that point to show a very quick demo just to get an idea of what it does.
+
+It can work quite well, doesn't always work well, but for final year presentation,
+
+I often say that don't leave people waiting until the very, very end of the presentation to see it doing something.
+
+Your service is the star of the show here, so make sure you get to demoing it fairly early, but that means showing a very small journey.
+
+But again, I think what I would say here is the journey story makes more sense. Doing a user journey, showing how it solves problems.
+
+What I mean is you do five minutes get to how might we? And then the very next thing you should do should probably be digging into what happens now.
+
+Yeah. And don't leave it for too long. Don't start telling us what it can do and telling us all the great things it does.
+
+Just start showing us almost immediately. Yes. Right after the outline.
+
+Because yeah, that's probably fine. Yeah.
+
+But what I mean is, yeah, I'm trying to help you get away from the sandwich demo idea where you kind of have loads of
+
+presentation and then like a five minute demo and then loads another five presentation,
+
+like it's very common in years gone past, you get ten minutes of talking,
+
+five minutes of playing with something and then five minutes talking at the end.
+
+And that's not a very effective style because it's not an integrated experience, right?
+
+It feels like the demo is just a side afterthought of the whole thing. Better than having the demo right at the end.
+
+Like the worst thing you can do is do the entire presentation, including summaries and conclusions, and then demo at the end.
+
+That's awful. Right? That would kill you zero for sure on that criteria,
+
+because it's just a very bad way of presenting something you need for 15 minutes before we finally see anything happening.
+
+So you have to try and avoid that. Cool.
+
+I think I want to move on briefly and talk about the documentation submissions. So we have time on this.
+
+So there's two things here that are quite lightweight and one which is a bit more heavyweight.
+
+But most of the work should have been done already effectively.
+
+So you've got these two documents that have been marked by the computer team that are leaflet,
+
+which you've already put something up onto the spreadsheet anyway.
+
+I haven't locked it, so if you want to jump up there, you can still do. There's no changing slots anymore.
+
+I moved a couple of groups around in the slots to make the starts a bit more sensible for everybody.
+
+There's some weird gaps here, and I think one group got moved on the Wednesday, so just double check your times to make sure.
+
+Um, yes, the leaflet is here basically to generate some excitement.
+
+The idea is I'm going to email around the staff and the department later today and say, hey, your two teams are doing stuff.
+
+You might want to watch them present in a couple of days.
+
+We don't tend to get a lot of people around because everyone's busy doing other stuff as well.
+
+With your projects coming up. We'll see. Um, but this is market over a few very small criteria.
+
+You can basically read them. Do you have a name? Is it like, got something?
+
+A nice native thing? Um, do you put a good mock up screenshot?
+
+Um, I do a screenshot. Um, into the leaflet itself to see what it's doing, and it should be showing a moment of key interaction, ideally.
+
+Um, do you have you define what the problem is? Have you defined who it's for and have you defined what the solution is?
+
+Right. So you're trying to summarise those five things onto a little leaflet.
+
+Basically get some insight about this is a cool thing. It solves a problem in this way.
+
+It's a bit different to an impact asset right.
+
+Because it's more advertising what you do, it's not going into as much detail as an impact as I would focus here on direct user benefits.
+
+Right. So this is more of a direct article, whereas the um, the impact asset will have a direct and indirect benefits to you.
+
+But this is more of a directed the one person who's using it right now, the benefit you get.
+
+So it'd be something you see on the tube on a poster, or maybe hand out career fair or something like that could be used.
+
+Um, the second thing is this copyright legal report.
+
+So here this is basically following on from the law theory and the law lectures.
+
+Just to reflect on your own project with the legal contents, you've learned this term in mind.
+
+Um, so what we're looking for here is basically an understanding of where does your project fit within the wider legal space.
+
+So the first thing I want you to have is a list of any third party resources you've used, along with the licenses they're in.
+
+And the best way to present that is in a table, which basically is thing.
+
+And then the license it uses to one side and down the page and clustered them together in some way.
+
+A lot of you are probably use frameworks that maybe have a lot of random library inclusions.
+
+So if you go to that node, I think node can do an export.
+
+Don't give us every single tiny, tiny thing that you have used, because they won't fit nicely on a page, right?
+
+Highlight to the kind of the library you included. And don't worry about the library's included.
+
+That's not important. I don't care what libraries include, just the libraries you actively included in your code.
+
+Those are the libraries we care about and the content you actually use.
+
+If you use a bunch of imagery that isn't yours, give us the site where you pull them down.
+
+Don't give us every single icon that you added too much information. Give us our icons came from this package right at that level of analysis.
+
+So basically every time you had a library or a resource you went to that can be amalgamated in some way.
+
+Please do or do not want to see people posting on SDM today, which bound to us saying,
+
+oh, it won't fit on one page because we've got 10,000 import things. Summarise it down a little bit, right.
+
+It's not an it's not an existence proof of every single thing you've done.
+
+We're not actually assessing every single little tiny thing to make sure the license is correct.
+
+We want broadly to know what the things you used were and what letters they have,
+
+and specific licenses in terms of the license type, not the licenses themselves.
+
+Right. I don't care about the wording of every license I care.
+
+Is it BSD, is it GP2, is it MIT? That level of detail is enough just to be aware of what you've used.
+
+So the first two things that you've got a table list, a list of all the things that aren't yours,
+
+everything's third party and that those things all have a clearly linked license that applies to them because they do.
+
+They will have you go and look through their their code bases or their GitHub properties or whatever.
+
+Then there are three things to unpack here in terms of what implications of the law applied to your project.
+
+First one is probably the easiest one.
+
+The licenses those licenses will impose upon you certain restrictions about what you can and can't do with your project.
+
+If you were to publish it for real. Pretend that you are going to publish it for real on GitHub or wherever.
+
+Work out what you would have to do to be compliant with the licenses that you're subject to.
+
+Okay, that's the first thing you do. The second thing is about copyright. So that's separate.
+
+That's not about the code you've got. That's now about content on your service probably.
+
+Right. Who owns the copyright of content on your service? Whose job is it to make sure the law is not broken?
+
+There are various things you can do there about those things, but there are some requirements on you about how you use that content.
+
+Use other people's content and how you work with that content and who owns it, etc. so we'll have to think about that as well.
+
+And that could be also things like if you have used so the libraries and things will be more linked to licenses,
+
+whereas things like icon packages or other images and placeholders you're using might be linked to actual copyright.
+
+Right. So they're different. So I would include those in that case as well.
+
+So if you've got a whole bunch of placeholder text or placeholder images, or maybe your logo is not actually your own logo or something,
+
+then just be clear about who would own that and who is to go talk to and pay.
+
+If you want to use that permanent, you're not going to have to pay for anything, right?
+
+But who would a group in the future have to go and talk to to negotiate contracts on those things?
+
+If you want to use those copyrighted things really in a published real world situation.
+
+And the final thing is wider legal implications, that is what else is at play here.
+
+So it could be reflecting on how GDPR would apply it to your project.
+
+It could be thinking about what you would do if people uploaded malicious content to your site or inappropriate content to your site,
+
+how would you deal with that kind of thing? Those kind of scopes.
+
+Anything that's not covered by licensing law and copyright law will be covered in that last other part.
+
+Anything that you think is applicable to your thing, roughly one paragraph each of those things should be plenty of text.
+
+It's not an exercise of how much you can write, it's just showing us an awareness of what parts of the law applied to you on that side of things.
+
+Does that make sense? So a table filling up about half the page and then a few paragraphs underneath that,
+
+that fill up the rest of the page should be enough with the leaflets. Again, these things are both A4 pages.
+
+If you want a double sided leaflet, if it's a triple folding thing,
+
+you can do two A4 sides because you lose a lot of real estate on the page from all the folding margin spaces.
+
+If it's a card that's two sided, make it A5. Put it on one page.
+
+If it's any other poster, one side. So everyone's working that same rule.
+
+That's just about making sure that we don't have to read huge amounts of text
+
+content to make sure everyone's got the same amount of text space to use,
+
+but the only way you could go double a A4 size is if it's a free, free tier photo leaflet.
+
+And that's because the margins of those things will cost you a lot of tech space.
+
+So just being fair about that to give everyone the same real estate to work within. Yeah.
+
+Question. The impact of an impact is entirely separate to this discussion.
+
+This is about your leaflets. Yeah. This is the leaflet not the impact asset.
+
+The asset can be whatever form you want it to be. But again don't go crazy with them with these things.
+
+A couple of pages maximum for an impact asset. Cool.
+
+So that's those two things. The last one is the HCD portfolio. So you can read this text in your own time.
+
+Broadly speaking what we're looking for here, let me go through this at the end is that it's to pull together the various research documents you might
+
+have been working on behind the scenes that you were unable to present to us across the whole project,
+
+because there'll be loads of stuff that you've done that we couldn't see in the last time because they weren't long enough.
+
+So this is the chance to put it all together and to present it to us. Do you want to say a few words about this?
+
+Um, yeah. So this is your opportunity to show what your process has been like.
+
+So you might not have had the chance to talk about how you develop your persona and what you chose to put in there.
+
+Where did you get your your data from? What inspired you?
+
+So, um, like Mark said, a lot of the stuff that you've been using or should have been using in your project work,
+
+um, are things that you've learnt from and maybe you found it really challenging.
+
+We kind of want to hear that too. So it's showing us how you might have developed a persona, showing us your reflections on the how might we.
+
+So all of the different things appear, uh, in all of our lectures and are in the playbook.
+
+What did you use? What did you find useful? What did you find challenging, and what made the most impact to your work?
+
+And just be honest about that, really. So it's um, like we said at the beginning,
+
+it's a kind of if if you get an interview with somebody and they asked to talk about a project you've been working on,
+
+they look at the idea, they might look at, you know, your proposition, but they want to know more often than not, how did you get there?
+
+What was your process? What was your approach? What was your thinking and critical critical analysis?
+
+So, um, yeah, it's a list of, um, methods up there.
+
+But there's there's more behind it in your reasoning, really? Yeah.
+
+Anything you've made on a human centred or design approach as part of the project should probably be pulled together here.
+
+Don't throw every single tiny piece of kitchen sink at the problem.
+
+It's about collating the ones together that you think makes sense, or you're most proud of what worked well for you.
+
+Um, the criteria here kind of give you the rough categories, right?
+
+So it's like about the people that are involved in that.
+
+So how have you how have you what various techniques and documentation have you used to help you define the people?
+
+I think that persona documentations, um, but also stakeholder maps,
+
+those kind of things I would expect to be covered in kind of these two criteria here are kind of saying
+
+it's kind of persona and stakeholder maps of the things and understanding of the current and future state.
+
+So that should be things like current journey maps and future journey maps later on.
+
+Um, you've also got things like any insights you've got, showing a bit of the evidence you gathered from researching and studying.
+
+Don't show every single bit of evidence gathered, but maybe the things you put in the presentation go well here as well,
+
+because they're the ones you're highlighting as being the most proud of or most impactful, um, on your project.
+
+Um. Yeah.
+
+So it's about. Yeah.
+
+Current state is the top one, and it's about the, um, the insights you gathered and then the opportunity statement, I guess the how might.
+
+We should probably be on a page somewhere, though, because I think we want to see as part of the process as well.
+
+Then you've got your testing validation. So this is the user testing, but the actual development testing as you went through things.
+
+So again, show you probably can't show video clips as a PDF. So video is a pretty bit tricky to embed.
+
+Waste time with that. But you can show a few images of clips and a few bits of text that you pulled out in quotation
+
+marks to show us the sort of content and the sort of interaction you want to show us.
+
+Your design for, how you're structuring your interviews, how are you? What were the questions you're asking?
+
+What was the way you're approaching that you've got your research methodology that you would have drawn out in the first week?
+
+Why not put that in here somewhere and show us what your plans research were back at the beginning of the project, and talk a bit about those as well.
+
+Um, yeah. Again, in the playbook there were some, um, there were some templates to show your reasoning, like What did you want to learn in the week?
+
+What the questions are going to use to get the feedback? How did you earn based on that?
+
+How did you set the context to the users that you tested?
+
+With all of those things, we really want to know here about your approach in order to get really good feedback.
+
+That's kind of like helped you come up with new ideas.
+
+Yeah, broadly speaking, it's feedback iterations and analysis down these three criteria here here.
+
+So show us the feedback you got. Show us the iterations you did with that. And then kind of show us the analysis you're using to make next choices.
+
+And if you get it in, you don't want to go into excessive detail in a similar detail that you got for the final presentation.
+
+You know,
+
+a couple of core interactions show us how you refine them over 3 to 5 iterations to give us an idea of the approach taking on that sort of things,
+
+and then the impact stuff. This is about your impact asset. Surprise, surprise.
+
+And here is basically direct impact and indirect impact.
+
+So very similar to how we assessed the ones we saw last Friday.
+
+But now a more detailed evaluation of both of those things rather than just did you kind of cover the areas in the general terms.
+
+So please take on the feedback we gave you last Friday about the assets to improve them before this Friday as well.
+
+It's got a high level whip through, but the idea is this one's unlimited in length, but don't go mad.
+
+I think if it's more than about 30 pages, you've probably gone way too big.
+
+I reckon typically they're about 15 pages. 20 pages. It should be highly visual with some sort of minimal reflections.
+
+That's the idea. But most of the documentation you've been doing and preparing behind the scenes,
+
+particularly stuff that you couldn't show us in the master review sessions where you really kind of
+
+wanted to you feel like it maybe showcases better how you were working or showcase your ideas better,
+
+but the master review didn't cover that in a nice way.
+
+They would be good things to put into this documentation, just to kind of get some credit from them,
+
+or allow us to see them and give you credit for those things. Right. So this carries quite a bit of credit of the entire module.
+
+It's 15% or more or 15% is 80% of of 20% isn't it.
+
+So it's about 16% of the entire module in the portfolio. So it's worth just spending some time collating that together.
+
+We want a bit of reflection about how you found the process, but it should be about no more than one A4 side in total,
+
+but you can spread it across the document as you want to write. It's a bit of a reflection on how you found certain processes, how you found the easy,
+
+hard, useful, what were challenging, what was, what would you learn from them?
+
+Read a bit of that through the report at various points of time as well. Be nice to see. So it's not just a huge pile of unguided thing,
+
+but at least have sections of some kind to break up documents in some way so
+
+we can read through it and kind of know what we're seeing and try and follow.
+
+Probably this approximate flow would be good to try and follow through, because it's kind of the flow of the project, right?
+
+It's the the people at the beginning. Then what did you learn about them?
+
+And then what do we do to help make things better? And then what do we get to at the end? Is the rough flow of the document here.
+
+So try and pull this list here. So try and approximately flow that flow through so it's coherent.
+
+And don't make it too hard for your assessor to to pick through it and work out what you've done.
+
+Well any last question is a hand up here to you here as a slide jumper.
+
+Yeah. It's not a folder, it's a PDF. It's a single document. So it needs to be submitted as one one document.
+
+We're not going to try and pick through a folder of random stuff in random order, because that's not fair enough, right?
+
+You need to collect the experience a bit, so it's one PDF. We don't do Zips missions in year two.
+
+Everything is git. Um. Or PDFs. Um, yeah.
+
+So if you click Create the Experience, collate what you want to showcase up and show us off to us in that document for the portfolio.
+
+No question yet. All this stuff.
+
+Is that stuff you. Know only stuff that's part of your app is worried about.
+
+So if you've used stock images as part of your presentation, or if your presentation slide theme deck don't care, that's that's not the point.
+
+It's the actual code itself. Actual project itself is what we care about.
+
+So if someone if someone were to carry it on at the end of DRP, if you want to try and do it over the summer or in a future year,
+
+or set it off to start off, whatever, then then what would they need to be aware of if that did not extend?
+
+That it will happen in this case, but if that were happening,
+
+what would they need to be aware of in terms of what they do and don't own within that project? And what is it that they're subject to?
+
+Because that would affect how you could market these things in the future. The idea. But just to ask you to reflect, again,
+
+it's kind of fitting in or tying off the story that came through the law lectures that you've been through, that content you've done.
+
+You listened to David and talk about things. You've done a little laudatory.
+
+Now, what does it mean to apply it to this project, just to kind of complete that story in some sense?
+
+Cool. Any other last thoughts before you wrap up your questions?
+
+You've got them, of course, over the week.
+
+Just bear in mind that after I think I said about 8 p.m. today, 7 p.m. today, I'm not going to answer that question presentation.
+
+So for fairness, I'm not going to start asking questions about presentations on Tuesday.
+
+Then people can get on Wednesday only that would be unfair, right? So this evening. That's it.
+
+No more questions on presentations, documentation you can ask.
+
+Just bear in mind that I'm going to be in presentations for all of Tuesday and all of Wednesday.
+
+And there's been presentations on all of Tuesday of the Thursday and Friday.
+
+So I'm going to be answering this in small gaps between presentations and maybe in the evenings.
+
+I'm not going to have a lot of time to help them edit them, so just be mindful that I will be responsive as it can be,
+
+but I can't promise to be seeing it quite as quick as I have been. Maybe over the weekend.
+
+Just gone this week, just because I'm seeing something like 60 presentations between this week and next week.
+
+So please pity me in that sense. Otherwise good luck.
+
+Look forward to seeing everyone presents this week.
+
+Um, don't do anything I did this morning in terms of presenting because that would be bad and have a good time, hopefully.
+
+I hope you enjoy it and be proud of what you've done. You've achieved something really amazing over these four weeks.
+
+Be proud of that. Post.
+

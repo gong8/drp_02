@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>BeThere - Human-Centred Design Portfolio</title>
+<link rel="stylesheet" href="portfolio.css">
+<style>
+  /* v2 helpers: human prose set in the v1 brand */
+  .body{ font-family:Inter; font-weight:500; font-size:14.7px; line-height:1.4; color:var(--ink); margin:0 0 10px; }
+  .body:last-child{ margin-bottom:0; }
+  .body b{ font-weight:700; }
+  .facts{ list-style:none; margin:0; padding:0; }
+  .facts li{ font-family:Inter; font-weight:600; font-size:14px; color:var(--muted-2); padding:6px 0 6px 18px; position:relative; border-bottom:1px solid var(--line); }
+  .facts li:last-child{ border-bottom:0; }
+  .facts li:before{ content:""; position:absolute; left:0; top:12px; width:7px; height:7px; background:var(--pink); }
+  .imgcard{ border:3px solid var(--ink); box-shadow:var(--sh); display:block; }
+  .imgcard--sm{ box-shadow:var(--sh-sm); }
+  .seqlabel{ font-family:'Space Mono',monospace; font-weight:700; font-size:12px; color:var(--muted); margin:0 0 6px; }
+</style>
+</head>
+<body>
+
+<!-- ===================== 1 - COVER ===================== -->
+<section class="page page--blush" style="justify-content:center;">
+  <div style="position:absolute;top:25mm;right:25mm;">
+    <span class="hl" style="font-family:Archivo;font-weight:900;font-size:20px;letter-spacing:1px;padding:5px 13px 9px;">DRP02</span>
+  </div>
+  <h1 class="ptitle" style="font-size:72px;">How we designed<br><span class="hl" style="font-size:72px;padding:0 18px 10px;">BeThere</span></h1>
+  <p class="lead" style="font-size:20px;margin-top:30px;max-width:150mm;">A human-centred design portfolio: from a 47-person survey and three rounds of interviews to a shipped app that turns a loose "maybe" into a plan that actually happens.</p>
+</section>
+
+<!-- ===================== 2 - VASANTH ===================== -->
+<section class="page">
+  <div class="head">
+    <h2>Meet Vasanth</h2>
+    <div class="hr"></div>
+  </div>
+
+  <div class="row" style="gap:22px;align-items:flex-start;margin-bottom:18px;">
+    <div style="flex:1;">
+      <span class="sticker bg-pink" style="margin-bottom:14px;">The organiser.</span>
+      <ul class="facts" style="margin-top:14px;">
+        <li>Age 21</li>
+        <li>Studies Law at St. Andrews</li>
+        <li>Enjoys playing volleyball and board games</li>
+        <li>Loves to cook for his friends</li>
+        <li>Extroverted and reliable</li>
+      </ul>
+    </div>
+    <img src="assets/personas/vasanth.png" alt="Vasanth" style="flex:0 0 66mm;width:66mm;height:84mm;object-fit:cover;object-position:38% 32%;" class="imgcard">
+  </div>
+
+  <p class="body">Early on in our DRP project, we created Vasanth, and used his story to guide BeThere's development. Vasanth was intended to be an embodiment of the heart of a friend group. Popular and outgoing, his hobbies are deeply social, and he lives for his friends. He is selfless and responsible, which naturally leads him to take on the role of organiser.</p>
+
+  <p class="quote" style="font-size:18px;margin:16px 0;">However, like many other university students, he still struggles with loneliness.</p>
+
+  <p class="body">He tries tirelessly to see his friends more but the burden and pressure of being the initiator is leading him to feel frustrated and hopeless. Poor communication, uncertain replies, and a feeling of being the only one brave enough to initiate have all fuelled Vasanth's struggle. What was once a feeling of joy at the thought of making new plans, is now an empty dread at the reality of chasing responses.</p>
+
+  <div class="card" style="margin-top:16px;">
+    <p class="body"><b>Vasanth's experiences shaped every core decision in BeThere's design.</b> The anonymous suggestion feature exists because of his embarrassment at chasing replies into silence. The voting system exists because he shouldn't have to assert a time and hope everyone agrees. The deadline-based resolution exists because the open-ended nature of group chats is precisely what lets plans die. Throughout the project, we returned to Vasanth whenever we needed to sense-check whether a design decision genuinely addressed the problem or just added features.</p>
+  </div>
+</section>
+
+<!-- ===================== 3 - MILLY ===================== -->
+<section class="page">
+  <div class="head">
+    <h2>Meet Milly</h2>
+    <div class="hr"></div>
+  </div>
+
+  <div class="row" style="gap:22px;align-items:flex-start;margin-bottom:18px;">
+    <div style="flex:1;">
+      <span class="sticker bg-purple" style="margin-bottom:14px;">The passive participant</span>
+      <ul class="facts" style="margin-top:14px;">
+        <li>Age 19</li>
+        <li>Studies English Literature at St. Andrews</li>
+        <li>Likes to play cello and read</li>
+        <li>Recently joined her university's netball society and Vasanth's friend group</li>
+        <li>Shy and introverted</li>
+      </ul>
+    </div>
+    <img src="assets/personas/milly.png" alt="Milly" style="flex:0 0 66mm;width:66mm;height:84mm;object-fit:cover;object-position:50% 28%;" class="imgcard">
+  </div>
+
+  <p class="body">Appreciating that every failed meetup has two sides to it, we realised the necessity of having a second persona, so we proposed Milly. She is very introverted, and symbolises the quiet participants of a friend group who prefer tagging along to organising their own events.</p>
+
+  <p class="body">We did not mean Milly to be antisocial. For this reason, we chose Milly to be a new member of Vasanth's friend group, explaining her shyness without giving the impression she didn't want to engage with her new friends. This allowed us to explore the reasons why people give vague 'maybe' replies, without the assumption that these people simply don't want to see their friends, which we didn't think was the full picture. <b>Milly directly motivated the conditional attendance feature</b>, without her perspective, we may never have recognised that for some people, attending isn't a simple yes or no but a decision that depends entirely on who else is going.</p>
+
+  <div class="card" style="margin-top:16px;">
+    <p class="body"><b>Milly's perspective shaped how attendance works.</b> The conditional "I'll go if..." exists because, for her, going is rarely a flat yes or no - it depends on whether someone she is comfortable with will be there. The blind reveal exists so she never has to commit in front of everyone while they hesitate. The two plain options ("at least one" or "all of them") exist because her dependence is human, not boolean. Whenever a feature risked leaving the quiet member behind, Milly was the test we ran it against.</p>
+  </div>
+</section>
+
+<!-- ===================== 4 - STAKEHOLDERS ===================== -->
+<section class="page">
+  <div class="head">
+    <h2>Stakeholders</h2>
+    <div class="hr"></div>
+  </div>
+
+  <div style="display:flex;justify-content:center;margin-bottom:12px;">
+    <img src="assets/stakeholders/map.png" alt="Hand-drawn stakeholder map: students (organisers and participants) at the centre, then university, family, school friends, restaurants, pubs, employers, and the outer ring of the NHS, mental health services and government." style="width:76mm;height:auto;" class="imgcard">
+  </div>
+
+  <div class="grid2" style="gap:22px;">
+    <p class="body">Undergraduates are our main stakeholders, but within this group we identified two further categories: organisers and participants. Organisers are people like Vasanth, who make meetup suggestions to their friend groups and carry them all the way through taking on a myriad of responsibilities: working out each friend's schedule, picking times that suit everyone, chasing hesitant or unresponsive people. On the other side we have participants like Milly, who rarely suggest meetups themselves but take part; from interviewing students, we found these people typically don't like to attend events without someone they know quite well - their attendance is dependent on others going and when they're not sure those friends will go they become non-responsive or reply with a 'maybe'.</p>
+    <div>
+      <p class="body">Thinking about the wider impacts, if undergraduates spend more time with their friends, those places they meet will benefit, such as pubs and restaurants. We'd also expect to see improvements to larger university communities as the effects of happier, tighter-knit friend groups ripple outwards. We're the most connected generation, and yet we're the loneliest. The NHS is reporting a loneliness crisis, 15-24s spend 70% less time with their friends in-person than two decades ago, and over 25% of lonely young people have sought therapy; if we can make it easier for friends to meet-up in-person, we can help fix this.</p>
+      <p class="cap" style="margin-top:10px;">Time-with-friends figure: US Surgeon General, 2023; therapy figure: BACP, 2025.</p>
+    </div>
+  </div>
+
+  <div style="margin-top:12px;border-top:2px solid var(--ink);padding-top:10px;">
+    <div class="label" style="margin-bottom:8px;">What the wider stakeholders need, and how BeThere serves it</div>
+    <div class="grid3" style="gap:16px;">
+      <p style="margin:0;font-family:Inter;font-weight:500;font-size:12.5px;line-height:1.3;color:var(--muted-2);"><b style="color:var(--ink);">Venues (pubs, cafes):</b> a firm headcount; a resolved plan books better than a maybe-thread.</p>
+      <p style="margin:0;font-family:Inter;font-weight:500;font-size:12.5px;line-height:1.3;color:var(--muted-2);"><b style="color:var(--ink);">Universities:</b> connected students; meet-ups that happen ease the isolation and drop-out behind it.</p>
+      <p style="margin:0;font-family:Inter;font-weight:500;font-size:12.5px;line-height:1.3;color:var(--muted-2);"><b style="color:var(--ink);">Health services:</b> they carry the cost of loneliness; more in-person contact helps upstream.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 5 - USER JOURNEY MAPS (before) ===================== -->
+<section class="page">
+  <div class="head">
+    <h2>User Journey Maps</h2>
+    <div class="hr"></div>
+  </div>
+
+  <p class="body" style="margin-bottom:14px;">To provide a strong basis for our problem, we constructed a realistic scenario that could be told from two perspectives, those of Vasanth and Milly. We chose a pub quiz as the setting, since this was an event where if Milly turned up without a close friend there, there was high potential for it to be awkward and leave Milly feeling alienated from her new friends. These high social stakes provided the perfect background to map out the reasons why people respond with 'maybe'.</p>
+
+  <p class="body" style="margin-bottom:8px;">From Vasanth's perspective, it's an event that requires an explicit organiser to choose a location and reserve a table for example.</p>
+  <img src="assets/journeys/vasanth-before.png" alt="Vasanth's pub quiz journey map - happiness falls over time as he chases replies and finally gives up." style="width:100%;height:auto;margin-bottom:18px;" class="imgcard imgcard--sm">
+
+  <p class="body" style="margin-bottom:8px;">From Milly's perspective, it's a daunting social event that she would be much more comfortable attending if she has a close friend there.</p>
+  <img src="assets/journeys/milly-before.png" alt="Milly's pub quiz journey map - happiness swings on whether her close friend will reply, then falls as the meetup falls apart." style="width:100%;height:auto;" class="imgcard imgcard--sm">
+</section>
+
+<!-- ===================== 6 - HOW MEETUPS FALL APART ===================== -->
+<section class="page">
+  <div class="head">
+    <h2>How meetups fall apart</h2>
+    <div class="hr"></div>
+  </div>
+
+  <p class="body">To determine how meetups are made and how they fall apart, we conducted interviews with undergraduates from different universities. Interviewing a mix of people who typically organise meetups and people who remain passive in the group chat allowed us to gain insights into all angles of the problem landscape, ensuring any solutions we come up with directly benefit everyone.</p>
+
+  <div class="row" style="gap:16px;align-items:stretch;margin:16px 0;">
+    <div class="card card--sm" style="flex:1;">
+      <div class="label" style="margin-bottom:8px;">Someone who typically organises meetups told us</div>
+      <p class="quote" style="font-size:15px;">"I do all the work - where we're going, who's paying, making sure everyone's free - then half of them don't even reply and it just dies. All that effort for nothing."</p>
+    </div>
+    <div class="card card--sm" style="flex:1;">
+      <div class="label" style="margin-bottom:8px;">A few passive participants told us</div>
+      <p class="quote" style="font-size:13.5px;">"Honestly I wasn't sure I'd go - and everyone else seemed just as unsure. Once a couple of people went quiet, I just figured it wasn't happening."</p>
+      <p class="quote" style="font-size:13.5px;margin-top:10px;">"If I'm meeting a friend of a friend, my attendance is conditional on my friend being there. I'll wait for them to respond first, then decide."</p>
+    </div>
+  </div>
+
+  <p class="body">It is clear that organising a meetup is one-sided and exhausting. Pushing for replies is awkward and it feels humiliating repeatedly sending messages into the chat that don't get a response. We've gathered that uncertainty compounds uncertainty, and some people's participation is contingent on others, especially when members of the group are not particularly close.</p>
+
+  <p class="body">The current state of meetup organising is as follows. Someone suggests a plan on the group chat, sometimes asking for everyone's availability first, sometimes asserting a time and place. With every question the organiser asks on the group chat, the likelihood of the meetup taking place lowers. Some people don't reply on the group chat, others don't reply because the people they want to go with also haven't replied yet. The effects are amplified when not every member of the group is close with each other.</p>
+
+  <div class="card-ink">
+    <p style="font-family:Inter;font-weight:500;font-size:14.7px;line-height:1.4;margin:0;color:var(--surface);">Our interviews surfaced these patterns, but to test how widespread they were we surveyed 47 students about how they plan meet-ups. The results confirmed that hesitancy is the norm, not the exception: <b style="color:var(--pink);">87%</b> admitted to sending a "maybe" or delaying their reply to a plan they were unsure about. This hesitancy has real consequences, with <b style="color:var(--pink);">over half</b> of respondents saying that more than a third of their meet-ups never make it out of the group chat, and <b style="color:var(--pink);">79%</b> saying the time they first suggest gets moved at least half the time. Taken together, the survey shows that the "maybe" response is not a minor annoyance but the single point at which group plans most often collapse, which is exactly what our solution is designed to resolve.</p>
+  </div>
+</section>
+
+<!-- ===================== AEIOU FIELD RESEARCH ===================== -->
+<section class="page">
+  <div class="head">
+    <h2>AEIOU field research</h2>
+    <div class="hr"></div>
+  </div>
+
+  <p class="body" style="margin-bottom:16px;">Before designing anything, we mapped what people actually told us through <b>AEIOU</b> - Activities, Environments, Interactions, Objects, Users - so the design space stayed grounded in observed behaviour rather than assumption. Every cell points back to an interview or the survey.</p>
+
+  <table class="tbl tight" style="width:100%;">
+    <thead>
+      <tr>
+        <th style="width:15%;">Lens</th>
+        <th style="width:55%;">What we observed</th>
+        <th style="width:30%;">Where it came from</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>Activities</b></td>
+        <td>Planning ad-hoc in a group chat; floating a vague "we should hang out"; running an informal poll and taking the majority time even if someone cannot make it; postponing when the group is split; chasing non-responders, or forgetting the plan entirely.</td>
+        <td>Luca, Luke (polls, postponing, chasing); survey (the first suggested time rarely sticks)</td>
+      </tr>
+      <tr>
+        <td><b>Environments</b></td>
+        <td>WhatsApp group chats as the default venue; term-time dispersion and clashing timetables; the long limbo of an unresolved thread, where second thoughts have time to grow.</td>
+        <td>Felicity ("if you are on WhatsApp anyway"); Matthew, Luke (deadlocked schedules, doubts creeping in)</td>
+      </tr>
+      <tr>
+        <td><b>Interactions</b></td>
+        <td>The "maybe" as a deliberate hedge; silence and non-response; the conditional "I am down if others are down"; cascading uncertainty, where one early "I can't" writes off the whole plan; reluctance to be the first to say yes.</td>
+        <td>Luca, Matthew ("maybe" as a copout); Luke ("cascades uncertainty"); Felicity (fear of being the only yes)</td>
+      </tr>
+      <tr>
+        <td><b>Objects</b></td>
+        <td>Phones; WhatsApp chats and polls; Doodle-style polls; calendars people forget to fill; the BeReal-style push notification people actually respond to.</td>
+        <td>Felicity, Tom (existing tools); Matthew (calendars unfilled); Luke, Tom (the push)</td>
+      </tr>
+      <tr>
+        <td><b>Users</b></td>
+        <td>Small friend groups of four to six; a single reluctant organiser ("mostly one specific friend, not me"); members who hedge to protect themselves; people who care more about seeing each other than about the activity.</td>
+        <td>Survey (group size, lead asymmetry); Felicity ("I just want to see them"); Luca (usually the only organiser)</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ===================== 7 - THE PREFERRED FUTURE + OPPORTUNITY ===================== -->
+<section class="page">
+  <div class="head">
+    <h2>The preferred future</h2>
+    <div class="hr"></div>
+  </div>
+
+  <p class="body">The preferred future experience removes the group chat from the equation entirely. Rather than one person shouldering the organising and chasing replies into silence, anyone in the group can suggest a meetup anonymously, taking the pressure and potential embarrassment off the person suggesting. Others vote on the times that work for them, and the choice resolves automatically at a set deadline. Crucially, no one has to publicly commit while everyone else hesitates. People's intentions, including conditional ones like "I'll go if my close friends go", stay hidden until the deadline, at which point everyone is resolved to a clear Yes or No. The result is an experience where Vasanth no longer has to push for replies and Milly no longer has to wait anxiously on others before deciding: the uncertainty that used to compound in the group chat simply never surfaces, and the meetup goes ahead.</p>
+
+  <p class="body" style="margin:14px 0 8px;">The same event, run through this experience, reverses the curve that used to kill it. Vasanth's journey now climbs from suggestion to a meetup that actually happens:</p>
+  <img src="assets/journeys/vasanth-after.png" alt="Vasanth's new journey on BeThere - the line climbs from anonymous suggestion to a meetup that takes place, while the faint old group-chat curve still falls and dies." style="width:100%;height:auto;margin-bottom:18px;" class="imgcard imgcard--sm">
+
+  <div class="card-ink">
+    <div class="label" style="color:var(--pink);margin-bottom:10px;">Opportunity Statement</div>
+    <p style="font-family:Inter;font-weight:500;font-size:14px;line-height:1.4;margin:0 0 12px;color:var(--grey);">Taken together, the interviews and survey point to a single leverage point: the moment hesitancy becomes visible in the group chat. Removing that friction, for both the organiser chasing replies and the participant waiting on others, is the opportunity we set out to address - and because every plan that survives is a group that actually meets, it reaches past students to the venues that host them, the universities that want connected campuses, and the loneliness all of them are trying to ease:</p>
+    <p class="quote" style="color:var(--surface);border-left-color:var(--pink);font-size:17px;">"How might we reduce hesitancy in undergraduate friend groups when planning to meet up so that groups go from frustrating 'maybe' responses to a clear consensus?"</p>
+  </div>
+</section>
+
+<!-- ===================== 8 - SERVICE BLUEPRINT ===================== -->
+<section class="page">
+  <div class="head">
+    <h2>How the promises are kept</h2>
+    <div class="hr"></div>
+  </div>
+
+  <p class="lead" style="margin-bottom:16px;">The future journey runs on one typed system. There is <b>no scheduler</b> - phases settle lazily on read - and the privacy promises that make the moment feel safe are enforced in the server, out of the client's reach.</p>
+
+  <div style="margin:2px 0 4px;">
+    <img src="assets/architecture.png" alt="BeThere system architecture: deployment, frontend, backend, database and the shared core" style="width:100%;display:block;border:3px solid var(--ink);box-shadow:var(--sh);">
+  </div>
+
+  <div class="card-ink" style="margin-top:20px;padding:20px 22px;">
+    <div class="label" style="color:var(--pink);margin-bottom:14px;">The promises that make the moment feel safe - enforced in the server, not the screen</div>
+    <div class="grid3" style="gap:18px;">
+      <div>
+        <p style="margin:0 0 6px;font-family:Archivo;font-weight:800;font-size:15px;color:var(--surface);line-height:1.15;">No one sees who proposed it</p>
+        <p style="margin:0;font-family:Inter;font-weight:500;font-size:12px;line-height:1.45;color:var(--grey);">Creator anonymity is on by default; the read layer returns only a private "is this me?" boolean, never the creator's id.</p>
+      </div>
+      <div>
+        <p style="margin:0 0 6px;font-family:Archivo;font-weight:800;font-size:15px;color:var(--surface);line-height:1.15;">No one sees how you voted</p>
+        <p style="margin:0;font-family:Inter;font-weight:500;font-size:12px;line-height:1.45;color:var(--grey);">Collecting shows the +1 totals for momentum but never the voter set; the moment reveals nothing about others until it resolves.</p>
+      </div>
+      <div>
+        <p style="margin:0 0 6px;font-family:Archivo;font-weight:800;font-size:15px;color:var(--surface);line-height:1.15;">A dead plan dies quietly</p>
+        <p style="margin:0;font-family:Inter;font-weight:500;font-size:12px;line-height:1.45;color:var(--grey);">If it misses quorum it fizzles on the next read and drops out of every dashboard - no push, no awkward dead thread.</p>
+      </div>
+    </div>
+  </div>
+
+  <p class="cap" style="margin-top:20px;">These promises are structural, not copy: anonymity and the blind moment live in the server's procedures (<span class="mono" style="font-size:12px;">events.ts</span>, <span class="mono" style="font-size:12px;">db/schema.ts</span>), so they cannot leak to the client.</p>
+</section>
+
+<!-- ===================== 9 - OUR METHODOLOGY ===================== -->
+<section class="page">
+  <div class="head">
+    <h2>Our Methodology</h2>
+    <div class="hr"></div>
+  </div>
+
+  <p class="body">To ensure our development remained focussed on user needs, we conducted several interviews daily with university students, our target audience. Our approach was generally to let the users explore the app themselves, with minimal guidance at first. This ensured we understood exactly what a new user would encounter and how they would proceed. This helped us identify problems in our app's user experience, and keep our user interface as simple and clear as possible. Furthermore, this often led to interviewees volunteering ideas and suggestions that we would have not otherwise considered.</p>
+
+  <p class="quote" style="font-size:17px;margin:16px 0;">Let the users explore the app themselves, with minimal guidance at first.</p>
+
+  <p class="body">As time went on, we understood the main stakeholder groups of our app better, and decided to only interview people who were more of the organisers of their group with regard to the 'suggest a meetup' feature of our app. Likewise, we started to only interview the more passive participants of groups about the features attendants used like the conditional attendance feature described below. This targeted interviewing of stakeholders helped us to understand stakeholder needs better, and produce an app that fulfilled them.</p>
+
+  <p class="seqlabel" style="margin:18px 0 8px;">Our testing plan</p>
+  <table class="tbl tight" style="width:100%;">
+    <thead>
+      <tr>
+        <th style="width:13%;">Round</th>
+        <th style="width:25%;">Who we recruited</th>
+        <th style="width:30%;">What we put in front of them</th>
+        <th style="width:32%;">What we watched for, and what it changed</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>R1</b> Discovery</td>
+        <td>Organisers and passive participants, several universities</td>
+        <td>Semi-structured interviews on how plans form and fall apart</td>
+        <td>The real failure points and why people send a "maybe"; drove the personas, journey maps and problem</td>
+      </tr>
+      <tr>
+        <td><b>R2</b> Prototype</td>
+        <td>New users first, then organisers specifically</td>
+        <td>Paper form, then first digital form, then the three-mode wizard</td>
+        <td>Could they suggest a meetup unaided? Drove voting over a fixed time, the wizard, and cutting the three modes</td>
+      </tr>
+      <tr>
+        <td><b>R3</b> Touchpoint</td>
+        <td>Organisers (suggest) and passive participants (conditional)</td>
+        <td>The shipped optional-fields flow and the "I'll go if..." sheet</td>
+        <td>Did they understand it with no explanation? Drove optional fields and the two-option conditional</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="card-ink" style="margin-top:16px;">
+    <div class="label" style="color:var(--pink);margin-bottom:8px;">What testing taught us</div>
+    <p style="font-family:Inter;font-weight:500;font-size:14.7px;line-height:1.4;margin:0;color:var(--surface);">The same lesson kept recurring. With the three suggest modes and the boolean "and / or" conditions alike, we were designing for our own mental model, and testing kept pulling us back to the simpler thing a real person would do. Almost every change we shipped was a step of <b style="color:var(--pink);">removing structure, not adding it</b>.</p>
+  </div>
+</section>
+
+<!-- ===================== 10 - SUGGESTING (paper to first digital) ===================== -->
+<section class="page">
+  <div class="head">
+    <h2>Suggesting a meetup</h2>
+    <div class="hr"></div>
+  </div>
+
+  <p class="body" style="margin-bottom:16px;">Concept to experience: the suggest flow evolved across four touchpoints, from a paper form to the final shipped wizard. Each step below was driven by what users told us.</p>
+
+  <div class="row" style="gap:20px;align-items:flex-end;justify-content:center;margin-bottom:18px;">
+    <div style="text-align:center;">
+      <p class="seqlabel">1 - Paper mock-up</p>
+      <img src="assets/sketches/suggest.png" alt="Hand-drawn suggest-a-meetup form: title, description, date, time, location, deadline, create." style="height:82mm;width:auto;" class="imgcard imgcard--sm">
+    </div>
+    <div style="text-align:center;">
+      <p class="seqlabel">2 - First digital form</p>
+      <img src="assets/screens/suggest-form.png" alt="First digital suggest form with a fixed title, location, date and time." style="height:82mm;width:auto;" class="imgcard imgcard--sm">
+    </div>
+  </div>
+
+  <p class="body">As seen in the first image above, we started with a mock-up of a simple form and showed this design to users. It was initially met positively, but after creating a digital version of our mock-up (as shown in the second screenshot), we were told:</p>
+  <p class="quote" style="font-size:15px;margin:12px 0;">"Having a set time seems quite restrictive - it would be nice to agree on a time within the group."</p>
+  <p class="body">This revealed a fundamental assumption we had built the entire initial design around: that the organiser would arrive with a fixed time in mind. In reality, for someone like Vasanth, the whole point is to find a time that works for everyone, a fixed time input was solving the wrong problem entirely. Reflecting on this, it also exposed a tension we hadn't considered: giving the organiser too much control over the details of a meetup risked replicating the exact top-down dynamic that makes organising feel burdensome and one-sided in the first place. A collaborative voting system for time naturally addressed this, and we realised the same logic extended to activity, if uncertainty about time causes hesitancy, uncertainty about whether you'll enjoy the activity does too. Having created a new digital touchpoint incorporating both, we interviewed new users, who told us:</p>
+</section>
+
+<!-- ===================== 11 - SUGGESTING (the wizard) ===================== -->
+<section class="page">
+  <div class="head">
+    <h2>Suggesting a meetup <span style="font-family:Inter;font-weight:600;font-size:16px;color:var(--muted-2);">- continued</span></h2>
+    <div class="hr"></div>
+  </div>
+
+  <p class="quote" style="font-size:15px;margin:0 0 16px;">"It takes me a second to read through and understand where to put every single thing and what each thing does, especially with the boxes. Maybe more space between the boxes, or laying it out a bit differently."</p>
+
+  <p class="body">Clearly, we had overcomplicated our UI by designing for our own mental model of the meetup creation process rather than the user's. We had assumed that presenting all the information fields together would feel efficient, but in reality, it revealed that we were thinking like developers, not like someone casually floating a plan to their friends. This led us to a 'wizard' style design with separate pages for each piece of information, reducing the cognitive load at each step. Crucially, this also better reflected how someone actually thinks about organising a meetup, not all at once, but one decision at a time. Subsequent users navigated the flow with no difficulty, whereas previously we had needed to explain the layout every time, validating that the change addressed the root cause rather than just the surface complaint. However, new issues emerged:</p>
+
+  <div style="text-align:center;margin:16px 0;">
+    <p class="seqlabel">3 - Wizard with three modes (Float it / Rough plan / It's set)</p>
+    <img src="assets/screens/float-wizard.png" alt="Wizard with Float it / Rough plan / It's set, then who it is for, what the spark is, and roughly when." style="width:155mm;max-width:100%;height:auto;" class="imgcard imgcard--sm">
+  </div>
+
+  <div class="row" style="gap:16px;">
+    <p class="quote" style="font-size:14px;flex:1;">"These options are quite confusing - I don't really understand when you would ever use the rough plan option"</p>
+    <p class="quote" style="font-size:14px;flex:1;">"I could see this being used to just check for people's availability - sending out a vague idea of 'I want to meetup' and seeing what everyone wants to do."</p>
+  </div>
+</section>
+
+<!-- ===================== 12 - SUGGESTING (the final flow) ===================== -->
+<section class="page">
+  <div class="head">
+    <h2>Suggesting a meetup <span style="font-family:Inter;font-weight:600;font-size:16px;color:var(--muted-2);">- continued</span></h2>
+    <div class="hr"></div>
+  </div>
+
+  <div style="text-align:center;margin-bottom:18px;">
+    <p class="seqlabel">4 - Final flow with optional fields</p>
+    <img src="assets/screens/create-flow.png" alt="Final suggest flow with optional fields: fresh or do one again, what do you fancy, when could it be." style="width:162mm;max-width:100%;height:auto;" class="imgcard imgcard--sm">
+  </div>
+
+  <p class="body">These two ideas we found particularly interesting. Our users loved the idea of just floating a meetup, but were less keen on the three options we provided them with. This led us to create our final iteration (as shown in the fourth and final set of screenshots above) of the 'suggest a meetup' flow, where we use optional fields so that users who don't know much about the meetup they are suggesting can skip these, acting in the same way the float an idea concept did, whilst avoiding confusing options like 'rough plan' and 'it's set'.</p>
+</section>
+
+<!-- ===================== 13 - CONDITIONAL ATTENDANCE (build evolution) ===================== -->
+<section class="page">
+  <div class="head">
+    <h2>Conditional Attendance</h2>
+    <div class="hr"></div>
+  </div>
+
+  <p class="body" style="margin-bottom:14px;">The conditional ("I'll go if...") evolved from a free list, through an over-engineered and/or system, to two simple options users understood instantly.</p>
+
+  <div class="row" style="gap:14px;align-items:flex-end;justify-content:center;margin-bottom:16px;">
+    <div style="text-align:center;">
+      <p class="seqlabel">1 - First mock-up</p>
+      <img src="assets/sketches/conditional-1.png" alt="First conditional mock-up: I will make it / I won't make it / I will make it if named people are going." style="height:70mm;width:auto;" class="imgcard imgcard--sm">
+    </div>
+    <div style="text-align:center;">
+      <p class="seqlabel">2 - And / or controls</p>
+      <img src="assets/sketches/conditional-2.png" alt="Second mock-up adding explicit AND / OR controls between named people." style="height:70mm;width:auto;" class="imgcard imgcard--sm">
+    </div>
+    <div style="text-align:center;">
+      <p class="seqlabel">3 - Final mock-up</p>
+      <img src="assets/sketches/conditional-3.png" alt="Final mock-up: at least one of / all of these people are going." style="height:70mm;width:auto;" class="imgcard imgcard--sm">
+    </div>
+  </div>
+
+  <p class="body">Our earlier interviews with stakeholders made us realise we needed some system of capturing people's dependence on other people going to a certain social event. To address this problem and hence to reduce people's hesitation about going to social events, we created the mock-up shown above in the first image. The idea was to give each user the option to say they'll go to an event if the specified people are going too. We showed this to users, however we had to explain how it worked, and users told us:</p>
+  <p class="quote" style="font-size:15px;margin:12px 0;">"It's not obvious how the dependence works, I'm not sure whether I am going if all of these people go, or if it's just when one of these people go"</p>
+  <p class="body">The ambiguity stemmed from users not knowing whether they needed all or just one of their specified friends to attend. Our instinct was to solve this precisely, giving users explicit 'and' and 'or' controls so they could express their exact conditions (as shown in the second mock-up). However, this was an overcorrection: in trying to eliminate every possible edge case, we had created something more confusing than the original problem:</p>
+</section>
+
+<!-- ===================== 14 - CONDITIONAL ATTENDANCE (cont.) ===================== -->
+<section class="page">
+  <div class="head">
+    <h2>Conditional Attendance <span style="font-family:Inter;font-weight:600;font-size:16px;color:var(--muted-2);">- continued</span></h2>
+    <div class="hr"></div>
+  </div>
+
+  <p class="quote" style="font-size:16px;margin:0 0 16px;">"I don't understand how to use this. Would a meetup ever be this complicated?"</p>
+
+  <p class="body">This brought us back to the insight that had motivated the feature in the first place: Milly's attendance isn't governed by complex logic, it's governed by one simple question, is someone I'm comfortable with going? By overcomplicating the conditions system we had lost sight of the human reality behind the feature. The final design (as shown in the final mock-up and the digital touchpoint) reflects this: two options, 'if one of these people go' or 'if all of these people go', which cover the vast majority of real social dependencies without asking users to think in boolean logic.</p>
+
+  <div class="card-ink" style="margin-top:14px;">
+    <p style="font-family:Inter;font-weight:500;font-size:14.7px;line-height:1.4;margin:0;color:var(--surface);">Crucially, subsequent users understood the feature immediately without explanation, a clear contrast to both previous iterations, and a sign that the design had finally matched the human behaviour it was trying to capture.</p>
+  </div>
+
+  <p class="seqlabel" style="text-align:center;margin:20px 0 8px;">The shipped touchpoint</p>
+  <div class="row" style="gap:18px;justify-content:center;align-items:flex-start;">
+    <img src="assets/screens/are-you-in.png" alt="Shipped RSVP: I'm in / I'll go if... / Can't make it." style="height:94mm;width:auto;" class="imgcard imgcard--sm">
+    <img src="assets/screens/go-if.png" alt="Shipped 'I'll go if...' sheet with an At least one / All of them toggle over a blind list of names." style="height:94mm;width:auto;" class="imgcard imgcard--sm">
+  </div>
+</section>
+
+<!-- ===================== 15 - FROM FINDING TO CHANGE ===================== -->
+<section class="page">
+  <div class="head">
+    <h2>From finding to change</h2>
+    <div class="hr"></div>
+  </div>
+
+  <p class="lead" style="margin-bottom:18px;">The artefact that kept us honest: every change we shipped points back at a <b>real survey number or interview quote</b>. If a finding did not exist, the feature did not get built.</p>
+
+  <table class="tbl tight" style="flex:1;">
+    <thead>
+      <tr>
+        <th style="width:42%;">Finding (source)</th>
+        <th style="width:23%;">Insight</th>
+        <th style="width:35%;">Change shipped</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="src">87%</span> send "a maybe" or delay when slightly unsure; only 6 of 47 give a clean answer. <i>(survey, n=47)</i></td>
+        <td>Hedging is the default, and the failure mechanism.</td>
+        <td>A blind, deadlined RSVP - Yes / Can't make it / "I'll go if [people]" - no public maybe, no running tally.</td>
+      </tr>
+      <tr>
+        <td>"The organisers should have an option to be anonymous... no pressure on that person at all" <i>(Tom);</i> only <span class="src">6 of 47</span> mostly lead.</td>
+        <td>Anonymity reframes a plan as group consensus.</td>
+        <td>Creator anonymity is always on - the group sees the meetup, never who proposed it. No toggle.</td>
+      </tr>
+      <tr>
+        <td>"You split the load across your friends... without feeling like you're dragging everyone" <i>(Felicity);</i> <span class="src">83%</span> say smaller groups are easier.</td>
+        <td>People want to co-decide, not be organised.</td>
+        <td>Two member-fed candidate lists, TIME and ACTIVITY, anyone can add to and +1; counts public, names never.</td>
+      </tr>
+      <tr>
+        <td>"A checkbox or a switch... this is a concrete event, you cannot change it... like a football match" <i>(Tom);</i> confusion over three suggest modes.</td>
+        <td>One switch should cover concrete and open, not three modes.</td>
+        <td><span class="mono">lockTimes</span> / <span class="mono">lockActivity</span> flags; a fully pinned plan skips straight to a blind moment. The three-mode fork was deleted.</td>
+      </tr>
+      <tr>
+        <td>"The deadline would be better... but only if there was a push... like BeReal, it goes off, ding ding ding" <i>(Tom).</i></td>
+        <td>A blind, deadlined, push-driven yes/no beats an open poll.</td>
+        <td>Lock-in deadline plus device-local "Voting closes" / "RSVP closes" reminders.</td>
+      </tr>
+      <tr>
+        <td>The countdown bar turned greener as the deadline neared, signalling "you're nearly there" exactly when urgency should rise. <i>(M3 review)</i></td>
+        <td>Urgency was being signalled backwards.</td>
+        <td>The green drain bar became a plain-language countdown ("Voting closes in 2 days"); urgency shown in pink under one hour.</td>
+      </tr>
+      <tr>
+        <td>Felicity could not name a friend in a conditional, even privately <i>(R2);</i> Tom liked naming people.</td>
+        <td>Felt privacy is not the same as technical privacy.</td>
+        <td>The "Go if [people]" copy was softened and defaulted to "At least one" rather than a named person.</td>
+      </tr>
+      <tr>
+        <td>"Hoping people download it is probably not it" <i>(Fangyi Lin);</i> "a website would be less stressful" <i>(Felicity);</i> "it's just a link" <i>(Luca, R3).</i></td>
+        <td>The download is the adoption barrier, not the idea.</td>
+        <td>Invite links and join codes, plus a no-download meetup share link that converts to a responding member.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ===================== IMPACT (evidence) ===================== -->
+<section class="page">
+  <div class="head">
+    <h2>Impact</h2>
+    <div class="hr"></div>
+  </div>
+
+  <p class="lead" style="margin-bottom:18px;">The same plan, run through BeThere, ends differently. Here is what changed for each group we set out to help.</p>
+
+  <div class="col" style="gap:16px;">
+    <div class="card">
+      <div class="label" style="color:var(--pink);margin-bottom:6px;">For the organiser</div>
+      <p class="body" style="margin:0;">Vasanth's curve reverses: the plan that used to slide into "too late, gives up" now climbs to a meetup that actually happens. In our final sessions people completed the suggest flow with no explanation, where earlier prototypes had to be walked through every time. The chasing that used to kill his plans is gone.</p>
+    </div>
+    <div class="card">
+      <div class="label" style="color:var(--purple);margin-bottom:6px;">For the participant</div>
+      <p class="body" style="margin:0;">Milly's public "maybe" becomes a private "I'll go if...". Passive participants understood the conditional immediately, without explanation, a clear contrast to every earlier iteration. She can signal a real intention without having to commit in front of the whole group.</p>
+    </div>
+    <div class="card">
+      <div class="label" style="margin-bottom:6px;">For everyone around them</div>
+      <p class="body" style="margin:0;">We expect the effect to ripple outward: the venues that host the group get firmer headcounts, universities get better-connected students who are less likely to drop out, and the loneliness the NHS is treating gets a little relief upstream.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 16 - IMPACT (asset only) ===================== -->
+<section class="page">
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;min-height:0;">
+    <img src="assets/impact/cover.png" alt="BeThere cover story - 'get the whole group to BeThere', the loneliness context, by-the-numbers and a local-venue voice." style="max-height:100%;max-width:100%;width:auto;border:3px solid var(--ink);box-shadow:var(--sh-lg);display:block;">
+  </div>
+</section>
+
+</body>
+</html>
