@@ -6,7 +6,7 @@ Project Documentation block). **v2 is the merge candidate for final submission.*
 It takes the team's hand-written content from `project-doc/human/DRP - HCD Portfolio
 Human New.pdf` and sets it in the v1 refined-neobrutalist brand + build pipeline.
 
-**18 A4-portrait pages.** Guiding principle (agreed with the team):
+**16 A4-portrait pages.** Guiding principle (agreed with the team):
 
 - **Human wording is verbatim** - "restructure, not reword". Text is re-presented in
   brand components (callouts, captions, cards) but never paraphrased.
@@ -14,14 +14,20 @@ Human New.pdf` and sets it in the v1 refined-neobrutalist brand + build pipeline
   the hand-drawn -> digital build evolution, the journey maps, the "BeThere" cover.
 - **v1 only adds**: the brand (`portfolio.css`) + build pipeline, plus the artifacts
   the human version was missing - a cover page, an AEIOU field-research page, the
-  architecture page ("How the promises are kept"), a Testing Plan Canvas + a testing
-  reflection on the methodology page, the finding->change traceability table, and an
-  Impact evidence page.
+  architecture page ("How the promises are kept"), and a Testing Plan Canvas + a
+  testing reflection on the methodology page. The opportunity statement carries a
+  "Who this serves" all-stakeholder strip.
+- **No interviewee name-dropping** (team steer): research is sourced vaguely
+  ("interviews", "survey") - no individual interviewee is ever named. (Earlier drafts
+  named Luca/Luke/Matthew/Tom/Fangyi and **Felicity**; all removed.)
+- **Impact = the cover-story asset only** (team steer, matches the assessor framing
+  that the Understanding-Impact area *is* the impact asset). The earlier per-stakeholder
+  "Impact" evidence page and the "From finding to change" traceability table were both
+  **deleted** (the latter judged redundant with the iteration pages + a name-drop risk).
 - **Minimal chrome** (team steer): no kicker/eyebrow labels above headings, no page
   footers, no cover tagline. Just the heading + content per page.
-- **Ends on the cover asset** = an Impact evidence page (per-stakeholder validated
-  outcomes) leads into the team's cover-story asset, which closes the document
-  full-bleed.
+- **Ends on the cover asset** = the team's cover-story asset closes the document
+  full-bleed, straight after the conditional-attendance touchpoint.
 
 ## Files
 
@@ -29,7 +35,7 @@ Human New.pdf` and sets it in the v1 refined-neobrutalist brand + build pipeline
 - `portfolio.css` - the brand tokens/components (copied from v1; 2.5cm margins, body
   >=11pt, table text >=9pt - staff rule, do not change).
 - `build.py` - renders `portfolio.html` -> `hcd-portfolio.pdf` with headless Chrome.
-- `hcd-portfolio.pdf` - the deliverable (18 pages).
+- `hcd-portfolio.pdf` - the deliverable (16 pages).
 - `assets/` - `personas/`, `stakeholders/`, `journeys/`, `sketches/`, `screens/`,
   `impact/`, plus `architecture.png`.
 
