@@ -4,6 +4,8 @@
 **Deliverable:** HCD Techniques Portfolio (80% of the 20% Project Documentation block). Final submission candidate.
 **Output:** `project-doc/v2/hcd-portfolio/` (new), built to `hcd-portfolio.pdf`.
 
+> **Revision (2026-06-19, post-build team steer):** the as-built doc is **16 pages**, not the 17/19 planned below. The team cut the "How we ran the research" (Double Diamond) page, the structured-Impact page, and the Reflection page; made the Impact section the cover asset only (no prose); and stripped all chrome (eyebrow kickers, the cover tagline, and every page footer). The page list below is the original plan - see `project-doc/v2/hcd-portfolio/README.md` for the as-built structure.
+
 ## Goal
 
 Merge the team's **carefully written human version** (`project-doc/human/DRP - HCD Portfolio Human New.pdf`, 18pp, Google-Docs styling) with the **formatting + a few rubric artifacts** of the **v1 Claude version** (`project-doc/v1/hcd-portfolio/`, 12pp, refined-neobrutalist brand).
