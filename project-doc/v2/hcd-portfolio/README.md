@@ -31,9 +31,8 @@ Human New.pdf` and sets it in the v1 refined-neobrutalist brand + build pipeline
 
 ## Assets
 
-Human images were extracted from the human PDF with `pdfimages`; v1's cover
-screenshots (`assets/screens/init-*.jpg`, `voting-pick.jpg`) and `architecture.png`
-were reused for the two `[+v1]` pages that need them (cover, blueprint). The full
+Human images were extracted from the human PDF with `pdfimages`; v1's
+`architecture.png` was reused for the service-blueprint page. The full
 extraction map and page-by-page plan live in
 `docs/superpowers/specs/2026-06-19-hcd-portfolio-v2-design.md`.
 
