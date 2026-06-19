@@ -227,54 +227,12 @@
 
   <div class="card-ink">
     <div class="label" style="color:var(--pink);margin-bottom:8px;">Opportunity Statement</div>
-    <p style="font-family:Inter;font-weight:500;font-size:13px;line-height:1.35;margin:0 0 8px;color:var(--grey);">Taken together, the interviews and survey point to a single leverage point: the moment hesitancy becomes visible in the group chat. Removing that friction, for both the organiser chasing replies and the participant waiting on others, is the opportunity we set out to address - and because every plan that survives is a group that actually meets, it reaches past students to the venues that host them, the universities that want connected campuses, and the loneliness all of them are trying to ease:</p>
+    <p style="font-family:Inter;font-weight:500;font-size:13px;line-height:1.35;margin:0 0 8px;color:var(--grey);">Taken together, the interviews and survey point to a single leverage point: the moment hesitancy becomes visible in the group chat. Removing that friction, for both the organiser chasing replies and the participant waiting on others, is the opportunity we set out to address:</p>
     <p class="quote" style="color:var(--surface);border-left-color:var(--pink);font-size:17px;">"How might we reduce hesitancy in undergraduate friend groups when planning to meet up so that groups go from frustrating 'maybe' responses to a clear consensus?"</p>
-    <div style="margin-top:12px;border-top:1px solid rgba(255,255,255,0.22);padding-top:10px;">
-      <div class="label" style="color:var(--pink);margin-bottom:6px;">Who this serves</div>
-      <div class="grid3" style="gap:16px;">
-        <p style="margin:0;font-family:Inter;font-weight:500;font-size:11px;line-height:1.3;color:var(--grey);"><b style="color:var(--surface);">Friends and organisers:</b> a plan that resolves itself, with no one chasing replies.</p>
-        <p style="margin:0;font-family:Inter;font-weight:500;font-size:11px;line-height:1.3;color:var(--grey);"><b style="color:var(--surface);">Venues (pubs, cafes):</b> a firm headcount; a resolved plan books better than a maybe-thread.</p>
-        <p style="margin:0;font-family:Inter;font-weight:500;font-size:11px;line-height:1.3;color:var(--grey);"><b style="color:var(--surface);">Universities and health:</b> connected students, and relief upstream on the cost of loneliness.</p>
-      </div>
-    </div>
   </div>
 </section>
 
-<!-- ===================== 8 - SERVICE BLUEPRINT ===================== -->
-<section class="page">
-  <div class="head">
-    <h2>How the promises are kept</h2>
-    <div class="hr"></div>
-  </div>
-
-  <p class="lead" style="margin-bottom:16px;">The future journey runs on one typed system. There is <b>no scheduler</b> - phases settle lazily on read - and the privacy promises that make the moment feel safe are enforced in the server, out of the client's reach.</p>
-
-  <div style="margin:2px 0 4px;">
-    <img src="assets/architecture.png" alt="BeThere system architecture: deployment, frontend, backend, database and the shared core" style="width:100%;display:block;border:3px solid var(--ink);box-shadow:var(--sh);">
-  </div>
-
-  <div class="card-ink" style="margin-top:20px;padding:20px 22px;">
-    <div class="label" style="color:var(--pink);margin-bottom:14px;">The promises that make the moment feel safe - enforced in the server, not the screen</div>
-    <div class="grid3" style="gap:18px;">
-      <div>
-        <p style="margin:0 0 6px;font-family:Archivo;font-weight:800;font-size:15px;color:var(--surface);line-height:1.15;">No one sees who proposed it</p>
-        <p style="margin:0;font-family:Inter;font-weight:500;font-size:12px;line-height:1.45;color:var(--grey);">Creator anonymity is on by default; the read layer returns only a private "is this me?" boolean, never the creator's id.</p>
-      </div>
-      <div>
-        <p style="margin:0 0 6px;font-family:Archivo;font-weight:800;font-size:15px;color:var(--surface);line-height:1.15;">No one sees how you voted</p>
-        <p style="margin:0;font-family:Inter;font-weight:500;font-size:12px;line-height:1.45;color:var(--grey);">Collecting shows the +1 totals for momentum but never the voter set; the moment reveals nothing about others until it resolves.</p>
-      </div>
-      <div>
-        <p style="margin:0 0 6px;font-family:Archivo;font-weight:800;font-size:15px;color:var(--surface);line-height:1.15;">A dead plan dies quietly</p>
-        <p style="margin:0;font-family:Inter;font-weight:500;font-size:12px;line-height:1.45;color:var(--grey);">If it misses quorum it fizzles on the next read and drops out of every dashboard - no push, no awkward dead thread.</p>
-      </div>
-    </div>
-  </div>
-
-  <p class="cap" style="margin-top:20px;">These promises are structural, not copy: anonymity and the blind moment live in the server's procedures (<span class="mono" style="font-size:12px;">events.ts</span>, <span class="mono" style="font-size:12px;">db/schema.ts</span>), so they cannot leak to the client.</p>
-</section>
-
-<!-- ===================== 9 - OUR METHODOLOGY ===================== -->
+<!-- ===================== 8 - OUR METHODOLOGY ===================== -->
 <section class="page">
   <div class="head">
     <h2>Our Methodology</h2>

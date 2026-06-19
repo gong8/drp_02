@@ -6,17 +6,17 @@ Project Documentation block). **v2 is the merge candidate for final submission.*
 It takes the team's hand-written content from `project-doc/human/DRP - HCD Portfolio
 Human New.pdf` and sets it in the v1 refined-neobrutalist brand + build pipeline.
 
-**16 A4-portrait pages.** Guiding principle (agreed with the team):
+**15 A4-portrait pages.** Guiding principle (agreed with the team):
 
 - **Human wording is verbatim** - "restructure, not reword". Text is re-presented in
   brand components (callouts, captions, cards) but never paraphrased.
 - **Human assets throughout** - real persona photos, the hand-drawn stakeholder map,
   the hand-drawn -> digital build evolution, the journey maps, the "BeThere" cover.
 - **v1 only adds**: the brand (`portfolio.css`) + build pipeline, plus the artifacts
-  the human version was missing - a cover page, an AEIOU field-research page, the
-  architecture page ("How the promises are kept"), and a Testing Plan Canvas + a
-  testing reflection on the methodology page. The opportunity statement carries a
-  "Who this serves" all-stakeholder strip.
+  the human version was missing - a cover page, an AEIOU field-research page, and a
+  Testing Plan Canvas + a testing reflection on the methodology page. (An architecture
+  page "How the promises are kept" and a "Who this serves" opportunity-statement strip
+  were trialled and then cut on team steer - too much AI-added scaffolding.)
 - **No interviewee name-dropping** (team steer): research is sourced vaguely
   ("interviews", "survey") - no individual interviewee is ever named. (Earlier drafts
   named Luca/Luke/Matthew/Tom/Fangyi and **Felicity**; all removed.)
@@ -35,14 +35,13 @@ Human New.pdf` and sets it in the v1 refined-neobrutalist brand + build pipeline
 - `portfolio.css` - the brand tokens/components (copied from v1; 2.5cm margins, body
   >=11pt, table text >=9pt - staff rule, do not change).
 - `build.py` - renders `portfolio.html` -> `hcd-portfolio.pdf` with headless Chrome.
-- `hcd-portfolio.pdf` - the deliverable (16 pages).
+- `hcd-portfolio.pdf` - the deliverable (15 pages).
 - `assets/` - `personas/`, `stakeholders/`, `journeys/`, `sketches/`, `screens/`,
-  `impact/`, plus `architecture.png`.
+  `impact/` (`architecture.png` is no longer referenced - the page that used it was cut).
 
 ## Assets
 
-Human images were extracted from the human PDF with `pdfimages`; v1's
-`architecture.png` was reused for the service-blueprint page. The full
+Human images were extracted from the human PDF with `pdfimages`. The full
 extraction map and page-by-page plan live in
 `docs/superpowers/specs/2026-06-19-hcd-portfolio-v2-design.md`.
 
