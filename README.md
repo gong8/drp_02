@@ -68,6 +68,47 @@ pnpm check          # all of the above in one go
 
 Run `pnpm check` before opening any PR.
 
+## Live backend status
+
+> **The hosted backend is currently torn down (2026-06-22, DRP-75) to stop AWS costs (~$50/mo, mostly two RDS instances).** App code is unaffected and local development works exactly as documented above - the API runs fully against Dockerized Postgres with dev-bypass auth. Only the deployed AWS environment is gone.
+
+Removed from AWS (account `208569836255`, `us-east-1`), both the prod (`main`) and dev (`dev`) stacks:
+
+- App Runner services `bethere-api`, `bethere-api-dev`
+- RDS Postgres `bethere-db`, `bethere-db-dev` (+ subnet group `bethere-subnets`) - the main cost
+- VPC connector `bethere-vpc-conn`; security groups `bethere-rds-sg`, `bethere-apprunner-sg`
+- ECR repo `bethere-api` (and its images); the 4 `/aws/apprunner/bethere-api*` CloudWatch log groups
+- IAM role `bethere-apprunner-ecr-role` and CI user `bethere-ci` (+ its access keys)
+
+Left untouched: unrelated resources in the same account (the `knownissue-*` databases, the `sst-asset` ECR repo, the default VPC).
+
+While it is down: the live URLs 404, the CD workflows (`.github/workflows/deploy-api*.yml`, `cd.yml`) fail on push because their ECR / App Runner targets are gone, and the GitHub `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` secrets (the `bethere-ci` keys) are now dead.
+
+### Tear it down again
+
+```bash
+infra/teardown.sh   # removes the whole backend (both stacks) in dependency-safe order
+```
+
+It looks resources up by name (so it works on any rebuild) and never touches non-BeThere resources.
+
+### Bring it back up
+
+The provisioning scripts are the reproducible record. From the repo root, with an AWS CLI that has admin rights and Docker running:
+
+```bash
+infra/aws-deploy.sh       # 1. prod stack + the shared infra (VPC connector, ECR repo, IAM role, SGs, CI user)
+infra/aws-deploy-dev.sh   # 2. dev stack (reuses prod's shared infra, so prod must exist first)
+```
+
+Neither script is idempotent - most steps fail if the resource already exists, so run sections as needed. A rebuild mints **new** App Runner URLs, RDS endpoints, DB passwords, and admin tokens, so finish the manual wiring the scripts leave as trailing comments:
+
+- Create a `bethere-ci` access key and set the `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` GitHub secrets, so CD can push images again.
+- Set `CLERK_JWT_KEY`, `CLERK_SECRET_KEY`, and `ADMIN_RESET_TOKEN` on each App Runner service in the console (the CI user cannot `UpdateService`).
+- Point Vercel's `EXPO_PUBLIC_API_URL` / `OG_API_URL` (Production -> prod API, Preview -> dev API) at the new App Runner URLs, and update the hardcoded URLs in [`docs/runbook-deploy.md`](docs/runbook-deploy.md) and the section above.
+
+Full deploy and migration mechanics: [`docs/runbook-deploy.md`](docs/runbook-deploy.md).
+
 ## Docs
 
 - Branching and contribution workflow: [`CONTRIBUTING.md`](CONTRIBUTING.md)
